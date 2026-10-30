@@ -1,0 +1,13 @@
+effective_io_concurrency	16		user
+io_combine_limit	16	8kB	user
+io_max_combine_limit	16	8kB	postmaster
+io_max_concurrency	23		postmaster
+io_method	worker		postmaster
+io_workers	3		sighup
+track_io_timing	off		superuser
+
+client backend	relation	bulkread	279	7438336	0	14
+client backend	relation	bulkwrite	0	0	0	0
+client backend	relation	init	0	0	0	0
+client backend	relation	normal	56	876544	0	3609
+client backend	relation	vacuum	0	0	0	0

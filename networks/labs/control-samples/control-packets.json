@@ -1,0 +1,424 @@
+[
+  {
+    "name": "dhcp-discover",
+    "synthetic": true,
+    "decoded": {
+      "source_mac": "02:00:00:77:10:64",
+      "target_mac": "ff:ff:ff:ff:ff:ff",
+      "source_ip": "0.0.0.0",
+      "target_ip": "255.255.255.255",
+      "source_port": 68,
+      "target_port": 67,
+      "frame_length": 342,
+      "ip_length": 328,
+      "udp_length": 308,
+      "ip_checksum": "valid",
+      "udp_checksum": "valid",
+      "payload": {
+        "op": 1,
+        "htype": 1,
+        "hlen": 6,
+        "hops": 0,
+        "xid": 1997537281,
+        "secs": 0,
+        "flags": 32768,
+        "ciaddr": "0.0.0.0",
+        "yiaddr": "0.0.0.0",
+        "siaddr": "0.0.0.0",
+        "giaddr": "0.0.0.0",
+        "chaddr": "02:00:00:77:10:64:00:00:00:00:00:00:00:00:00:00",
+        "sname": "",
+        "file": "",
+        "message_type": "DISCOVER",
+        "options": [
+          {
+            "offset": 240,
+            "code": 53,
+            "length": 1,
+            "hex": "01"
+          },
+          {
+            "offset": 243,
+            "code": 61,
+            "length": 7,
+            "hex": "01020000771064"
+          },
+          {
+            "offset": 252,
+            "code": 55,
+            "length": 7,
+            "hex": "0103060f333a3b"
+          }
+        ],
+        "length": 300
+      }
+    }
+  },
+  {
+    "name": "dhcp-offer",
+    "synthetic": true,
+    "decoded": {
+      "source_mac": "02:00:00:77:10:01",
+      "target_mac": "ff:ff:ff:ff:ff:ff",
+      "source_ip": "10.77.10.1",
+      "target_ip": "255.255.255.255",
+      "source_port": 67,
+      "target_port": 68,
+      "frame_length": 347,
+      "ip_length": 333,
+      "udp_length": 313,
+      "ip_checksum": "valid",
+      "udp_checksum": "valid",
+      "payload": {
+        "op": 2,
+        "htype": 1,
+        "hlen": 6,
+        "hops": 0,
+        "xid": 1997537281,
+        "secs": 0,
+        "flags": 32768,
+        "ciaddr": "0.0.0.0",
+        "yiaddr": "10.77.10.100",
+        "siaddr": "0.0.0.0",
+        "giaddr": "0.0.0.0",
+        "chaddr": "02:00:00:77:10:64:00:00:00:00:00:00:00:00:00:00",
+        "sname": "",
+        "file": "",
+        "message_type": "OFFER",
+        "options": [
+          {
+            "offset": 240,
+            "code": 53,
+            "length": 1,
+            "hex": "02"
+          },
+          {
+            "offset": 243,
+            "code": 61,
+            "length": 7,
+            "hex": "01020000771064"
+          },
+          {
+            "offset": 252,
+            "code": 54,
+            "length": 4,
+            "hex": "0a4d0a01"
+          },
+          {
+            "offset": 258,
+            "code": 51,
+            "length": 4,
+            "hex": "00000e10"
+          },
+          {
+            "offset": 264,
+            "code": 58,
+            "length": 4,
+            "hex": "00000708"
+          },
+          {
+            "offset": 270,
+            "code": 59,
+            "length": 4,
+            "hex": "00000c4e"
+          },
+          {
+            "offset": 276,
+            "code": 1,
+            "length": 4,
+            "hex": "ffffff00"
+          },
+          {
+            "offset": 282,
+            "code": 3,
+            "length": 4,
+            "hex": "0a4d0a01"
+          },
+          {
+            "offset": 288,
+            "code": 6,
+            "length": 4,
+            "hex": "0a4d0a01"
+          },
+          {
+            "offset": 294,
+            "code": 15,
+            "length": 8,
+            "hex": "6c61622e74657374"
+          }
+        ],
+        "length": 305
+      }
+    }
+  },
+  {
+    "name": "dhcp-request",
+    "synthetic": true,
+    "decoded": {
+      "source_mac": "02:00:00:77:10:64",
+      "target_mac": "ff:ff:ff:ff:ff:ff",
+      "source_ip": "0.0.0.0",
+      "target_ip": "255.255.255.255",
+      "source_port": 68,
+      "target_port": 67,
+      "frame_length": 342,
+      "ip_length": 328,
+      "udp_length": 308,
+      "ip_checksum": "valid",
+      "udp_checksum": "valid",
+      "payload": {
+        "op": 1,
+        "htype": 1,
+        "hlen": 6,
+        "hops": 0,
+        "xid": 1997537281,
+        "secs": 0,
+        "flags": 32768,
+        "ciaddr": "0.0.0.0",
+        "yiaddr": "0.0.0.0",
+        "siaddr": "0.0.0.0",
+        "giaddr": "0.0.0.0",
+        "chaddr": "02:00:00:77:10:64:00:00:00:00:00:00:00:00:00:00",
+        "sname": "",
+        "file": "",
+        "message_type": "REQUEST",
+        "options": [
+          {
+            "offset": 240,
+            "code": 53,
+            "length": 1,
+            "hex": "03"
+          },
+          {
+            "offset": 243,
+            "code": 61,
+            "length": 7,
+            "hex": "01020000771064"
+          },
+          {
+            "offset": 252,
+            "code": 55,
+            "length": 7,
+            "hex": "0103060f333a3b"
+          },
+          {
+            "offset": 261,
+            "code": 50,
+            "length": 4,
+            "hex": "0a4d0a64"
+          },
+          {
+            "offset": 267,
+            "code": 54,
+            "length": 4,
+            "hex": "0a4d0a01"
+          }
+        ],
+        "length": 300
+      }
+    }
+  },
+  {
+    "name": "dhcp-ack",
+    "synthetic": true,
+    "decoded": {
+      "source_mac": "02:00:00:77:10:01",
+      "target_mac": "ff:ff:ff:ff:ff:ff",
+      "source_ip": "10.77.10.1",
+      "target_ip": "255.255.255.255",
+      "source_port": 67,
+      "target_port": 68,
+      "frame_length": 347,
+      "ip_length": 333,
+      "udp_length": 313,
+      "ip_checksum": "valid",
+      "udp_checksum": "valid",
+      "payload": {
+        "op": 2,
+        "htype": 1,
+        "hlen": 6,
+        "hops": 0,
+        "xid": 1997537281,
+        "secs": 0,
+        "flags": 32768,
+        "ciaddr": "0.0.0.0",
+        "yiaddr": "10.77.10.100",
+        "siaddr": "0.0.0.0",
+        "giaddr": "0.0.0.0",
+        "chaddr": "02:00:00:77:10:64:00:00:00:00:00:00:00:00:00:00",
+        "sname": "",
+        "file": "",
+        "message_type": "ACK",
+        "options": [
+          {
+            "offset": 240,
+            "code": 53,
+            "length": 1,
+            "hex": "05"
+          },
+          {
+            "offset": 243,
+            "code": 61,
+            "length": 7,
+            "hex": "01020000771064"
+          },
+          {
+            "offset": 252,
+            "code": 54,
+            "length": 4,
+            "hex": "0a4d0a01"
+          },
+          {
+            "offset": 258,
+            "code": 51,
+            "length": 4,
+            "hex": "00000e10"
+          },
+          {
+            "offset": 264,
+            "code": 58,
+            "length": 4,
+            "hex": "00000708"
+          },
+          {
+            "offset": 270,
+            "code": 59,
+            "length": 4,
+            "hex": "00000c4e"
+          },
+          {
+            "offset": 276,
+            "code": 1,
+            "length": 4,
+            "hex": "ffffff00"
+          },
+          {
+            "offset": 282,
+            "code": 3,
+            "length": 4,
+            "hex": "0a4d0a01"
+          },
+          {
+            "offset": 288,
+            "code": 6,
+            "length": 4,
+            "hex": "0a4d0a01"
+          },
+          {
+            "offset": 294,
+            "code": 15,
+            "length": 8,
+            "hex": "6c61622e74657374"
+          }
+        ],
+        "length": 305
+      }
+    }
+  },
+  {
+    "name": "dns-query",
+    "synthetic": true,
+    "decoded": {
+      "source_mac": "02:00:00:77:10:64",
+      "target_mac": "02:00:00:77:10:01",
+      "source_ip": "10.77.10.100",
+      "target_ip": "10.77.10.1",
+      "source_port": 53000,
+      "target_port": 53,
+      "frame_length": 72,
+      "ip_length": 58,
+      "udp_length": 38,
+      "ip_checksum": "valid",
+      "udp_checksum": "valid",
+      "payload": {
+        "id": 30480,
+        "flags": "0x0100",
+        "QR": 0,
+        "opcode": 0,
+        "AA": 0,
+        "TC": 0,
+        "RD": 1,
+        "RA": 0,
+        "Z": 0,
+        "AD": 0,
+        "CD": 0,
+        "rcode": 0,
+        "counts": {
+          "question": 1,
+          "answer": 0,
+          "authority": 0,
+          "additional": 0
+        },
+        "questions": [
+          {
+            "name": "app.lab.test.",
+            "type": 1,
+            "class": 1
+          }
+        ],
+        "answers": [],
+        "authority": [],
+        "additional": [],
+        "length": 30
+      }
+    }
+  },
+  {
+    "name": "dns-answer",
+    "synthetic": true,
+    "decoded": {
+      "source_mac": "02:00:00:77:10:01",
+      "target_mac": "02:00:00:77:10:64",
+      "source_ip": "10.77.10.1",
+      "target_ip": "10.77.10.100",
+      "source_port": 53,
+      "target_port": 53000,
+      "frame_length": 88,
+      "ip_length": 74,
+      "udp_length": 54,
+      "ip_checksum": "valid",
+      "udp_checksum": "valid",
+      "payload": {
+        "id": 30480,
+        "flags": "0x8500",
+        "QR": 1,
+        "opcode": 0,
+        "AA": 1,
+        "TC": 0,
+        "RD": 1,
+        "RA": 0,
+        "Z": 0,
+        "AD": 0,
+        "CD": 0,
+        "rcode": 0,
+        "counts": {
+          "question": 1,
+          "answer": 1,
+          "authority": 0,
+          "additional": 0
+        },
+        "questions": [
+          {
+            "name": "app.lab.test.",
+            "type": 1,
+            "class": 1
+          }
+        ],
+        "answers": [
+          {
+            "name": "app.lab.test.",
+            "type": 1,
+            "class": 1,
+            "ttl": 300,
+            "rdlength": 4,
+            "rdata_hex": "0a4d0a14",
+            "address": "10.77.10.20"
+          }
+        ],
+        "authority": [],
+        "additional": [],
+        "length": 46
+      }
+    }
+  }
+]

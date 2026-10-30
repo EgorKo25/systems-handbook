@@ -1,0 +1,2 @@
+rmgr: Heap        len (rec/tot):     54/   194, tx:        791, lsn: 0/01CB1438, prev 0/01CB1400, desc: INSERT off: 3, flags: 0x00, blkref #0: rel 1663/16384/16489 blk 0 FPW
+rmgr: Transaction len (rec/tot):     34/    34, tx:        791, lsn: 0/01CB1500, prev 0/01CB1438, desc: COMMIT 2026-10-27 21:55:54.417637 MSK

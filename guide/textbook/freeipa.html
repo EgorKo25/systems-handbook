@@ -1,0 +1,161 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FreeIPA: собрать домен — Инженерный практикум</title><link rel="stylesheet" href="book.css"><script src="book.js" defer></script></head><body><div id="progress"></div><header><a href="index.html">Инженерный практикум</a><div class="controls"><a href="../../index.html">Библиотека</a><button id="theme" type="button">Сменить тему</button><button type="button" onclick="window.print()">Печать</button></div></header><div class="layout"><aside class="chapters"><div class="nav-title">Устройство и настройка</div><nav><a class="" href="network.html">01 · Сеть от провода до сокета</a><a class="" href="dns.html">02 · DNS: серверы, зоны и кеш</a><a class="" href="kerberos.html">03 · Kerberos: ключи и билеты</a><a class="current" href="freeipa.html">04 · FreeIPA: собрать домен</a><a class="" href="postgres.html">05 · PostgreSQL: подключение и данные</a><a class="" href="operations.html">06 · Один запрос через весь стенд</a></nav><p class="small">Без внешних шрифтов, библиотек и подключения к сети.</p></aside><main><div class="eyebrow">Устройство · Настройка · Эксперимент / 04</div><h1>FreeIPA: собрать домен</h1><p class="lead">Контроллер и клиент, LDAP, SSSD, службы, роли и репликация.</p><div class="meta"><span>11 разделов</span><a href="freeipa.txt">Текстовая копия</a><a href="index.html#labs">Как работать с лабораториями</a></div><details class="mobile-toc"><summary>Содержание главы</summary><a href="#architecture">1. Какие процессы образуют домен</a><a href="#directory">2. Как выглядит LDAP изнутри</a><a href="#names">3. Четыре имени, которые надо согласовать до установки</a><a href="#install">4. Полная учебная установка сервера</a><a href="#client">5. Подключить чистый клиент и увидеть созданные файлы</a><a href="#accounts">6. Учётная запись, группа, право и роль</a><a href="#hbac">7. HBAC: разрешить вход конкретной группе на конкретный узел</a><a href="#api">8. HTTP API: Kerberos login, cookie, JSON-ошибка</a><a href="#discovery">9. Как приложение определяет IPA динамически</a><a href="#replicas">10. Репликация, сертификаты и резервное восстановление</a><a href="#faults">11. Проверка снизу вверх и уборка лаборатории</a></details><p>FreeIPA объединяет каталог идентичностей, Kerberos, управление сертификатами и политики доступа. Сервер отвечает на несколько разных протоколов. Успешное <code>ipa user-find</code> доказывает работу HTTP API под текущим principal, но не доказывает корректность SSH-входа, HBAC, sudo, мандатных меток или роли оператора в ДО. В этой главе мы проследим связи и соберём отдельный учебный домен.</p>
+<h2 id="architecture">1. Какие процессы образуют домен</h2>
+<figure><svg viewBox="0 0 760 285" role="img" aria-label="Компоненты FreeIPA и их связи"><rect class="svg-box" x="10" y="15" width="220" height="70" rx="10"/><text class="svg-label" x="120" y="43" text-anchor="middle">Клиент SSSD / IPA CLI</text><text class="svg-small" x="120" y="65" text-anchor="middle">NSS · PAM · API</text><rect class="svg-box" x="270" y="15" width="220" height="70" rx="10"/><text class="svg-label" x="380" y="43" text-anchor="middle">Apache HTTPS</text><text class="svg-small" x="380" y="65" text-anchor="middle">RPC · веб-интерфейс</text><path class="svg-line" d="M230 50H270"/><rect class="svg-box" x="530" y="15" width="220" height="70" rx="10"/><text class="svg-label" x="640" y="43" text-anchor="middle">Dogtag CA</text><text class="svg-small" x="640" y="65" text-anchor="middle">сертификаты</text><path class="svg-line" d="M490 50H530"/><rect class="svg-box" x="270" y="125" width="220" height="80" rx="10"/><text class="svg-label" x="380" y="155" text-anchor="middle">389 Directory Server</text><text class="svg-small" x="380" y="180" text-anchor="middle">LDAP · записи · ACI</text><path class="svg-line" d="M380 85V125"/><rect class="svg-box" x="10" y="125" width="220" height="80" rx="10"/><text class="svg-label" x="120" y="155" text-anchor="middle">Kerberos KDC</text><text class="svg-small" x="120" y="180" text-anchor="middle">TGT · service tickets</text><path class="svg-line" d="M230 165H270"/><rect class="svg-box" x="530" y="125" width="220" height="80" rx="10"/><text class="svg-label" x="640" y="155" text-anchor="middle">BIND, если установлен</text><text class="svg-small" x="640" y="180" text-anchor="middle">A · PTR · SRV</text><path class="svg-line" d="M490 165H530"/><text class="svg-small" x="380" y="250" text-anchor="middle">certmonger следит за сертификатами; chrony — за временем.</text></svg><figcaption>Схема ответственности, а не полный перечень внутренних RPC и портов.</figcaption></figure>
+<table><tr><th>Компонент</th><th>Данные / ответственность</th><th>Отдельная проверка</th></tr><tr><td>389 Directory Server</td><td>Пользователи, группы, узлы, сервисы, политики; LDAP schema и ACI</td><td>LDAP bind/search, состояние экземпляра dirsrv</td></tr><tr><td>MIT KDC с IPA backend</td><td>Выдача билетов; ключи principal связаны с каталогом</td><td>kinit, kvno, журнал KDC</td></tr><tr><td>Apache и IPA API</td><td>Административные команды и веб-интерфейс</td><td>Kerberos login и JSON RPC с error:null</td></tr><tr><td>Dogtag CA</td><td>Выпуск сертификатов и инфраструктура доверия</td><td>Сроки сертификатов, состояние CA, запросы certmonger</td></tr><tr><td>SSSD на клиенте</td><td>Получение и кеширование identity; PAM access и authentication</td><td>getent, id, sssctl, отдельный PAM/SSH-вход</td></tr><tr><td>DNS</td><td>Поиск адресов и служб; может быть внешним</td><td>dig A/PTR/SRV к конкретному серверу</td></tr></table>
+<p>SSSD — не маленький контроллер домена. Он хранит клиентский кеш и обслуживает локальные запросы. NSS отвечает на вопрос «какие UID/GID и группы у имени», PAM участвует в аутентификации и допуске к сеансу. <code>id user</code> может работать из кеша, когда KDC недоступен. Существующая SSH-сессия тоже может продолжать работать после отказа контроллера. Поэтому для проверки домена нужен новый вход и отдельная проверка получения билета.</p>
+<h2 id="directory">2. Как выглядит LDAP изнутри</h2>
+<pre><code>dc=lab,dc=test
+└── cn=accounts
+    ├── cn=users
+    │   └── uid=student
+    ├── cn=groups
+    ├── cn=computers
+    └── cn=services
+
+dn: uid=student,cn=users,cn=accounts,dc=lab,dc=test
+uid: student
+givenName: Иван
+sn: Учебный
+mail: student@lab.test
+uidNumber: 120000001
+gidNumber: 120000001
+krbPrincipalName: student@LAB.TEST
+nsAccountLock: FALSE</code></pre>
+<p>DN — distinguished name, адрес записи в дереве каталога. Левая часть наиболее конкретная; родитель читается вправо. UID здесь строковый login, uidNumber — числовой Unix UID. Это разные поля. Значения атрибутов в LDAP часто многозначные: несколько email или principal aliases допустимы по схеме соответствующего атрибута. Порядок набора значений не обязан выражать «основной». Canonical principal помогает выбрать основное имя; у некоторых записей его может не быть, как у admin с alias root.</p>
+<p>ObjectClass определяет допустимые и обязательные атрибуты. Нельзя ожидать, что у каждой записи заполнены телефон, должность, подразделение и отчество. Даже существующий атрибут может быть недоступен читающему principal по ACI. «Поля нет в ответе» означает отсутствие полученного значения, но не всегда отсутствие значения на сервере. Клиент должен различать бизнес-обязательность для формы ДО и обязательность LDAP schema.</p>
+<p>LDAP работает сообщениями с messageID и операциями bind/search/modify и т. д., закодированными BER. У search есть base DN, scope (base, one-level, subtree), filter, список атрибутов и limits. Несколько SearchResultEntry завершаются SearchResultDone с кодом результата. Поэтому «получили пять записей» не означает «нашли всех»: завершение может сообщить sizeLimitExceeded. Paged Results использует cookie продолжения, но поддержка и ограничения сервера всё равно важны.</p>
+<pre><code>ldapsearch -LLL -Y GSSAPI -H ldap://ipa.lab.test \
+  -b 'cn=users,cn=accounts,dc=lab,dc=test' \
+  -s sub '(uid=student)' uid givenName sn mail uidNumber krbPrincipalName</code></pre>
+<p>Команда выполняется на enrolled-клиенте после kinit. <code>-LLL</code> убирает часть служебного LDIF-оформления; <code>-Y GSSAPI</code> выбирает SASL Kerberos; <code>-H</code> задаёт LDAP URI; <code>-b</code> задаёт корень поиска; <code>-s sub</code> разрешает вложенные записи. Набор атрибутов в конце ограничивает ответ. Проверяйте согласованный SASL security layer; <code>ldap://</code> само по себе не означает TLS, а применение GSSAPI не повод игнорировать фактический SSF. Для LDAPS проверяются имя и CA сертификата.</p>
+<p>LDAP filter и DN имеют <em>разные</em> правила escaping. В фильтре пользовательская звёздочка должна экранироваться как литерал, если поиск не предполагает wildcard. В DN особое значение имеют запятые, плюсы и ведущие/замыкающие пробелы. Ни SQL escaping, ни URL encoding не заменяют эти правила. В коде применяют функции LDAP-библиотеки; подстановка строки из формы в готовый фильтр создаёт LDAP injection.</p>
+<h2 id="names">3. Четыре имени, которые надо согласовать до установки</h2>
+<table><tr><th>Сущность</th><th>Учебный пример</th><th>Второй учебный пример</th></tr><tr><td>FQDN сервера</td><td>ipa.lab.test</td><td>ipa.lab.example.test</td></tr><tr><td>DNS domain</td><td>lab.test</td><td>lab.example.test</td></tr><tr><td>Kerberos realm</td><td>LAB.TEST</td><td>LAB.EXAMPLE.TEST</td></tr><tr><td>LDAP base DN</td><td>dc=lab,dc=test</td><td>dc=lab,dc=example,dc=test</td></tr></table>
+<p>Realm обычно записывают в верхнем регистре по соглашению, но это отдельное имя, а не DNS-запрос. Смена realm после установки — не редактирование одной строки конфигурации. FQDN входит в service principals, сертификаты, DNS и записи хоста. DHCP не должен неожиданно переименовывать контроллер. Нельзя создавать второй независимый IPA/AD realm с тем же доменным пространством, надеясь, что DNS сам выберет правильный.</p>
+<p>До установки выберите также диапазон UID/GID, внутренний источник времени, способ DNS-делегации, адреса, резервирование и место резервных копий. Существующие файлы принадлежат числовым UID, поэтому новый домен с похожими логинами, но другими UID не становится автоматически владельцем старых файлов.</p>
+<h2 id="install">4. Полная учебная установка сервера</h2>
+<div class="callout"><p>Это создание <strong>нового учебного домена на чистой ВМ</strong>, не ремонт office.example.test. Пример пакетных команд рассчитан на семейство Enterprise Linux 9 с доступными репозиториями IPA. Astra использует свои пакеты, интеграцию безопасности и установочные процедуры; переносить на неё dnf-команды нельзя. Пакеты этой лаборатории на флешку не включены.</p></div>
+<p>Выделим серверу 198.18.0.10/24, клиенту 198.18.0.20/24 в отдельной виртуальной сети. Это учебный диапазон, его не маршрутизируют в рабочий контур. Статический адрес задаётся средствами вашей ВМ/ОС до установки. Нужны hostname ipa.lab.test и согласованное прямое/обратное разрешение. Если до установки DNS ещё нет, временная запись hosts помогает проверить имя самого сервера, но не заменяет будущие SRV-записи для клиентов.</p>
+<pre><code>hostnamectl set-hostname ipa.lab.test
+hostname -f
+ip -br address
+timedatectl
+chronyc tracking
+dnf install ipa-server ipa-server-dns
+ipa-server-install --help</code></pre>
+<p>Команды выполняются root на <em>новой</em> ВМ сервера. hostnamectl меняет постоянное имя; hostname -f проверяет результат через локальное разрешение. chronyc tracking показывает выбранную синхронизацию, смещение и состояние chrony. Наличие процесса chronyd ещё не значит, что часы синхронизированы. В закрытой сети нужен внутренний NTP, а не надежда на интернет. IPv6-стек на IPA не отключают полностью, даже если пользователи работают по IPv4.</p>
+<pre><code>ipa-server-install \
+  --hostname=ipa.lab.test \
+  --domain=lab.test \
+  --realm=LAB.TEST \
+  --ip-address=198.18.0.10 \
+  --setup-dns \
+  --no-forwarders</code></pre>
+<p>Инсталлятор задаст вопросы о Directory Manager, admin и DNS. Это две разные административные личности; пароли вводятся интерактивно. <code>--setup-dns</code> включает интегрированный DNS; <code>--no-forwarders</code> не настраивает пересылку внешних запросов. Это не firewall и не гарантия отсутствия попыток рекурсии через root hints. Для закрытой лаборатории ограничьте сетевой выход топологией и проверяйте только собственную зону. Обратную зону можно создать по предложению инсталлятора, предварительно убедившись, что она относится к вашей учебной сети.</p>
+<p>Если используется внешний DNS, не указывают --setup-dns и заранее публикуют требуемые записи. Это отдельный вариант установки; нельзя одновременно считать IPA владельцем зоны и вручную поддерживать её независимую несовпадающую копию на другом сервере.</p>
+<pre><code>firewall-cmd --get-services
+firewall-cmd --permanent --add-service=freeipa-4
+firewall-cmd --permanent --add-service=dns
+firewall-cmd --reload
+ipactl status
+kinit admin
+ipa ping
+dig @198.18.0.10 ipa.lab.test A
+dig @198.18.0.10 _ldap._tcp.lab.test SRV
+dig @198.18.0.10 _kerberos._udp.lab.test SRV</code></pre>
+<p>Firewall-команды применимы при работающем firewalld и наличии названных service definitions; сначала их проверяют. Изменяется учебная ВМ. <code>--permanent</code> сохраняет правило, reload применяет постоянную конфигурацию. На рабочем узле сначала выбирают нужную zone и изучают действующие правила: здесь показан простой случай новой ВМ. ipactl собирает состояние служб IPA, ipa ping проверяет API, dig проверяет записи DNS. Ни одна из этих проверок не заменяет остальные.</p>
+<h2 id="client">5. Подключить чистый клиент и увидеть созданные файлы</h2>
+<p>Клиент должен использовать DNS, который знает lab.test. Установите его адрес через NetworkManager или штатный механизм ОС, а не редактированием автоматически генерируемого resolv.conf. FQDN клиента — client.lab.test, адрес — 198.18.0.20. Сервер и клиент должны видеть друг друга по согласованным именам. Нужна синхронизация времени.</p>
+<pre><code>hostnamectl set-hostname client.lab.test
+dnf install ipa-client
+dig _ldap._tcp.lab.test SRV
+ipa-client-install --domain=lab.test --mkhomedir</code></pre>
+<p><code>--domain</code> указывает область discovery, <code>--mkhomedir</code> настраивает создание домашнего каталога при первом входе. Уполномоченные enrollment credentials вводятся по запросу. Явный <code>--server=ipa.lab.test</code> используется при необходимости фиксировать сервер; это осознанное изменение discovery, не обязательная настройка для каждого клиента. Не переносите keytab уже зарегистрированного хоста на новую машину с другим именем.</p>
+<table><tr><th>Файл/система клиента</th><th>Что появилось</th><th>Чего это не даёт автоматически</th></tr><tr><td>/etc/ipa/default.conf</td><td>Домен, realm, сервер/API, base DN</td><td>Пароль администратора</td></tr><tr><td>/etc/ipa/ca.crt</td><td>Доверенный CA IPA</td><td>Отключение проверки имени TLS</td></tr><tr><td>/etc/krb5.conf и includedir</td><td>Настройка Kerberos</td><td>Пользовательский TGT в каждом процессе</td></tr><tr><td>/etc/krb5.keytab</td><td>Ключ host/client.lab.test</td><td>Ключ HTTP/client.lab.test, если сервис не зарегистрирован</td></tr><tr><td>/etc/sssd/sssd.conf</td><td>Identity/auth/access provider и домен</td><td>Роль admin в приложении ДО</td></tr><tr><td>NSS/PAM</td><td>Интеграция поиска пользователей и входа</td><td>Право sudo для всех доменных пользователей</td></tr></table>
+<pre><code>grep -E '^[[:space:]]*(server|realm|domain|basedn|xmlrpc_uri)[[:space:]]*=' /etc/ipa/default.conf
+getent passwd student
+id student
+kinit student
+klist
+sssctl domain-status lab.test</code></pre>
+<p>Student должен быть создан на сервере, как в следующем разделе. sssctl может требовать пакет sssd-tools и права root. Не публикуйте полный sssd.conf: в иных конфигурациях там бывают секреты. Кеш SSSD не очищают удалением всей /var/lib/sss на работающей машине. Для конкретного пользователя применяют штатное истечение кеша <code>sss_cache -u student</code>, затем повторный запрос; это не смена пароля и не очистка Kerberos-билетов.</p>
+<h2 id="accounts">6. Учётная запись, группа, право и роль</h2>
+<pre><code>kinit admin
+ipa user-add student --first=Иван --last=Учебный --email=student@lab.test --password
+ipa group-add course-users --desc='Учебные пользователи'
+ipa group-add-member course-users --users=student
+ipa user-show student --all --raw
+ipa group-show course-users --all</code></pre>
+<p>Создание пароля может требовать смены при первом пользовательском входе; проверьте этот сценарий отдельно. Команды меняют только учебный домен. <code>--all</code> просит расширенный набор атрибутов, <code>--raw</code> оставляет технические имена. <code>ipa user-show student</code> принимает login записи; <code>student@LAB.TEST</code> — principal, и он не обязан быть ключом команды user-show.</p>
+<p>В административной модели IPA permission описывает разрешённые действия над объектами/атрибутами, privilege объединяет permissions, role объединяет privileges и назначается участникам. Группа users — удобное множество сотрудников, но сама по себе не равна role. Группа admins имеет особые полномочия в домене. Приложение ДО отдельно хранит отношения users/roles; доменный admin не должен автоматически становиться администратором каждого приложения без согласованной политики.</p>
+<pre><code>ipa role-find
+ipa privilege-find
+ipa permission-find
+ipa user-find --sizelimit=5
+ipa user-find --all --raw --sizelimit=0</code></pre>
+<p>Ноль в sizelimit просит отсутствие клиентского лимита этого вызова, но серверные ограничения и права всё равно учитываются. Всегда проверяйте признак усечения. Для формы выбора сотрудника нужен поиск с ограничением и явная обработка неполноты, а не молчаливое «нашли всех» после первых пяти записей. Служебные аккаунты не следует определять только по наличию ФИО: это бизнес-критерий отдельного фильтра.</p>
+<h2 id="hbac">7. HBAC: разрешить вход конкретной группе на конкретный узел</h2>
+<pre><code>ipa hbacrule-add course-ssh
+ipa hbacrule-add-user course-ssh --groups=course-users
+ipa hbacrule-add-host course-ssh --hosts=client.lab.test
+ipa hbacrule-add-service course-ssh --hbacsvcs=sshd
+ipa hbactest --user=student --host=client.lab.test --service=sshd --rules=course-ssh</code></pre>
+<p>Правило связывает пользователя/группу, host/hostgroup и PAM service. Оно не проверяет пароль и не выдаёт sudo. <code>hbactest</code> моделирует правило на сервере; успешный результат не заменяет фактический SSH-вход через клиентский PAM/SSSD. Имена PAM services должны соответствовать использующему их приложению.</p>
+<p>После установки может действовать широкое правило allow_all. Пока оно включено, новое узкое правило не ограничивает остальных: достаточно любого подходящего разрешения. В этой лаборатории сначала проверяют новое правило и сохраняют доступ через консоль локального администратора. Только в отдельной учебной среде, где учтены остальные входы, можно выключить allow_all и проверить положительный и отрицательный сценарии. На рабочем домене это изменение общей политики, а не локальная проверка формы ДО.</p>
+<pre><code>ipa hbacrule-show allow_all
+ipa hbacrule-disable allow_all
+# Проверка нового входа student на client.lab.test из другого терминала.
+# Возврат исходной учебной политики:
+ipa hbacrule-enable allow_all</code></pre>
+<p>Sudo-политики — отдельный слой. Успешный SSH без sudo является нормальным результатом, если sudo не выдавали. Диагностика выполняется <code>sudo -l</code> из сеанса нужного пользователя. Не выдавайте ALL:ALL только для того, чтобы проверить чтение каталога через API.</p>
+<h2 id="api">8. HTTP API: Kerberos login, cookie, JSON-ошибка</h2>
+<p>Команда ipa — клиент API. Для ДО удобен тот же HTTP-интерфейс: аутентифицироваться делегированным кешем, сохранить cookie в рамках одного CGI-вызова и выполнить user_find. Общий cookie одного администратора для всех пользователей изменил бы модель полномочий. Сырой LDAP остаётся другим интерфейсом с другой схемой ответов и контролем доступа.</p>
+<pre><code>(
+  set -eu
+  umask 077
+  cookie=$(mktemp)
+  trap 'rm -f -- "$cookie"' EXIT
+  ipa_host=ipa.lab.test
+  curl --silent --show-error --fail \
+    --connect-timeout 10 --max-time 30 \
+    --cacert /etc/ipa/ca.crt --negotiate -u : \
+    -H "Referer: https://$ipa_host/ipa" \
+    -c "$cookie" -X POST -o /dev/null \
+    "https://$ipa_host/ipa/session/login_kerberos"
+  curl --silent --show-error --fail \
+    --connect-timeout 10 --max-time 30 \
+    --cacert /etc/ipa/ca.crt -b "$cookie" \
+    -H "Referer: https://$ipa_host/ipa" \
+    -H 'Content-Type: application/json' \
+    --data '{"method":"user_find","params":[["student"],{"sizelimit":5}],"id":1}' \
+    "https://$ipa_host/ipa/session/json"
+  printf '\n'
+)</code></pre>
+<p>Подоболочка ограничивает переменные и trap. <code>umask 077</code> закрывает cookie от других пользователей; mktemp создаёт уникальный файл; trap удаляет его и при ошибке. <code>--negotiate -u :</code> запускает SPNEGO без передачи парольной пары. <code>--cacert</code> сохраняет проверку TLS по CA домена. <code>-c</code> записывает cookie, <code>-b</code> читает. Таймаут соединения и общий таймаут ограничивают разные этапы. --fail проверяет HTTP-код, но не JSON-поле error — его приложение обязано разобрать отдельно.</p>
+<p>API version — версия контракта команд, а не версия HTTP или установленной ОС. Сервер может предупредить VersionMissing и назвать свой API, например 2.239. Это не повод зашить 2.239 как вечную константу всех FreeIPA. Выбор версии должен соответствовать совместимости клиента и сервера; server product version 4.8.10 — другое число. Аналогично <code>result.truncated=true</code> означает, что список неполный, даже при error:null и HTTP 200.</p>
+<h2 id="discovery">9. Как приложение определяет IPA динамически</h2>
+<p>Enrolled-машина уже знает параметры домена. Для нашего CGI опорная точка — локальный /etc/ipa/default.conf и доверенный CA. Это позволяет одному комплекту работать на office.example.test и lab.example.test без адреса контроллера, зашитого в Go. Конфигурация относится к машине, credentials — к текущему пользователю. Их нельзя смешивать: KRB5CCNAME не является адресом IPA, а server из default.conf не доказывает наличие действующего TGT.</p>
+<p>DNS SRV нужен для discovery/failover соответствующих клиентов. Один параметр server в файле не равен полноценному алгоритму перебора реплик; если приложению нужен failover, его поведение проектируют явно. При выборе другого контроллера всё равно проверяется CA и имя сертификата. Произвольный URL из пользовательского запроса использовать нельзя: это одновременно риск утечки credentials и запросов сервера к нежелательным адресам.</p>
+<pre><code>dig _ldap._tcp.lab.example.test SRV
+dig _kerberos._tcp.lab.example.test SRV
+grep -E '^[[:space:]]*(server|xmlrpc_uri|realm|basedn)[[:space:]]*=' /etc/ipa/default.conf
+openssl x509 -in /etc/ipa/ca.crt -noout -subject -issuer -dates</code></pre>
+<p>Первые команды показывают DNS-публикацию; grep — настройку именно этого клиента; openssl читает метаданные локального сертификата, не его приватный ключ. Если они расходятся, сначала выясняют историю enrollment и адрес DNS. Переписывание hosts не исправляет неправильный realm или чужой CA.</p>
+<h2 id="replicas">10. Репликация, сертификаты и резервное восстановление</h2>
+<p>Реплика IPA — ещё один контроллер того же домена, а не новый сервер с таким же названием realm. У него согласованные каталожные данные и ключевая инфраструктура. Топология каталога и наличие CA-роли требуют отдельных проверок. Отказ единственного CA может не остановить выдачу TGT немедленно, но позже сломает выпуск и продление сертификатов. Поэтому «пользователи входят» не означает, что все роли реплики здоровы.</p>
+<pre><code>ipa server-find
+ipa topologysegment-find domain
+ipa topologysegment-find ca
+ipa-healthcheck --failures-only
+getcert list</code></pre>
+<p>Команды чтения выполняются с подходящими правами на IPA; ipa-healthcheck должен быть установлен и поддерживаться сборкой. CA suffix может отсутствовать, если встроенная CA не развёрнута. getcert list показывает заявки certmonger, состояние и сроки; файл сертификата проверяют также openssl x509. Не удаляют каталоги сертификатов ради устранения просрочки — сначала выясняют, кто должен их продлевать.</p>
+<p>Снимок ВМ удобен в одиночной лаборатории. Возврат старого снимка одного контроллера в живой реплицируемый домен — другой риск: время, пароли, сертификаты и репликационное состояние уже изменились. Для домена используют поддерживаемый порядок ipa-backup/ipa-restore с планом реплик и проверкой восстановления. Резервная копия содержит ключи и каталог; её доступ защищают как административный доступ к домену.</p>
+<h2 id="faults">11. Проверка снизу вверх и уборка лаборатории</h2>
+<table><tr><th>Что не работает</th><th>Что уже доказано</th><th>Следующая проверка</th></tr><tr><td>getent есть, kinit нет</td><td>Identity могла прийти из кеша</td><td>KDC discovery, время, principal и состояние учётной записи</td></tr><tr><td>kinit есть, ipa ping нет</td><td>Получен TGT</td><td>HTTP principal, TLS CA/имя, порт 443, API</td></tr><tr><td>ipa user-find есть, SSH нет</td><td>API доступен данному principal</td><td>PAM, HBAC, sshd, домашний каталог, локальные ограничения</td></tr><tr><td>SSH есть, sudo нет</td><td>Вход разрешён</td><td>Sudo policy и членство групп, а не пароль от FreeIPA</td></tr><tr><td>CGI не видит IPA, shell видит</td><td>Работает только shell-контекст</td><td>UID, метка, FILE-кеш, окружение CGI, CA и сетевой доступ этого контекста</td></tr></table>
+<p>После обучения чистые ВМ можно удалить вместе с учебным realm. Если сохраняете сервер, удалите созданные правила/аккаунты штатными ipa-командами, учитывая их зависимости. <code>ipa-client-install --uninstall</code> меняет регистрацию и локальную конфигурацию клиента; это не команда очистки кеша. Не запускайте её на spo1 для проверки списка пользователей. Практический порядок восстановления рабочего ДО находится в основном справочнике, вне лабораторного домена.</p>
+
+
+
+
+<p class="sources">Источники: <a href="https://www.freeipa.org/page/Deployment_Recommendations">планирование FreeIPA</a>, <a href="https://raw.githubusercontent.com/freeipa/freeipa/ipa-4-8/install/tools/man/ipa-server-install.1">параметры установки 4.8</a>, <a href="https://raw.githubusercontent.com/freeipa/freeipa/ipa-4-8/client/man/ipa-client-install.1">клиент и discovery 4.8</a>, <a href="https://www.freeipa.org/page/Howto/HBAC_and_allow_all">HBAC и allow_all</a>, <a href="https://www.rfc-editor.org/rfc/rfc4511">LDAP protocol</a>, <a href="https://www.rfc-editor.org/rfc/rfc4514">DN</a>, <a href="https://www.rfc-editor.org/rfc/rfc4515">фильтры LDAP</a>. Для основания механизмов см. <a href="dns.html">DNS</a> и <a href="kerberos.html">Kerberos</a>.</p>
+<div class="next"><a href="index.html">← Оглавление</a><a href="postgres.html">Далее: PostgreSQL: подключение и данные →</a></div></main><aside class="contents"><div class="nav-title">В этой главе</div><a href="#architecture">1. Какие процессы образуют домен</a><a href="#directory">2. Как выглядит LDAP изнутри</a><a href="#names">3. Четыре имени, которые надо согласовать до установки</a><a href="#install">4. Полная учебная установка сервера</a><a href="#client">5. Подключить чистый клиент и увидеть созданные файлы</a><a href="#accounts">6. Учётная запись, группа, право и роль</a><a href="#hbac">7. HBAC: разрешить вход конкретной группе на конкретный узел</a><a href="#api">8. HTTP API: Kerberos login, cookie, JSON-ошибка</a><a href="#discovery">9. Как приложение определяет IPA динамически</a><a href="#replicas">10. Репликация, сертификаты и резервное восстановление</a><a href="#faults">11. Проверка снизу вверх и уборка лаборатории</a></aside></div></body></html>

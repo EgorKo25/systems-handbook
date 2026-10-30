@@ -1,0 +1,202 @@
+[
+  {
+    "query": "app.lab.test",
+    "type": 1,
+    "transport": "UDP",
+    "decoded": {
+      "id": 30480,
+      "flags": "0x8580",
+      "QR": 1,
+      "opcode": 0,
+      "AA": 1,
+      "TC": 0,
+      "RD": 1,
+      "RA": 1,
+      "Z": 0,
+      "AD": 0,
+      "CD": 0,
+      "rcode": 0,
+      "counts": {
+        "question": 1,
+        "answer": 1,
+        "authority": 0,
+        "additional": 0
+      },
+      "questions": [
+        {
+          "name": "app.lab.test.",
+          "type": 1,
+          "class": 1
+        }
+      ],
+      "answers": [
+        {
+          "name": "app.lab.test.",
+          "type": 1,
+          "class": 1,
+          "ttl": 300,
+          "rdlength": 4,
+          "rdata_hex": "0a4d0a14",
+          "address": "10.77.10.20"
+        }
+      ],
+      "authority": [],
+      "additional": [],
+      "length": 46
+    }
+  },
+  {
+    "query": "app.lab.test",
+    "type": 1,
+    "transport": "TCP",
+    "decoded": {
+      "id": 30480,
+      "flags": "0x8580",
+      "QR": 1,
+      "opcode": 0,
+      "AA": 1,
+      "TC": 0,
+      "RD": 1,
+      "RA": 1,
+      "Z": 0,
+      "AD": 0,
+      "CD": 0,
+      "rcode": 0,
+      "counts": {
+        "question": 1,
+        "answer": 1,
+        "authority": 0,
+        "additional": 0
+      },
+      "questions": [
+        {
+          "name": "app.lab.test.",
+          "type": 1,
+          "class": 1
+        }
+      ],
+      "answers": [
+        {
+          "name": "app.lab.test.",
+          "type": 1,
+          "class": 1,
+          "ttl": 300,
+          "rdlength": 4,
+          "rdata_hex": "0a4d0a14",
+          "address": "10.77.10.20"
+        }
+      ],
+      "authority": [],
+      "additional": [],
+      "length": 46
+    }
+  },
+  {
+    "query": "app.lab.test",
+    "type": 28,
+    "transport": "UDP",
+    "decoded": {
+      "id": 30480,
+      "flags": "0x8180",
+      "QR": 1,
+      "opcode": 0,
+      "AA": 0,
+      "TC": 0,
+      "RD": 1,
+      "RA": 1,
+      "Z": 0,
+      "AD": 0,
+      "CD": 0,
+      "rcode": 0,
+      "counts": {
+        "question": 1,
+        "answer": 0,
+        "authority": 0,
+        "additional": 0
+      },
+      "questions": [
+        {
+          "name": "app.lab.test.",
+          "type": 28,
+          "class": 1
+        }
+      ],
+      "answers": [],
+      "authority": [],
+      "additional": [],
+      "length": 30
+    }
+  },
+  {
+    "query": "missing.lab.test",
+    "type": 1,
+    "transport": "UDP",
+    "decoded": {
+      "id": 30480,
+      "flags": "0x8183",
+      "QR": 1,
+      "opcode": 0,
+      "AA": 0,
+      "TC": 0,
+      "RD": 1,
+      "RA": 1,
+      "Z": 0,
+      "AD": 0,
+      "CD": 0,
+      "rcode": 3,
+      "counts": {
+        "question": 1,
+        "answer": 0,
+        "authority": 0,
+        "additional": 0
+      },
+      "questions": [
+        {
+          "name": "missing.lab.test.",
+          "type": 1,
+          "class": 1
+        }
+      ],
+      "answers": [],
+      "authority": [],
+      "additional": [],
+      "length": 34
+    }
+  },
+  {
+    "query": "example.com",
+    "type": 1,
+    "transport": "UDP",
+    "decoded": {
+      "id": 30480,
+      "flags": "0x8185",
+      "QR": 1,
+      "opcode": 0,
+      "AA": 0,
+      "TC": 0,
+      "RD": 1,
+      "RA": 1,
+      "Z": 0,
+      "AD": 0,
+      "CD": 0,
+      "rcode": 5,
+      "counts": {
+        "question": 1,
+        "answer": 0,
+        "authority": 0,
+        "additional": 0
+      },
+      "questions": [
+        {
+          "name": "example.com.",
+          "type": 1,
+          "class": 1
+        }
+      ],
+      "answers": [],
+      "authority": [],
+      "additional": [],
+      "length": 29
+    }
+  }
+]

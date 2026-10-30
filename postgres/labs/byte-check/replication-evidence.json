@@ -1,0 +1,12 @@
+{
+  "asynchronous_data": "1\tbefore basebackup\n2\tafter basebackup",
+  "slot": "book_standby\tphysical\tt\tt",
+  "synchronous_state": "streaming\tsync",
+  "immediate_read_after_remote_apply": "applied before reply",
+  "standby_positions": "0/3000248\t0/3000248",
+  "primary_positions": "0/3000248\t0/3000248\t0/3000248\t0/3000248",
+  "write_on_standby_error": "ERROR:  25006: cannot execute INSERT in a read-only transaction\nLOCATION:  PreventCommandIfReadOnly, utility.c:407",
+  "status": "PASS",
+  "tcp_listeners": false,
+  "version": "PostgreSQL 18.6 on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit"
+}

@@ -1,0 +1,9 @@
+{
+  "page_lsn": "0/1CA84C8",
+  "checksum_16bit": 29693,
+  "flags": 0,
+  "lower": 32,
+  "upper": 8128,
+  "special": 8192,
+  "tuple_items": "1\t790\t0\t(0,1)\t24\n2\t790\t0\t(0,2)\t24"
+}

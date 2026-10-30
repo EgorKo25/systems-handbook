@@ -1,0 +1,98 @@
+
+Опыт 01
+byteorder: little
+pointer_bytes: 8
+page_size: 4096
+integer_0x12345678_le: 78 56 34 12
+integer_0x12345678_be: 12 34 56 78
+own_buffer_virtual_address: 0x7dfa041ebf20
+own_buffer: 41 42 43 00
+
+Опыт 02
+fd: 3
+written: 6
+offset: 6
+read: b'Linux\n'
+
+Опыт 03
+parent_pid: 71297
+child_output: child pid=71298 token=from-parent
+child_exit: 0
+
+Опыт 04
+a_reads: AB
+dup_b_reads: CD
+new_open_c_reads: AB
+offsets: [4, 4, 2]
+
+Опыт 05
+child_value: B
+parent_value: A
+
+Опыт 06
+same_inode: True
+hard_links_before: 2
+hard_links_after: 1
+symlink_target_exists: False
+open_after_unlink: old
+fd_links: 0
+
+Опыт 07
+read_old_descriptor: old
+read_new_path: new
+
+Опыт 08
+requested_mode: 0666
+umask: 0027
+actual_mode: 0o640
+owner_uid: 1000
+our_effective_uid: 1000
+groups: [4, 24, 27, 30, 46, 100, 114, 984, 1000]
+
+Опыт 09
+child: ready
+child: received=10
+exit: 0
+
+Опыт 10
+bytes_before_eof: b'one\ntwo\n'
+line_count: 2
+
+Опыт 11
+recv_with_size_2: ['he', 'll', 'o']
+complete_message: hello
+
+Опыт 12
+ready_before: [(3, 1)]
+first_read: X
+ready_still: True
+remaining: YZ
+empty_nonblocking_read: EAGAIN
+after_writer_close: [(3, 16)]
+eof: b''
+
+Опыт 13
+Name:	python3
+State:	R (running)
+Pid:	71297
+PPid:	71294
+VmSize:	   22912 kB
+VmRSS:	   15056 kB
+Threads:	1
+voluntary_ctxt_switches:	12
+nonvoluntary_ctxt_switches:	1
+own_cgroup: 0::/user.slice/user-1000.slice/user@1000.service/app.slice/app-org.chromium.Chromium-21744.scope
+namespace_pid: pid:[4026531836]
+namespace_mnt: mnt:[4026531832]
+namespace_net: net:[4026531833]
+namespace_user: user:[4026531837]
+psi_cpu: some avg10=0.00 avg60=0.00 avg300=0.00 total=56173197 | full avg10=0.00 avg60=0.00 avg300=0.00 total=0
+psi_memory: some avg10=0.00 avg60=0.00 avg300=0.00 total=346245 | full avg10=0.00 avg60=0.00 avg300=0.00 total=343473
+psi_io: some avg10=0.00 avg60=0.00 avg300=0.00 total=29297946 | full avg10=0.00 avg60=0.00 avg300=0.00 total=27539372
+
+Опыт 14
+calculation_check: 375003
+work_elapsed_seconds: 0.036672
+work_cpu_seconds: 0.036686
+sleep_elapsed_seconds: 0.040116
+sleep_cpu_seconds: 0.000119

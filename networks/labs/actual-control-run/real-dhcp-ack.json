@@ -1,0 +1,80 @@
+{
+  "op": 2,
+  "htype": 1,
+  "hlen": 6,
+  "hops": 0,
+  "xid": 1997537281,
+  "secs": 0,
+  "flags": 32768,
+  "ciaddr": "0.0.0.0",
+  "yiaddr": "10.77.10.146",
+  "siaddr": "10.77.10.1",
+  "giaddr": "0.0.0.0",
+  "chaddr": "02:00:00:77:10:64:00:00:00:00:00:00:00:00:00:00",
+  "sname": "",
+  "file": "",
+  "message_type": "ACK",
+  "options": [
+    {
+      "offset": 240,
+      "code": 53,
+      "length": 1,
+      "hex": "05"
+    },
+    {
+      "offset": 243,
+      "code": 54,
+      "length": 4,
+      "hex": "0a4d0a01"
+    },
+    {
+      "offset": 249,
+      "code": 51,
+      "length": 4,
+      "hex": "00000e10"
+    },
+    {
+      "offset": 255,
+      "code": 58,
+      "length": 4,
+      "hex": "00000708"
+    },
+    {
+      "offset": 261,
+      "code": 59,
+      "length": 4,
+      "hex": "00000c4e"
+    },
+    {
+      "offset": 267,
+      "code": 1,
+      "length": 4,
+      "hex": "ffffff00"
+    },
+    {
+      "offset": 273,
+      "code": 28,
+      "length": 4,
+      "hex": "0a4d0aff"
+    },
+    {
+      "offset": 279,
+      "code": 15,
+      "length": 8,
+      "hex": "6c61622e74657374"
+    },
+    {
+      "offset": 289,
+      "code": 6,
+      "length": 4,
+      "hex": "0a4d0a01"
+    },
+    {
+      "offset": 295,
+      "code": 3,
+      "length": 4,
+      "hex": "0a4d0a01"
+    }
+  ],
+  "length": 302
+}

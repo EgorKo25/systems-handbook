@@ -1,0 +1,143 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Kerberos: ключи и билеты — Инженерный практикум</title><link rel="stylesheet" href="book.css"><script src="book.js" defer></script></head><body><div id="progress"></div><header><a href="index.html">Инженерный практикум</a><div class="controls"><a href="../../index.html">Библиотека</a><button id="theme" type="button">Сменить тему</button><button type="button" onclick="window.print()">Печать</button></div></header><div class="layout"><aside class="chapters"><div class="nav-title">Устройство и настройка</div><nav><a class="" href="network.html">01 · Сеть от провода до сокета</a><a class="" href="dns.html">02 · DNS: серверы, зоны и кеш</a><a class="current" href="kerberos.html">03 · Kerberos: ключи и билеты</a><a class="" href="freeipa.html">04 · FreeIPA: собрать домен</a><a class="" href="postgres.html">05 · PostgreSQL: подключение и данные</a><a class="" href="operations.html">06 · Один запрос через весь стенд</a></nav><p class="small">Без внешних шрифтов, библиотек и подключения к сети.</p></aside><main><div class="eyebrow">Устройство · Настройка · Эксперимент / 03</div><h1>Kerberos: ключи и билеты</h1><p class="lead">AS/TGS/AP, устройство билета, свой KDC и делегирование CGI.</p><div class="meta"><span>11 разделов</span><a href="kerberos.txt">Текстовая копия</a><a href="index.html#labs">Как работать с лабораториями</a></div><details class="mobile-toc"><summary>Содержание главы</summary><a href="#keys">1. Какие ключи существуют одновременно</a><a href="#exchange">2. AS, TGS и AP — три обмена с разными получателями</a><a href="#ticket">3. Что находится внутри билета</a><a href="#names">4. Имя машины — часть криптографической идентичности</a><a href="#delegation">5. Делегирование от браузера через Apache к CGI</a><a href="#kdc-lab">6. Собственный KDC без изменения системного домена</a><a href="#kdc-config">7. Разобрать конфигурацию KDC, а не просто скопировать её</a><a href="#experiments">8. Три контролируемые поломки</a><a href="#errors">9. Локализовать отказ по этапу</a><a href="#cleanup">10. Закончить опыт и понять, что осталось</a><a href="#time-service">11. Время как зависимость аутентификации: настроить chrony осмысленно</a></details><p>Kerberos нужен для доказательства личности без передачи пароля каждому серверу. Но «передали билет» — слишком короткое объяснение. Билет зашифрован ключом получателя, клиент доказывает знание отдельного сеансового ключа, сервер проверяет время и повторное использование. Возможность войти на сайт и возможность сайта обратиться к базе от вашего имени — два разных результата.</p>
+<h2 id="keys">1. Какие ключи существуют одновременно</h2>
+<table><tr><th>Обозначение</th><th>Кто знает</th><th>Для чего</th><th>Где искать при диагностике</th></tr><tr><td>Kuser — долговременный ключ пользователя</td><td>Клиент получает из пароля; KDC хранит соответствующий ключ</td><td>Начальное доказательство личности и защита части AS-ответа</td><td>Не выводится klist; пароль не нужен для чтения готового кеша</td></tr><tr><td>Ktgs — ключ krbtgt/REALM</td><td>KDC</td><td>Защищает TGT</td><td>База KDC; не клиентская keytab HTTP</td></tr><tr><td>Kservice — ключ HTTP/host либо postgres/host</td><td>KDC и конкретная служба</td><td>Защищает сервисный билет</td><td>Keytab службы, principal, enctype, KVNO</td></tr><tr><td>Kclient,tgs — сеансовый ключ TGT</td><td>Клиент и KDC</td><td>Позволяет просить сервисные билеты</td><td>Credential cache; это секрет, не просто список имён</td></tr><tr><td>Kclient,service — сеансовый ключ службы</td><td>Клиент и служба; выдаёт KDC</td><td>Защищает authenticator и контекст связи</td><td>Кеш клиента и расшифрованный билет на сервере</td></tr></table>
+<p>Пароль преобразуется в ключ алгоритмом string-to-key с параметрами конкретного enctype, солью и вычислительной работой. Это не простое кодирование строки в Base64. У principal может быть несколько ключей для разных enctypes. Смена пароля или генерация нового сервисного ключа меняет версию ключа — KVNO. Если KDC выдаёт билет версии 7, а Apache знает только ключ версии 6, правильный URL и правильный пользователь не спасут аутентификацию.</p>
+<p>Credential cache и keytab нельзя путать. Кеш содержит временные credentials, которыми пользуется клиент. Keytab содержит долговременные ключи principal и позволяет службе принимать билеты или самой получать credentials. Копирование keytab HTTP на рабочую станцию не является способом «починить пользовательский билет».</p>
+<h2 id="exchange">2. AS, TGS и AP — три обмена с разными получателями</h2>
+<div class="lab sequence"><h3>Один вход и обращение к HTTP-службе</h3><script type="application/json">{"title":"Обмены Kerberos","actors":["Клиент","KDC","HTTP-служба"],"steps":[{"from":0,"to":1,"label":"AS-REQ","note":"Клиент запрашивает TGT. При обычной парольной preauth доказывает знание пользовательского ключа. Первый ответ может запросить нужный тип preauth — это нормальный обмен, не обязательно ошибка пароля."},{"from":1,"to":0,"label":"AS-REP: TGT + часть клиента","note":"TGT защищён Ktgs. Клиент получает отдельную защищённую часть с Kclient,tgs и сохраняет credentials. Он не расшифровывает TGT ключом своего пароля."},{"from":0,"to":1,"label":"TGS-REQ для HTTP/web","note":"Клиент предъявляет TGT и authenticator, созданный с Kclient,tgs. Пароль пользователя снова не нужен."},{"from":1,"to":0,"label":"TGS-REP: service ticket","note":"Билет службы защищён Kservice, отдельная часть ответа сообщает клиенту Kclient,service."},{"from":0,"to":2,"label":"AP-REQ","note":"Клиент отправляет сервисный билет и новый authenticator. Сервер расшифровывает билет своей keytab, получает сеансовый ключ и проверяет authenticator."},{"from":2,"to":0,"label":"AP-REP при mutual auth","note":"Ответ доказывает клиенту, что другая сторона также получила сеансовый ключ. Далее GSSAPI использует установленный контекст согласно возможностям приложения."}]}</script><details class="sequence-transcript"><summary>Текст всех шагов схемы</summary><ol><li><strong>AS-REQ</strong>. Клиент запрашивает TGT. При обычной парольной preauth доказывает знание пользовательского ключа. Первый ответ может запросить нужный тип preauth — это нормальный обмен, не обязательно ошибка пароля.</li><li><strong>AS-REP: TGT + часть клиента</strong>. TGT защищён Ktgs. Клиент получает отдельную защищённую часть с Kclient,tgs и сохраняет credentials. Он не расшифровывает TGT ключом своего пароля.</li><li><strong>TGS-REQ для HTTP/web</strong>. Клиент предъявляет TGT и authenticator, созданный с Kclient,tgs. Пароль пользователя снова не нужен.</li><li><strong>TGS-REP: service ticket</strong>. Билет службы защищён Kservice, отдельная часть ответа сообщает клиенту Kclient,service.</li><li><strong>AP-REQ</strong>. Клиент отправляет сервисный билет и новый authenticator. Сервер расшифровывает билет своей keytab, получает сеансовый ключ и проверяет authenticator.</li><li><strong>AP-REP при mutual auth</strong>. Ответ доказывает клиенту, что другая сторона также получила сеансовый ключ. Далее GSSAPI использует установленный контекст согласно возможностям приложения.</li></ol></details></div>
+<p>В традиционной схеме encrypted timestamp предварительная аутентификация включает время, защищённое пользовательским ключом. Другие механизмы, например PKINIT или SPAKE, устроены иначе. Поэтому отсутствие на сети «зашифрованного паролем timestamp» не доказывает отсутствие Kerberos. Протокол расширяем, а конкретную схему видно в трассировке и настройках realm.</p>
+<p>Сервисный билет недостаточен для успешного повторного входа злоумышленника, который просто скопировал пакет: нужен authenticator с доказательством владения сеансовым ключом. Повтор того же authenticator должен обнаруживаться replay cache. Окно допустимого рассогласования часов ограничивает срок приемлемости authenticator. Это причина зависимости от времени; билет может быть ещё не просрочен, а запрос уже отклоняться из-за clock skew.</p>
+<h2 id="ticket">3. Что находится внутри билета</h2>
+<pre><code>Ticket [APPLICATION 1]
+  tkt-vno = 5
+  realm = LAB.TEST
+  sname = HTTP / web.lab.test
+  enc-part
+    etype = выбранный алгоритм
+    kvno = версия ключа службы
+    cipher = зашифрованный EncTicketPart
+
+EncTicketPart после расшифрования службой
+  flags
+  key = Kclient,service
+  crealm / cname = личность клиента
+  authtime / starttime / endtime / renew-till
+  transited
+  caddr, authorization-data — если присутствуют</code></pre>
+<p>Это структурная схема, не дамп рабочего секрета. Kerberos кодируется ASN.1 DER с тегами и длинами, а не фиксированным текстовым JSON. Внешние realm и sname читаемы, поэтому билет не скрывает всё о соединении. Зашифрованная часть содержит ключ сеанса и сведения о клиенте. Поле authorization-data может нести дополнительные данные, но наличие группы в каталоге и наличие такого поля — не одно и то же. Приложение должно понимать формат и доверительную цепочку.</p>
+<p><code>klist</code> показывает сведения из локального credential cache, где клиент хранит билет вместе с известными ему метаданными и сеансовым ключом. Это не универсальный дешифратор чужих билетов. В pcap обычный HTTP Negotiate виден как Base64-контейнер токена SPNEGO/GSSAPI. Base64 — представление байтов; криптографическую защиту обеспечивает Kerberos внутри, а конфиденциальность остального HTTP — TLS, если он используется.</p>
+<h2 id="names">4. Имя машины — часть криптографической идентичности</h2>
+<p>Запрос к <code>https://app.lab.example.test</code> обычно требует service principal <code>HTTP/app.lab.example.test@LAB.EXAMPLE.TEST</code>. При замене имени на IP сервисный principal может оказаться другим или не существовать. Исправление hosts решает получение адреса, но не создаёт principal в KDC и ключ в keytab. CNAME также требует согласования имени, которое реально выберет Kerberos-библиотека. Каноникализация имени зависит от реализации и настроек; её нужно увидеть, а не угадывать.</p>
+<pre><code>KRB5_TRACE=/dev/stderr kvno HTTP/app.lab.example.test@LAB.EXAMPLE.TEST
+klist -ef
+sudo klist -kte /etc/apache2/http.keytab</code></pre>
+<p>Первая команда получает билет для явно указанной службы и пишет путь принятия решений MIT Kerberos в stderr. <code>kvno</code> печатает версию ключа билета. У klist <code>-e</code> показывает enctypes, <code>-f</code> — флаги; <code>-k -t -e</code> читает только перечень записей keytab, время и алгоритмы. Путь keytab здесь пример: настоящий путь берётся из конфигурации Apache. Не используйте <code>-K</code> для отчёта: этот флаг выводит ключевой материал.</p>
+<p>Трассировка может содержать имена пользователей, служб и инфраструктуры. Не публикуйте её целиком без просмотра. Она полезна локально: какой KDC выбран, был ли cache hit, какое имя службы запрошено и в какой момент возник отказ. Некоторые привилегированные контексты намеренно игнорируют переменные окружения; успешный trace из shell не доказывает те же настройки у Apache.</p>
+<h2 id="delegation">5. Делегирование от браузера через Apache к CGI</h2>
+<p>Обычный вход позволяет Apache убедиться, кто пришёл. Для запроса к PostgreSQL от имени этого пользователя Apache/CGI нужны credentials, пригодные для получения другого service ticket. В нашем проверенном сценарии клиент делегирует TGT, mod_auth_gssapi сохраняет его в файловый кеш, а CGI получает ссылку на этот кеш через <code>KRB5CCNAME</code>. Фактическая смена UID CGI на пользователя — отдельная функция окружения Astra, не свойство HTTP Negotiate само по себе.</p>
+<pre><code>Браузер или curl
+   │ HTTP service ticket + разрешённая делегация
+   ▼
+Apache / mod_auth_gssapi
+   │ FILE:/opt/gss_cache/student@LAB.EXAMPLE.TEST
+   ▼
+CGI с KRB5CCNAME и подходящими UID/меткой
+   ├── TGS → postgres/db.lab.example.test → PostgreSQL
+   └── TGS → HTTP/ipa.lab.example.test → FreeIPA API</code></pre>
+<p>В выводе <code>klist -f</code> флаг F означает forwardable, f — forwarded. Они имеют разный смысл: разрешение пересылки и факт пересылки. Renewable не означает бессрочный автоматический вход: renewal ограничен renew-till и требует действующего механизма продления. При logout одного приложения другой кеш может сохраниться. KEYRING:persistent:UID и FILE:/opt/gss_cache/... — разные хранилища, даже если principal одинаковый.</p>
+<pre><code>printf '%s\n' "${KRB5CCNAME:-не задан}"
+klist -f
+klist -f -c 'FILE:/opt/gss_cache/student@LAB.EXAMPLE.TEST'
+namei -l /opt/gss_cache/student@LAB.EXAMPLE.TEST
+getfacl -cp /opt/gss_cache/student@LAB.EXAMPLE.TEST</code></pre>
+<p><code>-c</code> у klist выбирает конкретный кеш. <code>namei -l</code> раскладывает путь по компонентам: право чтения файла не помогает без прохода по каталогам. ACL может давать доступ сверх обычных owner/group/other, а ACL mask ограничивает эффективные права именованных записей. На Astra дополнительно проверяются мандатные условия. Не исправляйте ошибку кеша массовым chmod 777: это временные credentials пользователя, а не общий каталог загрузок.</p>
+<h2 id="kdc-lab">6. Собственный KDC без изменения системного домена</h2>
+<p>Следующий опыт предназначен для отдельной Linux ВМ с MIT Kerberos. Нужны <code>krb5kdc</code>, <code>kdb5_util</code>, <code>kadmin.local</code>, <code>kinit</code>, <code>klist</code>, <code>kvno</code>. В Debian это пакеты krb5-kdc, krb5-admin-server, krb5-user; в других ОС названия отличаются. Настройка ниже использует порт 10088 на loopback и каталог пользователя. Системные /etc/krb5.conf, keytab и действующий realm не меняются.</p>
+<pre><code>python3 labs/prepare-kdc.py "$HOME/kerberos-course"
+export LAB="$HOME/kerberos-course"
+export KRB5_CONFIG="$LAB/krb5.conf"
+export KRB5_KDC_PROFILE="$LAB/kdc.conf"
+export KRB5CCNAME="FILE:$LAB/client.ccache"
+umask 077
+kdb5_util create -s -r LAB.TEST
+kadmin.local -r LAB.TEST -q 'addprinc student'
+kadmin.local -r LAB.TEST -q 'addprinc -randkey HTTP/web.lab.test'
+kadmin.local -r LAB.TEST -q "ktadd -k $LAB/http.keytab HTTP/web.lab.test"
+krb5kdc -n -r LAB.TEST -P "$LAB/kdc.pid"</code></pre>
+<p><a href="labs/prepare-kdc.py">prepare-kdc.py</a> создаёт два конфигурационных файла и отказывается перезаписывать существующий каталог. <code>kdb5_util create</code> создаёт учебную базу; <code>-s</code> сохраняет master key в stash, чтобы KDC мог запускаться без запроса мастер-пароля. Мастер-пароль и пароль student вводятся интерактивно и могут быть разными. Не используйте рабочие пароли в лаборатории. <code>-randkey</code> создаёт случайный сервисный ключ. <code>ktadd</code> в обычном MIT-режиме генерирует новые ключи при экспорте — именно поэтому эта команда не приводится как безвредное чтение keytab рабочего сервиса.</p>
+<p><code>krb5kdc -n</code> остаётся в текущем терминале; Ctrl+C останавливает только этот процесс. <code>-P</code> задаёт pid-файл, <code>-r</code> — realm. Мы не запускаем kadmind: kadmin.local обращается непосредственно к нашей учебной базе. В отдельном терминале повторите четыре export с LAB и путями, затем выполните клиентскую часть.</p>
+<pre><code>kinit -f student@LAB.TEST
+klist -ef
+KRB5_TRACE=/dev/stderr kvno -k "$LAB/http.keytab" HTTP/web.lab.test@LAB.TEST
+klist -ef</code></pre>
+<p><code>kinit -f</code> просит forwardable TGT, но окончательное решение принимает политика KDC. После kinit ожидается krbtgt/LAB.TEST@LAB.TEST. После kvno добавится HTTP/web.lab.test@LAB.TEST. Опция <code>-k</code> у kvno проверяет, что билет действительно расшифровывается указанной keytab; это проверка криптографического соответствия, а не HTTP-запрос к web.lab.test. В этой лаборатории такого веб-сервера ещё нет.</p>
+<h2 id="kdc-config">7. Разобрать конфигурацию KDC, а не просто скопировать её</h2>
+<pre><code>[libdefaults]
+ default_realm = LAB.TEST
+ dns_lookup_kdc = false
+ dns_lookup_realm = false
+ rdns = false
+
+[realms]
+ LAB.TEST = {
+  kdc = 127.0.0.1:10088
+ }
+
+[domain_realm]
+ .lab.test = LAB.TEST
+ lab.test = LAB.TEST</code></pre>
+<p>Это клиентский krb5.conf. DNS discovery отключён только в изолированном опыте, чтобы запросы не ушли в настоящую сеть. <code>rdns=false</code> отключает обратную DNS-каноникализацию там, где её использует библиотека; это не универсальное управление всеми преобразованиями имени. Domain_realm сопоставляет DNS-суффикс с realm. Точка перед lab.test означает доменный суффикс, запись без точки покрывает само имя.</p>
+<p>В kdc.conf генератор задаёт <code>kdc_listen</code> и <code>kdc_tcp_listen</code> как 127.0.0.1:10088. Эти параметры относятся к современному MIT Kerberos; для старой сборки проверяют man kdc.conf. Database_name указывает только на учебную базу, key_stash_file — на её master key. <code>max_life</code> и <code>max_renewable_life</code> ограничивают выдаваемые билеты. Клиент не может потребовать срок длиннее разрешённого.</p>
+<h2 id="experiments">8. Три контролируемые поломки</h2>
+<h3>Несуществующее имя службы</h3><pre><code>kvno HTTP/wrong.lab.test@LAB.TEST</code></pre><p>Ожидается отказ получения service ticket, хотя TGT student действителен. Здесь не нужно менять пароль пользователя: ошибка возникла на поиске service principal.</p>
+<h3>Ключ сервиса изменился, старая keytab осталась</h3>
+<pre><code>kadmin.local -r LAB.TEST -q 'cpw -randkey HTTP/web.lab.test'
+kdestroy -c "$KRB5CCNAME"
+kinit student@LAB.TEST
+kvno -k "$LAB/http.keytab" HTTP/web.lab.test@LAB.TEST</code></pre>
+<p>Очищение <em>учебного</em> кеша необходимо, иначе kvno может использовать ранее полученный билет со старым KVNO и опыт даст иной результат. Новый билет не соответствует старой keytab. Восстановите согласованность в учебной среде экспортом новых ключей и снова получите новый билет. Это изменение ключей службы, поэтому в реальном домене его планируют вместе со всеми экземплярами сервиса.</p>
+<pre><code>kadmin.local -r LAB.TEST -q "ktadd -k $LAB/http-current.keytab HTTP/web.lab.test"
+kdestroy -c "$KRB5CCNAME"
+kinit student@LAB.TEST
+kvno -k "$LAB/http-current.keytab" HTTP/web.lab.test@LAB.TEST</code></pre>
+<h3>Выбран пустой кеш</h3><pre><code>KRB5CCNAME="FILE:$LAB/absent.ccache" kvno HTTP/web.lab.test@LAB.TEST</code></pre><p>Переменная задана только для одной команды. Она не меняет пароль и не удаляет нормальный кеш. Ошибка покажет отсутствие credentials. Такой же класс проблемы возможен у CGI, если shell использует KEYRING, а Apache передал несуществующий FILE.</p>
+<h2 id="errors">9. Локализовать отказ по этапу</h2>
+<table><tr><th>Симптом</th><th>Граница</th><th>Первое действие</th></tr><tr><td>Cannot contact any KDC</td><td>Discovery, маршрут, порт, KDC</td><td>Посмотреть KRB5_TRACE, SRV, фактический адрес; проверить TCP и UDP 88 отдельно</td></tr><tr><td>Client not found</td><td>Principal клиента / realm</td><td>Сравнить полное имя и выбранный realm, не только Linux login</td></tr><tr><td>Preauthentication failed</td><td>Начальный вход</td><td>Проверить пароль/ключ и журнал KDC; не делать десятки попыток, вызывая блокировку</td></tr><tr><td>Server not found</td><td>Имя службы</td><td>Посмотреть запрошенный HTTP/host или postgres/host</td></tr><tr><td>Ticket expired / clock skew</td><td>Время</td><td>Сравнить время клиента, KDC и сервиса; обновление TGT не заменяет синхронизацию часов</td></tr><tr><td>Cannot decrypt / key version mismatch</td><td>Сервисный ключ</td><td>Сравнить KVNO/enctype билета и keytab нужного экземпляра</td></tr><tr><td>HTTP 200 у session, нет доступа к IPA</td><td>Делегация и второй переход</td><td>Проверить FILE-кеш именно CGI, его TGT и доступность KDC из этого контекста</td></tr></table>
+<p>Windows <code>klist</code> и MIT <code>klist</code> имеют разный набор параметров. На Windows сначала запускают <code>klist</code> без параметров, а Linux-команды с FILE и -kte выполняют в Linux-терминале MobaXterm/SSH. Наличие билета Windows не гарантирует его появление в shell удалённой Linux-машины. Forwarding зависит от SSH-клиента, сервера и политики.</p>
+<h2 id="cleanup">10. Закончить опыт и понять, что осталось</h2>
+<pre><code>kdestroy -c "$KRB5CCNAME"
+unset KRB5_CONFIG KRB5_KDC_PROFILE KRB5CCNAME LAB</code></pre>
+<p>Перед этим остановите foreground krb5kdc через Ctrl+C. Каталог kerberos-course остаётся как учебный материал и содержит ключи; права 0700 на каталог и 0600 на секретные файлы обязательны. Если опыт больше не нужен, удаляется только этот проверенный каталог. Не применяйте kdestroy из непроверенной shell к действующему кешу администратора и не удаляйте /etc/krb5.keytab.</p>
+<details><summary>Почему kinit успешен, а веб-сайт всё равно возвращает 401?</summary><p>Kinit доказал получение TGT. Дальше ещё нужны service principal, согласованный ключ Apache, разрешённый Negotiate в браузере, подходящий URL и правила доступа веб-сервера. Делегация понадобится для второго перехода, но не всегда для первоначального установления личности. Сначала выясняют, получен ли HTTP-билет, затем смотрят Apache; повторный ввод пароля без этой границы мало что проверяет.</p></details>
+
+<h2 id="time-service">11. Время как зависимость аутентификации: настроить chrony осмысленно</h2>
+<p>У машины есть аппаратные часы RTC, системное время ядра и представление времени в часовом поясе. Kerberos сравнивает моменты времени, а не надпись «Москва» в настройках рабочего стола. Смена timezone меняет отображение локального времени и не является лечением реального рассогласования UTC. Ручная установка часов может на минуту скрыть проблему, пока неисправный источник времени не вернёт прежнее смещение.</p>
+<p>NTP обычно использует UDP 123. В базовом сообщении 48 байт. Первый байт содержит leap indicator, version и mode; далее идут stratum, poll, precision, root delay, root dispersion, reference ID и четыре timestamp по 8 байт. Timestamp состоит из 32 бит секунд и 32 бит дробной части. Эпоха и обработка переполнения отличаются от Unix time; «просто прочитать первые четыре байта как time_t» неверно.</p>
+<pre><code>T1 — клиент отправил запрос
+T2 — сервер получил запрос
+T3 — сервер отправил ответ
+T4 — клиент получил ответ
+
+Оценка задержки: (T4 - T1) - (T3 - T2)
+Оценка смещения: ((T2 - T1) + (T3 - T4)) / 2</code></pre>
+<p>Оценка предполагает достаточно симметричный путь. Если одно направление заметно медленнее другого, это создаёт погрешность. Поэтому chrony анализирует серию измерений, качество источников и дрейф собственных часов, а не ставит время равным одному полученному timestamp. Stratum показывает положение в цепочке синхронизации, но не является мерой точности в миллисекундах. Низкий stratum сам по себе не делает неправильно настроенные часы правильными.</p>
+<pre><code>timedatectl
+chronyc tracking
+chronyc sources -v
+chronyc sourcestats -v
+systemctl status chronyd --no-pager</code></pre>
+<p>На некоторых системах unit называется chrony, а не chronyd. Tracking показывает текущую оценку, reference и leap status. Sources показывает кандидатов и выбранный источник; отметка * относится к выбранному, ? часто означает недостаточную достижимость/измерения. Reach — регистр результатов последних опросов в восьмеричном представлении; 377 означает восемь последних успешных ответов, а не 377 миллисекунд. Sourcestats помогает увидеть качество накопленных измерений.</p>
+<h3>Учебный клиент закрытого контура</h3>
+<p>На <em>новой учебной ВМ</em> настройка chrony должна использовать согласованный внутренний сервер времени. Конфигурационный файл может называться /etc/chrony.conf или /etc/chrony/chrony.conf. Не добавляйте пример поверх неизвестных существующих pool/server: сначала выясните, какие источники останутся активными.</p>
+<pre><code># Фрагмент конфигурации новой учебной ВМ:
+server ntp.lab.test iburst
+makestep 1.0 3
+rtcsync</code></pre>
+<p>Server задаёт конкретный источник, iburst ускоряет первые измерения. Makestep 1.0 3 допускает скачок времени при расхождении больше секунды только в пределах первых трёх обновлений после старта; это полезно для новой ВМ, но на работающей базе скачки времени планируют осторожно. Rtcsync включает поддерживаемую ОС синхронизацию RTC. После изменения нового клиента перезапускают его chrony unit и проверяют tracking/sources; одна строка active в systemctl недостаточна.</p>
+<p>Если выделенный сервер времени сам изолирован от UTC-источников, он может быть настроен с local reference по принятой политике. Тогда клиенты согласуют часы между собой, но не получают доказательства точности относительно UTC. Это важное ограничение для журналов, сертификатов и расследований. Нельзя просто объявить любой контроллер «точным NTP», не выяснив, откуда он берёт время.</p>
+
+
+
+
+<p class="sources">Первичные описания: <a href="https://www.rfc-editor.org/rfc/rfc4120">форматы и обмены Kerberos V5</a>, <a href="https://web.mit.edu/kerberos/krb5-latest/doc/admin/install_kdc.html">установка MIT KDC</a>, <a href="https://web.mit.edu/kerberos/krb5-latest/doc/admin/conf_files/kdc_conf.html">kdc.conf</a>, <a href="https://web.mit.edu/kerberos/krb5-latest/doc/user/user_commands/kvno.html">kvno</a>, <a href="https://github.com/gssapi/mod_auth_gssapi">mod_auth_gssapi</a>. Следующая глава собирает эти механизмы в <a href="freeipa.html">полный домен FreeIPA</a>.</p><p class="sources">Поля и вычисления: <a href="https://www.rfc-editor.org/rfc/rfc5905">NTPv4</a>. Параметры реализации: <a href="https://chrony-project.org/doc/4.6/chrony.conf.html">chrony.conf</a>, <a href="https://chrony-project.org/doc/4.6/chronyc.html">chronyc</a>. Сверяйте поддержку с версией chrony своей ОС.</p>
+<div class="next"><a href="index.html">← Оглавление</a><a href="freeipa.html">Далее: FreeIPA: собрать домен →</a></div></main><aside class="contents"><div class="nav-title">В этой главе</div><a href="#keys">1. Какие ключи существуют одновременно</a><a href="#exchange">2. AS, TGS и AP — три обмена с разными получателями</a><a href="#ticket">3. Что находится внутри билета</a><a href="#names">4. Имя машины — часть криптографической идентичности</a><a href="#delegation">5. Делегирование от браузера через Apache к CGI</a><a href="#kdc-lab">6. Собственный KDC без изменения системного домена</a><a href="#kdc-config">7. Разобрать конфигурацию KDC, а не просто скопировать её</a><a href="#experiments">8. Три контролируемые поломки</a><a href="#errors">9. Локализовать отказ по этапу</a><a href="#cleanup">10. Закончить опыт и понять, что осталось</a><a href="#time-service">11. Время как зависимость аутентификации: настроить chrony осмысленно</a></aside></div></body></html>

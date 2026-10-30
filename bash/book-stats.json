@@ -1,0 +1,109 @@
+{
+  "slug": "bash",
+  "title": "Bash: от объектов ядра до надёжного сценария",
+  "short_title": "Bash",
+  "volume": "III",
+  "topic": "Bash",
+  "description": "Подробное объяснение оболочки через процессы, аргументы, окружение, дескрипторы и состояния. 18 автономных опытов с проверками точных результатов.",
+  "storage_key": "bash-book-v1",
+  "chapters": [
+    {
+      "id": "01-process-and-shell",
+      "title": "Оболочка, терминал и процесс",
+      "words": 2070
+    },
+    {
+      "id": "02-startup-environment",
+      "title": "Режимы запуска и окружение",
+      "words": 2056
+    },
+    {
+      "id": "03-language-and-argv",
+      "title": "От текста до argv",
+      "words": 1962
+    },
+    {
+      "id": "04-quoting-and-expansions",
+      "title": "Кавычки и подстановки",
+      "words": 3036
+    },
+    {
+      "id": "05-parameters-and-substitution",
+      "title": "Значения и результаты",
+      "words": 2962
+    },
+    {
+      "id": "06-descriptors-redirection",
+      "title": "Дескрипторы и перенаправления",
+      "words": 3036
+    },
+    {
+      "id": "07-pipelines-streams",
+      "title": "Конвейеры и потоки",
+      "words": 3744
+    },
+    {
+      "id": "08-status-tests-control",
+      "title": "Условия и циклы",
+      "words": 1825
+    },
+    {
+      "id": "09-functions-arrays",
+      "title": "Функции и массивы",
+      "words": 1796
+    },
+    {
+      "id": "10-errors-and-traps",
+      "title": "Ошибки и обработчики",
+      "words": 1869
+    },
+    {
+      "id": "11-filenames-and-records",
+      "title": "Имена файлов",
+      "words": 1764
+    },
+    {
+      "id": "12-text-and-bytes",
+      "title": "Текст и байты",
+      "words": 2020
+    },
+    {
+      "id": "13-jobs-signals",
+      "title": "Фоновые процессы и сигналы",
+      "words": 1790
+    },
+    {
+      "id": "14-scripts-and-portability",
+      "title": "Сценарий как программа",
+      "words": 1677
+    },
+    {
+      "id": "15-reliable-files-concurrency",
+      "title": "Надёжность и параллелизм",
+      "words": 2586
+    },
+    {
+      "id": "16-debugging-and-tests",
+      "title": "Отладка и проверка",
+      "words": 2417
+    },
+    {
+      "id": "17-language-boundaries",
+      "title": "Границы языков",
+      "words": 1967
+    },
+    {
+      "id": "18-practice-and-reference",
+      "title": "Автономная практика",
+      "words": 1964
+    },
+    {
+      "id": "99-glossary",
+      "title": "Словарь терминов",
+      "words": 6035
+    }
+  ],
+  "words": 46576,
+  "terms": 273,
+  "external_assets": 0
+}

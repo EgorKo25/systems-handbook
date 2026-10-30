@@ -1,0 +1,18 @@
+[
+  {
+    "record": "insert",
+    "length": 194,
+    "stored_crc32c": "0xdb1a13de",
+    "calculated_crc32c": "0xdb1a13de",
+    "changed_crc32c": "0xd6106e33",
+    "crc_verified": true
+  },
+  {
+    "record": "commit",
+    "length": 34,
+    "stored_crc32c": "0x2f90e23e",
+    "calculated_crc32c": "0x2f90e23e",
+    "changed_crc32c": "0x229a9fd3",
+    "crc_verified": true
+  }
+]

@@ -1,0 +1,44 @@
+Oct 27 21:19:12 dnsmasq[51385]: started, version 2.90 cachesize 150
+Oct 27 21:19:12 dnsmasq[51385]: compile time options: IPv6 GNU-getopt DBus no-UBus i18n IDN2 DHCP DHCPv6 no-Lua TFTP conntrack ipset nftset auth cryptohash DNSSEC loop-detect inotify dumpfile
+Oct 27 21:19:12 dnsmasq[51385]: warning: no upstream servers configured
+Oct 27 21:19:12 dnsmasq-dhcp[51385]: DHCP, IP range 10.77.10.100 -- 10.77.10.150, lease time 1h
+Oct 27 21:19:12 dnsmasq-dhcp[51385]: DHCP, sockets bound exclusively to interface lan0
+Oct 27 21:19:12 dnsmasq[51385]: using only locally-known addresses for lab.test
+Oct 27 21:19:12 dnsmasq[51385]: cleared cache
+Oct 27 21:19:12 dnsmasq-dhcp[51385]: 1997537281 available DHCP range: 10.77.10.100 -- 10.77.10.150
+Oct 27 21:19:12 dnsmasq-dhcp[51385]: 1997537281 DHCPDISCOVER(lan0) 02:00:00:77:10:64 
+Oct 27 21:19:12 dnsmasq-dhcp[51385]: 1997537281 tags: lan0
+Oct 27 21:19:12 dnsmasq-dhcp[51385]: 1997537281 DHCPOFFER(lan0) 10.77.10.146 02:00:00:77:10:64 
+Oct 27 21:19:12 dnsmasq-dhcp[51385]: 1997537281 requested options: 1:netmask, 3:router, 6:dns-server, 15:domain-name, 
+Oct 27 21:19:12 dnsmasq-dhcp[51385]: 1997537281 requested options: 51:lease-time, 58:T1, 59:T2
+Oct 27 21:19:12 dnsmasq-dhcp[51385]: 1997537281 next server: 10.77.10.1
+Oct 27 21:19:12 dnsmasq-dhcp[51385]: 1997537281 broadcast response
+Oct 27 21:19:12 dnsmasq-dhcp[51385]: 1997537281 sent size:  1 option: 53 message-type  2
+Oct 27 21:19:12 dnsmasq-dhcp[51385]: 1997537281 sent size:  4 option: 54 server-identifier  10.77.10.1
+Oct 27 21:19:12 dnsmasq-dhcp[51385]: 1997537281 sent size:  4 option: 51 lease-time  1h
+Oct 27 21:19:12 dnsmasq-dhcp[51385]: 1997537281 sent size:  4 option: 58 T1  30m
+Oct 27 21:19:12 dnsmasq-dhcp[51385]: 1997537281 sent size:  4 option: 59 T2  52m30s
+Oct 27 21:19:12 dnsmasq-dhcp[51385]: 1997537281 sent size:  4 option:  1 netmask  255.255.255.0
+Oct 27 21:19:12 dnsmasq-dhcp[51385]: 1997537281 sent size:  4 option: 28 broadcast  10.77.10.255
+Oct 27 21:19:12 dnsmasq-dhcp[51385]: 1997537281 sent size:  8 option: 15 domain-name  lab.test
+Oct 27 21:19:12 dnsmasq-dhcp[51385]: 1997537281 sent size:  4 option:  6 dns-server  10.77.10.1
+Oct 27 21:19:12 dnsmasq-dhcp[51385]: 1997537281 sent size:  4 option:  3 router  10.77.10.1
+Oct 27 21:19:12 dnsmasq-dhcp[51385]: 1997537281 available DHCP range: 10.77.10.100 -- 10.77.10.150
+Oct 27 21:19:12 dnsmasq-dhcp[51385]: 1997537281 DHCPREQUEST(lan0) 10.77.10.146 02:00:00:77:10:64 
+Oct 27 21:19:12 dnsmasq-dhcp[51385]: 1997537281 tags: lan0
+Oct 27 21:19:12 dnsmasq-dhcp[51385]: 1997537281 DHCPACK(lan0) 10.77.10.146 02:00:00:77:10:64 
+Oct 27 21:19:12 dnsmasq-dhcp[51385]: 1997537281 requested options: 1:netmask, 3:router, 6:dns-server, 15:domain-name, 
+Oct 27 21:19:12 dnsmasq-dhcp[51385]: 1997537281 requested options: 51:lease-time, 58:T1, 59:T2
+Oct 27 21:19:12 dnsmasq-dhcp[51385]: 1997537281 next server: 10.77.10.1
+Oct 27 21:19:12 dnsmasq-dhcp[51385]: 1997537281 broadcast response
+Oct 27 21:19:12 dnsmasq-dhcp[51385]: 1997537281 sent size:  1 option: 53 message-type  5
+Oct 27 21:19:12 dnsmasq-dhcp[51385]: 1997537281 sent size:  4 option: 54 server-identifier  10.77.10.1
+Oct 27 21:19:12 dnsmasq-dhcp[51385]: 1997537281 sent size:  4 option: 51 lease-time  1h
+Oct 27 21:19:12 dnsmasq-dhcp[51385]: 1997537281 sent size:  4 option: 58 T1  30m
+Oct 27 21:19:12 dnsmasq-dhcp[51385]: 1997537281 sent size:  4 option: 59 T2  52m30s
+Oct 27 21:19:12 dnsmasq-dhcp[51385]: 1997537281 sent size:  4 option:  1 netmask  255.255.255.0
+Oct 27 21:19:12 dnsmasq-dhcp[51385]: 1997537281 sent size:  4 option: 28 broadcast  10.77.10.255
+Oct 27 21:19:12 dnsmasq-dhcp[51385]: 1997537281 sent size:  8 option: 15 domain-name  lab.test
+Oct 27 21:19:12 dnsmasq-dhcp[51385]: 1997537281 sent size:  4 option:  6 dns-server  10.77.10.1
+Oct 27 21:19:12 dnsmasq-dhcp[51385]: 1997537281 sent size:  4 option:  3 router  10.77.10.1
+Oct 27 21:19:12 dnsmasq[51385]: exiting on receipt of SIGTERM

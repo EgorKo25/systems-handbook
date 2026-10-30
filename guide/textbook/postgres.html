@@ -1,0 +1,165 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PostgreSQL: подключение и данные — Инженерный практикум</title><link rel="stylesheet" href="book.css"><script src="book.js" defer></script></head><body><div id="progress"></div><header><a href="index.html">Инженерный практикум</a><div class="controls"><a href="../../index.html">Библиотека</a><button id="theme" type="button">Сменить тему</button><button type="button" onclick="window.print()">Печать</button></div></header><div class="layout"><aside class="chapters"><div class="nav-title">Устройство и настройка</div><nav><a class="" href="network.html">01 · Сеть от провода до сокета</a><a class="" href="dns.html">02 · DNS: серверы, зоны и кеш</a><a class="" href="kerberos.html">03 · Kerberos: ключи и билеты</a><a class="" href="freeipa.html">04 · FreeIPA: собрать домен</a><a class="current" href="postgres.html">05 · PostgreSQL: подключение и данные</a><a class="" href="operations.html">06 · Один запрос через весь стенд</a></nav><p class="small">Без внешних шрифтов, библиотек и подключения к сети.</p></aside><main><div class="eyebrow">Устройство · Настройка · Эксперимент / 05</div><h1>PostgreSQL: подключение и данные</h1><p class="lead">HBA, роли, транзакции, MVCC, WAL, планы и восстановление.</p><div class="meta"><span>13 разделов</span><a href="postgres.txt">Текстовая копия</a><a href="index.html#labs">Как работать с лабораториями</a></div><details class="mobile-toc"><summary>Содержание главы</summary><a href="#connection">1. Что происходит до первого SELECT</a><a href="#which-cluster">2. В какой кластер вы попали</a><a href="#hba">3. HBA проверяется сверху вниз без запасного пароля</a><a href="#privileges">4. Права — лестница, а не один GRANT ALL</a><a href="#sql-lab">5. Учебная база, которую можно разобрать без риска для ДО</a><a href="#mvcc">6. Почему два SELECT могут честно видеть разные данные</a><a href="#locks">7. Блокировки и ожидания без перезапуска базы</a><a href="#wal">8. Как COMMIT переживает падение питания</a><a href="#plans">9. План запроса и цена ошибки оценки</a><a href="#catalogs">10. Служебные каталоги для расследования пропавшей колонки</a><a href="#migration">11. Почему транзакция не спасает от неверного сценария миграции</a><a href="#backup">12. Резервная копия и проверяемое восстановление</a><a href="#labels">13. SQL-права, RLS и мандатные метки — разные фильтры видимости</a></details><p>Работающая база — это не только процесс postgres и открытый 5432. Клиент должен попасть в нужный кластер, пройти аутентификацию, получить права на базу, схему и объекты, работать с подходящей меткой, выполнить изменения и успешно зафиксировать транзакцию. Разберём каждый переход и затем проверим его на отдельной учебной базе.</p>
+<h2 id="connection">1. Что происходит до первого SELECT</h2>
+<div class="lab sequence"><h3>Сеанс PostgreSQL поверх TCP</h3><script type="application/json">{"title":"Установка соединения PostgreSQL","actors":["libpq / приложение","PostgreSQL"],"steps":[{"from":0,"to":1,"label":"TCP, затем SSLRequest при TLS","note":"DNS и TCP уже должны работать. При классическом согласовании TLS клиент сначала спрашивает поддержку SSL, затем выполняется TLS handshake."},{"from":0,"to":1,"label":"StartupMessage","note":"Версия протокола, user, database, параметры сеанса. У начального StartupMessage нет обычного однобайтового типа последующих сообщений."},{"from":1,"to":0,"label":"Authentication request","note":"Первое подходящее правило HBA определяет метод. Это может быть GSSAPI, SCRAM и другие варианты, разрешённые сборкой."},{"from":0,"to":1,"label":"Ответы аутентификации","note":"GSSAPI использует Kerberos-контекст; SCRAM использует свой challenge-response. Это разные протоколы, не две формы одного пароля."},{"from":1,"to":0,"label":"AuthenticationOk → ReadyForQuery","note":"Сервер также сообщает параметры и данные для отмены запросов. ReadyForQuery показывает состояние транзакции: idle, transaction или failed transaction."},{"from":0,"to":1,"label":"Query либо Parse / Bind / Execute","note":"Только теперь начинается SQL. Успешная аутентификация не гарантирует SELECT на нужной таблице."}]}</script><details class="sequence-transcript"><summary>Текст всех шагов схемы</summary><ol><li><strong>TCP, затем SSLRequest при TLS</strong>. DNS и TCP уже должны работать. При классическом согласовании TLS клиент сначала спрашивает поддержку SSL, затем выполняется TLS handshake.</li><li><strong>StartupMessage</strong>. Версия протокола, user, database, параметры сеанса. У начального StartupMessage нет обычного однобайтового типа последующих сообщений.</li><li><strong>Authentication request</strong>. Первое подходящее правило HBA определяет метод. Это может быть GSSAPI, SCRAM и другие варианты, разрешённые сборкой.</li><li><strong>Ответы аутентификации</strong>. GSSAPI использует Kerberos-контекст; SCRAM использует свой challenge-response. Это разные протоколы, не две формы одного пароля.</li><li><strong>AuthenticationOk → ReadyForQuery</strong>. Сервер также сообщает параметры и данные для отмены запросов. ReadyForQuery показывает состояние транзакции: idle, transaction или failed transaction.</li><li><strong>Query либо Parse / Bind / Execute</strong>. Только теперь начинается SQL. Успешная аутентификация не гарантирует SELECT на нужной таблице.</li></ol></details></div>
+<p>При обычном протоколе v3 многие сообщения имеют байт типа, 32-битную длину и содержимое. Length включает себя, но не байт типа. Simple Query передаёт SQL-текст; extended protocol разделяет подготовку, привязку параметров и выполнение. Параметризованный запрос не собирается экранированием пользовательского текста в SQL: значения передаются отдельно. На уровне сети это всё ещё поток TCP, а не «один SQL равен одному пакету».</p>
+<p>У PostgreSQL 11 GSSAPI-аутентификация не означает GSS-шифрование всего SQL-трафика. Возможности GSS encryption появились в следующих версиях. Для TLS <code>sslmode=verify-full</code> проверяет цепочку доверия и имя сервера; <code>require</code> не тождественен полной проверке идентичности. Существующие настройки объекта не меняют попутно с диагностикой: сначала фиксируют реальную версию и принятый способ защиты.</p>
+<h2 id="which-cluster">2. В какой кластер вы попали</h2>
+<pre><code>psql -X -h db.lab.example.test -p 5432 -U postgres -d document_flow
+\conninfo
+SELECT version(), current_database(), session_user, current_user;
+SELECT inet_server_addr(), inet_server_port(), pg_backend_pid();
+SHOW config_file;
+SHOW hba_file;
+SHOW data_directory;
+SHOW search_path;</code></pre>
+<p>Первая строка выполняется в Linux shell; остальные — в psql. <code>-X</code> запрещает загрузку персонального psqlrc, чтобы чужие настройки не меняли поведение диагностики. <code>-h</code> задаёт именно сервер; без него libpq может выбрать локальный Unix socket. <code>-p</code> — порт, <code>-U</code> — роль, <code>-d</code> — база. Если GSS не настроен для такого principal, понадобится разрешённый способ административного входа. Некоторые SHOW доступны только привилегированным ролям.</p>
+<p>Session_user отражает первоначальную роль сеанса, current_user — текущую, например после SET ROLE. Имя базы не определяет кластер: на двух серверах могут существовать одинаковые document_flow. Если дамп снят с одного, а миграция применена на другом, SQL может завершиться успешно и всё равно не исправить приложение. Поэтому адрес, порт, база и версия входят в протокол работ.</p>
+<h2 id="hba">3. HBA проверяется сверху вниз без запасного пароля</h2>
+<pre><code># Учебный пример строк, не конфигурация действующего объекта:
+local   course_db   course_reader                         peer
+hostssl course_db   course_reader   198.18.0.0/24          scram-sha-256
+host    course_db   all             0.0.0.0/0             reject</code></pre>
+<p>Local означает Unix socket; host — TCP; hostssl — TCP с TLS. В примере первый подходящий тип/база/роль/адрес выбирает способ входа. Если пароль по этой строке неверен, PostgreSQL не пробует следующую строку как запасной метод. Peer сверяет локальную ОС-личность и применимые mappings; он не действует на удалённое TCP-соединение. GSS сверяет Kerberos principal и разрешённое сопоставление роли, а не POSIX-группу пользователя на клиенте.</p>
+<pre><code>SELECT line_number, type, database, user_name, address, auth_method, error
+FROM pg_hba_file_rules ORDER BY line_number;
+SELECT name, setting, source, context, pending_restart
+FROM pg_settings
+WHERE name IN ('listen_addresses','port','ssl','max_connections','shared_buffers');
+SELECT pg_reload_conf();</code></pre>
+<p>Первые два запроса читают состояние. Последний просит reload конфигурации и является изменением; его выполняют только после проверенной правки. Успех pg_reload_conf означает доставку сигнала, а не успешность каждой новой строки: смотрят журнал и pg_hba_file_rules.error. Параметры с pending_restart требуют перезапуска; reload не меняет postmaster-параметр магически. Глобальный restart ради одной строки HBA не нужен.</p>
+<h2 id="privileges">4. Права — лестница, а не один GRANT ALL</h2>
+<table><tr><th>Ступень</th><th>Что даёт</th><th>Чего не даёт</th></tr><tr><td>LOGIN у роли и успешная HBA</td><td>Возможность аутентифицироваться</td><td>Права на все базы</td></tr><tr><td>CONNECT на базе</td><td>Подключение к конкретной базе</td><td>USAGE схемы</td></tr><tr><td>USAGE на схеме</td><td>Разрешение обращаться к объектам по именам</td><td>SELECT/INSERT таблиц</td></tr><tr><td>SELECT/INSERT/UPDATE/DELETE таблицы</td><td>Указанные операции</td><td>Автоматический доступ к sequence для serial</td></tr><tr><td>USAGE sequence</td><td>В частности nextval для выдачи номера</td><td>Право INSERT в таблицу</td></tr><tr><td>Владелец / CREATE схемы</td><td>DDL в пределах полномочий</td><td>Обход мандатной политики Astra по умолчанию</td></tr></table>
+<p>Ни роль в таблице приложения user_roles, ни группа atomic_users_manage не являются сами по себе GRANT PostgreSQL. Они используются на других уровнях. Мандатный контроль Astra добавляет ещё одно условие поверх SQL-привилегий. Выдача SELECT не должна рассматриваться как способ обойти метки.</p>
+<pre><code>SELECT has_database_privilege('course_reader','course_db','CONNECT');
+SELECT has_schema_privilege('course_reader','course','USAGE');
+SELECT has_table_privilege('course_reader','course.documents','SELECT');
+SELECT has_sequence_privilege('course_reader','course.documents_id_seq','USAGE');
+\du
+\dn+
+\dp course.*</code></pre>
+<p>Эти команды относятся к лаборатории ниже. has_* проверяет эффективное право с учётом членства и PUBLIC. ACL-строка в \dp — компактное представление прямых назначений, и её отсутствие не всегда означает отсутствие всех прав. Поиск только в information_schema.table_privileges может не дать полной картины наследования. Для конкретного действия полезнее эффективная проверка и пробный запрос под целевой ролью.</p>
+<h2 id="sql-lab">5. Учебная база, которую можно разобрать без риска для ДО</h2>
+<p>Используйте отдельный PostgreSQL для упражнений. Администратор создаёт <code>course_db</code>, затем запускает <a href="labs/postgres-lab.sql">postgres-lab.sql</a>. Скрипт проверяет имя базы, отказывается работать при существующей схеме course и создаёт только свою схему, таблицы и роли course_owner/course_reader/course_writer. Роли кластерные, поэтому при конфликте имён создание завершится ошибкой и транзакция откатится.</p>
+<pre><code>createdb -h 127.0.0.1 -U postgres course_db
+psql -X -h 127.0.0.1 -U postgres -d course_db \
+  -v ON_ERROR_STOP=1 -f labs/postgres-lab.sql
+psql -X -h 127.0.0.1 -U postgres -d course_db</code></pre>
+<p>Пример предполагает настроенный административный доступ к отдельному локальному тестовому кластеру. <code>-v ON_ERROR_STOP=1</code> заставляет psql прекратить скрипт на SQL-ошибке. Без него psql может напечатать ошибку, продолжить следующие команды и закончить с кодом, который неверно трактуют как полный успех. Транзакция в самом файле объединяет создание объектов. Создание базы отдельное, поскольку CREATE DATABASE нельзя выполнять внутри обычного transaction block.</p>
+<pre><code>SET ROLE course_reader;
+SELECT * FROM course.documents ORDER BY id;
+INSERT INTO course.documents(title) VALUES ('Запрещённая запись');
+RESET ROLE;
+SET ROLE course_writer;
+INSERT INTO course.documents(title) VALUES ('Разрешённая запись') RETURNING id;
+RESET ROLE;</code></pre>
+<p>Это интерактивный опыт: ошибка INSERT у reader ожидаема и не означает поломку лаборатории. SET ROLE проверяет SQL-права, но не повторяет сеть и аутентификацию нового соединения. Для полного login-теста дополнительно нужна LOGIN-роль, пароль/билет и HBA. В этой лаборатории роли NOLOGIN, чтобы не добавлять новые способы внешнего входа.</p>
+<h3>Почему новые таблицы иногда не получают старые права</h3>
+<pre><code>ALTER DEFAULT PRIVILEGES FOR ROLE course_owner IN SCHEMA course
+  GRANT SELECT ON TABLES TO course_reader;</code></pre>
+<p>Это правило для <em>будущих объектов, создаваемых course_owner</em>. Оно не исправляет существующие таблицы и не применяется к таблице, которую создал postgres лишь потому, что postgres состоит в нужной группе. Скрипт использует SET ROLE course_owner при создании объектов. Если миграции запускаются разными ролями, права по умолчанию могут различаться. Исправление состоит в понятном владельце миграций и явных GRANT, а не в повторном запуске того же ALTER DEFAULT PRIVILEGES наугад.</p>
+<h2 id="mvcc">6. Почему два SELECT могут честно видеть разные данные</h2>
+<p>PostgreSQL хранит версии строк. У версии есть служебные поля создания/завершения, но видимость нельзя вычислить только сравнением xmin и xmax с текущим номером: нужны состояние транзакций, снимок активных транзакций, специальные значения и особенности блокировок. UPDATE обычно создаёт новую версию, а старая остаётся, пока может понадобиться другим снимкам. Читатель обычно не ждёт обычного писателя строки, потому что может читать подходящую старую версию.</p>
+<div class="lab" data-mvcc><h3>Видимость в двух транзакциях</h3><label>Изоляция A <select><option value="rc">Read Committed</option><option value="rr">Repeatable Read</option></select></label><div class="lab-controls"><button data-read>SELECT в A</button><button data-commit>UPDATE и COMMIT в B</button><button data-reset>Сброс</button></div><output></output></div>
+<p>В Read Committed новый SQL statement получает новый снимок. В Repeatable Read снимок фиксируется для транзакции при первом соответствующем запросе. Нажмите SELECT, затем COMMIT в B, затем снова SELECT: отличие видно в модели. Модель намеренно показывает только чтение; реальные конфликтующие UPDATE дополнительно проверяют блокировки и могут завершиться serialization failure.</p>
+<table><tr><th>Шаг</th><th>Терминал A</th><th>Терминал B</th></tr><tr><td>1</td><td>BEGIN ISOLATION LEVEL REPEATABLE READ;</td><td></td></tr><tr><td>2</td><td>SELECT value FROM course.counter WHERE id=1;</td><td></td></tr><tr><td>3</td><td></td><td>UPDATE course.counter SET value=20 WHERE id=1;</td></tr><tr><td>4</td><td>SELECT value FROM course.counter WHERE id=1;</td><td>В autocommit UPDATE уже зафиксирован</td></tr><tr><td>5</td><td>COMMIT; затем повторить SELECT</td><td></td></tr></table>
+<p>После первого SELECT ожидается 10, после шага 4 всё ещё 10, после COMMIT и нового SELECT — 20. Для повторного опыта сначала верните значение 10 вне транзакции A и замените REPEATABLE READ на READ COMMITTED. Не сравнивайте два теста, оставив предыдущую транзакцию открытой: именно это часто портит ручную диагностику.</p>
+<p>Sequence не откатывает выданные номера как обычная таблица. INSERT, завершившийся ошибкой или ROLLBACK, может оставить пропуск id. Это нормально и не является доказательством потерянного сотрудника. Требование «без пропусков» — отдельная бизнес-задача с иной синхронизацией, а не настройка SERIAL.</p>
+<h2 id="locks">7. Блокировки и ожидания без перезапуска базы</h2>
+<pre><code>-- Терминал A, учебная база:
+BEGIN;
+UPDATE course.counter SET value=value+1 WHERE id=1;
+-- Пока не делайте COMMIT.
+
+-- Терминал B:
+SET lock_timeout='3s';
+UPDATE course.counter SET value=value+1 WHERE id=1;</code></pre>
+<p>В B ожидается lock timeout примерно через три секунды: обе операции хотят изменить одну строку. Обычный SELECT в третьем терминале может читать предыдущую зафиксированную версию. Завершите A через ROLLBACK, затем повторите B. Разница между ожиданием блокировки и медленным чтением диска принципиальна: индексы не устраняют забытый открытый transaction.</p>
+<pre><code>SELECT pid, usename, state, wait_event_type, wait_event,
+       clock_timestamp()-xact_start AS transaction_age,
+       pg_blocking_pids(pid) AS blockers,
+       left(query,160) AS query_sample
+FROM pg_stat_activity
+WHERE datname=current_database()
+ORDER BY xact_start NULLS LAST;</code></pre>
+<p>Запрос читает статистику. Для чужих сеансов нужны соответствующие права мониторинга. Query может содержать чувствительные значения, поэтому выгрузку просматривают перед отправкой. Idle in transaction означает незакрытую транзакцию, а не активное выполнение SQL. Сначала связывают PID с конкретным приложением. pg_cancel_backend отменяет текущий запрос; pg_terminate_backend разрывает сеанс и откатывает его незавершённую транзакцию. Это разные по последствиям действия, ни одно не запускается по всем PID «на всякий случай».</p>
+<h2 id="wal">8. Как COMMIT переживает падение питания</h2>
+<p>Изменённая страница сначала оказывается в памяти. WAL описывает изменения так, чтобы после аварии их можно было воспроизвести. Правило write-ahead требует необходимую запись журнала на устойчивом носителе до записи соответствующей изменённой страницы данных. При обычном synchronous_commit подтверждение COMMIT связано с сохранением WAL, а не с записью каждой страницы таблицы на своё окончательное место.</p>
+<figure><svg viewBox="0 0 760 180" role="img" aria-label="WAL до страниц данных"><rect class="svg-box" x="10" y="30" width="200" height="90" rx="10"/><text class="svg-label" x="110" y="60" text-anchor="middle">UPDATE</text><text class="svg-small" x="110" y="88" text-anchor="middle">изменение в буферах</text><path class="svg-line" d="M210 75H275"/><rect class="svg-box" x="275" y="30" width="210" height="90" rx="10"/><text class="svg-label" x="380" y="60" text-anchor="middle">WAL на носителе</text><text class="svg-small" x="380" y="88" text-anchor="middle">основа восстановления</text><path class="svg-line" d="M485 75H550"/><rect class="svg-box" x="550" y="30" width="200" height="90" rx="10"/><text class="svg-label" x="650" y="60" text-anchor="middle">Страницы данных</text><text class="svg-small" x="650" y="88" text-anchor="middle">могут записаться позже</text></svg></figure>
+<p>Checkpoint задаёт точку и условия, ограничивающие объём последующего восстановления; он не является COMMIT всех пользовательских транзакций. Crash recovery выполняет REDO необходимых WAL-записей. Незавершённые изменения не становятся видимыми просто потому, что их байты были записаны: видимость учитывает состояние транзакции. Отключение fsync ради скорости меняет гарантию целостности и не относится к нормальному ремонту медленного деплоя.</p>
+<p>VACUUM убирает версии, которые больше никому не нужны, и поддерживает служебные структуры. Долгая транзакция может удерживать старый снимок и мешать освобождению. Обычный VACUUM обычно не уменьшает размер файла ОС до исходного; место становится повторно используемым внутри таблицы. VACUUM FULL переписывает таблицу и требует сильной блокировки и дополнительного места. Это не первая команда при нехватке диска.</p>
+<h2 id="plans">9. План запроса и цена ошибки оценки</h2>
+<pre><code>CREATE TABLE course.measurements AS
+SELECT n AS id, n % 100 AS bucket, repeat('x',80) AS payload
+FROM generate_series(1,10000) AS n;
+ANALYZE course.measurements;
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT * FROM course.measurements WHERE id=7777;
+CREATE INDEX measurements_id_idx ON course.measurements(id);
+ANALYZE course.measurements;
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT * FROM course.measurements WHERE id=7777;</code></pre>
+<p>Выполняется администратором только в course_db. До индекса ожидается последовательное чтение; после индекса планировщик обычно выбирает индекс для одной строки. Фактический выбор зависит от версии, статистики и стоимости. Cost в EXPLAIN — условная оценка, не миллисекунды. Actual time — измерение этого запуска; rows и loops помогают понять, сколько раз выполнялся внутренний узел. Buffers различает попадания в буферный кеш и чтение, но чтение блока не всегда равно физическому чтению диска: ниже есть кеш ОС.</p>
+<p>Сравнивайте estimated rows и actual rows. Большое расхождение размножается на join и может привести к неудачному плану. Индекс не обязан помогать запросу, который возвращает половину таблицы. Больше индексов — больше работы при записи и больше занимаемого места. EXPLAIN ANALYZE действительно исполняет запрос, включая UPDATE/DELETE; не запускайте его на изменяющем рабочие данные запросе ради безобидного просмотра. ROLLBACK не отменяет внешние эффекты вызываемых функций.</p>
+<h2 id="catalogs">10. Служебные каталоги для расследования пропавшей колонки</h2>
+<pre><code>SELECT schemaname, tablename, tableowner
+FROM pg_tables WHERE schemaname='document-flow' ORDER BY tablename;
+
+SELECT n.nspname, c.relname, c.relkind, pg_get_userbyid(c.relowner) AS owner
+FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+WHERE n.nspname='document-flow' ORDER BY c.relname;
+
+SELECT a.attnum, a.attname, format_type(a.atttypid,a.atttypmod) AS type,
+       a.attnotnull, pg_get_expr(d.adbin,d.adrelid) AS default_value
+FROM pg_attribute a
+LEFT JOIN pg_attrdef d ON d.adrelid=a.attrelid AND d.adnum=a.attnum
+WHERE a.attrelid='"document-flow".documents'::regclass
+  AND a.attnum&gt;0 AND NOT a.attisdropped
+ORDER BY a.attnum;</code></pre>
+<p>pg_tables — удобное представление таблиц. pg_class содержит больше типов отношений: обычные таблицы, индексы, последовательности, представления и др.; relkind различает их. pg_namespace хранит схемы. pg_attribute описывает колонки, включая системные и удалённые, поэтому фильтры attnum&gt;0 и NOT attisdropped здесь необходимы. Regclass разрешает точное имя объекта; кавычки вокруг document-flow нужны из-за дефиса. Search_path не должен случайно направить проверку в одноимённую таблицу другой схемы.</p>
+<pre><code>SELECT conname, contype, pg_get_constraintdef(oid)
+FROM pg_constraint
+WHERE conrelid='"document-flow".documents'::regclass;
+SELECT indexname, indexdef FROM pg_indexes
+WHERE schemaname='document-flow' AND tablename='documents';
+SELECT obj_description('"document-flow".documents'::regclass);</code></pre>
+<p>Эти запросы читают фактическое состояние, а не файл миграции. COMMENT на таблице — документация объекта; это не прикладной комментарий сотрудника и не мандатная метка. Нативная MAC-версия PostgreSQL Astra может добавлять собственные поля, команды и системные объекты. Их проверяют по конкретной сборке и существующему дампу, не выдумывают универсальное имя колонки security_label. Для обычных стандартных security labels есть отдельные каталоги pg_seclabel, но это не основание считать их полным описанием нативного MAC.</p>
+<h2 id="migration">11. Почему транзакция не спасает от неверного сценария миграции</h2>
+<p>Транзакция гарантирует атомарность тех команд, которые действительно вошли в неё и дошли до успешного COMMIT. Она не гарантирует, что выбран правильный файл, база, схема и версия. IF NOT EXISTS не проверяет тип существующей колонки. Скрипт может пропустить шаг по неверному условию и совершенно успешно зафиксировать оставшиеся. Поэтому после миграции проверяют целевую структуру отдельно.</p>
+<pre><code>psql -X -h db.lab.example.test -p 5432 -U postgres -d document_flow \
+  -v ON_ERROR_STOP=1 -f checked-migration.sql &gt; migration.log 2&gt;&amp;1
+result=$?
+cat migration.log
+printf 'psql exit=%s\n' "$result"
+test "$result" -eq 0</code></pre>
+<p>Это шаблон запуска уже проверенного файла, а не готовая миграция. <code>2&gt;&amp;1</code> сохраняет stderr вместе со stdout. Код возврата снимается немедленно после psql: последующий cat изменит $?. При pipe через tee нужен Bash pipefail или PIPESTATUS, иначе результатом будет успех tee. Если SQL сам содержит BEGIN/COMMIT, не добавляют внешнюю транзакционную обёртку без проверки. CREATE INDEX CONCURRENTLY, CREATE DATABASE и ряд других команд имеют ограничения на transaction block.</p>
+<p>Проверка после COMMIT должна подтвердить не только наличие поля, но и тип, default, nullability, ограничения и необходимые права. Затем проверяется реальный CGI новым запросом. Таблица миграций показывает заявленную историю, а служебные каталоги — фактическую структуру. Их расхождение нужно объяснить, а не скрыть ручной вставкой «миграция выполнена».</p>
+<h2 id="backup">12. Резервная копия и проверяемое восстановление</h2>
+<pre><code>pg_dump -h 127.0.0.1 -U postgres -d course_db -Fc -f course.dump
+pg_restore --list course.dump
+createdb -h 127.0.0.1 -U postgres course_restore
+pg_restore -h 127.0.0.1 -U postgres -d course_restore \
+  --exit-on-error --single-transaction course.dump</code></pre>
+<p>Команды относятся к учебной БД и тому же тестовому кластеру, где роли уже существуют. <code>-Fc</code> создаёт custom archive; --list читает оглавление, но не доказывает восстанавливаемость всех данных. Настоящий тест — восстановление в отдельную новую базу и проверки строк, ограничений и прав. --single-transaction обеспечивает атомарность совместимого восстановления; для больших баз оценивают размер и длительность. Пользователи/роли кластерного уровня не входят в обычный дамп одной базы.</p>
+<p>На Astra учитываются мандатные метки самого файла и объектов архива. Ошибка установки cluster maclabel не исправляется автоматически выключением всех меток. В нашем выезде потребовалось различать вывод pg_dump в файл через -f и через stdout; итоговый архив всё равно требует проверки. Универсальную лабораторию обычного PostgreSQL нельзя выдавать за доказательство восстановления нативной MAC-базы.</p>
+<p>Для удаления учебных данных сначала закройте сеансы course_db/course_restore, затем в отдельном тестовом кластере удалите эти две базы. После этого можно удалить три созданные NOLOGIN-роли. Не используйте DROP OWNED/REASSIGN OWNED по рабочим ролям и не делайте TRUNCATE всех таблиц как способ вернуть исходную схему: TRUNCATE удаляет данные, а не структуру.</p>
+
+<h2 id="labels">13. SQL-права, RLS и мандатные метки — разные фильтры видимости</h2>
+<p>Прикладная колонка privacy_level хранит число, которое понимает ДО. Нативная мандатная метка Astra — атрибут безопасности, применяемый соответствующим механизмом ОС/СУБД. Наличие числа 2 в колонке само по себе не доказывает, что файловый объект, строка БД и текущий процесс имеют согласованные метки. Связь обеспечивается реализацией приложения и механизмами конкретной сборки, а не совпадением названия поля.</p>
+<p>Row-Level Security стандартного PostgreSQL — ещё один механизм. Политики RLS добавляют условия доступа к строкам на основании SQL-выражений и ролей. Это не универсальное имя мандатного контроля Astra. Таблица может иметь выключенный relrowsecurity и при этом подчиняться нативному MAC; обратное тоже требует отдельного понимания окружения.</p>
+<pre><code>SELECT n.nspname, c.relname, c.relrowsecurity, c.relforcerowsecurity
+FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+WHERE n.nspname='document-flow' AND c.relkind IN ('r','p');
+
+SELECT schemaname, tablename, policyname, roles, cmd, qual, with_check
+FROM pg_policies
+WHERE schemaname='document-flow';</code></pre>
+<p>Это чтение стандартных RLS-настроек, не проверка всех мандатных условий. USING определяет допустимые существующие строки для применимых операций, WITH CHECK — допустимые новые версии при записи. Владелец таблицы обычно обходит RLS, если не включено принуждение; superuser и BYPASSRLS требуют отдельного учёта. Поэтому проверка под postgres может показывать больше, чем реальное подключение CGI. Не меняйте RLS ради совпадения с результатом root-проверки.</p>
+<p>Чтобы исследовать неверный счётчик документов, сравнивают список и count в одинаковых условиях: роль, метка, пользователь приложения, фильтры статуса, видимость удалённых строк и момент снимка. Если count запускается другим подключением с расширенными полномочиями, он может честно посчитать недоступные пользователю строки. Если count и список выполнены в Read Committed разными statement, параллельное изменение также может дать краткое расхождение. Постоянное расхождение после прекращения записей указывает на иной класс проблемы.</p>
+<h3>Рабочая последовательность расследования</h3>
+<ol><li>Зафиксировать api/session и текущую метку процесса, под которым воспроизведён запрос. Пароль и токен в отчёт не включать.</li><li>Записать точные URL списка и счётчика, включая query parameters. Отдельно проверить переключатель «только мои» и статусные фильтры.</li><li>На стороне SQL подтвердить current_database, session_user и current_user соответствующего подключения. Не подменять его административным сеансом.</li><li>Сравнить SQL-условия и применимые политики. Проверить soft delete, доступность по маршруту и участие пользователя.</li><li>Повторить в том же контексте после завершения параллельных изменений. Затем проверить другую метку как отдельный тест.</li></ol>
+<p>Факт, что документ читается на более высокой метке, не является разрешением редактировать его оттуда. Направление чтения и записи определяется политикой. Сервер должен отклонять запрещённое действие, даже если фронтенд случайно оставил кнопку. Скрытие кнопки улучшает интерфейс, но не заменяет проверку. Эта разница связывает устройство БД с требованиями к форме ДО, а не остаётся отвлечённой теорией безопасности.</p>
+
+
+
+<p class="sources">Подробности версий: <a href="https://www.postgresql.org/docs/11/protocol-flow.html">протокол v3</a>, <a href="https://www.postgresql.org/docs/11/auth-pg-hba-conf.html">HBA</a>, <a href="https://www.postgresql.org/docs/11/sql-alterdefaultprivileges.html">default privileges</a>, <a href="https://www.postgresql.org/docs/11/transaction-iso.html">изоляция</a>, <a href="https://www.postgresql.org/docs/11/explicit-locking.html">блокировки</a>, <a href="https://www.postgresql.org/docs/11/wal-intro.html">WAL</a>, <a href="https://www.postgresql.org/docs/11/using-explain.html">EXPLAIN</a>. Сетевые причины отказов разобраны в <a href="network.html">первой главе</a>, GSS — в <a href="kerberos.html">главе Kerberos</a>.</p>
+<div class="next"><a href="index.html">← Оглавление</a><a href="operations.html">Далее: Один запрос через весь стенд →</a></div></main><aside class="contents"><div class="nav-title">В этой главе</div><a href="#connection">1. Что происходит до первого SELECT</a><a href="#which-cluster">2. В какой кластер вы попали</a><a href="#hba">3. HBA проверяется сверху вниз без запасного пароля</a><a href="#privileges">4. Права — лестница, а не один GRANT ALL</a><a href="#sql-lab">5. Учебная база, которую можно разобрать без риска для ДО</a><a href="#mvcc">6. Почему два SELECT могут честно видеть разные данные</a><a href="#locks">7. Блокировки и ожидания без перезапуска базы</a><a href="#wal">8. Как COMMIT переживает падение питания</a><a href="#plans">9. План запроса и цена ошибки оценки</a><a href="#catalogs">10. Служебные каталоги для расследования пропавшей колонки</a><a href="#migration">11. Почему транзакция не спасает от неверного сценария миграции</a><a href="#backup">12. Резервная копия и проверяемое восстановление</a><a href="#labels">13. SQL-права, RLS и мандатные метки — разные фильтры видимости</a></aside></div></body></html>

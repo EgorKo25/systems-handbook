@@ -1,0 +1,1 @@
+page_size=4096 pages=16 minor_fault_delta=16 major_fault_delta=0

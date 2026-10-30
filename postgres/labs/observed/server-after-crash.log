@@ -1,0 +1,17 @@
+2026-10-27 21:55:56.038 MSK [65893] LOG:  starting PostgreSQL 18.6 on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+2026-10-27 21:55:56.039 MSK [65893] LOG:  listening on Unix socket "/tmp/pgbook-ymcwym5s/socket/.s.PGSQL.55432"
+2026-10-27 21:55:56.043 MSK [65899] LOG:  database system was interrupted; last known up at 2026-10-27 21:55:54 MSK
+2026-10-27 21:55:56.179 MSK [65899] LOG:  database system was not properly shut down; automatic recovery in progress
+2026-10-27 21:55:56.181 MSK [65899] LOG:  redo starts at 0/3000028
+2026-10-27 21:55:56.181 MSK [65899] LOG:  unexpected pageaddr 0/2000000 in WAL segment 000000010000000000000005, LSN 0/5000000, offset 0
+2026-10-27 21:55:56.181 MSK [65899] LOG:  redo done at 0/4000280 system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+2026-10-27 21:55:56.185 MSK [65897] LOG:  checkpoint starting: end-of-recovery immediate wait
+2026-10-27 21:55:56.193 MSK [65897] LOG:  checkpoint complete: wrote 2 buffers (0.1%), wrote 3 SLRU buffers; 0 WAL file(s) added, 0 removed, 2 recycled; write=0.002 s, sync=0.001 s, total=0.009 s; sync files=4, longest=0.001 s, average=0.001 s; distance=32768 kB, estimate=32768 kB; lsn=0/5000028, redo lsn=0/5000028
+2026-10-27 21:55:56.194 MSK [65893] LOG:  database system is ready to accept connections
+2026-10-27 21:55:56.230 MSK [65893] LOG:  received fast shutdown request
+2026-10-27 21:55:56.231 MSK [65893] LOG:  aborting any active transactions
+2026-10-27 21:55:56.232 MSK [65893] LOG:  background worker "logical replication launcher" (PID 65903) exited with exit code 1
+2026-10-27 21:55:56.232 MSK [65897] LOG:  shutting down
+2026-10-27 21:55:56.249 MSK [65897] LOG:  checkpoint starting: shutdown immediate
+2026-10-27 21:55:56.254 MSK [65897] LOG:  checkpoint complete: wrote 3 buffers (0.1%), wrote 0 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.007 s; sync files=3, longest=0.001 s, average=0.001 s; distance=16384 kB, estimate=31129 kB; lsn=0/6000028, redo lsn=0/6000028
+2026-10-27 21:55:56.265 MSK [65893] LOG:  database system is shut down

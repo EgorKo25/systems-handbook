@@ -1,0 +1,175 @@
+Синтетический учебный PCAP; реальная сеть не использована.
+Захват на Ethernet-сегменте клиента. Linktype=1, classic pcap, little-endian.
+Преамбула, SFD, FCS, межкадровый интервал отсутствуют. Padding присутствует.
+Один маршрутизатор, без NAT. TCP options отсутствуют, window scaling не согласован.
+Абсолютные SEQ/ACK. SYN и FIN занимают по одному номеру последовательности.
+Request=73 bytes; response=106 bytes; body=16 bytes.
+
+[
+  {
+    "number": 1,
+    "name": "SYN",
+    "source": "192.0.2.10",
+    "destination": "198.51.100.20",
+    "seq": 1000,
+    "ack": 0,
+    "flags": 2,
+    "payload_length": 0,
+    "ipv4_length": 40,
+    "frame_length": 60,
+    "ipv4_checksum": "0x3c4d",
+    "tcp_checksum": "0xe95e",
+    "ttl": 64
+  },
+  {
+    "number": 2,
+    "name": "SYN, ACK",
+    "source": "198.51.100.20",
+    "destination": "192.0.2.10",
+    "seq": 9000,
+    "ack": 1001,
+    "flags": 18,
+    "payload_length": 0,
+    "ipv4_length": 40,
+    "frame_length": 60,
+    "ipv4_checksum": "0x2d4d",
+    "tcp_checksum": "0xc625",
+    "ttl": 63
+  },
+  {
+    "number": 3,
+    "name": "ACK",
+    "source": "192.0.2.10",
+    "destination": "198.51.100.20",
+    "seq": 1001,
+    "ack": 9001,
+    "flags": 16,
+    "payload_length": 0,
+    "ipv4_length": 40,
+    "frame_length": 60,
+    "ipv4_checksum": "0x3c4c",
+    "tcp_checksum": "0xc626",
+    "ttl": 64
+  },
+  {
+    "number": 4,
+    "name": "HTTP request",
+    "source": "192.0.2.10",
+    "destination": "198.51.100.20",
+    "seq": 1001,
+    "ack": 9001,
+    "flags": 24,
+    "payload_length": 73,
+    "ipv4_length": 113,
+    "frame_length": 127,
+    "ipv4_checksum": "0x3c01",
+    "tcp_checksum": "0xdf89",
+    "ttl": 64
+  },
+  {
+    "number": 5,
+    "name": "ACK request",
+    "source": "198.51.100.20",
+    "destination": "192.0.2.10",
+    "seq": 9001,
+    "ack": 1074,
+    "flags": 16,
+    "payload_length": 0,
+    "ipv4_length": 40,
+    "frame_length": 60,
+    "ipv4_checksum": "0x2d4c",
+    "tcp_checksum": "0xc5dd",
+    "ttl": 63
+  },
+  {
+    "number": 6,
+    "name": "HTTP response",
+    "source": "198.51.100.20",
+    "destination": "192.0.2.10",
+    "seq": 9001,
+    "ack": 1074,
+    "flags": 24,
+    "payload_length": 106,
+    "ipv4_length": 146,
+    "frame_length": 160,
+    "ipv4_checksum": "0x2ce1",
+    "tcp_checksum": "0x721c",
+    "ttl": 63
+  },
+  {
+    "number": 7,
+    "name": "server FIN, ACK",
+    "source": "198.51.100.20",
+    "destination": "192.0.2.10",
+    "seq": 9107,
+    "ack": 1074,
+    "flags": 17,
+    "payload_length": 0,
+    "ipv4_length": 40,
+    "frame_length": 60,
+    "ipv4_checksum": "0x2d4a",
+    "tcp_checksum": "0xc572",
+    "ttl": 63
+  },
+  {
+    "number": 8,
+    "name": "ACK server FIN",
+    "source": "192.0.2.10",
+    "destination": "198.51.100.20",
+    "seq": 1074,
+    "ack": 9108,
+    "flags": 16,
+    "payload_length": 0,
+    "ipv4_length": 40,
+    "frame_length": 60,
+    "ipv4_checksum": "0x3c49",
+    "tcp_checksum": "0xc572",
+    "ttl": 64
+  },
+  {
+    "number": 9,
+    "name": "client FIN, ACK",
+    "source": "192.0.2.10",
+    "destination": "198.51.100.20",
+    "seq": 1074,
+    "ack": 9108,
+    "flags": 17,
+    "payload_length": 0,
+    "ipv4_length": 40,
+    "frame_length": 60,
+    "ipv4_checksum": "0x3c48",
+    "tcp_checksum": "0xc571",
+    "ttl": 64
+  },
+  {
+    "number": 10,
+    "name": "ACK client FIN",
+    "source": "198.51.100.20",
+    "destination": "192.0.2.10",
+    "seq": 9108,
+    "ack": 1075,
+    "flags": 16,
+    "payload_length": 0,
+    "ipv4_length": 40,
+    "frame_length": 60,
+    "ipv4_checksum": "0x2d49",
+    "tcp_checksum": "0xc571",
+    "ttl": 63
+  }
+]
+
+Пакет 4, смещения от начала Ethernet:
+0000  02 00 00 00 00 01 02 00 00 00 00 10 08 00 45 00  ..............E.
+0010  00 71 12 34 40 00 40 06 3c 01 c0 00 02 0a c6 33  .q.4@.@.<......3
+0020  64 14 c0 00 1b 58 00 00 03 e9 00 00 23 29 50 18  d....X......#)P.
+0030  fa f0 df 89 00 00 47 45 54 20 2f 61 70 69 2f 73  ......GET /api/s
+0040  65 73 73 69 6f 6e 20 48 54 54 50 2f 31 2e 31 0d  ession HTTP/1.1.
+0050  0a 48 6f 73 74 3a 20 61 70 70 2e 6c 61 62 2e 74  .Host: app.lab.t
+0060  65 73 74 3a 37 30 30 30 0d 0a 43 6f 6e 6e 65 63  est:7000..Connec
+0070  74 69 6f 6e 3a 20 63 6c 6f 73 65 0d 0a 0d 0a     tion: close....
+
+HTTP request repr:
+b'GET /api/session HTTP/1.1\r\nHost: app.lab.test:7000\r\nConnection: close\r\n\r\n'
+
+HTTP response repr:
+b'HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: 16\r\nConnection: close\r\n\r\n{"user":"alice"}'

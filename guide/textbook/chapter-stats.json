@@ -1,0 +1,44 @@
+{
+  "network": {
+    "words": 4422,
+    "sections": 15,
+    "tables": 5,
+    "figures": 2,
+    "labs": 2
+  },
+  "dns": {
+    "words": 3525,
+    "sections": 15,
+    "tables": 6,
+    "figures": 1,
+    "labs": 5
+  },
+  "kerberos": {
+    "words": 2515,
+    "sections": 11,
+    "tables": 2,
+    "figures": 0,
+    "labs": 1
+  },
+  "freeipa": {
+    "words": 2623,
+    "sections": 11,
+    "tables": 4,
+    "figures": 1,
+    "labs": 0
+  },
+  "postgres": {
+    "words": 2966,
+    "sections": 13,
+    "tables": 2,
+    "figures": 1,
+    "labs": 3
+  },
+  "operations": {
+    "words": 2494,
+    "sections": 12,
+    "tables": 3,
+    "figures": 1,
+    "labs": 0
+  }
+}

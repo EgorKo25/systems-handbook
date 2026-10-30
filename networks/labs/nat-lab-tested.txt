@@ -1,0 +1,112 @@
+ФАКТИЧЕСКАЯ ПРОВЕРКА, 27 октября 2026 года.
+Команда: bash nat-lab.sh --run
+Повторный запуск после исправления переносимости пути сценария.
+Обычный пользователь; внутренний сценарий автоматически использовал
+unshare -Urnm, частное пространство монтирования и временный /run.
+Все учебные связи замкнуты внутри стенда, интернет не подключён.
+Ниже сохранён фактический вывод. Число пакетов/байтов может отличаться
+при повторе из-за времени наблюдения и разбиения данных на сегменты.
+Сценарий несколько раз целиком загружает правила в собственном G;
+это обнуляет новые именованные счётчики, а не записи conntrack.
+Проверка NAT=1 и forward>1 выполняется сразу после этапа 3;
+итоговый набор ниже содержит уже счётчики последней загрузки правил.
+
+Стенд: пять новых пространств C, I, G, U, S (уникальный префикс запуска опущен)
+1. Проверка обратного маршрута U к 10.77.10.10 (должен отсутствовать).
+RTNETLINK answers: Network is unreachable
+2. Без SNAT клиент C не получает ответ.
+Ожидаемый отказ: TimeoutError timed out
+3. Со SNAT внешняя служба видит 198.18.0.2.
+HTTP 200; сервер наблюдает: {"peer": "198.18.0.2", "peer_port": 41002, "local": "198.18.1.20", "path": "/nat-lab"}
+Счётчик NAT считает создание привязки, forward — все прошедшие здесь пакеты:
+table ip lab_nat {
+	counter outbound_bindings {
+		packets 1 bytes 60
+	}
+}
+table inet lab_filter {
+	counter routed_packets {
+		packets 12 bytes 953
+	}
+}
+Проверено: NAT=1, forward>1 для одного нового TCP-соединения
+4. DNAT: внешний S входит к I через 198.18.0.2:8080.
+HTTP 200; сервер наблюдает: {"peer": "198.18.1.20", "peer_port": 42001, "local": "10.77.10.20", "path": "/nat-lab"}
+5. Возврат из LAN через внешний адрес без дополнительного SNAT не работает.
+Ожидаемый отказ: TimeoutError timed out
+6. После SNAT возврат через внешний адрес работает; I видит 10.77.10.1.
+HTTP 200; сервер наблюдает: {"peer": "10.77.10.1", "peer_port": 41004, "local": "10.77.10.20", "path": "/nat-lab"}
+7. Новый вход с WAN прямо к C: маршрут добавлен в U, служба C слушает, фильтр G запрещает.
+Ожидаемый отказ: TimeoutError timed out
+table inet lab_filter {
+	counter blocked_new_wan {
+		packets 2 bytes 120
+	}
+}
+Проверено: пакет достиг запрещающего правила G
+Итоговый набор правил только шлюза G:
+table inet lab_filter {
+	counter routed_packets {
+		packets 14 bytes 1073
+	}
+
+	counter blocked_new_wan {
+		packets 2 bytes 120
+	}
+
+	chain input {
+		type filter hook input priority filter; policy drop;
+		iifname "lo" accept
+		ct state invalid drop
+		ct state established,related accept
+		ip protocol icmp icmp type { destination-unreachable, echo-request, time-exceeded, parameter-problem } accept
+	}
+
+	chain forward {
+		type filter hook forward priority filter; policy drop;
+		counter name "routed_packets"
+		ct state invalid drop
+		ct state established,related accept
+		iifname "lan0" oifname "wan0" ip saddr 10.77.10.0/24 ip daddr 198.18.1.20 tcp dport 8080 ct state new accept
+		iifname "wan0" oifname "lan0" ip saddr 198.18.1.20 ip daddr 10.77.10.20 tcp dport 7000 ct status dnat ct state new accept
+		iifname "lan0" oifname "lan0" ip saddr 10.77.10.0/24 ip daddr 10.77.10.20 tcp dport 7000 ct status dnat ct state new accept
+		iifname "wan0" ct state new counter name "blocked_new_wan" drop
+	}
+}
+table ip lab_nat {
+	counter outbound_bindings {
+		packets 0 bytes 0
+	}
+
+	counter published_bindings {
+		packets 1 bytes 60
+	}
+
+	counter hairpin_bindings {
+		packets 1 bytes 60
+	}
+
+	chain prerouting {
+		type nat hook prerouting priority dstnat; policy accept;
+		iifname "wan0" ip saddr 198.18.1.20 ip daddr 198.18.0.2 tcp dport 8080 counter name "published_bindings" dnat to 10.77.10.20:7000
+		iifname "lan0" ip saddr 10.77.10.0/24 ip daddr 198.18.0.2 tcp dport 8080 counter name "published_bindings" dnat to 10.77.10.20:7000
+	}
+
+	chain postrouting {
+		type nat hook postrouting priority srcnat; policy accept;
+		oifname "wan0" ip saddr 10.77.10.0/24 ip daddr 198.18.1.20 tcp dport 8080 counter name "outbound_bindings" snat to 198.18.0.2
+		iifname "lan0" oifname "lan0" ip saddr 10.77.10.0/24 ip daddr 10.77.10.20 tcp dport 7000 ct status dnat counter name "hairpin_bindings" snat to 10.77.10.1
+	}
+}
+Все семь этапов завершены успешно. Доступа к интернету не было.
+Очистка: собственные серверы остановлены, собственные пространства удалены.
+
+ДОПОЛНИТЕЛЬНАЯ ФАКТИЧЕСКАЯ ПРОВЕРКА ПЕРЕНОСИМОСТИ
+Сценарий скопирован в собственный временный каталог под /run/user/<uid>.
+Текущим каталогом выбран тот же каталог; TMPDIR указывает туда же.
+После частного overmount /run исходный путь и TMPDIR недоступны по имени.
+Сценарий читался через заранее открытый файловый дескриптор 3, рабочий
+каталог переключён в /tmp, собственный каталог данных создан явно в /tmp.
+Полностью повторены все семь этапов: PASS, штатная очистка выполнена.
+Внешний временный каталог проверки также удалён.
+Реальная флэшка в проверке не использовалась и не изменялась.

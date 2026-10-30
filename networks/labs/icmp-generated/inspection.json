@@ -1,0 +1,232 @@
+{
+  "echo-request": {
+    "version": 4,
+    "src": "192.0.2.10",
+    "dst": "198.51.100.20",
+    "protocol": 1,
+    "total_length": 32,
+    "stored_bytes": 32,
+    "ip_checksum": "valid",
+    "type": 8,
+    "code": 0,
+    "icmp_checksum": "valid",
+    "identifier": 4660,
+    "sequence": 1,
+    "data_hex": "4e455421"
+  },
+  "echo-reply": {
+    "version": 4,
+    "src": "198.51.100.20",
+    "dst": "192.0.2.10",
+    "protocol": 1,
+    "total_length": 32,
+    "stored_bytes": 32,
+    "ip_checksum": "valid",
+    "type": 0,
+    "code": 0,
+    "icmp_checksum": "valid",
+    "identifier": 4660,
+    "sequence": 1,
+    "data_hex": "4e455421"
+  },
+  "quoted-original-udp": {
+    "version": 4,
+    "src": "192.0.2.10",
+    "dst": "198.51.100.20",
+    "protocol": 17,
+    "total_length": 28,
+    "stored_bytes": 28,
+    "ip_checksum": "valid",
+    "source_port": 53000,
+    "destination_port": 33434,
+    "udp_length": 8,
+    "udp_checksum": "valid"
+  },
+  "port-unreachable": {
+    "version": 4,
+    "src": "198.51.100.20",
+    "dst": "192.0.2.10",
+    "protocol": 1,
+    "total_length": 56,
+    "stored_bytes": 56,
+    "ip_checksum": "valid",
+    "type": 3,
+    "code": 3,
+    "icmp_checksum": "valid",
+    "quoted": {
+      "version": 4,
+      "src": "192.0.2.10",
+      "dst": "198.51.100.20",
+      "protocol": 17,
+      "total_length": 28,
+      "stored_bytes": 28,
+      "ip_checksum": "valid",
+      "source_port": 53000,
+      "destination_port": 33434,
+      "udp_length": 8,
+      "udp_checksum": "valid"
+    }
+  },
+  "ttl-exceeded": {
+    "version": 4,
+    "src": "192.0.2.1",
+    "dst": "192.0.2.10",
+    "protocol": 1,
+    "total_length": 56,
+    "stored_bytes": 56,
+    "ip_checksum": "valid",
+    "type": 11,
+    "code": 0,
+    "icmp_checksum": "valid",
+    "quoted": {
+      "version": 4,
+      "src": "192.0.2.10",
+      "dst": "198.51.100.20",
+      "protocol": 17,
+      "total_length": 28,
+      "stored_bytes": 28,
+      "ip_checksum": "valid",
+      "source_port": 53000,
+      "destination_port": 33434,
+      "udp_length": 8,
+      "udp_checksum": "valid"
+    }
+  },
+  "large-original-udp": {
+    "version": 4,
+    "src": "192.0.2.10",
+    "dst": "198.51.100.20",
+    "protocol": 17,
+    "total_length": 1500,
+    "stored_bytes": 1500,
+    "ip_checksum": "valid",
+    "source_port": 53000,
+    "destination_port": 33434,
+    "udp_length": 1480,
+    "udp_checksum": "valid"
+  },
+  "fragmentation-needed": {
+    "version": 4,
+    "src": "192.0.2.1",
+    "dst": "192.0.2.10",
+    "protocol": 1,
+    "total_length": 56,
+    "stored_bytes": 56,
+    "ip_checksum": "valid",
+    "type": 3,
+    "code": 4,
+    "icmp_checksum": "valid",
+    "quoted": {
+      "version": 4,
+      "src": "192.0.2.10",
+      "dst": "198.51.100.20",
+      "protocol": 17,
+      "total_length": 1500,
+      "stored_bytes": 28,
+      "ip_checksum": "valid",
+      "source_port": 53000,
+      "destination_port": 33434,
+      "udp_length": 1480,
+      "udp_checksum": "not verifiable: quotation incomplete"
+    },
+    "next_hop_mtu": 1400
+  },
+  "nat-error-before": {
+    "version": 4,
+    "src": "203.0.113.1",
+    "dst": "198.51.100.2",
+    "protocol": 1,
+    "total_length": 56,
+    "stored_bytes": 56,
+    "ip_checksum": "valid",
+    "type": 11,
+    "code": 0,
+    "icmp_checksum": "valid",
+    "quoted": {
+      "version": 4,
+      "src": "198.51.100.2",
+      "dst": "203.0.113.9",
+      "protocol": 17,
+      "total_length": 28,
+      "stored_bytes": 28,
+      "ip_checksum": "valid",
+      "source_port": 61000,
+      "destination_port": 33434,
+      "udp_length": 8,
+      "udp_checksum": "valid"
+    }
+  },
+  "nat-error-after": {
+    "version": 4,
+    "src": "203.0.113.1",
+    "dst": "10.77.0.10",
+    "protocol": 1,
+    "total_length": 56,
+    "stored_bytes": 56,
+    "ip_checksum": "valid",
+    "type": 11,
+    "code": 0,
+    "icmp_checksum": "valid",
+    "quoted": {
+      "version": 4,
+      "src": "10.77.0.10",
+      "dst": "203.0.113.9",
+      "protocol": 17,
+      "total_length": 28,
+      "stored_bytes": 28,
+      "ip_checksum": "valid",
+      "source_port": 53000,
+      "destination_port": 33434,
+      "udp_length": 8,
+      "udp_checksum": "valid"
+    }
+  },
+  "ipv6-neighbor-solicitation": {
+    "version": 6,
+    "src": "2001:db8:77::10",
+    "dst": "ff02::1:ff00:1",
+    "payload_length": 32,
+    "hop_limit": 255,
+    "type": 135,
+    "code": 0,
+    "icmp_checksum": "valid",
+    "target": "2001:db8:77::1",
+    "options": [
+      {
+        "type": 1,
+        "length_units": 1,
+        "value_hex": "020000000010"
+      }
+    ]
+  },
+  "ipv6-neighbor-advertisement": {
+    "version": 6,
+    "src": "2001:db8:77::1",
+    "dst": "2001:db8:77::10",
+    "payload_length": 32,
+    "hop_limit": 255,
+    "type": 136,
+    "code": 0,
+    "icmp_checksum": "valid",
+    "target": "2001:db8:77::1",
+    "options": [
+      {
+        "type": 2,
+        "length_units": 1,
+        "value_hex": "020000000001"
+      }
+    ]
+  },
+  "ipv6-duplicate-address-probe": {
+    "version": 6,
+    "src": "::",
+    "dst": "ff02::1:ff00:1",
+    "payload_length": 24,
+    "hop_limit": 255,
+    "type": 135,
+    "code": 0,
+    "icmp_checksum": "valid",
+    "target": "2001:db8:77::1",
+    "options": []
+  }
+}

@@ -1,0 +1,133 @@
+{
+  "bash": "GNU bash, version 5.2.21(1)-release (x86_64-pc-linux-gnu)",
+  "python": "3.12.3 (main, Mar 23 2026, 19:04:32) [GCC 13.3.0]",
+  "checks": 137,
+  "results": [
+    {
+      "number": 1,
+      "title": "Процесс, собственная переменная и окружение",
+      "status": "PASS",
+      "checks": 6,
+      "detail": ""
+    },
+    {
+      "number": 2,
+      "title": "Временный HOME и выбор стартовых файлов",
+      "status": "PASS",
+      "checks": 9,
+      "detail": ""
+    },
+    {
+      "number": 3,
+      "title": "Аргументы как точные отдельные байтовые строки",
+      "status": "PASS",
+      "checks": 5,
+      "detail": ""
+    },
+    {
+      "number": 4,
+      "title": "Разбиение слов и раскрытие имён",
+      "status": "PASS",
+      "checks": 11,
+      "detail": ""
+    },
+    {
+      "number": 5,
+      "title": "Unset, пустота, позиционные параметры и подстановка команды",
+      "status": "PASS",
+      "checks": 9,
+      "detail": ""
+    },
+    {
+      "number": 6,
+      "title": "Порядок дескрипторов и усечение",
+      "status": "PASS",
+      "checks": 10,
+      "detail": ""
+    },
+    {
+      "number": 7,
+      "title": "PIPESTATUS, pipefail, подоболочка и EOF",
+      "status": "PASS",
+      "checks": 12,
+      "detail": ""
+    },
+    {
+      "number": 8,
+      "title": "Условия, выражения и последняя незавершённая строка",
+      "status": "PASS",
+      "checks": 6,
+      "detail": ""
+    },
+    {
+      "number": 9,
+      "title": "Функции, динамическая область и массивы",
+      "status": "PASS",
+      "checks": 8,
+      "detail": ""
+    },
+    {
+      "number": 10,
+      "title": "Errexit: контексты и наследование",
+      "status": "PASS",
+      "checks": 14,
+      "detail": ""
+    },
+    {
+      "number": 11,
+      "title": "Сложные имена и нулевые разделители",
+      "status": "PASS",
+      "checks": 3,
+      "detail": ""
+    },
+    {
+      "number": 12,
+      "title": "Байты, строки, сортировка и соседние дубликаты",
+      "status": "PASS",
+      "checks": 14,
+      "detail": ""
+    },
+    {
+      "number": 13,
+      "title": "Собственный ребёнок, wait и TERM",
+      "status": "PASS",
+      "checks": 4,
+      "detail": ""
+    },
+    {
+      "number": 14,
+      "title": "Интерпретатор, source и CRLF",
+      "status": "PASS",
+      "checks": 6,
+      "detail": ""
+    },
+    {
+      "number": 15,
+      "title": "Согласованное обновление под flock",
+      "status": "PASS",
+      "checks": 3,
+      "detail": ""
+    },
+    {
+      "number": 16,
+      "title": "Публикация, искусственный отказ и fsync",
+      "status": "PASS",
+      "checks": 3,
+      "detail": ""
+    },
+    {
+      "number": 17,
+      "title": "Частичный вывод, синтаксис и отделённая трассировка",
+      "status": "PASS",
+      "checks": 6,
+      "detail": ""
+    },
+    {
+      "number": 18,
+      "title": "Граница между данными и вторым разбором кода",
+      "status": "PASS",
+      "checks": 8,
+      "detail": ""
+    }
+  ]
+}
