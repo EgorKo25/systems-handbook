@@ -1,0 +1,71 @@
+{
+  "format": 1,
+  "date": "2026-10-31",
+  "volume": "git",
+  "original_chapters": 24,
+  "reader_sections": 25,
+  "diagrams": 6,
+  "steps": 46,
+  "local_terms": 140,
+  "new_command_cards": 35,
+  "explained_flags_and_forms": 134,
+  "laboratory": {
+    "format": 1,
+    "suite": "real-git-and-byte-laboratory",
+    "git": "git version 2.43.0",
+    "python": "3.12.3",
+    "platform": "Linux",
+    "windows_executed": false,
+    "tests": 52,
+    "passed": 52,
+    "failures": [],
+    "errors": [],
+    "skipped": [],
+    "ok": true
+  },
+  "reference_search": {
+    "ok": true,
+    "assertions": 94,
+    "uses_shipped_reader_code": true
+  },
+  "preparation_experiments": {
+    "git_mechanisms": 19,
+    "build_and_shell": 9,
+    "jenkinsfile_python_contract": 9,
+    "reference_forms": 11
+  },
+  "not_executed": [
+    "Jenkins controller/agents",
+    "Maven",
+    "Windows"
+  ],
+  "sources": {
+    "git/sources/00-route.html": "f120860f7b268e0f135d0a90b71960183c3afcb284270a3520eb92b791f7030a",
+    "git/sources/01-repository-model.html": "5b9c9ec73a0358c04edfab914b889739153c5af0f3f401c67373d84e848029d3",
+    "git/sources/02-objects.html": "89f15c0e14b7ab4e53a5f39414af5cd20069e83ca5dc9ca644cd2f0a65595961",
+    "git/sources/03-index.html": "9c8cae468a609896252080cb76d2077090cb4543262e292a4aa9a71c5b8867a3",
+    "git/sources/04-history.html": "8e7d6eef1841ff438ddde811cee01df40cb1f3063d7e24ded982839b0bb740ac",
+    "git/sources/05-branches.html": "492d74c067089d8f0ea19e2af926d7d90b56e7c93970da66ea4914a20ece822e",
+    "git/sources/06-diffs.html": "56d2f99121cee13bf08757c233cefad539217fdad2b392c382aa605a9cce1c6f",
+    "git/sources/07-merge.html": "fb9beaaad9e7f74d4f97ef609680d8ed8c535cc03862d0d385e0afd5c0ddd7af",
+    "git/sources/08-rewrite.html": "6cb0aff11112d30ccc4316a188d2cbaf1964f13b31765dc5b9645915bf1f82df",
+    "git/sources/09-recovery.html": "f9825f93a553c45a8ffc68a59e5b9d3796c3c3a3a7f794634e742304e040a3bb",
+    "git/sources/10-remotes.html": "b1968bbaebf4bcd43a349ede56df9e978cad3da35a894aedf01facb3d5d05fd0",
+    "git/sources/11-collaboration.html": "3ebe5bf341dd8c2fae747137b83186b671703e058cc18f5a680f0d819b7b7b66",
+    "git/sources/12-attributes.html": "0240743c5e2e79e1407da1ba74e47fd27a805af373d85170c3c7cea41a646b9e",
+    "git/sources/13-storage-performance.html": "b44db93c18968494807de841d5640aa04bed66e3b0b26449f69ff77a1fdff810",
+    "git/sources/14-build-process.html": "757ef2afefda43084a50c8bdcba4201d918695964bcd8ab656619253bfac071e",
+    "git/sources/15-dependencies.html": "e8f4aee52ec3b7b29ad8f4f89793031415c9ee40e567e45d1d0862cb68f00370",
+    "git/sources/16-reproducibility.html": "447864e2b04c26ae3e2ecad76715db46c531f5d31edbbd0bbb680073e03c5c91",
+    "git/sources/17-build-cache.html": "131422c62fa08ed4b278a01b37544926e5b91655956e83dbfe4af02ac21cd818",
+    "git/sources/18-jenkins-architecture.html": "5d1af8aa49c15c7df3dd8f742c87ac45003fd228791a5bf44c8df59084472998",
+    "git/sources/19-jenkinsfile.html": "3dc0fd57c72ba7485988a393b0bd6d490fc7dd25a7d0b49344cabf579c701a04",
+    "git/sources/20-checks-artifacts.html": "f43892b1a00af9be7e7a719b6d0404f2c062e466f8d5f250a7a927d0828f814e",
+    "git/sources/21-measurement.html": "3719cf9dbb8ba47096c70717b75becbcff318ba07e794d61f8c32b984cf06174",
+    "git/sources/22-lab.html": "dcdebb1a1efb3b5c4be38595b94e3f9b942666ef37d74325c1ec8e95f33cafa0",
+    "git/sources/23-release.html": "9de99aa18b841386f62de2fe7fc98d8afc21cac6443827d1bd78dfdac285cfe7",
+    "git/sources/git_diagrams.py": "57be03a9e0008fb8d60d545a694eaa16a4b7aaabde30f9f329848dce138717de",
+    "git/sources/git_reference.py": "a818c79d7b29dd05d8f06c8807ecd66600ec5ecc4eaff72a2e2943347f1a2a00",
+    "git/sources/git_state_diagrams.py": "393e81bcc82c4ea5384a993ad4e00f215a184d882b3629ece762e4bcfd836c9d"
+  }
+}

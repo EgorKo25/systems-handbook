@@ -1,0 +1,389 @@
+"""Original Git state diagrams for the shared deep-sketch reader.
+
+Data only: importing this module starts no process and writes no files.
+Commit labels A/B/C/M/R denote explicitly described vertices, not abbreviated
+object IDs. Blob IDs below are real SHA-1 IDs of the stated ASCII bytes.
+"""
+
+
+def _field(name, before, after, why):
+    return dict(name=name, before=before, after=after, why=why)
+
+
+def _step(title, explanation, actor, focus, active, states, *fields):
+    return dict(
+        title=title, explanation=explanation, actor=actor,
+        focus=focus.split(), active=active.split(), states=states,
+        fields=list(fields),
+        bands=[dict(label=f['name'], value=f['after'], detail=f['why'])
+               for f in fields],
+    )
+
+
+def _diagram(identifier, chapter, title, intro, assumptions, nodes, edges,
+             steps, takeaway, sources, insert_before):
+    return dict(
+        id=identifier, volume='git', chapter=chapter, anchor=chapter,
+        title=title, intro=intro, assumptions=assumptions,
+        nodes=[dict(id=i, label=label, sub=sub) for i, label, sub in nodes],
+        edges=[dict(id=i, **{'from': start, 'to': end}, label=label)
+               for i, start, end, label in edges],
+        steps=steps, takeaway=takeaway, sources=sources,
+        insert_before=insert_before,
+    )
+
+
+DIAGRAMS = [
+    _diagram(
+        'git-index-three-states', '03-index',
+        'Один путь: три состояния и два разных изменения',
+        'Измените note.txt, подготовьте одну версию и продолжите редактирование. '
+        'Затем проследите, какие байты сохранит commit и что отдельно изменят reset и restore.',
+        'Отдельный учебный SHA-1-репозиторий, ветка main, единственный путь note.txt. '
+        'Буквы A и B — имена вершин для рисунка, не настоящие сокращения хешей. '
+        'A содержит old\\n, B — staged\\n; \\n обозначает один байт LF, а не два знака. '
+        'Для этого пути нет атрибутов преобразования, подписи и обработчики не меняют опыт. '
+        'После B нет обслуживания с удалением объектов. Рабочие байты worktree\\n никогда '
+        'не добавляются: их расчётный хеш не означает, что такой blob записан. '
+        'Стрелки показывают логический поток содержимого, не системные вызовы записи.',
+        [('work', 'Рабочий файл', 'note.txt на диске'),
+         ('index', 'Индекс', 'Подготовленный вариант'),
+         ('head', 'HEAD и main', 'Выбранный снимок'),
+         ('objects', 'Объекты Git', 'Blob, деревья, коммиты')],
+        [('stage', 'work', 'index', 'add: взять байты'),
+         ('store', 'index', 'objects', 'сохранить объекты'),
+         ('select', 'head', 'objects', 'ссылка на коммит'),
+         ('from_head', 'head', 'index', 'restore --staged'),
+         ('to_work', 'index', 'work', 'restore: в файл')],
+        [
+            _step('Чистый исходный снимок',
+                  'HEAD символически указывает на refs/heads/main, а main — на A. '
+                  'Рабочий файл, запись индекса и путь в дереве A содержат одинаковые четыре байта.',
+                  'git status --short: пустой вывод', 'work index head', 'select',
+                  dict(work='old\\n', index='old\\n; stage 0', head='HEAD → main → A',
+                       objects='A; blob 3367afd…'),
+                  _field('Точные байты note.txt', 'old\\n', '6f 6c 64 0a',
+                         'Три ASCII-буквы и один LF; длина содержимого 4 байта.'),
+                  _field('Blob old', 'сохранён', '3367afdbbf91e638efe983616377c60477cc6612',
+                         'SHA-1 вычислен от blob 4, нулевого байта и old с LF.')),
+            _step('Редактор меняет только рабочий файл',
+                  'Запись staged с LF пока существует только как новые рабочие байты. '
+                  'Индекс продолжает выбирать old; текущий коммит A неизменен.',
+                  "printf 'staged\\n' > note.txt", 'work', '',
+                  dict(work='staged\\n', index='old\\n; stage 0', head='HEAD → main → A',
+                       objects='A; прежний blob'),
+                  _field('Рабочие байты', '6f 6c 64 0a', '73 74 61 67 65 64 0a',
+                         'Новый файл длиннее: семь байт; редактирование не обновляет индекс.'),
+                  _field('Краткий статус', 'чисто', ' M note.txt',
+                         'Первая колонка пуста; вторая M означает рабочую разницу относительно индекса.')),
+            _step('Add фиксирует конкретные подготовленные байты',
+                  'Git записывает blob staged с LF и обновляет запись индекса. '
+                  'HEAD по-прежнему выбирает A с old; коммит ещё не создан.',
+                  'git add -- note.txt', 'work index objects', 'stage store',
+                  dict(work='staged\\n', index='staged\\n; stage 0', head='HEAD → main → A',
+                       objects='A; old и staged'),
+                  _field('Blob staged', 'не требовался', '19d9cc8584ac2c7dcf57d2680375e80f099dc481',
+                         'Индекс теперь ссылается на этот точный объект содержимого.'),
+                  _field('Краткий статус', ' M note.txt', 'M  note.txt',
+                         'Рабочий файл совпал с индексом, индекс отличается от A.')),
+            _step('Следующая правка не догоняет индекс',
+                  'Редактор записал worktree с LF: девять байт. Подготовленная версия '
+                  'staged осталась отдельным объектом и отдельной записью.',
+                  "printf 'worktree\\n' > note.txt", 'work index', '',
+                  dict(work='worktree\\n', index='staged\\n; stage 0', head='HEAD → main → A',
+                       objects='A; old и staged'),
+                  _field('Рабочие байты', '73 74 61 67 65 64 0a',
+                         '77 6f 72 6b 74 72 65 65 0a',
+                         'Новый вариант не записан через add и не входит в будущий снимок.'),
+                  _field('Краткий статус', 'M  note.txt', 'MM note.txt',
+                         'Две M описывают две разные пары: A→индекс и индекс→файл.')),
+            _step('Commit сохраняет индекс, не позднюю правку',
+                  'Создан B с деревом, содержащим staged, и родителем A. '
+                  'Main перемещена на B; рабочий файл worktree остался на месте.',
+                  "git commit -m 'Подготовленная версия'", 'index objects head', 'store select',
+                  dict(work='worktree\\n', index='staged\\n; stage 0', head='HEAD → main → B',
+                       objects='A ← B; оба blob'),
+                  _field('Снимок', 'A: old\\n', 'B: staged\\n; parent=A',
+                         'Коммит построен из индекса; B не содержит worktree с LF.'),
+                  _field('Краткий статус', 'MM note.txt', ' M note.txt',
+                         'Индекс совпал с B, а поздняя рабочая правка осталась.')),
+            _step('Soft reset меняет вершину, а не прошлый объект',
+                  'Main возвращена к A. Индекс всё ещё содержит staged, рабочий файл — worktree. '
+                  'B остаётся объектом и находится по журналу перемещения ссылки.',
+                  'git reset --soft HEAD^', 'head objects', 'select',
+                  dict(work='worktree\\n', index='staged\\n; stage 0', head='HEAD → main → A',
+                       objects='A и B существуют'),
+                  _field('Ссылка main', 'B', 'A',
+                         '--soft не заменяет индекс и рабочие файлы.'),
+                  _field('Объект B', 'достижим из main', 'не выбран main; остаётся в хранилище и reflog',
+                         'Недостижимость из одной ветки не является физическим удалением.')),
+            _step('Restore staged выбирает снимок A для индекса',
+                  'Без явного --source режим --staged берёт источник из HEAD. '
+                  'Текущий HEAD выбирает A, поэтому индекс снова содержит old. Рабочий файл не изменён.',
+                  'git restore --staged -- note.txt', 'head index', 'from_head',
+                  dict(work='worktree\\n', index='old\\n; stage 0', head='HEAD → main → A',
+                       objects='A, B и оба blob'),
+                  _field('Запись индекса', 'staged\\n', 'old\\n',
+                         'Снятие подготовки не стирает рабочее содержимое.'),
+                  _field('Краткий статус', 'MM note.txt', ' M note.txt',
+                         'Подготовленная разница с A исчезла, рабочая осталась.')),
+            _step('Обычный restore заменяет рабочие байты индексом',
+                  'Теперь источник по умолчанию — индекс с old. Рабочий файл заменён. '
+                  'Несохранённая версия worktree не становится восстанавливаемой из reflog: '
+                  'в этом опыте её никогда не превращали в сохранённый объект.',
+                  'git restore -- note.txt', 'index work', 'to_work',
+                  dict(work='old\\n', index='old\\n; stage 0', head='HEAD → main → A',
+                       objects='B всё ещё существует'),
+                  _field('Рабочий файл', 'worktree\\n', 'old\\n',
+                         'Восстановление выбранных байтов перезаписало неподготовленную версию.'),
+                  _field('Граница восстановления', 'B хранит staged\\n', 'B не хранит worktree\\n',
+                         'Журнал ссылок помогает найти коммит, а не любое прежнее содержимое редактора.')),
+        ],
+        'Add сохраняет конкретные байты в индекс; commit создаёт снимок из индекса. '
+        'Reset может переместить ссылку без удаления объекта. Restore отдельно выбирает '
+        'источник и назначение; незаписанные рабочие байты не становятся историей автоматически.',
+        ['https://git-scm.com/docs/git-add',
+         'https://git-scm.com/docs/git-reset',
+         'https://git-scm.com/docs/git-restore',
+         'https://git-scm.com/docs/git-reflog'],
+        '<h2>Какие именно пути подготавливает add</h2>'),
+
+    _diagram(
+        'git-merge-index-stages', '07-merge',
+        'Конфликт: маркеры в файле и три записи индекса',
+        'Сопоставьте основание и обе стороны, затем запишите третье решение. '
+        'Удаление маркеров, git add и завершение merge изменяют разные части состояния.',
+        'Обычное слияние topic в main, не rebase. Коммиты M и T имеют общего родителя A. '
+        'Единственный изменённый путь service.conf содержит одну строку ASCII с LF. '
+        'В A порт 8000, в M — 8080, в T — 9000. Никакого сетевого сервиса здесь нет: '
+        'это учебный текстовый файл, а 8443 — выбранное читателем третье значение. '
+        'У обработчиков нет побочных действий; рабочее состояние до merge чистое. '
+        'Буквы — условные имена коммитов; показанные идентификаторы blob вычислены точно.',
+        [('base', 'Общий предок A', 'Исходный снимок'),
+         ('ours', 'Наша main / HEAD', 'Первый родитель'),
+         ('theirs', 'Присоединяемая topic', 'Второй родитель'),
+         ('index', 'Индекс', 'Стадии пути'),
+         ('work', 'Рабочий файл', 'Результат для человека')],
+        [('base_stage', 'base', 'index', 'основание: stage 1'),
+         ('ours_stage', 'ours', 'index', 'наша: stage 2'),
+         ('theirs_stage', 'theirs', 'index', 'их: stage 3'),
+         ('markers', 'index', 'work', 'показать конфликт'),
+         ('resolve', 'work', 'index', 'add: stage 0'),
+         ('commit', 'index', 'ours', 'создать итог R')],
+        [
+            _step('Две стороны разошлись после A',
+                  'Main выбирает M, topic выбирает T. Оба коммита сохранили разные значения '
+                  'той же строки. Наш индекс пока обычный, stage 0, и совпадает с M.',
+                  'Чтение исходного графа', 'base ours theirs', '',
+                  dict(base='A: port=8000', ours='M: port=8080', theirs='T: port=9000',
+                       index='stage 0: port=8080', work='port=8080\\n'),
+                  _field('Граф', 'A — общее основание', 'parent(M)=A; parent(T)=A',
+                         'Различия вычисляются от общего снимка, а не путём голосования коммитов.'),
+                  _field('Наше чистое состояние', 'HEAD=M', 'индекс и файл совпадают с M',
+                         'До начала операции нет посторонних незакоммиченных правок.')),
+            _step('Merge находит основание и сравнивает переходы',
+                  'При git merge topic вычислены A→M: 8000→8080 и A→T: 8000→9000. '
+                  'Автоматический выбор единственного нового значения невозможен.',
+                  'git merge topic', 'base ours theirs', '',
+                  dict(base='8000 → две правки', ours='M: 8080', theirs='T: 9000',
+                       index='stage 0: port=8080', work='port=8080\\n'),
+                  _field('Наша разница', 'port=8000', 'port=8080',
+                         'Изменена та же исходная строка.'),
+                  _field('Их разница', 'port=8000', 'port=9000',
+                         'Другая сторона выбрала несовместимое значение.')),
+            _step('Остановка оставляет исходные варианты в индексе',
+                  'Git записал до трёх конфликтных стадий и маркеры в рабочий файл. '
+                  'HEAD всё ещё M; MERGE_HEAD указывает на T. Итоговый коммит ещё не создан.',
+                  'Merge остановлен с конфликтом', 'index work ours theirs',
+                  'base_stage ours_stage theirs_stage markers',
+                  dict(base='A: 8000', ours='HEAD=M; 8080', theirs='MERGE_HEAD=T; 9000',
+                       index='stages 1/2/3', work='8080 / маркеры / 9000'),
+                  _field('Индекс service.conf', 'одна stage 0',
+                         'stage 1:8000; stage 2:8080; stage 3:9000',
+                         'В этом конфликте содержимого присутствуют все три варианта.'),
+                  _field('История', 'HEAD=M', 'HEAD=M; merge не завершён',
+                         'Конфликтный рабочий файл не является новым коммитом.')),
+            _step('Show читает точную стадию, не маркеры',
+                  'git show :1:service.conf вернёт основание; :2: — нашу сторону; :3: — topic. '
+                  'Маркерный рабочий файл не подменяет сохранённые версии.',
+                  'git ls-files --unmerged; git show :1:service.conf', 'base index', 'base_stage',
+                  dict(base='port=8000\\n', ours='port=8080\\n', theirs='port=9000\\n',
+                       index='stages 1/2/3 сохранены', work='конфликтные маркеры'),
+                  _field('Stage 1 blob', 'исходные 10 байт',
+                         '8714c4baaaf3f639bd7dee092beaa66a0ffa9ed3',
+                         'Содержимое: port=8000 и LF.'),
+                  _field('Stage 2 / stage 3', 'разные сохранённые варианты',
+                         'fc6826aa… / cecd77d3…',
+                         'Это реальные префиксы SHA-1 для port=8080 и port=9000 с LF.')),
+            _step('Человек пишет третье решение в рабочий файл',
+                  'В файле теперь одна строка port=8443 с LF, без маркеров. '
+                  'Индекс по-прежнему содержит стадии 1, 2 и 3: редактирование не означает разрешение для Git.',
+                  "printf 'port=8443\\n' > service.conf", 'work index', '',
+                  dict(base='A: 8000', ours='HEAD=M', theirs='MERGE_HEAD=T',
+                       index='stages 1/2/3', work='port=8443\\n'),
+                  _field('Рабочий результат', 'маркеры 8080/9000', 'port=8443\\n',
+                         'Решение может отличаться от обеих сторон; это ответственность автора результата.'),
+                  _field('Состояние конфликта', 'три стадии', 'три стадии',
+                         'Git не запускает add вслед за редактором автоматически.')),
+            _step('Проверка смысла ещё не меняет индекс',
+                  'Читатель проверяет, что итог содержит ровно согласованную строку. '
+                  'В настоящем проекте здесь нужны проверки формата и поведения связанных компонентов. '
+                  'Само исчезновение маркеров не является проверкой работоспособности.',
+                  'Проверка выбранного результата', 'work index', '',
+                  dict(base='A: 8000', ours='HEAD=M', theirs='MERGE_HEAD=T',
+                       index='ещё stages 1/2/3', work='выбран port=8443'),
+                  _field('Байты результата', 'предложенное решение',
+                         '70 6f 72 74 3d 38 34 34 33 0a',
+                         'Десять байт: port=8443 и один LF.'),
+                  _field('Что доказано', 'маркеров нет', 'читатель согласовал значение',
+                         'Никакой настоящий сервер этой схемой не запущен и не протестирован.')),
+            _step('Add заменяет конфликтные стадии разрешённой',
+                  'Записан blob с port=8443 и создана обычная запись stage 0. '
+                  'Основное состояние пути в индексе больше не конфликтное; HEAD пока всё ещё M.',
+                  'git add -- service.conf', 'work index', 'resolve',
+                  dict(base='A: 8000', ours='HEAD=M', theirs='MERGE_HEAD=T',
+                       index='stage 0: port=8443', work='port=8443\\n'),
+                  _field('Записи индекса', 'stages 1/2/3', 'одна stage 0',
+                         'Git теперь считает подготовленный вариант разрешением конфликта.'),
+                  _field('Итоговый blob', 'рабочие байты',
+                         'eb3961daf40324010a7213211a1f90bf06abf534',
+                         'Восстановленный из этого объекта файл содержит согласованную строку.')),
+            _step('Continue записывает итог и двух родителей',
+                  'Создан новый коммит R с подготовленным деревом. Main переместилась на R. '
+                  'Первый родитель — прежний HEAD M, второй — присоединённый T; прежние объекты не изменены.',
+                  'git merge --continue', 'index ours theirs', 'commit',
+                  dict(base='A сохранён', ours='HEAD → main → R', theirs='topic → T',
+                       index='stage 0: port=8443', work='port=8443\\n'),
+                  _field('Родители R', 'нового коммита нет', 'parent 1=M; parent 2=T',
+                         'Сохранено событие объединения двух линий.'),
+                  _field('Снимок R', 'индекс подготовлен', 'service.conf: port=8443\\n',
+                         'Граф происхождения и выбранное содержимое записаны разными полями объекта.')),
+        ],
+        'Маркеры — представление для человека, конфликтные стадии — состояние индекса. '
+        'Редактирование выбирает результат; add подготавливает его; continue создаёт коммит '
+        'с двумя родителями. Каждое действие имеет отдельный проверяемый эффект.',
+        ['https://git-scm.com/docs/git-merge',
+         'https://git-scm.com/docs/git-ls-files',
+         'https://git-scm.com/docs/gitformat-index'],
+        '<h2>Завершение и отмена</h2>'),
+
+    _diagram(
+        'git-remotes-separate-refs', '10-remotes',
+        'Два клона и сервер: почему fetch не двигает нашу main',
+        'Разделите локальную ветку, локальную отслеживаемую ссылку и фактическую серверную ветку. '
+        'Восемь шагов показывают независимую работу, отказ push, получение и осмысленное объединение.',
+        'Два отдельных клона Алисы и Бориса и локальный bare-сервер. Начальный коммит A содержит '
+        'README с ready и LF. Алиса добавит alice.txt с a=1 и LF, Борис — bob.txt с b=1 и LF. '
+        'Других изменений, серверных обработчиков и конкурирующих обновлений нет. '
+        'В обоих клонах origin указывает на этот сервер, правило fetch — '
+        '+refs/heads/*:refs/remotes/origin/*. HEAD символически выбирает main. '
+        'A/B/C/M — условные имена определённых коммитов, не выдуманные хеши. '
+        'Поток объектов показан в пояснениях: стрелки обозначают операции с логическими состояниями.',
+        [('alice', 'Алиса: своя main', 'refs/heads/main'),
+         ('tracking', 'Алиса: origin/main', 'refs/remotes/origin/main'),
+         ('server', 'Сервер: своя main', 'refs/heads/main'),
+         ('bob', 'Борис: свой клон', 'Своя main и origin/main')],
+        [('push_a', 'alice', 'server', 'push Алисы'),
+         ('fetch_a', 'server', 'tracking', 'fetch Алисы'),
+         ('integrate', 'tracking', 'alice', 'merge отслеживаемой'),
+         ('push_b', 'bob', 'server', 'push Бориса'),
+         ('fetch_b', 'server', 'bob', 'fetch Бориса'),
+         ('push_track', 'alice', 'tracking', 'учёт успешного push')],
+        [
+            _step('Три main совпали только в начальный момент',
+                  'Оба клона получили A. У каждого собственная локальная ветка и собственная '
+                  'копия origin/main. Совпадение значений не превращает их в один общий указатель.',
+                  'Исходное состояние после clone', 'alice tracking server bob', '',
+                  dict(alice='main=A', tracking='origin/main=A', server='main=A',
+                       bob='main=A; origin/main=A'),
+                  _field('Имена в разных репозиториях', 'main, main, main',
+                         'три независимые ссылки на A',
+                         'Имя refs/heads/main локально для своего хранилища.'),
+                  _field('Снимок A', 'одинаковый исходный проект', 'README: ready\\n',
+                         'Байты README одинаковы во всех трёх снимках.')),
+            _step('Алиса фиксирует C только у себя',
+                  'Коммит C с родителем A добавляет alice.txt. Её main переместилась на C. '
+                  'Ни серверная main, ни её собственная origin/main от локального commit не изменились.',
+                  "Алиса: git add -- alice.txt; git commit -m 'Алиса'", 'alice', '',
+                  dict(alice='main=C; parent(C)=A', tracking='origin/main=A', server='main=A',
+                       bob='main=A; origin/main=A'),
+                  _field('Новый файл C', 'alice.txt отсутствует', 'alice.txt: a=1\\n',
+                         'Четыре ASCII-байта, включая LF; README унаследован из A.'),
+                  _field('Удалённое состояние', 'main=A', 'main=A',
+                         'Commit не выполняет сетевую отправку.')),
+            _step('Борис отправляет независимое продолжение B',
+                  'Борис создал B с родителем A и файлом bob.txt, затем отправил main. '
+                  'Сервер принял fast-forward A→B. У Алисы обе ссылки остались прежними.',
+                  'Борис: commit B; git push origin main', 'bob server', 'push_b',
+                  dict(alice='main=C', tracking='origin/main=A', server='main=B; parent(B)=A',
+                       bob='main=B; origin/main=B'),
+                  _field('Новый файл B', 'bob.txt отсутствует', 'bob.txt: b=1\\n',
+                         'B добавляет другой путь; будущий merge этого опыта не конфликтует.'),
+                  _field('Знание Алисы', 'origin/main=A', 'origin/main=A',
+                         'Её отслеживаемая ссылка не подписана на живые изменения сервера.')),
+            _step('Обычный push Алисы отвергнут',
+                  'Алиса предлагает серверу C вместо текущего B. B не является предком C, '
+                  'поэтому обычное обновление main не проходит проверку fast-forward. '
+                  'Серверная ссылка остаётся на B.',
+                  'Алиса: git push origin main', 'alice server', 'push_a',
+                  dict(alice='main=C', tracking='origin/main=A', server='main=B; C отклонён',
+                       bob='main=B; origin/main=B'),
+                  _field('Запрошенное обновление', 'сервер main=B', 'предложено main=C; отказ',
+                         'Объединение линий не выполняется внутри обычного push.'),
+                  _field('Граф', 'C←A и B←A', 'B не предок C',
+                         'Принудительная перезапись скрыла бы B из выбранной серверной линии.')),
+            _step('Fetch обновляет знание, не рабочую ветку',
+                  'Алиса получает B и недостающие связанные объекты. Правило fetch обновляет '
+                  'refs/remotes/origin/main с A на B. Её refs/heads/main остаётся C; '
+                  'рабочий каталог всё ещё выбран из C.',
+                  'Алиса: git fetch origin', 'server tracking alice', 'fetch_a',
+                  dict(alice='main=C; файл alice.txt', tracking='origin/main=B', server='main=B',
+                       bob='main=B; origin/main=B'),
+                  _field('Локальные ссылки Алисы', 'main=C; origin/main=A', 'main=C; origin/main=B',
+                         'Два пространства имён имеют разные назначения.'),
+                  _field('Полученные объекты', 'C и его предки', 'также B и bob.txt из его дерева',
+                         'Наличие объекта не означает, что он выбран текущим HEAD.')),
+            _step('Отдельный merge создаёт проверяемый итог M',
+                  'Алиса объединяет origin/main с собственной main. Пути разные, поэтому '
+                  'этот пример даёт автоматический результат M с родителями C и B. '
+                  'Её рабочий снимок содержит оба новых файла; сервер пока ещё на B.',
+                  'Алиса: git merge --no-edit origin/main', 'tracking alice', 'integrate',
+                  dict(alice='main=M; родители C,B', tracking='origin/main=B', server='main=B',
+                       bob='main=B; origin/main=B'),
+                  _field('Снимок M', 'C: README и alice.txt',
+                         'README; alice.txt a=1\\n; bob.txt b=1\\n',
+                         'Итог нужно проверить до публикации; --no-edit лишь принимает сообщение без редактора.'),
+                  _field('Серверная main', 'B', 'B',
+                         'Локальный merge не отправляет новый коммит автоматически.')),
+            _step('Push публикует продолжение B→M',
+                  'Теперь B является одним из родителей M. Обычный push передаёт недостающие '
+                  'объекты и просит передвинуть серверную main на M. При наших настройках '
+                  'успешная отправка обновляет также соответствующую origin/main Алисы.',
+                  'Алиса: git push origin main', 'alice server tracking', 'push_a push_track',
+                  dict(alice='main=M', tracking='origin/main=M', server='main=M',
+                       bob='main=B; origin/main=B'),
+                  _field('Серверное обновление', 'main=B', 'main=M; принято',
+                         'B достижим из M, поэтому обновление сохраняет опубликованную линию.'),
+                  _field('Локальная отметка отправителя', 'origin/main=B', 'origin/main=M',
+                         'Обновлена по сопоставлению remote.origin.fetch; клон Бориса не меняется.')),
+            _step('Fetch Бориса ещё не переключает его файлы',
+                  'Борис получает M, и его origin/main становится M. Его рабочая main остаётся B. '
+                  'Чтобы выбрать итоговый снимок, ему отдельно понадобится, например, '
+                  'git merge --ff-only origin/main.',
+                  'Борис: git fetch origin', 'server bob', 'fetch_b',
+                  dict(alice='main=M', tracking='origin/main=M', server='main=M',
+                       bob='main=B; origin/main=M'),
+                  _field('Ссылки Бориса', 'main=B; origin/main=B', 'main=B; origin/main=M',
+                         'Получение и интеграция разделены и в другом клоне.'),
+                  _field('Следующий допустимый шаг', 'файлы снимка B', 'merge --ff-only: B→M',
+                         'M продолжает B; быстрое перемещение не потребует ещё одного merge-коммита.')),
+        ],
+        'Refs/heads/main, refs/remotes/origin/main и серверная refs/heads/main — разные '
+        'ссылки. Fetch обновляет локальное знание и объекты; merge выбирает новый локальный '
+        'снимок; push отдельно просит сервер изменить его ссылку.',
+        ['https://git-scm.com/docs/git-fetch',
+         'https://git-scm.com/docs/git-push',
+         'https://git-scm.com/docs/git-merge',
+         'https://git-scm.com/docs/gitrepository-layout'],
+        '<h2>Отправка — запрос изменения чужой ссылки</h2>'),
+]

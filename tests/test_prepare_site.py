@@ -24,6 +24,12 @@ class ExportTests(unittest.TestCase):
         self.write("cache/labs/example.py", "print('teaching example')")
         self.write("cache/sources/00.html", "authoring fragment")
         self.write("cache/sources/eviction.js", "module.exports = {}")
+        self.write("git/index.html", "<h1>Git</h1>")
+        self.write("git/build.py", "authoring builder")
+        self.write("git/sources/01.html", "authoring fragment")
+        self.write("git/labs/trainer.py", "print('trainer')")
+        self.write("git/labs/template/.gitignore", "dist/\n")
+        self.write("git/labs/template/tools/build.py", "print('build')")
         self.write("guide/textbook/index.html", "public supplement")
         self.write(".github/workflows/pages.yml", "authoring")
         self.write("guide/index.html", "private deployment instructions")
@@ -43,6 +49,10 @@ class ExportTests(unittest.TestCase):
         self.assertTrue((output / "cache/sources/eviction.js").is_file())
         self.assertTrue((output / "guide/textbook/index.html").is_file())
         for name in [".git", ".github", "guide/index.html", "cache/sources/00.html", "cache/labs/private-untracked.txt"]:
+            self.assertFalse((output / name).exists(), name)
+        for name in ["git/index.html", "git/labs/trainer.py", "git/labs/template/.gitignore", "git/labs/template/tools/build.py"]:
+            self.assertTrue((output / name).is_file(), name)
+        for name in ["git/build.py", "git/sources/01.html"]:
             self.assertFalse((output / name).exists(), name)
         lines = (output / "SHA256SUMS").read_text().splitlines()
         for line in lines:

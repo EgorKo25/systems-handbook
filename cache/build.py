@@ -223,6 +223,9 @@ def main():
     home=home.replace('</section><section class="notes" style="margin-top:22px"><h2>Как читать',links+'</section><section class="notes" style="margin-top:22px"><h2>Как читать',1)
     home=home.replace('21 новых схем:','Пошаговые схемы:').replace('26 пошаговых схем:','Пошаговые схемы:').replace('31 пошаговая схема:','Пошаговые схемы:')
     write_text(ROOT/'index.html',home)
+    sys.path.insert(0, str(ROOT/'scripts'))
+    from library_catalog import refresh
+    refresh()
     print(json.dumps(dict(words=total,chapters=len(pages),terms=len(glossary),diagrams=len(DIAGRAMS),illustrations=len(ART),steps=sum(len(d['steps']) for d in DIAGRAMS)),ensure_ascii=False))
 
 

@@ -1,0 +1,14 @@
+{
+  "format": 1,
+  "suite": "real-git-and-byte-laboratory",
+  "git": "git version 2.43.0",
+  "python": "3.12.3",
+  "platform": "Linux",
+  "windows_executed": false,
+  "tests": 52,
+  "passed": 52,
+  "failures": [],
+  "errors": [],
+  "skipped": [],
+  "ok": true
+}

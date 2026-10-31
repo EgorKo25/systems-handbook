@@ -28,8 +28,10 @@ jobs:
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
       - name: Test validation and publication rules
         run: python3 -m unittest discover -s tests -v
-      - name: Build cache volume and shared dictionary
-        run: python3 cache/build.py
+      - name: Build maintained volumes and shared dictionary
+        run: python3 scripts/build_library.py
+      - name: Check the stateful Git laboratory
+        run: python3 git/labs/check_lab.py
       - name: Check pages, anchors, JSON and JavaScript
         run: python3 scripts/check_site.py . --node-check
       - name: Check teaching models
@@ -37,6 +39,7 @@ jobs:
           node cache/labs/test-eviction.cjs
           node cache/labs/test-resources.cjs
           node cache/labs/test-resp.cjs
+          node git/labs/check-reader.cjs
       - name: Prepare public reading files
         run: python3 scripts/prepare_site.py _site --revision "${{ github.sha }}"
       - name: Check the exact publication artifact
