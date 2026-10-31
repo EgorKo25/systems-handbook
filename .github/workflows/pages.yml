@@ -30,6 +30,13 @@ jobs:
         run: python3 -m unittest discover -s tests -v
       - name: Build maintained volumes and shared dictionary
         run: python3 scripts/build_library.py
+      - name: Prepare the tested Go toolchain
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version: '1.27.3'
+          cache: false
+      - name: Check the Go teaching service and build contract
+        run: python3 go/labs/check.py
       - name: Check the stateful Git laboratory
         run: python3 git/labs/check_lab.py
       - name: Check pages, anchors, JSON and JavaScript

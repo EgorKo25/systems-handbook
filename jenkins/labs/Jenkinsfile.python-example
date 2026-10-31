@@ -1,0 +1,99 @@
+pipeline {
+    agent { label 'handbook-local' }
+    parameters {
+        string(name: 'SOURCE_REPO', defaultValue: '/absolute/path/to/git-workshop/repo',
+               description: 'Полный путь к собственной рабочей копии лаборатории Git')
+    }
+    options {
+        timeout(time: 10, unit: 'MINUTES')
+        disableConcurrentBuilds()
+        skipDefaultCheckout(true)
+        buildDiscarder(logRotator(numToKeepStr: '20'))
+    }
+    environment {
+        PYTHONDONTWRITEBYTECODE = '1'
+        PYTHONUTF8 = '1'
+    }
+    stages {
+        stage('Исходники') {
+            steps {
+                deleteDir()
+                sh '''
+                    git -c core.hooksPath=/dev/null clone --no-hardlinks --template= -- "$SOURCE_REPO" .
+                '''
+            }
+        }
+        stage('Тесты') {
+            steps {
+                sh 'python3 -m unittest discover -s tests -v'
+            }
+        }
+        stage('Сборка') {
+            steps {
+                sh 'python3 tools/build.py'
+            }
+        }
+        stage('Проверка комплекта') {
+            steps {
+                sh '''python3 - <<'PY'
+import hashlib, json, stat, subprocess, zipfile
+from pathlib import Path
+
+def require(condition, message):
+    if not condition:
+        raise SystemExit(message)
+
+output = Path('dist')
+archive_path = output / 'handbook-demo.zip'
+manifest = json.loads((output / 'manifest.json').read_text(encoding='utf-8'))
+names = ['README.txt', 'app.py']
+require(manifest['format'] == 1 and manifest['archive'] == archive_path.name,
+        'Неизвестный формат комплекта')
+require([r['name'] for r in manifest['members']] == names, 'Неверный перечень входов')
+require(hashlib.sha256(archive_path.read_bytes()).hexdigest() == manifest['sha256'],
+        'Хеш ZIP отличается от manifest.json')
+with zipfile.ZipFile(archive_path) as archive:
+    require(archive.namelist() == names, 'Неверный состав ZIP')
+    require(archive.testzip() is None, 'Повреждён элемент ZIP')
+    for name, record in zip(names, manifest['members']):
+        body = archive.read(name)
+        info = archive.getinfo(name)
+        require(body == Path(name).read_bytes(), 'ZIP отличается от текущего входа')
+        require(record['bytes'] == len(body)
+                and record['sha256'] == hashlib.sha256(body).hexdigest(),
+                'Метаданные входа отличаются от его байтов')
+        require(info.date_time == (2000, 1, 1, 0, 0, 0)
+                and info.compress_type == zipfile.ZIP_STORED
+                and info.create_system == 3
+                and info.external_attr >> 16 == (stat.S_IFREG | 0o644),
+                'Метаданные ZIP не соответствуют правилу сборки')
+head = subprocess.check_output(['git', 'rev-parse', '--verify', 'HEAD'], text=True).strip()
+require(manifest['provenance']['head'] == head
+        and (output / 'source-commit.txt').read_text(encoding='ascii') == head + chr(10),
+        'Сведения о происхождении относятся к другому коммиту')
+require(manifest['provenance']['tracked_and_untracked_dirty'] is False,
+        'Сборщик зафиксировал изменения рабочей копии')
+PY
+'''
+            }
+        }
+        stage('Сохранение комплекта') {
+            steps {
+                archiveArtifacts(
+                    artifacts: 'dist/handbook-demo.zip,dist/manifest.json,dist/source-commit.txt',
+                    allowEmptyArchive: false,
+                    onlyIfSuccessful: true,
+                    fingerprint: true
+                )
+            }
+        }
+    }
+    post {
+        always {
+            echo "Итог: ${currentBuild.currentResult}"
+        }
+        cleanup {
+            deleteDir()
+        }
+    }
+}

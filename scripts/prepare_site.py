@@ -16,7 +16,7 @@ ROOT_FILES = {
     "КАК-ЧИТАТЬ.txt", "ПЛАН-ПРАКТИЧЕСКОГО-СТЕНДА.txt",
     "ПРОВЕРКИ-БИБЛИОТЕКИ.txt", "ПЛАН-РАЗВИТИЯ.txt",
 }
-BOOKS = {"networks", "linux", "bash", "postgres", "cache", "git"}
+BOOKS = {"networks", "linux", "bash", "postgres", "cache", "git", "go", "jenkins"}
 CACHE_LAB_MODELS = {"cache/sources/eviction.js", "cache/sources/resource-labs.js", "cache/sources/resp-lab.js"}
 REVISION = re.compile(r"[0-9a-f]{40,64}")
 
@@ -50,7 +50,7 @@ def is_reading_file(name: str) -> bool:
         return True
     if name in CACHE_LAB_MODELS:
         return True  # Node laboratory checks require these same browser models.
-    if name == "git/labs/template/.gitignore":
+    if name in {"git/labs/template/.gitignore", "go/labs/service/.gitignore"}:
         return True
     if any(p.startswith(".") or p in {"__pycache__", "node_modules"} for p in path.parts):
         return False
@@ -62,7 +62,7 @@ def is_reading_file(name: str) -> bool:
         return path.suffix in {".json", ".png", ".jpg", ".svg", ".txt"}
     if path.parts[0] not in BOOKS:
         return False
-    if path.parts[0] in {"cache", "git"}:
+    if path.parts[0] in {"cache", "git", "go", "jenkins"}:
         if len(path.parts) > 1 and path.parts[1] == "sources":
             return False
         if len(path.parts) == 2 and path.suffix in {".py", ".cjs"}:

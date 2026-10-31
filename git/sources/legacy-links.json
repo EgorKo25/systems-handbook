@@ -1,0 +1,278 @@
+{
+  "14-build-process": {
+    "volume": "go",
+    "chapter": "14-build-process"
+  },
+  "14-build-process-section-1": {
+    "volume": "go",
+    "chapter": "14-build-process"
+  },
+  "14-build-process-section-2": {
+    "volume": "go",
+    "chapter": "14-build-process"
+  },
+  "14-build-process-section-3": {
+    "volume": "go",
+    "chapter": "14-build-process"
+  },
+  "git-source-to-artifact": {
+    "volume": "go",
+    "chapter": "14-build-process"
+  },
+  "git-source-to-artifact-title": {
+    "volume": "go",
+    "chapter": "14-build-process"
+  },
+  "14-build-process-section-4": {
+    "volume": "go",
+    "chapter": "14-build-process"
+  },
+  "14-build-process-section-5": {
+    "volume": "go",
+    "chapter": "14-build-process"
+  },
+  "14-build-process-section-6": {
+    "volume": "go",
+    "chapter": "14-build-process"
+  },
+  "15-dependencies": {
+    "volume": "go",
+    "chapter": "15-dependencies"
+  },
+  "15-dependencies-section-1": {
+    "volume": "go",
+    "chapter": "15-dependencies"
+  },
+  "15-dependencies-section-2": {
+    "volume": "go",
+    "chapter": "15-dependencies"
+  },
+  "15-dependencies-section-3": {
+    "volume": "go",
+    "chapter": "15-dependencies"
+  },
+  "15-dependencies-section-4": {
+    "volume": "go",
+    "chapter": "15-dependencies"
+  },
+  "15-dependencies-section-5": {
+    "volume": "go",
+    "chapter": "15-dependencies"
+  },
+  "15-dependencies-section-6": {
+    "volume": "go",
+    "chapter": "15-dependencies"
+  },
+  "16-reproducibility": {
+    "volume": "go",
+    "chapter": "16-reproducibility"
+  },
+  "16-reproducibility-section-1": {
+    "volume": "go",
+    "chapter": "16-reproducibility"
+  },
+  "16-reproducibility-section-2": {
+    "volume": "go",
+    "chapter": "16-reproducibility"
+  },
+  "16-reproducibility-section-3": {
+    "volume": "go",
+    "chapter": "16-reproducibility"
+  },
+  "16-reproducibility-section-4": {
+    "volume": "go",
+    "chapter": "16-reproducibility"
+  },
+  "16-reproducibility-section-5": {
+    "volume": "go",
+    "chapter": "16-reproducibility"
+  },
+  "17-build-cache": {
+    "volume": "go",
+    "chapter": "17-build-cache"
+  },
+  "17-build-cache-section-1": {
+    "volume": "go",
+    "chapter": "17-build-cache"
+  },
+  "17-build-cache-section-2": {
+    "volume": "go",
+    "chapter": "17-build-cache"
+  },
+  "git-cache-hidden-input": {
+    "volume": "go",
+    "chapter": "17-build-cache"
+  },
+  "git-cache-hidden-input-title": {
+    "volume": "go",
+    "chapter": "17-build-cache"
+  },
+  "17-build-cache-section-3": {
+    "volume": "go",
+    "chapter": "17-build-cache"
+  },
+  "17-build-cache-section-4": {
+    "volume": "go",
+    "chapter": "17-build-cache"
+  },
+  "17-build-cache-section-5": {
+    "volume": "go",
+    "chapter": "17-build-cache"
+  },
+  "17-build-cache-section-6": {
+    "volume": "go",
+    "chapter": "17-build-cache"
+  },
+  "20-checks-artifacts": {
+    "volume": "go",
+    "chapter": "20-checks-artifacts"
+  },
+  "20-checks-artifacts-section-1": {
+    "volume": "go",
+    "chapter": "20-checks-artifacts"
+  },
+  "20-checks-artifacts-section-2": {
+    "volume": "go",
+    "chapter": "20-checks-artifacts"
+  },
+  "20-checks-artifacts-section-3": {
+    "volume": "go",
+    "chapter": "20-checks-artifacts"
+  },
+  "20-checks-artifacts-section-4": {
+    "volume": "go",
+    "chapter": "20-checks-artifacts"
+  },
+  "20-checks-artifacts-section-5": {
+    "volume": "go",
+    "chapter": "20-checks-artifacts"
+  },
+  "21-measurement": {
+    "volume": "go",
+    "chapter": "21-measurement"
+  },
+  "21-measurement-section-1": {
+    "volume": "go",
+    "chapter": "21-measurement"
+  },
+  "21-measurement-section-2": {
+    "volume": "go",
+    "chapter": "21-measurement"
+  },
+  "21-measurement-section-3": {
+    "volume": "go",
+    "chapter": "21-measurement"
+  },
+  "21-measurement-section-4": {
+    "volume": "go",
+    "chapter": "21-measurement"
+  },
+  "21-measurement-section-5": {
+    "volume": "go",
+    "chapter": "21-measurement"
+  },
+  "23-release": {
+    "volume": "go",
+    "chapter": "23-release"
+  },
+  "23-release-section-1": {
+    "volume": "go",
+    "chapter": "23-release"
+  },
+  "23-release-section-2": {
+    "volume": "go",
+    "chapter": "23-release"
+  },
+  "23-release-section-3": {
+    "volume": "go",
+    "chapter": "23-release"
+  },
+  "23-release-section-4": {
+    "volume": "go",
+    "chapter": "23-release"
+  },
+  "23-release-section-5": {
+    "volume": "go",
+    "chapter": "23-release"
+  },
+  "23-release-section-6": {
+    "volume": "go",
+    "chapter": "23-release"
+  },
+  "23-release-section-7": {
+    "volume": "go",
+    "chapter": "23-release"
+  },
+  "18-jenkins-architecture": {
+    "volume": "jenkins",
+    "chapter": "18-jenkins-architecture"
+  },
+  "18-jenkins-architecture-section-1": {
+    "volume": "jenkins",
+    "chapter": "18-jenkins-architecture"
+  },
+  "18-jenkins-architecture-section-2": {
+    "volume": "jenkins",
+    "chapter": "18-jenkins-architecture"
+  },
+  "git-jenkins-queue-process": {
+    "volume": "jenkins",
+    "chapter": "18-jenkins-architecture"
+  },
+  "git-jenkins-queue-process-title": {
+    "volume": "jenkins",
+    "chapter": "18-jenkins-architecture"
+  },
+  "18-jenkins-architecture-section-3": {
+    "volume": "jenkins",
+    "chapter": "18-jenkins-architecture"
+  },
+  "18-jenkins-architecture-section-4": {
+    "volume": "jenkins",
+    "chapter": "18-jenkins-architecture"
+  },
+  "18-jenkins-architecture-section-5": {
+    "volume": "jenkins",
+    "chapter": "18-jenkins-architecture"
+  },
+  "19-jenkinsfile": {
+    "volume": "jenkins",
+    "chapter": "19-jenkinsfile"
+  },
+  "19-jenkinsfile-section-1": {
+    "volume": "jenkins",
+    "chapter": "19-jenkinsfile"
+  },
+  "19-jenkinsfile-section-2": {
+    "volume": "jenkins",
+    "chapter": "19-jenkinsfile"
+  },
+  "19-jenkinsfile-section-3": {
+    "volume": "jenkins",
+    "chapter": "19-jenkinsfile"
+  },
+  "19-jenkinsfile-section-4": {
+    "volume": "jenkins",
+    "chapter": "19-jenkinsfile"
+  },
+  "19-jenkinsfile-section-5": {
+    "volume": "jenkins",
+    "chapter": "19-jenkinsfile"
+  },
+  "19-jenkinsfile-section-6": {
+    "volume": "jenkins",
+    "chapter": "19-jenkinsfile"
+  },
+  "90-git-book": {
+    "volume": "git",
+    "chapter": "00-route"
+  },
+  "91-build-book": {
+    "volume": "go",
+    "chapter": "91-build-book"
+  },
+  "92-jenkins-book": {
+    "volume": "jenkins",
+    "chapter": "00-route"
+  }
+}

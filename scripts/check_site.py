@@ -22,7 +22,7 @@ import sys
 import tempfile
 from urllib.parse import unquote, urlsplit
 
-VOLUMES = {"networks", "linux", "bash", "postgres", "cache", "git"}
+VOLUMES = {"networks", "linux", "bash", "postgres", "cache", "git", "go", "jenkins"}
 JSON_TYPES = {"application/json", "application/ld+json"}
 JS_TYPES = {"", "text/javascript", "application/javascript", "module"}
 URL_ATTRIBUTES = {"href", "xlink:href", "src", "poster", "action", "formaction", "data", "cite"}
@@ -317,7 +317,7 @@ class SiteChecker:
     def check(self):
         if not (self.root / "index.html").is_file():
             self.error(self.root / "index.html", "site entry point is missing")
-        files = sorted(p for p in self.root.rglob("*") if p.is_file() and not any(x.startswith(".") for x in p.relative_to(self.root).parts) and p.relative_to(self.root).parts[:2] not in {("cache", "sources"), ("git", "sources")})
+        files = sorted(p for p in self.root.rglob("*") if p.is_file() and not any(x.startswith(".") for x in p.relative_to(self.root).parts) and p.relative_to(self.root).parts[:2] not in {(v, "sources") for v in ("cache", "git", "go", "jenkins")})
         for path in files:
             if path.suffix.lower() in {".html", ".htm"}:
                 page = Page(path)
@@ -382,7 +382,7 @@ class SiteChecker:
         # Check every shipped JS file, including downloadable laboratory tools.
         known = {p for p, _, _ in self._js_sources}
         for path in sorted(p for p in self.root.rglob("*") if p.suffix in {".js", ".mjs"}):
-            if ".git" not in path.parts and path.relative_to(self.root).parts[:2] not in {("cache", "sources"), ("git", "sources")} and path not in known:
+            if ".git" not in path.parts and path.relative_to(self.root).parts[:2] not in {(v, "sources") for v in ("cache", "git", "go", "jenkins")} and path not in known:
                 self._js_sources.append((path, "JavaScript file", path.read_text(encoding="utf-8")))
         with tempfile.TemporaryDirectory(prefix="handbook-js-check-") as directory:
             for index, (path, label, text) in enumerate(self._js_sources):

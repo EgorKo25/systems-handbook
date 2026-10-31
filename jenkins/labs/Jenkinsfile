@@ -1,0 +1,120 @@
+pipeline {
+    agent { label 'handbook-local' }
+    parameters {
+        string(name: 'SOURCE_REPO', defaultValue: '/absolute/path/to/go-workshop',
+               description: 'Полный путь к своему чистому репозиторию Go-службы')
+    }
+    options {
+        timeout(time: 15, unit: 'MINUTES')
+        disableConcurrentBuilds()
+        skipDefaultCheckout(true)
+        buildDiscarder(logRotator(numToKeepStr: '20'))
+    }
+    environment {
+        PYTHONDONTWRITEBYTECODE = '1'
+        PYTHONUTF8 = '1'
+        GOENV = 'off'
+        GOTOOLCHAIN = 'local'
+        GOWORK = 'off'
+        GOPROXY = 'off'
+        GOTELEMETRY = 'off'
+        GOFLAGS = ''
+        CGO_ENABLED = '0'
+        GOOS = 'linux'
+        GOARCH = 'amd64'
+        GOAMD64 = 'v1'
+        GOEXPERIMENT = ''
+    }
+    stages {
+        stage('Снимок исходников') {
+            steps {
+                deleteDir()
+                script {
+                    def source = params.SOURCE_REPO?.trim()
+                    if (!source || source == '/absolute/path/to/go-workshop' || !source.startsWith('/')) {
+                        error('Укажите абсолютный путь к собственному Go-репозиторию через Build with Parameters. Первый запуск может только создать параметры задания.')
+                    }
+                    withEnv(['SOURCE_REPO_PATH=' + source]) {
+                        sh '''
+                            git -c core.hooksPath=/dev/null clone --no-hardlinks --template= -- "$SOURCE_REPO_PATH" .
+                            go version
+                        '''
+                    }
+                }
+            }
+        }
+        stage('Тесты без повторного использования результата') {
+            steps {
+                sh '''
+                    export GOCACHE="$PWD/.lab-cache/build"
+                    export GOPATH="$PWD/.lab-cache/gopath"
+                    export GOMODCACHE="$PWD/.lab-cache/modules"
+                    go test -count=1 ./...
+                '''
+            }
+        }
+        stage('Сборка') {
+            steps {
+                sh 'python3 tools/build.py --version 1.0.0'
+            }
+        }
+        stage('Проверка комплекта') {
+            steps {
+                sh '''python3 - <<'PY'
+import hashlib, json, subprocess
+from pathlib import Path
+
+def require(condition, message):
+    if not condition:
+        raise SystemExit(message)
+
+output = Path('dist')
+manifest = json.loads((output / 'manifest.json').read_text(encoding='utf-8'))
+require(manifest['format'] == 1 and manifest['binary'] == 'handbook-service',
+        'Неверный формат или имя бинарного файла')
+binary = output / manifest['binary']
+data = binary.read_bytes()
+require(len(data) == manifest['bytes'], 'Размер бинарного файла изменился')
+require(hashlib.sha256(data).hexdigest() == manifest['sha256'], 'SHA-256 не совпал')
+require(manifest['version'] == '1.0.0', 'Неожиданная версия приложения')
+require(manifest['target'] == dict(GOOS='linux', GOARCH='amd64', GOAMD64='v1',
+                                  CGO_ENABLED='0', GOEXPERIMENT=''),
+        'Неожиданная целевая среда')
+require(manifest['flags'] == ['-mod=readonly', '-trimpath', '-buildvcs=false',
+                             '-ldflags=-X main.Version=1.0.0'],
+        'Неожиданные параметры сборки')
+head = subprocess.check_output(['git', 'rev-parse', '--verify', 'HEAD'], text=True).strip()
+require(manifest['source_revision'] == head and manifest['source_dirty'] is False,
+        'Происхождение не соответствует чистому текущему снимку')
+require(manifest['build_script_sha256'] == hashlib.sha256(Path('tools/build.py').read_bytes()).hexdigest(),
+        'Изменился сценарий сборки')
+toolchain = subprocess.check_output(['go', 'version'], text=True).strip()
+require(manifest['toolchain'] == toolchain, 'Сведения о Go отличаются от инструмента агента')
+version = subprocess.check_output([str(binary.resolve()), '-version'], text=True).strip()
+require(version == '1.0.0', 'Запущен другой выпуск')
+PY
+'''
+                sh 'go version -m dist/handbook-service'
+                sh 'go tool buildid dist/handbook-service'
+            }
+        }
+        stage('Сохранение комплекта') {
+            steps {
+                archiveArtifacts(
+                    artifacts: 'dist/handbook-service,dist/manifest.json',
+                    allowEmptyArchive: false,
+                    onlyIfSuccessful: true,
+                    fingerprint: true
+                )
+            }
+        }
+    }
+    post {
+        always {
+            echo "Итог: ${currentBuild.currentResult}"
+        }
+        cleanup {
+            deleteDir()
+        }
+    }
+}

@@ -41,10 +41,26 @@
   },
   {
     "slug": "git",
-    "title": "Git и воспроизводимая сборка: от байтов файла до проверенного выпуска",
+    "title": "Git: от байтов объектов до совместной работы и восстановления",
     "volume": "VI",
-    "words": 34190,
-    "chapters": 25,
-    "terms": 140
+    "words": 44286,
+    "chapters": 26,
+    "terms": 178
+  },
+  {
+    "slug": "go",
+    "title": "Go: сборка, компилятор и исполняемая программа",
+    "volume": "VII",
+    "words": 51829,
+    "chapters": 24,
+    "terms": 170
+  },
+  {
+    "slug": "jenkins",
+    "title": "Jenkins: от установки и плагинов до устройства и эксплуатации Pipeline",
+    "volume": "VIII",
+    "words": 27960,
+    "chapters": 16,
+    "terms": 88
   }
 ]

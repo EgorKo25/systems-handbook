@@ -1,0 +1,42 @@
+{
+  "date": "2026-10-31",
+  "method": "in-app Chromium browser, viewport emulation; not a physical iPhone/Safari run",
+  "viewports": [
+    {
+      "width": 390,
+      "height": 844,
+      "reference": "iPhone 14 CSS size"
+    },
+    {
+      "width": 320,
+      "height": 740,
+      "reference": "narrow-screen regression"
+    }
+  ],
+  "volumes": [
+    "networks",
+    "linux",
+    "bash",
+    "postgres",
+    "cache",
+    "git",
+    "go",
+    "jenkins"
+  ],
+  "verified": [
+    "five fixed thumb controls, at least 51x52 CSS px at 320px",
+    "chapter drawer open/select/close",
+    "reading settings and font change",
+    "shared light/dark theme across home and volumes",
+    "dictionary and compound Go flag value",
+    "step diagram advance",
+    "wide table contained inside horizontal wrapper in all eight volumes",
+    "no page-wide horizontal overflow in tested chapters",
+    "top/bottom safe-area CSS and viewport-fit=cover included"
+  ],
+  "not_verified": [
+    "physical iPhone Safari",
+    "actual onscreen keyboard and hardware safe-area insets",
+    "browser file-origin behavior"
+  ]
+}

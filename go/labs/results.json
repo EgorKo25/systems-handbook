@@ -1,0 +1,20 @@
+{
+  "format": 1,
+  "ok": true,
+  "tests": 7,
+  "go": "go version go1.27.3 linux/amd64",
+  "scope": [
+    "nine HTTP handler cases",
+    "native binary metadata",
+    "different-path byte identity",
+    "empty commit provenance",
+    "changed source invalidation",
+    "version as build input",
+    "output symlink refusal"
+  ],
+  "not_tested": [
+    "Windows execution",
+    "external module proxy",
+    "CGO runtime"
+  ]
+}

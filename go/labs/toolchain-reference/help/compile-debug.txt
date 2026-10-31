@@ -1,0 +1,81 @@
+usage: -d arg[,arg]* and arg is <key>[=<value>]
+
+<key> is one of:
+
+	abiwrap              	print information about ABI wrapper generation
+	alignhot             	enable hot block alignment (currently requires -pgo)
+	append               	print information about append compilation
+	astdump              	for specified function/method, dump AST/IR at interesting points in compilation, to file pkg.func.ast. Use leading ~ for regular expression match.
+	checkptr             	instrument unsafe pointer conversions
+	                     	0: instrumentation disabled
+	                     	1: conversions involving unsafe.Pointer are instrumented
+	                     	2: conversions to unsafe.Pointer force heap allocation
+	closure              	print information about closure compilation
+	compressinstructions 	use compressed instructions when possible (if supported by architecture)
+	converthash          	hash value for use in debugging changes to platform-dependent float-to-[u]int conversion
+	defer                	print information about defer compilation
+	disablenil           	disable nil checks
+	dumpinlcallsitescores	dump scored callsites during inlining
+	dumpinlfuncprops     	dump function properties from inl heuristics to specified file
+	dumpptrs             	show Node pointers values in dump output
+	dwarfinl             	print information about DWARF inlined function creation
+	escapealias          	print information about alias analysis
+	escapealiascheck     	enable additional validation for alias analysis
+	escapedebug          	print information about escape analysis and resulting optimizations
+	escapemutationscalls 	print extra escape analysis diagnostics about mutations and calls
+	export               	print export data
+	fipshash             	hash value for FIPS debugging
+	fmahash              	hash value for use in debugging platform-dependent multiply-add use
+	freeappend           	insert frees of append results when proven safe (0 disabled, 1 enabled, 2 enabled + log)
+	gcadjust             	log adjustments to GOGC
+	gccheck              	check heap/gc use by compiler
+	gcprog               	print dump of GC programs
+	gcstart              	specify "starting" compiler's heap size in MiB
+	gossahash            	hash value for use in debugging the compiler
+	inlbudgetslack       	amount to expand the initial inline budget when new inliner enabled. Defaults to 80 if option not set.
+	inlfuncswithclosures 	allow functions with closures to be inlined
+	inlscoreadj          	set inliner score adjustments (ex: -d=inlscoreadj=panicPathAdj:10/passConstToNestedIfAdj:-90)
+	inlstaticinit        	allow static initialization of inlined calls
+	interfacecycles      	allow anonymous interface cycles
+	libfuzzer            	enable coverage instrumentation for libfuzzer
+	literalallochash     	hash value for use in debugging literal allocation optimizations
+	locationlists        	print information about DWARF location list creation
+	loopvar              	shared (0), 1 (private loop variables, default), 2, private + log
+	loopvarhash          	for debugging changes in loop behavior. Overrides experiment and loopvar flag.
+	maxshapelen          	hash shape names longer than this threshold (default 500)
+	maymorestack         	call named function before all stack growth checks
+	mergelocals          	merge together non-interfering local stack slots
+	mergelocalsdumpfunc  	dump specified func in merge locals
+	mergelocalshash      	hash value for debugging stack slot merging of local variables
+	mergelocalshtrace    	hash-selected trace debug output for locals merging
+	mergelocalstrace     	trace debug output for locals merging
+	nil                  	print information about nil checks
+	nodeadlocals         	disable deadlocals pass
+	noopendefer          	disable open-coded defers
+	norefname            	do not include referenced symbol names in object file
+	panic                	show all compiler panics
+	pctab                	print named pc-value table
+	                     	One of: pctospadj, pctofile, pctoline, pctoinline, pctopcdata
+	pgodebug             	debug profile-guided optimizations
+	pgodevirtualize      	enable profile-guided devirtualization; 0 to disable, 1 to enable interface devirtualization, 2 to enable function devirtualization
+	pgohash              	hash value for debugging profile-guided optimizations
+	pgoinline            	enable profile-guided inlining
+	pgoinlinebudget      	inline budget for hot functions
+	pgoinlinecdfthreshold	cumulative threshold percentage for determining call sites as hot candidates for inlining
+	rangefunccheck       	insert code to check behavior of range iterator functions
+	reshape              	print information about expression reshaping
+	shapify              	print information about shaping recursive types
+	simd                 	print information about simd analysis and code transformation
+	slice                	print information about slice compilation
+	softfloat            	force compiler to emit soft-float code
+	staticcopy           	print information about missed static copies
+	syncframes           	how many writer stack frames to include at sync points in unified export data
+	tailcall             	print information about tail calls
+	typeassert           	print information about type assertion inlining
+	variablemakehash     	hash value for debugging stack allocation of variable-sized make results
+	variablemakethreshold	threshold in bytes for possible stack allocation of variable-sized make results
+	wb                   	print information about write barriers
+	wrapglobalmapctl     	global map init wrap control (0 => default, 1 => off, 2 => stress mode, no size cutoff)
+	wrapglobalmapdbg     	debug trace output for global map init wrapping
+	zerocopy             	enable zero-copy string->[]byte conversions
+	ssa/help             	print help about SSA debugging

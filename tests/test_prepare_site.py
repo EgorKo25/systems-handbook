@@ -27,8 +27,14 @@ class ExportTests(unittest.TestCase):
         self.write("git/index.html", "<h1>Git</h1>")
         self.write("git/build.py", "authoring builder")
         self.write("git/sources/01.html", "authoring fragment")
+        self.write("go/sources/01.html", "Go authoring")
+        self.write("jenkins/sources/01.html", "Jenkins authoring")
+        self.write("go/build.py", "Go builder")
+        self.write("jenkins/build.py", "Jenkins builder")
         self.write("git/labs/trainer.py", "print('trainer')")
         self.write("git/labs/template/.gitignore", "dist/\n")
+        self.write("go/labs/service/.gitignore", "dist/\n")
+        self.write("go/labs/service/go.mod", "module example.org/handbook-service\n")
         self.write("git/labs/template/tools/build.py", "print('build')")
         self.write("guide/textbook/index.html", "public supplement")
         self.write(".github/workflows/pages.yml", "authoring")
@@ -50,9 +56,9 @@ class ExportTests(unittest.TestCase):
         self.assertTrue((output / "guide/textbook/index.html").is_file())
         for name in [".git", ".github", "guide/index.html", "cache/sources/00.html", "cache/labs/private-untracked.txt"]:
             self.assertFalse((output / name).exists(), name)
-        for name in ["git/index.html", "git/labs/trainer.py", "git/labs/template/.gitignore", "git/labs/template/tools/build.py"]:
+        for name in ["git/index.html", "git/labs/trainer.py", "git/labs/template/.gitignore", "git/labs/template/tools/build.py", "go/labs/service/.gitignore", "go/labs/service/go.mod"]:
             self.assertTrue((output / name).is_file(), name)
-        for name in ["git/build.py", "git/sources/01.html"]:
+        for name in ["git/build.py", "git/sources/01.html", "go/build.py", "go/sources/01.html", "jenkins/build.py", "jenkins/sources/01.html"]:
             self.assertFalse((output / name).exists(), name)
         lines = (output / "SHA256SUMS").read_text().splitlines()
         for line in lines:

@@ -1,0 +1,60 @@
+compile: PhaseOptions usage:
+
+    go tool compile -d=ssa/<phase>/<flag>[=<value>|<function_name>]
+
+where:
+
+- <phase> is one of:
+    check, all, build, intrinsics, genssa, number_lines
+    early_phielim_and_copyelim, early_deadcode, short_circuit
+    decompose_user, pre-opt_deadcode, opt, zero_arg_cse, opt_deadcode
+    generic_cse, phiopt, gcse_deadcode, nilcheckelim, prove, divisible
+    divmod, middle_opt, known_bits, early_fuse, expand_calls
+    decompose_builtin, softfloat, branchelim, late_opt, dead_auto_elim, sccp
+    generic_deadcode, late_fuse, check_bce, dse, memcombine, writebarrier
+    insert_resched_checks, cpufeatures, rewrite_tern, lower
+    addressing_modes, late_lower, pair, lowered_deadcode_for_cse
+    lowered_cse, elim_unread_autos, tighten_tuple_selectors
+    lowered_deadcode, checkLower, loop_invariant, late_phielim_and_copyelim
+    tighten, late_deadcode, critical, phi_tighten, likelyadjust, layout
+    schedule, late_nilcheck, flagalloc, regalloc, loop_rotate, trim
+
+- <flag> is one of:
+    on, off, debug, mem, time, test, stats, dump, seed
+
+- <value> defaults to 1
+
+- <function_name> is required for the "dump" flag, and specifies the
+  name of function to dump after <phase>
+
+Phase "all" supports flags "time", "mem", and "dump".
+Phase "intrinsics" supports flags "on", "off", and "debug".
+Phase "genssa" (assembly generation) supports the flag "dump".
+
+If the "dump" flag is specified, the output is written on a file named
+<phase>__<function_name>_<seq>.dump; otherwise it is directed to stdout.
+
+Examples:
+
+    -d=ssa/check/on
+enables checking after each phase
+
+	-d=ssa/check/seed=1234
+enables checking after each phase, using 1234 to seed the PRNG
+used for value order randomization
+
+    -d=ssa/all/time
+enables time reporting for all phases
+
+    -d=ssa/prove/debug=2
+sets debugging level to 2 in the prove pass
+
+Be aware that when "/debug=X" is applied to a pass, some passes
+will emit debug output for all functions, and other passes will
+only emit debug output for functions that match the current
+GOSSAFUNC value.
+
+Multiple flags can be passed at once, by separating them with
+commas. For example:
+
+    -d=ssa/check/on,ssa/all/time
