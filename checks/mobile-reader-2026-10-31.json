@@ -36,7 +36,11 @@
     "command click focuses non-editable heading on phone; desktop retains search autofocus",
     "explicit tap in search still focuses input",
     "text/theme sheet close button measured 44x44, circular",
-    "font controls use touch-action:manipulation; repeated clicks change font only in viewport test"
+    "font controls use touch-action:manipulation; repeated clicks change font only in viewport test",
+    "three font choices and warmth0/50/100 preview; no blur behind reading settings",
+    "font and warmth preserved between Go/PostgreSQL; changed size20px inherited in another volume",
+    "paragraph justification and automatic hyphenation; code formatting preserved",
+    "appearance API103behavior checks and nine-page idempotence"
   ],
   "not_verified": [
     "physical iPhone Safari",

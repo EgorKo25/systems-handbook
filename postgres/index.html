@@ -1,8 +1,10 @@
 <!doctype html><html lang="ru"><head><meta charset="utf-8">
 <script id="library-preferences-bootstrap-v1">(() => {
 'use strict';
-const key='library-theme-v1', oldHome='library-home-theme-v1', oldBook="postgres-book-v1";
+const key='library-theme-v1', appearanceKey='library-reader-appearance-v1', oldHome='library-home-theme-v1', oldBook="postgres-book-v1";
 const valid=value=>value==='dark'||value==='light';
+const fonts={book:'Georgia, "DejaVu Serif", serif',sans:'system-ui, sans-serif',palatino:'Palatino, Georgia, serif'};
+const clamp=(value,low,high)=>Math.max(low,Math.min(high,value));
 function read(){
  let value;
  try{value=localStorage.getItem(key);if(valid(value))return value;}catch{}
@@ -10,10 +12,28 @@ function read(){
  if(oldBook)try{value=JSON.parse(localStorage.getItem(oldBook)||'null')?.theme;if(valid(value))return value;}catch{}
  return 'dark';
 }
-let theme=read();
+function normalizeAppearance(value,base={font:'book',warmth:0,size:null}){
+ const next={...base};if(!value||typeof value!=='object')return next;
+ if(Object.hasOwn(fonts,value.font))next.font=value.font;
+ if(typeof value.warmth==='number'&&Number.isFinite(value.warmth))next.warmth=clamp(value.warmth,0,100);
+ if(value.size===null)next.size=null;
+ else if(typeof value.size==='number'&&Number.isFinite(value.size))next.size=clamp(value.size,16,26);
+ return next;
+}
+function readAppearance(){try{return normalizeAppearance(JSON.parse(localStorage.getItem(appearanceKey)||'null'));}catch{return normalizeAppearance(null);}}
+let theme=read(),appearance=readAppearance();
+let oldSize=null;
+if(oldBook)try{const value=JSON.parse(localStorage.getItem(oldBook)||'null')?.size;if(typeof value==='number'&&Number.isFinite(value)&&value>=16&&value<=26)oldSize=value;}catch{}
 const subscribers=new Set();
 function paint(){
- document.documentElement.dataset.theme=theme;
+ const html=document.documentElement;
+ html.dataset.theme=theme;
+ html.style.setProperty('--reader-font',fonts[appearance.font]);
+ const from=theme==='dark'?[20,32,39]:[244,241,233],to=theme==='dark'?[39,31,22]:[250,227,185];
+ const rgb=from.map((value,index)=>Math.round(value+(to[index]-value)*appearance.warmth/100));
+ html.style.setProperty('--reader-page','rgb('+rgb.join(', ')+')');
+ const size=appearance.size===null?oldSize:appearance.size;
+ if(size!==null)html.style.setProperty('--size',size+'px');
  for(const id of ['theme','home-theme-toggle']){
   const button=document.getElementById(id);if(!button)continue;
   const dark=theme==='dark';button.textContent=dark?'Светлая тема':'Тёмная тема';
@@ -21,17 +41,24 @@ function paint(){
   button.setAttribute('aria-label',dark?'Включить светлую тему':'Включить тёмную тему');
  }
 }
-function apply(value){if(!valid(value))return theme;theme=value;paint();for(const update of subscribers)update(theme);return theme;}
+function notify(){paint();for(const update of subscribers)update(theme,{...appearance});}
+function apply(value){if(!valid(value))return theme;theme=value;notify();return theme;}
 window.LibraryPreferences={
  get theme(){return theme;},
+ get appearance(){return {...appearance};},
  setTheme(value){if(!valid(value))return theme;try{localStorage.setItem(key,value);}catch{}return apply(value);},
+ setAppearance(partial){appearance=normalizeAppearance(partial,appearance);try{localStorage.setItem(appearanceKey,JSON.stringify(appearance));}catch{}notify();return {...appearance};},
  subscribe(update){subscribers.add(update);return ()=>subscribers.delete(update);}
 };
-// Migrate only the shared scalar; no book notes, font size or progress is rewritten.
+// Only shared scalars are migrated; notes and other book data are untouched.
 try{if(!valid(localStorage.getItem(key)))localStorage.setItem(key,theme);}catch{}
 paint();
-window.addEventListener('storage',event=>{if(event.key===key||event.key===null)apply(valid(event.newValue)?event.newValue:read());});
-window.addEventListener('pageshow',()=>apply(read()));
+window.addEventListener('storage',event=>{
+ if(event.key===key)apply(valid(event.newValue)?event.newValue:read());
+ else if(event.key===appearanceKey){try{appearance=normalizeAppearance(JSON.parse(event.newValue||'null'));}catch{appearance=normalizeAppearance(null);}notify();}
+ else if(event.key===null){theme=read();appearance=readAppearance();notify();}
+});
+window.addEventListener('pageshow',()=>{theme=read();appearance=readAppearance();notify();});
 function ready(){
  paint();
  const button=document.getElementById('home-theme-toggle');
@@ -94,8 +121,10 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
 .fc-body>.fc-current{justify-content:flex-start}.fc-current input[type=checkbox]{width:15px;min-width:15px;height:15px;flex:0 0 15px;margin:3px 0 0;padding:0}.fc-current span{min-width:0;flex:1}
 </style><style id="library-phone-style">
-.phone-tools,.phone-view,.phone-backdrop,.phone-sidebar-close{display:none}
+.phone-tools,.phone-view,.phone-backdrop,.phone-sidebar-close{display:none}.phone-backdrop{border:0;border-radius:0;padding:0}
+body{background:var(--reader-page,var(--bg))}.chapter{font-family:var(--reader-font,var(--serif))}.chapter p,.chapter li,.command-card p,.term p{text-align:justify;text-align-last:start;text-justify:inter-word;hyphens:auto;-webkit-hyphens:auto;overflow-wrap:break-word}.chapter pre,.chapter code{hyphens:none;-webkit-hyphens:none;text-align:start}
 @media(max-width:750px){
+.phone-settings-preview .phone-backdrop:not([hidden]){background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none}.phone-view .phone-view-head{margin-bottom:14px}.phone-typefaces{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:4px 0 16px}.phone-typefaces button{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;min-height:60px;min-width:0;border-radius:13px;padding:8px 3px}.phone-typefaces button strong{font-size:24px;line-height:1}.phone-typefaces button span{font:11px/1.3 var(--sans)}.phone-typefaces button[aria-pressed=true]{border-color:var(--accent);background:var(--soft);box-shadow:inset 0 0 0 1px var(--accent)}[data-phone-typeface=book] strong{font-family:Georgia,serif}[data-phone-typeface=sans] strong{font-family:system-ui,sans-serif}[data-phone-typeface=palatino] strong{font-family:Palatino,Georgia,serif}.phone-warmth{margin:0 0 16px}.phone-warmth>label{display:flex;justify-content:space-between;gap:12px;font:650 13px var(--sans)}.phone-warmth>label output{color:var(--muted);font-weight:400}.phone-warmth input[type=range]{appearance:none;-webkit-appearance:none;display:block;width:100%;height:38px;margin:4px 0 0;background:transparent;cursor:pointer}.phone-warmth input::-webkit-slider-runnable-track{height:8px;border-radius:9px;background:linear-gradient(90deg,#dce8ed,#dfac59)}.phone-warmth input::-moz-range-track{height:8px;border-radius:9px;background:linear-gradient(90deg,#dce8ed,#dfac59)}.phone-warmth input::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;width:25px;height:25px;border:3px solid var(--paper);border-radius:50%;background:var(--accent);box-shadow:0 1px 5px #0004;margin-top:-8px}.phone-warmth input::-moz-range-thumb{width:20px;height:20px;border:3px solid var(--paper);border-radius:50%;background:var(--accent);box-shadow:0 1px 5px #0004}.phone-warmth-ends{display:flex;justify-content:space-between;color:var(--muted);font:11px var(--sans)}
 .phone-view button,.phone-sidebar-close,.drawer button,.deep-sketch button{touch-action:manipulation}.phone-view .phone-view-head button{width:44px;height:44px;min-width:44px;min-height:44px;flex:0 0 44px;display:grid;place-items:center;padding:0;line-height:1;border-radius:50%;font-size:22px}.phone-view-head button svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
 .topbar{padding-top:calc(10px + env(safe-area-inset-top))!important}.sidebar{padding-top:calc(20px + env(safe-area-inset-top))!important}.drawer{padding-top:calc(22px + env(safe-area-inset-top))!important}html{scroll-padding-top:calc(76px + env(safe-area-inset-top))!important}
 .phone-reference-hint{display:none!important}.deep-sketch .ds-navigation>button{min-width:44px;min-height:44px}.deep-sketch .ds-steps{gap:5px}.deep-sketch .ds-steps button{width:38px;height:38px;min-width:38px;min-height:38px}
@@ -3213,9 +3242,9 @@ window.addEventListener('hashchange',()=>select(location.hash));
 function updateProgress(){const max=document.documentElement.scrollHeight-innerHeight;let percent=max>0?Math.min(100,Math.max(0,scrollY/max*100)):100;$('#progress').style.width=percent+'%';$('#page-progress').textContent=Math.round(percent)+'% главы';}
 let scrollTimer;addEventListener('scroll',()=>{updateProgress();clearTimeout(scrollTimer);scrollTimer=setTimeout(()=>{state.scroll[state.current]=scrollY;save();},350);},{passive:true});
 $('#theme').addEventListener('click',()=>{state.theme=window.LibraryPreferences.setTheme(window.LibraryPreferences.theme==='dark'?'light':'dark');applyPreferences();save();});
-function applyPreferences(){state.theme=window.LibraryPreferences.theme;document.documentElement.dataset.theme=state.theme;document.documentElement.style.setProperty('--size',state.size+'px');$('#theme').textContent=state.theme==='dark'?'Светлая тема':'Тёмная тема';}
+function applyPreferences(){state.theme=window.LibraryPreferences.theme;const appearance=window.LibraryPreferences.appearance;if(appearance.size!==null)state.size=appearance.size;document.documentElement.dataset.theme=state.theme;document.documentElement.style.setProperty('--size',state.size+'px');$('#theme').textContent=state.theme==='dark'?'Светлая тема':'Тёмная тема';}
 window.LibraryPreferences.subscribe(()=>applyPreferences());
-$('#font-down').onclick=()=>{state.size=Math.max(16,state.size-1);applyPreferences();save();};$('#font-up').onclick=()=>{state.size=Math.min(26,state.size+1);applyPreferences();save();};
+$('#font-down').onclick=()=>{state.size=window.LibraryPreferences.setAppearance({size:Math.max(16,(Number(state.size)||19)-1)}).size;applyPreferences();save();};$('#font-up').onclick=()=>{state.size=window.LibraryPreferences.setAppearance({size:Math.min(26,(Number(state.size)||19)+1)}).size;applyPreferences();save();};
 $('#menu').onclick=()=>{let open=$('#side-nav').classList.toggle('open');$('#menu').setAttribute('aria-expanded',String(open));};
 $$('.read-toggle').forEach(b=>b.onclick=()=>{let id=b.closest('.chapter').id;state.read[id]=!state.read[id];save();updateRead();});
 $$('.note').forEach(n=>{const id=n.closest('.chapter').id;n.value=state.notes[id]||'';n.addEventListener('input',()=>{state.notes[id]=n.value;const ok=save();$('.note-state',n.parentElement).textContent=ok?'Заметка сохранена в этом браузере.':'Браузер не разрешил сохранение. Скопируйте заметку в отдельный файл.';});});
@@ -3945,7 +3974,7 @@ function mount(container,command){for(const details of container.querySelectorAl
  }}
 root.FlagComparison={mount,runPair,fileChanges};
 })(typeof globalThis==='object'?globalThis:this);
-</script><div id="library-phone-controls"><button id="phone-backdrop" class="phone-backdrop" aria-label="Закрыть панель" hidden></button><section id="phone-view" class="phone-view" role="dialog" aria-modal="true" aria-labelledby="phone-view-title" hidden><div class="phone-view-head"><h2 id="phone-view-title">Текст и тема</h2><button type="button" data-phone-close aria-label="Закрыть настройки чтения"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div><div class="phone-font-row"><button type="button" data-phone-font="down" aria-label="Уменьшить шрифт">A−</button><output>Размер текста</output><button type="button" data-phone-font="up" aria-label="Увеличить шрифт">A+</button></div><button type="button" class="phone-theme-toggle" data-phone-theme>Тема</button></section><nav id="phone-tools" class="phone-tools" aria-label="Управление чтением"><button type="button" data-phone-action="prev"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg><span>Назад</span></button><button type="button" data-phone-action="chapters" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg><span>Главы</span></button><button type="button" data-phone-action="dictionary" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7a3 3 0 0 1 3 3v14a4 4 0 0 0-4-2H4zM14 7a3 3 0 0 1 3-3h3v15h-3a4 4 0 0 0-3 2"/></svg><span>Справка</span></button><button type="button" data-phone-action="view" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 18 5-12 5 12M5 14h6M16 18l3-8 3 8M17 15h4"/></svg><span>Вид</span></button><button type="button" data-phone-action="next"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 6 6 6-6 6"/></svg><span>Дальше</span></button></nav><script>(()=>{'use strict';
+</script><div id="library-phone-controls"><button id="phone-backdrop" class="phone-backdrop" aria-label="Закрыть панель" hidden></button><section id="phone-view" class="phone-view" role="dialog" aria-modal="true" aria-labelledby="phone-view-title" hidden><div class="phone-view-head"><h2 id="phone-view-title">Текст и тема</h2><button type="button" data-phone-close aria-label="Закрыть настройки чтения"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div><div class="phone-font-row"><button type="button" data-phone-font="down" aria-label="Уменьшить шрифт">A−</button><output>Размер текста</output><button type="button" data-phone-font="up" aria-label="Увеличить шрифт">A+</button></div><div class="phone-typefaces" role="group" aria-label="Шрифт текста"><button type="button" data-phone-typeface="book" aria-label="Шрифт Georgia" aria-pressed="true"><strong>Aa</strong><span>Книжный</span></button><button type="button" data-phone-typeface="sans" aria-label="Системный шрифт" aria-pressed="false"><strong>Aa</strong><span>Системный</span></button><button type="button" data-phone-typeface="palatino" aria-label="Шрифт Palatino" aria-pressed="false"><strong>Aa</strong><span>Palatino</span></button></div><div class="phone-warmth"><label for="phone-warmth">Теплота страницы <output data-phone-warmth-value>0%</output></label><input id="phone-warmth" data-phone-warmth type="range" min="0" max="100" step="5" value="0"><div class="phone-warmth-ends"><span>Нейтрально</span><span>Теплее</span></div></div><button type="button" class="phone-theme-toggle" data-phone-theme>Тема</button></section><nav id="phone-tools" class="phone-tools" aria-label="Управление чтением"><button type="button" data-phone-action="prev"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg><span>Назад</span></button><button type="button" data-phone-action="chapters" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg><span>Главы</span></button><button type="button" data-phone-action="dictionary" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7a3 3 0 0 1 3 3v14a4 4 0 0 0-4-2H4zM14 7a3 3 0 0 1 3-3h3v15h-3a4 4 0 0 0-3 2"/></svg><span>Справка</span></button><button type="button" data-phone-action="view" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 18 5-12 5 12M5 14h6M16 18l3-8 3 8M17 15h4"/></svg><span>Вид</span></button><button type="button" data-phone-action="next"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 6 6 6-6 6"/></svg><span>Дальше</span></button></nav><script>(()=>{'use strict';
 const bar=document.getElementById('phone-tools'),view=document.getElementById('phone-view'),backdrop=document.getElementById('phone-backdrop'),side=document.getElementById('side-nav'),dictionary=document.getElementById('dictionary');
 if(!bar||!view||!side||!dictionary)return;
 const mq=matchMedia('(max-width:750px)'),button=name=>bar.querySelector('[data-phone-action="'+name+'"]');
@@ -3956,9 +3985,14 @@ function sync(){
  button('chapters').setAttribute('aria-expanded',String(opened));button('dictionary').setAttribute('aria-expanded',String(dictOpen));
  backdrop.hidden=!mq.matches||!(opened||dictOpen||!view.hidden);
  document.body.classList.toggle('phone-panel-open',mq.matches&&!backdrop.hidden);
+ document.body.classList.toggle('phone-settings-preview',mq.matches&&!view.hidden);
  const size=parseInt(document.documentElement.style.getPropertyValue('--size'),10)||19;
  view.querySelector('output').textContent='Размер текста · '+size;
  view.querySelector('[data-phone-theme]').textContent=document.documentElement.dataset.theme==='dark'?'☀  Светлая тема':'☾  Тёмная тема';
+ const appearance=window.LibraryPreferences?.appearance||{font:'book',warmth:0};
+ for(const control of view.querySelectorAll('[data-phone-typeface]'))control.setAttribute('aria-pressed',String(control.dataset.phoneTypeface===appearance.font));
+ view.querySelector('[data-phone-warmth]').value=appearance.warmth;
+ view.querySelector('[data-phone-warmth-value]').textContent=appearance.warmth+'%';
 }
 function closeAll(){closeView();side.classList.remove('open');document.getElementById('menu').setAttribute('aria-expanded','false');if(!dictionary.hidden)document.getElementById('dictionary-close').click();sync();}
 bar.addEventListener('click',event=>{
@@ -3972,11 +4006,13 @@ bar.addEventListener('click',event=>{
  if(action==='dictionary'){closeView();side.classList.remove('open');document.getElementById(dictionary.hidden?'dictionary-open':'dictionary-close').click();sync();return;}
  if(action==='view'){const was=view.hidden;closeAll();view.hidden=!was;button('view').setAttribute('aria-expanded',String(was));if(was)view.querySelector('[data-phone-close]').focus();sync();}
 });
-view.addEventListener('click',event=>{const target=event.target.closest('button');if(!target)return;if(target.hasAttribute('data-phone-close')){closeView();sync();button('view').focus();}if(target.dataset.phoneFont){document.getElementById(target.dataset.phoneFont==='up'?'font-up':'font-down').click();sync();}if(target.hasAttribute('data-phone-theme')){document.getElementById('theme').click();sync();}});
+view.addEventListener('click',event=>{const target=event.target.closest('button');if(!target)return;if(target.hasAttribute('data-phone-close')){closeView();sync();button('view').focus();}if(target.dataset.phoneFont){document.getElementById(target.dataset.phoneFont==='up'?'font-up':'font-down').click();sync();}if(target.hasAttribute('data-phone-theme')){document.getElementById('theme').click();sync();}if(target.dataset.phoneTypeface){window.LibraryPreferences?.setAppearance?.({font:target.dataset.phoneTypeface});sync();}});
+view.addEventListener('input',event=>{if(event.target.matches('[data-phone-warmth]')){window.LibraryPreferences?.setAppearance?.({warmth:Number(event.target.value)});sync();}});
 view.addEventListener('dblclick',event=>{if(event.target.closest('button'))event.preventDefault();});
 view.addEventListener('keydown',event=>{if(event.key!=='Tab')return;const all=[...view.querySelectorAll('button')],first=all[0],last=all.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}});
 backdrop.addEventListener('click',closeAll);addEventListener('keydown',event=>{if(event.key==='Escape')closeAll();});
 const close=document.createElement('button');close.type='button';close.className='phone-sidebar-close';close.textContent='Закрыть главы ×';close.addEventListener('click',closeAll);side.prepend(close);
 new MutationObserver(sync).observe(side,{attributes:true,attributeFilter:['class']});new MutationObserver(sync).observe(dictionary,{attributes:true,attributeFilter:['hidden']});new MutationObserver(sync).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+window.LibraryPreferences?.subscribe(sync);
 addEventListener('hashchange',()=>{closeView();sync();});mq.addEventListener('change',()=>{if(!mq.matches)closeAll();sync();});sync();
 })();</script></div><!-- /library-phone-controls --></body></html>
