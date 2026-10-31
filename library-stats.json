@@ -35,8 +35,8 @@
     "slug": "cache",
     "title": "Кэш и базы данных в памяти: от ускорения чтения до Redis и Memcached",
     "volume": "V",
-    "words": 53949,
+    "words": 75040,
     "chapters": 40,
-    "terms": 203
+    "terms": 226
   }
 ]

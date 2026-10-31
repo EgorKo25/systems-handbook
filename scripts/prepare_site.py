@@ -17,6 +17,7 @@ ROOT_FILES = {
     "ПРОВЕРКИ-БИБЛИОТЕКИ.txt",
 }
 BOOKS = {"networks", "linux", "bash", "postgres", "cache"}
+CACHE_LAB_MODELS = {"cache/sources/eviction.js", "cache/sources/resource-labs.js", "cache/sources/resp-lab.js"}
 REVISION = re.compile(r"[0-9a-f]{40,64}")
 
 
@@ -47,6 +48,8 @@ def is_reading_file(name: str) -> bool:
         return False
     if name in ROOT_FILES:
         return True
+    if name in CACHE_LAB_MODELS:
+        return True  # Node laboratory checks require these same browser models.
     if any(p.startswith(".") or p in {"__pycache__", "node_modules"} for p in path.parts):
         return False
     if path.suffix in {".pyc", ".pyo"}:

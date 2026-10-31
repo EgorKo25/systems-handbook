@@ -1,0 +1,413 @@
+{
+  "status": "PASS",
+  "kind": "owned Linux loopback Redis semantic checks",
+  "cases": [
+    {
+      "name": "server supports Redis 7+ commands",
+      "actual": true,
+      "expected": true,
+      "status": "PASS"
+    },
+    {
+      "name": "RESP request byte length",
+      "actual": 26,
+      "expected": 26,
+      "status": "PASS"
+    },
+    {
+      "name": "no response to incomplete name",
+      "actual": false,
+      "expected": false,
+      "status": "PASS"
+    },
+    {
+      "name": "no response to incomplete key",
+      "actual": false,
+      "expected": false,
+      "status": "PASS"
+    },
+    {
+      "name": "nil after final five bytes",
+      "actual": {
+        "hex": "242d310d0a"
+      },
+      "expected": {
+        "hex": "242d310d0a"
+      },
+      "status": "PASS"
+    },
+    {
+      "name": "first pipelined response nil",
+      "actual": {
+        "hex": "242d310d0a"
+      },
+      "expected": {
+        "hex": "242d310d0a"
+      },
+      "status": "PASS"
+    },
+    {
+      "name": "second pipelined response pong",
+      "actual": {
+        "hex": "2b504f4e470d0a"
+      },
+      "expected": {
+        "hex": "2b504f4e470d0a"
+      },
+      "status": "PASS"
+    },
+    {
+      "name": "empty distinct from missing",
+      "actual": "",
+      "expected": "",
+      "status": "PASS"
+    },
+    {
+      "name": "missing distinct from empty",
+      "actual": null,
+      "expected": null,
+      "status": "PASS"
+    },
+    {
+      "name": "KEEPTTL preserves existing deadline",
+      "actual": true,
+      "expected": true,
+      "status": "PASS"
+    },
+    {
+      "name": "plain SET clears TTL",
+      "actual": -1,
+      "expected": -1,
+      "status": "PASS"
+    },
+    {
+      "name": "EXEC neighbors survive runtime error",
+      "actual": true,
+      "expected": true,
+      "status": "PASS"
+    },
+    {
+      "name": "EXEC no rollback",
+      "actual": [
+        "done",
+        "text",
+        "done"
+      ],
+      "expected": [
+        "done",
+        "text",
+        "done"
+      ],
+      "status": "PASS"
+    },
+    {
+      "name": "queue wrong arity is an error",
+      "actual": true,
+      "expected": true,
+      "status": "PASS"
+    },
+    {
+      "name": "queue error gives EXECABORT",
+      "actual": true,
+      "expected": true,
+      "status": "PASS"
+    },
+    {
+      "name": "queue error has no queued effects",
+      "actual": null,
+      "expected": null,
+      "status": "PASS"
+    },
+    {
+      "name": "WATCH detects writing identical bytes",
+      "actual": null,
+      "expected": null,
+      "status": "PASS"
+    },
+    {
+      "name": "WATCH detects expiration",
+      "actual": null,
+      "expected": null,
+      "status": "PASS"
+    },
+    {
+      "name": "Lua later error",
+      "actual": true,
+      "expected": true,
+      "status": "PASS"
+    },
+    {
+      "name": "Lua prior write retained",
+      "actual": "before-error",
+      "expected": "before-error",
+      "status": "PASS"
+    },
+    {
+      "name": "conditional decrement accepted",
+      "actual": [
+        1,
+        "7"
+      ],
+      "expected": [
+        1,
+        "7"
+      ],
+      "status": "PASS"
+    },
+    {
+      "name": "conditional decrement insufficient",
+      "actual": [
+        0,
+        "7"
+      ],
+      "expected": [
+        0,
+        "7"
+      ],
+      "status": "PASS"
+    },
+    {
+      "name": "insufficient leaves stock unchanged",
+      "actual": "7",
+      "expected": "7",
+      "status": "PASS"
+    },
+    {
+      "name": "invalid quantity 0",
+      "actual": true,
+      "expected": true,
+      "status": "PASS"
+    },
+    {
+      "name": "invalid quantity -1",
+      "actual": true,
+      "expected": true,
+      "status": "PASS"
+    },
+    {
+      "name": "invalid quantity 1.5",
+      "actual": true,
+      "expected": true,
+      "status": "PASS"
+    },
+    {
+      "name": "invalid quantity 1000001",
+      "actual": true,
+      "expected": true,
+      "status": "PASS"
+    },
+    {
+      "name": "invalid quantity not-number",
+      "actual": true,
+      "expected": true,
+      "status": "PASS"
+    },
+    {
+      "name": "invalid quantities leave stock unchanged",
+      "actual": "7",
+      "expected": "7",
+      "status": "PASS"
+    },
+    {
+      "name": "missing stock is explicit",
+      "actual": [
+        0,
+        "missing"
+      ],
+      "expected": [
+        0,
+        "missing"
+      ],
+      "status": "PASS"
+    },
+    {
+      "name": "invalid stock text",
+      "actual": true,
+      "expected": true,
+      "status": "PASS"
+    },
+    {
+      "name": "invalid stock unchanged text",
+      "actual": "text",
+      "expected": "text",
+      "status": "PASS"
+    },
+    {
+      "name": "invalid stock 03",
+      "actual": true,
+      "expected": true,
+      "status": "PASS"
+    },
+    {
+      "name": "invalid stock unchanged 03",
+      "actual": "03",
+      "expected": "03",
+      "status": "PASS"
+    },
+    {
+      "name": "invalid stock -1",
+      "actual": true,
+      "expected": true,
+      "status": "PASS"
+    },
+    {
+      "name": "invalid stock unchanged -1",
+      "actual": "-1",
+      "expected": "-1",
+      "status": "PASS"
+    },
+    {
+      "name": "invalid stock 1000001",
+      "actual": true,
+      "expected": true,
+      "status": "PASS"
+    },
+    {
+      "name": "invalid stock unchanged 1000001",
+      "actual": "1000001",
+      "expected": "1000001",
+      "status": "PASS"
+    },
+    {
+      "name": "wrong type stock has no mutation",
+      "actual": true,
+      "expected": true,
+      "status": "PASS"
+    },
+    {
+      "name": "wrong type hash retained",
+      "actual": "b",
+      "expected": "b",
+      "status": "PASS"
+    },
+    {
+      "name": "small hash is listpack",
+      "actual": "listpack",
+      "expected": "listpack",
+      "status": "PASS"
+    },
+    {
+      "name": "long value converts hash",
+      "actual": "hashtable",
+      "expected": "hashtable",
+      "status": "PASS"
+    },
+    {
+      "name": "integer set is intset",
+      "actual": "intset",
+      "expected": "intset",
+      "status": "PASS"
+    },
+    {
+      "name": "text converts 7.0 set to hashtable",
+      "actual": "hashtable",
+      "expected": "hashtable",
+      "status": "PASS"
+    },
+    {
+      "name": "integer string is int",
+      "actual": "int",
+      "expected": "int",
+      "status": "PASS"
+    },
+    {
+      "name": "ACL dryrun allowed key",
+      "actual": "OK",
+      "expected": "OK",
+      "status": "PASS"
+    },
+    {
+      "name": "ACL dryrun forbidden key",
+      "actual": true,
+      "expected": true,
+      "status": "PASS"
+    },
+    {
+      "name": "ACL dryrun forbidden write",
+      "actual": true,
+      "expected": true,
+      "status": "PASS"
+    },
+    {
+      "name": "reader authenticates",
+      "actual": "OK",
+      "expected": "OK",
+      "status": "PASS"
+    },
+    {
+      "name": "mixed MGET forbidden even absent key",
+      "actual": true,
+      "expected": true,
+      "status": "PASS"
+    },
+    {
+      "name": "selector public read allowed",
+      "actual": "OK",
+      "expected": "OK",
+      "status": "PASS"
+    },
+    {
+      "name": "selector draft write allowed",
+      "actual": "OK",
+      "expected": "OK",
+      "status": "PASS"
+    },
+    {
+      "name": "selector cannot combine get with draft namespace",
+      "actual": true,
+      "expected": true,
+      "status": "PASS"
+    },
+    {
+      "name": "AOF SET ack",
+      "actual": "OK",
+      "expected": "OK",
+      "status": "PASS"
+    },
+    {
+      "name": "AOF confirmed key after process crash",
+      "actual": "confirmed",
+      "expected": "confirmed",
+      "status": "PASS"
+    },
+    {
+      "name": "AOF multipart manifest exists",
+      "actual": true,
+      "expected": true,
+      "status": "PASS"
+    },
+    {
+      "name": "WAITAOF availability follows 7.2 boundary",
+      "actual": false,
+      "expected": false,
+      "status": "PASS"
+    },
+    {
+      "name": "break-even percentage",
+      "actual": 15.15,
+      "expected": 15.15,
+      "status": "PASS"
+    },
+    {
+      "name": "payload MiB per second",
+      "actual": 78.125,
+      "expected": 78.125,
+      "status": "PASS"
+    }
+  ],
+  "limits": [
+    "No performance measurements",
+    "No power-loss or hardware durability experiment",
+    "No Sentinel or Cluster deployment/failure experiment",
+    "No production services changed",
+    "Reference run: Redis 7.0.15, MALLOC=libc; memory sizes depend on the supplied build"
+  ],
+  "server_version": "7.0.15",
+  "hash_memory": {
+    "before": 88,
+    "after": 416,
+    "difference_not_pure_encoding_cost": 328
+  },
+  "cases_count": 59,
+  "processes_remaining": 0
+}

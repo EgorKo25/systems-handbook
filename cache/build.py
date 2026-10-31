@@ -14,13 +14,15 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 sys.path.insert(0, str(HERE / 'sources'))
 from diagrams import DIAGRAMS
+from depth_diagrams import DEPTH_DIAGRAMS
 from commands import COMMANDS, EXTRA_FLAGS
 from course import SECTIONS, RENAME
 from artwork import ART, figure, write_assets
 from replication import render_replication
+from resp_lab import render_resp
 
 # The earlier generic failure sketch is replaced by the explicit sequence model.
-DIAGRAMS = [d for d in DIAGRAMS if d['id'] != 'cache-failover']
+DIAGRAMS = [d for d in DIAGRAMS if d['id'] != 'cache-failover'] + DEPTH_DIAGRAMS
 
 TITLE = 'Кэш и базы данных в памяти: от ускорения чтения до Redis и Memcached'
 
@@ -51,10 +53,23 @@ class Text(HTMLParser):
 
 def plain(value):
     parser = Text(); parser.feed(value)
-    return re.sub(r'\n[ \t]*\n(?:[ \t]*\n)+', '\n\n', ''.join(parser.parts)).strip()
+    text = re.sub(r'[ \t]+(?=\n)', '', ''.join(parser.parts))
+    return re.sub(r'\n[ \t]*\n(?:[ \t]*\n)+', '\n\n', text).strip()
+
+
+def write_text(path, value):
+    """Keep established line endings and avoid rewriting unchanged outputs."""
+    previous = path.read_bytes() if path.exists() else b''
+    value = value.replace('\r\n', '\n')
+    if previous.decode('utf-8').replace('\r\n', '\n') == value:
+        return
+    ending = '\r\n' if previous and previous.count(b'\r\n') == previous.count(b'\n') else '\n'
+    path.write_bytes(value.replace('\n', ending).encode('utf-8'))
 
 
 def sketch(d):
+    # Editorial placement markup is not part of the reader's diagram data.
+    d = {k: v for k, v in d.items() if k != 'insert_before'}
     esc = escape
     transcript = []
     labels = {n['id']: n['label'] for n in d['nodes']}
@@ -88,6 +103,17 @@ def main():
         body=re.sub(r'^<header>.*?</header>\s*','',source,flags=re.S)
         body=re.sub(r'<div data-art="([^"]+)"></div>',lambda m:figure(m[1]),body)
         body=body.replace('<div data-replication-lab></div>',render_replication())
+        if path.stem == '07-redis':
+            marker = '<h3>От дескриптора соединения до исполнения</h3>'
+            assert body.count(marker) == 1
+            body = body.replace(marker, render_resp() + '\n' + marker, 1)
+        for d in DEPTH_DIAGRAMS:
+            if d['chapter'] == path.stem:
+                marker = d['insert_before']
+                for old, new in RENAME.items():
+                    marker = marker.replace('<h2>'+old+'</h2>', '<h2>'+new+'</h2>')
+                assert body.count(marker) == 1, (path.stem, marker)
+                body = body.replace(marker, sketch(d) + '\n' + marker, 1)
         for d in DIAGRAMS:
             body=body.replace(f'<div data-diagram="{d["id"]}"></div>',sketch(d))
         # Tables keep their columns readable while scrolling inside the article on phones.
@@ -156,8 +182,9 @@ def main():
     s=s.replace('</style></head>', '''.calc-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.calc-fields label{font:14px/1.5 var(--sans)}.calc-fields input{display:block;width:100%;min-width:0;margin-top:5px;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--text)}.cache-calculator output{display:block;margin-top:20px;font:16px/1.7 var(--sans);white-space:normal}@media(max-width:600px){.calc-fields{grid-template-columns:1fr}}@media print{.cache-calculator{break-inside:avoid}}
 </style></head>''',1)
     calculator=(HERE/'sources/calculator.js').read_text(encoding='utf-8')
-    extras=''.join((HERE/'sources'/name).read_text(encoding='utf-8') for name in ['eviction.js','replication.js','resource-labs.js'])
+    extras=''.join((HERE/'sources'/name).read_text(encoding='utf-8') for name in ['eviction.js','replication.js','resource-labs.js','resp-lab.js'])
     s=s.replace('</body>', '<script>'+calculator+'\n'+extras+'</script></body>')
+    s=s.replace('</style></head>', (HERE/'sources/resp-lab.css').read_text(encoding='utf-8')+'\n</style></head>',1)
     s=s.replace('</style></head>', '''.course-label{font:800 13px/1.5 var(--sans);color:var(--accent);padding:20px 8px 5px;border-top:1px solid var(--line)}.chapter-nav a{grid-template-columns:42px 1fr}.course-paths{display:grid;gap:16px}.course-paths a{display:grid;gap:8px;padding:22px;background:var(--paper);border:1px solid var(--line);border-left:5px solid var(--accent);border-radius:8px;text-decoration:none}.course-paths span{font:16px/1.6 var(--sans);color:var(--muted)}.book-figure{margin:30px 0;background:var(--paper);border:1px solid var(--line);border-radius:12px;overflow:hidden}.figure-scroll,.sequence-scroll{overflow-x:auto;max-width:100%}.book-figure img{display:block;width:100%;min-width:650px;height:auto}.book-figure figcaption{font:14px/1.7 var(--sans);padding:16px 20px}.sequence-scroll svg{display:block;min-width:900px;width:100%;height:auto}.step-toolbar{display:flex;gap:12px;align-items:center;justify-content:space-between;margin:18px 0}.step-toolbar strong{font:16px/1.5 var(--sans)}.eviction-trainer label{display:inline-block;max-width:100%;font:14px/1.6 var(--sans);margin:8px}.eviction-trainer input,.eviction-trainer select,.replication-lab select{max-width:100%;padding:8px;background:var(--paper);color:var(--text);border:1px solid var(--line);border-radius:5px}.eviction-trainer [data-trace]{display:block;width:420px;max-width:100%}.cache-slot{display:inline-grid;min-width:100px;padding:12px;margin:5px;border:2px solid var(--accent);border-radius:8px}.cache-slot small{font:12px/1.5 var(--sans)}@media print{.book-figure img{min-width:0}.sequence-scroll svg{min-width:0}.sequence-scroll{display:none}.replication-lab details{display:block}}
 </style></head>''',1)
     # Shared glossary is embedded, so file:// requires no fetch or server.
@@ -171,31 +198,31 @@ def main():
     s=s.replace('min-width:900px;width:100%;height:auto','min-width:740px;width:100%;height:auto;font-family:var(--sans)')
     s=s.replace('</style></head>', '''.resource-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.resource-fields label{font:14px/1.5 var(--sans)}.resource-fields input{display:block;width:100%;min-width:0;padding:9px;margin-top:5px;color:var(--text);background:var(--paper);border:1px solid var(--line);border-radius:5px}.resource-lab output{display:block;margin:20px 0;font:16px/1.7 var(--sans)}.resource-chart{overflow-x:auto}.resource-chart svg{width:100%;min-width:580px;font:17px var(--sans)}.slab-page{margin:12px 0;border:1px solid var(--line);padding:12px}.slab-page strong{font:700 14px var(--sans)}.slab-chunks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}.slab-chunk{border:1px solid var(--line);min-height:48px;font:12px/1.7 var(--sans)}.slab-fill{display:flex;height:24px}.slab-chunk small{display:block;padding:5px}.slab-fill span{min-width:0}.resource-lab{overflow:hidden}@media(max-width:600px){.resource-fields{grid-template-columns:1fr}}@media print{.resource-fields{display:none}.resource-chart svg{min-width:0}.resource-lab{break-inside:auto}}
 </style></head>''',1)
-    (HERE/'index.html').write_text(s,encoding='utf-8')
+    write_text(HERE/'index.html',s)
     for volume in ['networks','linux','bash','postgres']:
         path=ROOT/volume/'index.html'; original=path.read_text(encoding='utf-8')
         updated=put_json(original,'library-glossary-data',library)
         if "cache:'Кэш и базы в памяти'" not in updated:
             updated=updated.replace("postgres:'PostgreSQL'", "postgres:'PostgreSQL',cache:'Кэш и базы в памяти'")
         updated=updated.replace('Термины всех четырёх томов','Термины всех пяти томов')
-        if updated!=original: path.write_text(updated,encoding='utf-8')
-    (HERE/'Текст-тома.txt').write_text(TITLE+'\n\n'+ '\n\n'.join(plain(a.split('<footer')[0]) for a in articles),encoding='utf-8')
-    (HERE/'commands.json').write_text(json.dumps(commands,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
-    (HERE/'Справочник-команд.txt').write_text('\n\n'.join(c['name']+'\n'+c['purpose']+'\n'+c['syntax']+'\n'+'\n'.join(f['flag']+' — '+f['action']+'\nКогда: '+f['when']+'\n'+f['example']+'\nРезультат: '+f['result'] for f in c['flags']) for c in commands),encoding='utf-8')
-    (HERE/'book-stats.json').write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+        if updated!=original: write_text(path,updated)
+    write_text(HERE/'Текст-тома.txt', TITLE+'\n\n'+ '\n\n'.join(plain(a.split('<footer')[0]) for a in articles))
+    write_text(HERE/'commands.json',json.dumps(commands,ensure_ascii=False,indent=2)+'\n')
+    write_text(HERE/'Справочник-команд.txt','\n\n'.join(c['name']+'\n'+c['purpose']+'\n'+c['syntax']+'\n'+'\n'.join(f['flag']+' — '+f['action']+'\nКогда: '+f['when']+'\n'+f['example']+'\nРезультат: '+f['result'] for f in c['flags']) for c in commands))
+    write_text(HERE/'book-stats.json',json.dumps(data,ensure_ascii=False,indent=2)+'\n')
     stats=json.loads((ROOT/'library-stats.json').read_text(encoding='utf-8'))
     stats=[r for r in stats if r['slug']!='cache']+[dict(slug='cache',title=TITLE,volume='V',words=total,chapters=len(pages),terms=len(glossary))]
-    (ROOT/'library-stats.json').write_text(json.dumps(stats,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+    write_text(ROOT/'library-stats.json',json.dumps(stats,ensure_ascii=False,indent=2)+'\n')
     home=(ROOT/'index.html').read_text(encoding='utf-8')
     home=re.sub(r'<a class="volume" href="cache/index.html">.*?</a>','',home,flags=re.S)
     card=f'<a class="volume" href="cache/index.html"><div class="tag">Том V</div><h2>Кэш и базы в памяти</h2><p>Причины внедрения → расчёт пользы → свежесть и память → Redis и Memcached → измерения и отказы.</p><div class="counts">{len(pages)} глав · {total:,} слов · словарь: {len(glossary)}</div><span class="open">Открыть том →</span></a>'
     home=home.replace('</div><section class="notes">',card+'</div><section class="notes">',1)
     home=home.replace('Четыре связанных тома: как данные проходят сеть, как ядро предоставляет ресурсы, как оболочка управляет процессами и как база превращает запрос в устойчивое изменение.', 'Пять связанных томов: сеть, ядро Linux, Bash, PostgreSQL и кэширование. От устройства механизма до расчёта ресурсов, наблюдения и восстановления.')
     home=re.sub(r'<details data-cache-map>.*?</details>','',home,flags=re.S)
-    links='<details data-cache-map><summary>Кэш · теория, Redis и Memcached</summary><ul>'+''.join(f'<li><a href="cache/index.html#{d["id"]}">{escape(d["title"])}</a> <span class="small">· {len(d["steps"])} шагов</span></li>' for d in DIAGRAMS)+'<li><a href="cache/index.html#cache-failover">Репликация: поток, подтверждения и отказ — 3 сценария</a></li><li><a href="cache/index.html#33-eviction">Тренажёр FIFO, LRU, LFU, CLOCK и OPT</a></li></ul></details>'
+    links='<details data-cache-map><summary>Кэш · теория, Redis и Memcached</summary><ul>'+''.join(f'<li><a href="cache/index.html#{d["id"]}">{escape(d["title"])}</a> <span class="small">· {len(d["steps"])} шагов</span></li>' for d in DIAGRAMS)+'<li><a href="cache/index.html#cache-resp-stream">RESP: байты запроса и четыре разных ответа</a></li><li><a href="cache/index.html#cache-failover">Репликация: поток, подтверждения и отказ — 3 сценария</a></li><li><a href="cache/index.html#33-eviction">Тренажёр FIFO, LRU, LFU, CLOCK и OPT</a></li></ul></details>'
     home=home.replace('</section><section class="notes" style="margin-top:22px"><h2>Как читать',links+'</section><section class="notes" style="margin-top:22px"><h2>Как читать',1)
-    home=home.replace('21 новых схем:','26 пошаговых схем:')
-    (ROOT/'index.html').write_text(home,encoding='utf-8')
+    home=home.replace('21 новых схем:','Пошаговые схемы:').replace('26 пошаговых схем:','Пошаговые схемы:').replace('31 пошаговая схема:','Пошаговые схемы:')
+    write_text(ROOT/'index.html',home)
     print(json.dumps(dict(words=total,chapters=len(pages),terms=len(glossary),diagrams=len(DIAGRAMS),illustrations=len(ART),steps=sum(len(d['steps']) for d in DIAGRAMS)),ensure_ascii=False))
 
 

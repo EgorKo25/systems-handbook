@@ -1,0 +1,91 @@
+{
+  "status": "PASS",
+  "date": "2026-10-31",
+  "baseline_commit": "6e59bac3485fee85c4f1b168bd334be3f6c25fa1",
+  "book_sha256": "0e8331003f35d56f6cae38f803795f460c3f94c957d8a461e0a0302fcad21db6",
+  "edition": {
+    "chapters": 40,
+    "words_before": 53949,
+    "words_after": 75040,
+    "cache_terms": 226,
+    "shared_definitions": 1588
+  },
+  "new_content": {
+    "chapters_expanded": 39,
+    "new_explanatory_words_in_source_reviews": 16962,
+    "new_step_diagrams": 5,
+    "new_diagram_steps": 35,
+    "new_resp_stream_model": true,
+    "new_dictionary_definitions": 23
+  },
+  "browser": {
+    "method": "CUA via local HTTP",
+    "new_diagrams_steps_visited": 35,
+    "resp_received_bytes": [
+      8,
+      21,
+      26
+    ],
+    "resp_ready_arguments": [
+      0,
+      1,
+      2
+    ],
+    "reply_cases": [
+      "missing",
+      "empty",
+      "hello",
+      "wrongtype"
+    ],
+    "cross_volume_dictionary": "Bash → cache WAITAOF anchor",
+    "responsive_viewport": {
+      "width": 390,
+      "height": 844,
+      "tested_widgets": 6,
+      "horizontal_document_overflow": false
+    },
+    "observed_console_errors": [],
+    "screenshots": [
+      "cache-depth-resp.png",
+      "cache-depth-cluster.png"
+    ]
+  },
+  "portable_export": {
+    "static_site_check": "PASS",
+    "node_models": "PASS, run from exported reading tree",
+    "redis_semantics": {
+      "cases": 59,
+      "version": "7.0.15",
+      "status": "PASS"
+    },
+    "redis_tls_acl": {
+      "cases": 8,
+      "version": "7.0.15",
+      "status": "PASS"
+    },
+    "processes_remaining": 0
+  },
+  "checks": {
+    "publication_unit_fixtures": 9,
+    "eviction_model_cases": 12397,
+    "ttl_and_slab_cases": 4811,
+    "resp_test_groups": 14,
+    "cache_static": {
+      "status": "PASS",
+      "book_sha256": "0e8331003f35d56f6cae38f803795f460c3f94c957d8a461e0a0302fcad21db6",
+      "links": 524,
+      "anchors": 751,
+      "diagrams": 9,
+      "steps": 59,
+      "replication_scenarios": 3,
+      "failures": [],
+      "scope": "Static local links, diagram state references, text transcripts, shared dictionary anchors; not server performance."
+    }
+  },
+  "limitations": [
+    "New browser review used local HTTP, not actual Windows or file:// navigation.",
+    "No power-loss, production benchmark or modern Memcached proxy/SASL experiment.",
+    "The new Redis semantic/TLS checks do not deploy or fail over Sentinel/Cluster.",
+    "Historical browser and lab reports describe their recorded editions, not a fresh repeat."
+  ]
+}

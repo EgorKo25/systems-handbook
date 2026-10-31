@@ -1,0 +1,62 @@
+{
+  "status": "PASS",
+  "kind": "owned loopback Redis mTLS and ACL",
+  "cases": [
+    {
+      "name": "OpenSSL server chain and usage valid",
+      "actual": true,
+      "expected": true,
+      "status": "PASS"
+    },
+    {
+      "name": "OpenSSL client chain and usage valid",
+      "actual": true,
+      "expected": true,
+      "status": "PASS"
+    },
+    {
+      "name": "valid certificate does not bypass AUTH",
+      "actual": true,
+      "expected": true,
+      "status": "PASS"
+    },
+    {
+      "name": "password over mTLS authenticates",
+      "actual": "OK",
+      "expected": "OK",
+      "status": "PASS"
+    },
+    {
+      "name": "authorized PING after AUTH",
+      "actual": "PONG",
+      "expected": "PONG",
+      "status": "PASS"
+    },
+    {
+      "name": "valid certificate and AUTH cannot bypass ACL",
+      "actual": true,
+      "expected": true,
+      "status": "PASS"
+    },
+    {
+      "name": "missing client certificate refused",
+      "actual": true,
+      "expected": true,
+      "status": "PASS"
+    },
+    {
+      "name": "trusted CA but wrong server identity refused",
+      "actual": true,
+      "expected": true,
+      "status": "PASS"
+    }
+  ],
+  "limits": [
+    "No operating-system trust installation",
+    "No load or certificate-rotation experiment",
+    "No TLS protection of Sentinel/Cluster tested here"
+  ],
+  "server_version": "7.0.15",
+  "cases_count": 8,
+  "processes_remaining": 0
+}

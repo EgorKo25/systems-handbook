@@ -36,6 +36,7 @@ jobs:
         run: |
           node cache/labs/test-eviction.cjs
           node cache/labs/test-resources.cjs
+          node cache/labs/test-resp.cjs
       - name: Prepare public reading files
         run: python3 scripts/prepare_site.py _site --revision "${{ github.sha }}"
       - name: Check the exact publication artifact

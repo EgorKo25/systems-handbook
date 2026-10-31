@@ -23,6 +23,7 @@ class ExportTests(unittest.TestCase):
         self.write("cache/index.html", "<h1>Cache</h1>")
         self.write("cache/labs/example.py", "print('teaching example')")
         self.write("cache/sources/00.html", "authoring fragment")
+        self.write("cache/sources/eviction.js", "module.exports = {}")
         self.write("guide/textbook/index.html", "public supplement")
         self.write(".github/workflows/pages.yml", "authoring")
         self.write("guide/index.html", "private deployment instructions")
@@ -39,8 +40,9 @@ class ExportTests(unittest.TestCase):
         output = self.root / "site"
         MODULE.export_site(self.source, output, "a" * 40)
         self.assertTrue((output / "cache/labs/example.py").is_file())
+        self.assertTrue((output / "cache/sources/eviction.js").is_file())
         self.assertTrue((output / "guide/textbook/index.html").is_file())
-        for name in [".git", ".github", "guide/index.html", "cache/sources", "cache/labs/private-untracked.txt"]:
+        for name in [".git", ".github", "guide/index.html", "cache/sources/00.html", "cache/labs/private-untracked.txt"]:
             self.assertFalse((output / name).exists(), name)
         lines = (output / "SHA256SUMS").read_text().splitlines()
         for line in lines:
