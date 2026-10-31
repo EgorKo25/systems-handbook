@@ -9,6 +9,28 @@ ICONS = {
     'next':'<path d="m10 6 6 6-6 6"/>',
 }
 
+# The preference bootstrap computes these together. Fall back to the established
+# reader colors when JavaScript or storage is unavailable.
+PALETTE_FALLBACKS = {
+    'light': dict(bg='#f4f1e9', paper='#fffcf5', text='#202d34', muted='#5a696e',
+                  line='#d9ded8', accent='#0c6b63', soft='#e8f2ec', code='#182b35',
+                  **{'code-text':'#e3eeef', 'shadow':'0 12px 40px #17332b12'}),
+    'dark': dict(bg='#142027', paper='#1c2a31', text='#e4e8e1', muted='#b4c1be',
+                 line='#3b4c51', accent='#85d2bd', soft='#243d3b', code='#101b21',
+                 **{'code-text':'#e4eeee', 'shadow':'0 12px 40px #17332b12'}),
+}
+
+
+def palette_css(*, home=False):
+    rules = []
+    for theme, colors in PALETTE_FALLBACKS.items():
+        selector = ':root' if theme == 'light' and not home else ':root[data-theme='+theme+']'
+        if home and theme == 'dark': selector += ',:root:not([data-theme])'
+        declarations = ''.join('--'+('home-' if home else '')+name+':var(--reader-'+name+','+value+');'
+                               for name,value in colors.items())
+        rules.append(selector+'{'+declarations+'}')
+    return '\n'.join(rules)
+
 CSS = '''
 .phone-tools,.phone-view,.phone-backdrop,.phone-sidebar-close{display:none}.phone-backdrop{border:0;border-radius:0;padding:0}
 body{background:var(--reader-page,var(--bg))}.chapter{font-family:var(--reader-font,var(--serif))}.chapter p,.chapter li,.command-card p,.term p{text-align:justify;text-align-last:start;text-justify:inter-word;hyphens:auto;-webkit-hyphens:auto;overflow-wrap:break-word}.chapter pre,.chapter code{hyphens:none;-webkit-hyphens:none;text-align:start}
@@ -23,6 +45,12 @@ html{scroll-padding-top:76px}body{padding-bottom:0}main{padding:24px 20px calc(1
 .phone-backdrop:not([hidden]){display:block;position:fixed;inset:0;z-index:80;background:#07141699;backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}.phone-view:not([hidden]){display:block;position:fixed;left:10px;right:10px;bottom:calc(86px + env(safe-area-inset-bottom));z-index:95;padding:21px;border:1px solid var(--line);border-radius:23px;background:var(--paper);box-shadow:0 8px 38px #0003;font:15px/1.5 var(--sans)}.phone-view-head{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:18px}.phone-view h2{margin:0;font:750 22px var(--sans)}.phone-view-head button{min-width:44px;min-height:44px;border-radius:50%;padding:5px;font-size:24px}.phone-font-row{display:grid;grid-template-columns:60px 1fr 60px;align-items:center;gap:12px;margin-bottom:14px}.phone-font-row button{min-height:52px;font-size:22px;font-weight:650;border-radius:15px}.phone-font-row output{text-align:center;color:var(--muted);font-size:14px}.phone-theme-toggle{width:100%;min-height:50px;border-radius:15px;text-align:left;padding:12px 16px;font-weight:650}.phone-panel-open{overflow:hidden}
 }
 @media(prefers-reduced-motion:reduce){.sidebar{transition:none}.phone-tools button:active{transform:none}}
+@media(max-width:750px),(hover:none) and (pointer:coarse){
+.chapter a,.drawer a{text-decoration:none;text-underline-offset:0}
+.chapter .command-ref{border-bottom:0!important;text-decoration:none!important;color:var(--accent)!important;cursor:pointer}
+.chapter .command-ref:hover:not(:focus-visible){outline:none}
+.chapter a:focus-visible,.drawer a:focus-visible,.chapter .command-ref:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:3px}
+}
 '''
 
 SCRIPT = r'''(()=>{'use strict';
@@ -75,7 +103,7 @@ def enhance(page, *, home=False):
     page = re.sub(r'<div id="library-phone-controls">.*?</div><!-- /library-phone-controls -->', '', page, flags=re.S)
     if home:
         css = '''@media(max-width:750px){body{padding:26px 19px 40px}#home-theme-toggle{min-height:44px;padding:9px 16px!important;border-radius:24px!important}h1{font-size:clamp(37px,10vw,56px);line-height:1.04}.grid{grid-template-columns:minmax(0,1fr)!important;gap:15px}.volume{padding:24px!important;min-width:0;border-radius:20px!important}.volume h2{font-size:28px}.volume p{font-size:16px;line-height:1.6}.volume .open{display:inline-block;margin-top:12px}.notes{border-radius:20px!important;padding:24px!important}summary{min-height:44px;padding:10px 0}a,button{touch-action:manipulation}}'''
-        return page.replace('</head>','<style id="library-phone-style">'+css+'</style></head>',1)
+        return page.replace('</head>','<style id="library-phone-style">'+palette_css(home=True)+css+'</style></head>',1)
     # Opening a reference is a reading action on a phone, not a request to type.
     # Focus a non-editable heading before Safari can summon the keyboard.
     focus_helper = '''function focusReferenceSearch() {
@@ -97,5 +125,5 @@ def enhance(page, *, home=False):
         attrs = ' aria-expanded="false"' if name in {'chapters','dictionary','view'} else ''
         controls += '<button type="button" data-phone-action="'+name+'"'+attrs+'><svg viewBox="0 0 24 24" aria-hidden="true">'+ICONS[name]+'</svg><span>'+label+'</span></button>'
     controls += '</nav><script>'+SCRIPT+'</script></div><!-- /library-phone-controls -->'
-    page = page.replace('</head>','<style id="library-phone-style">'+CSS+'</style></head>',1)
+    page = page.replace('</head>','<style id="library-phone-style">'+palette_css()+CSS+'</style></head>',1)
     return page.replace('</body>',controls+'</body>',1)

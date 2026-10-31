@@ -40,7 +40,11 @@
     "three font choices and warmth0/50/100 preview; no blur behind reading settings",
     "font and warmth preserved between Go/PostgreSQL; changed size20px inherited in another volume",
     "paragraph justification and automatic hyphenation; code formatting preserved",
-    "appearance API103behavior checks and nine-page idempotence"
+    "appearance API103behavior checks and nine-page idempotence",
+    "whole light/dark palette coordinated at warmth0/50/100; text, muted text and code contrast checked on all nine pages",
+    "390x844 at font26 and warmth100: background, panels and code use matching warm colors; no horizontal overflow",
+    "phone command references have no underline or dotted border; desktop dotted command reference and ordinary link underline retained",
+    "library card gaps32px desktop and26px phone; top accent hidden at rest, shown on focused or active card; hover only for fine pointer"
   ],
   "not_verified": [
     "physical iPhone Safari",

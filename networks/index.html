@@ -5,6 +5,25 @@ const key='library-theme-v1', appearanceKey='library-reader-appearance-v1', oldH
 const valid=value=>value==='dark'||value==='light';
 const fonts={book:'Georgia, "DejaVu Serif", serif',sans:'system-ui, sans-serif',palatino:'Palatino, Georgia, serif'};
 const clamp=(value,low,high)=>Math.max(low,Math.min(high,value));
+// Warm the whole reading palette, not a translucent layer over cool panels.
+// Neutral endpoints match the original reader CSS exactly, including its shadow.
+const palettes={
+ light:{
+  neutral:{bg:'#f4f1e9',paper:'#fffcf5',soft:'#e8f2ec',text:'#202d34',muted:'#5a696e',line:'#d9ded8',accent:'#0c6b63',code:'#182b35','code-text':'#e3eeef',shadow:'#17332b12'},
+  warm:{bg:'#f4ecde',paper:'#fff7e9',soft:'#eee4d0',text:'#302c25',muted:'#70634f',line:'#ddd1bd',accent:'#79603b',code:'#2b2822','code-text':'#f3ead9',shadow:'#24180e1c'}
+ },
+ dark:{
+  neutral:{bg:'#142027',paper:'#1c2a31',soft:'#243d3b',text:'#e4e8e1',muted:'#b4c1be',line:'#3b4c51',accent:'#85d2bd',code:'#101b21','code-text':'#e4eeee',shadow:'#17332b12'},
+  warm:{bg:'#24211d',paper:'#2d2923',soft:'#3a332a',text:'#eee7d9',muted:'#c2b8a8',line:'#51483c',accent:'#d8be8b',code:'#191714','code-text':'#ece5d8',shadow:'#130f092e'}
+ }
+};
+function mixColour(from,to,amount){
+ if(amount===0)return from;
+ if(amount===1)return to;
+ const channels=value=>value.slice(1).match(/.{2}/g).map(part=>parseInt(part,16));
+ const start=channels(from),end=channels(to),mixed=start.map((value,index)=>Math.round(value+(end[index]-value)*amount));
+ return mixed.length===4?'rgba('+mixed.slice(0,3).join(', ')+', '+(mixed[3]/255).toFixed(4)+')':'rgb('+mixed.join(', ')+')';
+}
 function read(){
  let value;
  try{value=localStorage.getItem(key);if(valid(value))return value;}catch{}
@@ -29,9 +48,13 @@ function paint(){
  const html=document.documentElement;
  html.dataset.theme=theme;
  html.style.setProperty('--reader-font',fonts[appearance.font]);
- const from=theme==='dark'?[20,32,39]:[244,241,233],to=theme==='dark'?[39,31,22]:[250,227,185];
- const rgb=from.map((value,index)=>Math.round(value+(to[index]-value)*appearance.warmth/100));
- html.style.setProperty('--reader-page','rgb('+rgb.join(', ')+')');
+ const palette=palettes[theme],amount=appearance.warmth/100;
+ for(const [name,from] of Object.entries(palette.neutral)){
+  const colour=mixColour(from,palette.warm[name],amount);
+  html.style.setProperty('--reader-'+name,name==='shadow'?'0 12px 40px '+colour:colour);
+  // Compatibility with reading copies using the former background-only API.
+  if(name==='bg')html.style.setProperty('--reader-page',colour);
+ }
  const size=appearance.size===null?oldSize:appearance.size;
  if(size!==null)html.style.setProperty('--size',size+'px');
  for(const id of ['theme','home-theme-toggle']){
@@ -121,7 +144,8 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 .fc-bytes-label{font:10px/1.5 var(--sans);color:var(--muted);margin-top:-6px;margin-bottom:8px}.fc-bytes{margin-bottom:10px}
 
 .fc-body>.fc-current{justify-content:flex-start}.fc-current input[type=checkbox]{width:15px;min-width:15px;height:15px;flex:0 0 15px;margin:3px 0 0;padding:0}.fc-current span{min-width:0;flex:1}
-</style><style id="library-phone-style">
+</style><style id="library-phone-style">:root{--bg:var(--reader-bg,#f4f1e9);--paper:var(--reader-paper,#fffcf5);--text:var(--reader-text,#202d34);--muted:var(--reader-muted,#5a696e);--line:var(--reader-line,#d9ded8);--accent:var(--reader-accent,#0c6b63);--soft:var(--reader-soft,#e8f2ec);--code:var(--reader-code,#182b35);--code-text:var(--reader-code-text,#e3eeef);--shadow:var(--reader-shadow,0 12px 40px #17332b12);}
+:root[data-theme=dark]{--bg:var(--reader-bg,#142027);--paper:var(--reader-paper,#1c2a31);--text:var(--reader-text,#e4e8e1);--muted:var(--reader-muted,#b4c1be);--line:var(--reader-line,#3b4c51);--accent:var(--reader-accent,#85d2bd);--soft:var(--reader-soft,#243d3b);--code:var(--reader-code,#101b21);--code-text:var(--reader-code-text,#e4eeee);--shadow:var(--reader-shadow,0 12px 40px #17332b12);}
 .phone-tools,.phone-view,.phone-backdrop,.phone-sidebar-close{display:none}.phone-backdrop{border:0;border-radius:0;padding:0}
 body{background:var(--reader-page,var(--bg))}.chapter{font-family:var(--reader-font,var(--serif))}.chapter p,.chapter li,.command-card p,.term p{text-align:justify;text-align-last:start;text-justify:inter-word;hyphens:auto;-webkit-hyphens:auto;overflow-wrap:break-word}.chapter pre,.chapter code{hyphens:none;-webkit-hyphens:none;text-align:start}
 @media(max-width:750px){
@@ -135,6 +159,12 @@ html{scroll-padding-top:76px}body{padding-bottom:0}main{padding:24px 20px calc(1
 .phone-backdrop:not([hidden]){display:block;position:fixed;inset:0;z-index:80;background:#07141699;backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}.phone-view:not([hidden]){display:block;position:fixed;left:10px;right:10px;bottom:calc(86px + env(safe-area-inset-bottom));z-index:95;padding:21px;border:1px solid var(--line);border-radius:23px;background:var(--paper);box-shadow:0 8px 38px #0003;font:15px/1.5 var(--sans)}.phone-view-head{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:18px}.phone-view h2{margin:0;font:750 22px var(--sans)}.phone-view-head button{min-width:44px;min-height:44px;border-radius:50%;padding:5px;font-size:24px}.phone-font-row{display:grid;grid-template-columns:60px 1fr 60px;align-items:center;gap:12px;margin-bottom:14px}.phone-font-row button{min-height:52px;font-size:22px;font-weight:650;border-radius:15px}.phone-font-row output{text-align:center;color:var(--muted);font-size:14px}.phone-theme-toggle{width:100%;min-height:50px;border-radius:15px;text-align:left;padding:12px 16px;font-weight:650}.phone-panel-open{overflow:hidden}
 }
 @media(prefers-reduced-motion:reduce){.sidebar{transition:none}.phone-tools button:active{transform:none}}
+@media(max-width:750px),(hover:none) and (pointer:coarse){
+.chapter a,.drawer a{text-decoration:none;text-underline-offset:0}
+.chapter .command-ref{border-bottom:0!important;text-decoration:none!important;color:var(--accent)!important;cursor:pointer}
+.chapter .command-ref:hover:not(:focus-visible){outline:none}
+.chapter a:focus-visible,.drawer a:focus-visible,.chapter .command-ref:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:3px}
+}
 </style></head><body data-volume="networks"><a class="skip" href="#main">Перейти к тексту</a><div class="progress-track" aria-hidden="true"><div class="progress-line" id="progress"></div></div><aside class="sidebar" id="side-nav" aria-label="Оглавление"><a class="brand" href="../index.html">Техническая библиотека</a><div class="bookname">От программы<br>до программы</div><div class="subtitle">Том I. Сети<br>81 381 слово · 20 глав · автономные практикумы<br>Редакция 28 октября 2026</div><label class="search-label" for="search">Найти в книге · Ctrl K</label><input id="search" type="search" placeholder="Например: окно, DMA, ARP" autocomplete="off"><div id="search-results" class="search-results" hidden aria-live="polite"></div><div id="chapter-links"><nav class="chapter-nav"><a id="nav-01-foundations" href="#01-foundations"><span class="chapter-num">01</span><span>Сначала понять язык сети</span></a><a id="nav-02-host-send" href="#02-host-send"><span class="chapter-num">02</span><span>Как отправляет компьютер</span></a><a id="nav-03-wire-ethernet" href="#03-wire-ethernet"><span class="chapter-num">03</span><span>Что происходит на линии</span></a><a id="nav-04-ip-routing" href="#04-ip-routing"><span class="chapter-num">04</span><span>Как выбирается путь</span></a><a id="nav-05-transport" href="#05-transport"><span class="chapter-num">05</span><span>Как устроена надёжная передача</span></a><a id="nav-06-host-receive" href="#06-host-receive"><span class="chapter-num">06</span><span>Как принимает компьютер</span></a><a id="nav-07-byte-autopsy" href="#07-byte-autopsy"><span class="chapter-num">07</span><span>Один кадр: разобрать каждый байт</span></a><a id="nav-08-beyond-lan" href="#08-beyond-lan"><span class="chapter-num">08</span><span>Карта взаимодействия протоколов</span></a><a id="nav-12-icmp-ipv6" href="#12-icmp-ipv6"><span class="chapter-num">09</span><span>ICMP и IPv6: управление доставкой</span></a><a id="nav-13-dhcp" href="#13-dhcp"><span class="chapter-num">10</span><span>DHCP: получить сетевую конфигурацию</span></a><a id="nav-14-dns" href="#14-dns"><span class="chapter-num">11</span><span>DNS: от имени до ответа</span></a><a id="nav-15-tls" href="#15-tls"><span class="chapter-num">12</span><span>TLS: установить защищённый канал</span></a><a id="nav-17-switching" href="#17-switching"><span class="chapter-num">13</span><span>Построить канальную сеть</span></a><a id="nav-18-routing-control" href="#18-routing-control"><span class="chapter-num">14</span><span>Откуда берутся маршруты</span></a><a id="nav-19-performance" href="#19-performance"><span class="chapter-num">15</span><span>Скорость, задержка и очереди</span></a><a id="nav-16-nat-lab" href="#16-nat-lab"><span class="chapter-num">16</span><span>NAT и межсетевой экран в действии</span></a><a id="nav-09-diagnostics" href="#09-diagnostics"><span class="chapter-num">17</span><span>Как расследовать сетевой сбой</span></a><a id="nav-10-labs" href="#10-labs"><span class="chapter-num">18</span><span>Восемь начальных опытов</span></a><a id="nav-11-project" href="#11-project"><span class="chapter-num">19</span><span>Как это связано с ДО</span></a><a id="nav-12-glossary" href="#12-glossary"><span class="chapter-num">20</span><span>Словарь сетевых терминов</span></a></nav></div><div class="status"><div id="read-status"></div><div id="page-progress"></div><p id="storage-info">Текст, поиск и схемы работают без интернета. Внешние ссылки — дополнительные источники.</p><p><a href="Учебник-сети.txt">Текстовая версия</a><br><a href="labs/README.txt">Файлы и команды опытов</a><br><a href="Справочник-команд.txt">Справка команд текстом</a><br><a href="../index.html#sketches">Карта зарисовок</a></p><button id="export-notes">Выгрузить заметки</button></div></aside><header class="topbar"><button id="menu" class="mobile-menu" aria-expanded="false" aria-controls="side-nav">☰ Главы</button><span id="top-title" class="topbar-title"></span><div class="tools"><button id="dictionary-open">Словарь</button><button id="font-down" aria-label="Уменьшить шрифт">А−</button><button id="font-up" aria-label="Увеличить шрифт">А+</button><button id="theme">Тёмная тема</button><button id="print">Печать всего тома</button></div></header><main id="main"><div class="reader"><noscript><p class="callout">JavaScript выключен. Откройте текстовую версию или включите JavaScript для навигации и интерактивных разборов.</p><style>.chapter[hidden]{display:block!important}.chapter-footer{display:none}</style></noscript><article id="01-foundations" class="chapter"><header class="hero"><div class="eyebrow">Том I · Сети · Глава 01</div><h1>Сначала понять язык сети</h1><div class="meta">Слова, числа, программы и уровни · 2 505 слов · 17 мин чтения без опытов</div></header><details class="local-toc"><summary>В этой главе: 8 разделов</summary><ol><li><a href="#start-contract">1. Как устроено объяснение</a></li><li><a href="#start-process">2. Кто вообще «отправляет»: программа, процесс и операционная система</a></li><li><a href="#start-numbers">3. Бит, байт, число и текст: четыре разных понятия</a></li><li><a href="#start-protocol">4. Протокол: кто договорился о смысле байтов</a></li><li><a href="#start-units">5. Кадр, пакет, сегмент и сообщение: что именно мы считаем</a></li><li><a href="#start-address">6. Четыре разных ответа на вопрос «куда»</a></li><li><a href="#start-time">7. Что значит «быстро» и когда данные считаются доставленными</a></li><li><a href="#start-route-map">8. Карта нашего путешествия</a></li></ol></details><p class="lead">Сеть соединяет программы, исполняющиеся на разных вычислительных машинах. Между намерением «получить сведения о сеансе» и ответом стоят преобразования данных, ожидания и решения. В этой книге проследим эти преобразования и решения по порядку. Начнём с понятий, без которых даже точная схема пакета остаётся набором непонятных прямоугольников.</p>
 <h2 id="start-contract">1. Как устроено объяснение</h2>
 <p>Любую новую сущность будем рассматривать с пяти сторон: какую проблему она решает; что существует в действительности — число, область памяти, электрическое изменение или программа; кто её создаёт; кто использует; какое наблюдение подтверждает её работу. Английское имя понадобится для узнавания надписи в программе. Оно не заменяет определения.</p>

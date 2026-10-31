@@ -15,6 +15,25 @@ const key='library-theme-v1', appearanceKey='library-reader-appearance-v1', oldH
 const valid=value=>value==='dark'||value==='light';
 const fonts={book:'Georgia, "DejaVu Serif", serif',sans:'system-ui, sans-serif',palatino:'Palatino, Georgia, serif'};
 const clamp=(value,low,high)=>Math.max(low,Math.min(high,value));
+// Warm the whole reading palette, not a translucent layer over cool panels.
+// Neutral endpoints match the original reader CSS exactly, including its shadow.
+const palettes={
+ light:{
+  neutral:{bg:'#f4f1e9',paper:'#fffcf5',soft:'#e8f2ec',text:'#202d34',muted:'#5a696e',line:'#d9ded8',accent:'#0c6b63',code:'#182b35','code-text':'#e3eeef',shadow:'#17332b12'},
+  warm:{bg:'#f4ecde',paper:'#fff7e9',soft:'#eee4d0',text:'#302c25',muted:'#70634f',line:'#ddd1bd',accent:'#79603b',code:'#2b2822','code-text':'#f3ead9',shadow:'#24180e1c'}
+ },
+ dark:{
+  neutral:{bg:'#142027',paper:'#1c2a31',soft:'#243d3b',text:'#e4e8e1',muted:'#b4c1be',line:'#3b4c51',accent:'#85d2bd',code:'#101b21','code-text':'#e4eeee',shadow:'#17332b12'},
+  warm:{bg:'#24211d',paper:'#2d2923',soft:'#3a332a',text:'#eee7d9',muted:'#c2b8a8',line:'#51483c',accent:'#d8be8b',code:'#191714','code-text':'#ece5d8',shadow:'#130f092e'}
+ }
+};
+function mixColour(from,to,amount){
+ if(amount===0)return from;
+ if(amount===1)return to;
+ const channels=value=>value.slice(1).match(/.{2}/g).map(part=>parseInt(part,16));
+ const start=channels(from),end=channels(to),mixed=start.map((value,index)=>Math.round(value+(end[index]-value)*amount));
+ return mixed.length===4?'rgba('+mixed.slice(0,3).join(', ')+', '+(mixed[3]/255).toFixed(4)+')':'rgb('+mixed.join(', ')+')';
+}
 function read(){
  let value;
  try{value=localStorage.getItem(key);if(valid(value))return value;}catch{}
@@ -39,9 +58,13 @@ function paint(){
  const html=document.documentElement;
  html.dataset.theme=theme;
  html.style.setProperty('--reader-font',fonts[appearance.font]);
- const from=theme==='dark'?[20,32,39]:[244,241,233],to=theme==='dark'?[39,31,22]:[250,227,185];
- const rgb=from.map((value,index)=>Math.round(value+(to[index]-value)*appearance.warmth/100));
- html.style.setProperty('--reader-page','rgb('+rgb.join(', ')+')');
+ const palette=palettes[theme],amount=appearance.warmth/100;
+ for(const [name,from] of Object.entries(palette.neutral)){
+  const colour=mixColour(from,palette.warm[name],amount);
+  html.style.setProperty('--reader-'+name,name==='shadow'?'0 12px 40px '+colour:colour);
+  // Compatibility with reading copies using the former background-only API.
+  if(name==='bg')html.style.setProperty('--reader-page',colour);
+ }
  const size=appearance.size===null?oldSize:appearance.size;
  if(size!==null)html.style.setProperty('--size',size+'px');
  for(const id of ['theme','home-theme-toggle']){
