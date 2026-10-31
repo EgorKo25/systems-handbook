@@ -96,6 +96,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 </style><style id="library-phone-style">
 .phone-tools,.phone-view,.phone-backdrop,.phone-sidebar-close{display:none}
 @media(max-width:750px){
+.phone-view button,.phone-sidebar-close,.drawer button,.deep-sketch button{touch-action:manipulation}.phone-view .phone-view-head button{width:44px;height:44px;min-width:44px;min-height:44px;flex:0 0 44px;display:grid;place-items:center;padding:0;line-height:1;border-radius:50%;font-size:22px}.phone-view-head button svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
 .topbar{padding-top:calc(10px + env(safe-area-inset-top))!important}.sidebar{padding-top:calc(20px + env(safe-area-inset-top))!important}.drawer{padding-top:calc(22px + env(safe-area-inset-top))!important}html{scroll-padding-top:calc(76px + env(safe-area-inset-top))!important}
 .phone-reference-hint{display:none!important}.deep-sketch .ds-navigation>button{min-width:44px;min-height:44px}.deep-sketch .ds-steps{gap:5px}.deep-sketch .ds-steps button{width:38px;height:38px;min-width:38px;min-height:38px}
 html{scroll-padding-top:76px}body{padding-bottom:0}main{padding:24px 20px calc(112px + env(safe-area-inset-bottom))!important;min-width:0}.reader,.chapter{min-width:0;max-width:100%}.chapter{font-size:var(--size,19px);line-height:1.74}.chapter p,.chapter li,.chapter h1,.chapter h2,.chapter h3,.chapter dd{overflow-wrap:anywhere}.chapter h1{font-size:clamp(30px,8vw,39px);line-height:1.13}.chapter h2{font-size:26px;line-height:1.25}.chapter pre{max-width:100%;font-size:13px;line-height:1.65;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}.chapter table{font-size:14px}.table-wrap{width:100%;max-width:100%;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}.chapter .deep-sketch{min-width:0;max-width:100%}
@@ -2177,7 +2178,7 @@ let previousDetails=[];addEventListener('beforeprint',()=>{previousDetails=$$('d
 const index=[];data.forEach(c=>{let active=c.id;$$('h2,h3,p,li,td',document.getElementById(c.id)).forEach(el=>{if((el.tagName==='H2'||el.tagName==='H3')&&el.id)active=el.id;let text=el.textContent.trim();if(text.length>35)index.push({text,norm:norm(text),chapter:c.title,target:active});});});
 let searchTimer;$('#search').addEventListener('input',()=>{clearTimeout(searchTimer);searchTimer=setTimeout(search,120);});
 function search(){const q=norm($('#search').value.trim());const out=$('#search-results');if(q.length<2){out.hidden=true;$('#chapter-links').hidden=false;return;}$('#chapter-links').hidden=true;out.hidden=false;out.textContent='';let results=index.filter(x=>x.norm.includes(q));let lead=document.createElement('p');lead.textContent=results.length?`Найдено фрагментов: ${results.length}. Показаны первые 40.`:'Совпадений нет. Попробуйте русский термин или сокращение.';out.append(lead);results.slice(0,40).forEach(r=>{let a=document.createElement('a');a.className='search-hit';a.href='#'+r.target;let strong=document.createElement('strong');strong.textContent=r.chapter;let small=document.createElement('small');let p=r.norm.indexOf(q);small.textContent=(p>55?'…':'')+r.text.slice(Math.max(0,p-55),p+140)+'…';a.append(strong,small);a.onclick=()=>{select('#'+r.target);};out.append(a);});}
-$('#dictionary-open').onclick=()=>{$('#dictionary').hidden=false;$('#term-search').focus();};$('#dictionary-close').onclick=()=>{$('#dictionary').hidden=true;$('#dictionary-open').focus();};
+$('#dictionary-open').onclick=()=>{$('#dictionary').hidden=false;if(matchMedia('(max-width:750px), (pointer:coarse)').matches){const heading=$('#dictionary .drawer-head h2');heading.tabIndex=-1;heading.focus({preventScroll:true});}else $('#term-search').focus({preventScroll:true});};$('#dictionary-close').onclick=()=>{$('#dictionary').hidden=true;$('#dictionary-open').focus();};
 function dictionary(){let q=norm($('#term-search').value);let out=$('#terms');out.textContent='';let terms=glossary.filter(x=>norm(x.join(' ')).includes(q));for(let [term,def] of terms){let d=document.createElement('div');d.className='term';let t=document.createElement('strong');t.textContent=term;let p=document.createElement('p');p.textContent=def;d.append(t,p);out.append(d);}if(!terms.length){let p=document.createElement('p');p.className='small';p.textContent='Совпадений нет. Попробуйте русское название или сокращение.';out.append(p);}$('#term-count').textContent='Терминов найдено: '+terms.length;}
 $('#term-search').oninput=dictionary;addEventListener('keydown',e=>{if(e.key==='Escape'){$('#dictionary').hidden=true;$('#side-nav').classList.remove('open');}if((e.ctrlKey||e.metaKey)&&e.key==='k'){e.preventDefault();$('#side-nav').classList.add('open');$('#search').focus();}});
 $$('[data-widget=layers]').forEach(w=>{const layers={app:{parts:['HTTP: запрос и его заголовки'],text:'Разборщик HTTP читает метод GET, путь /api/session и имя Host. Это прикладное сообщение. TCP пока рассматриваем как предоставленный ему способ перенести байты.'},tcp:{parts:['TCP: 20 байт','HTTP: 73 байта'],text:'TCP добавляет исходный порт 49152, конечный 7000, номера последовательности и подтверждения, окно и контрольную сумму. Итого 93 байта. Эти поля используют конечные реализации TCP, а не коммутатор для выбора Ethernet-порта.'},ip:{parts:['IPv4: 20 байт','TCP: 20 байт','HTTP: 73 байта'],text:'IPv4 добавляет адреса 192.0.2.10 → 198.51.100.20, TTL64, тип следующего протокола 6 (TCP) и длину 113. Маршрутизатору нужен адрес назначения; он не обязан разбирать HTTP-путь.'},ethernet:{parts:['Ethernet: 14 байт','IPv4: 20 байт','TCP: 20 байт','HTTP: 73 байта'],text:'В pcap здесь 127 байт, без FCS. MAC назначения 02:00:00:00:00:01 — ближайший шлюз. На линии к этому кадру добавляется FCS 4 байта: от MAC назначения до FCS получается 131 байт. Преамбула/SFD и межкадровый интервал считаются отдельно.'}};let render=k=>{let d=layers[k];$('.widget-result',w).innerHTML='<div class="layer-row">'+d.parts.map(p=>'<span>'+esc(p)+'</span>').join('')+'</div><p>'+esc(d.text)+'</p>';};$$('[data-layer]',w).forEach(b=>b.onclick=()=>render(b.dataset.layer));render('app');});
@@ -2666,8 +2667,8 @@ function rememberOrigin(element) {
 function closeReference(restore = true) {
     drawer.hidden = true;
     if (!restore) return;
-    const visibleOrigin = originFocus?.isConnected && !originFocus.closest('.chapter[hidden]');
-    (visibleOrigin ? originFocus : dictionaryOpen)?.focus({ preventScroll: true });
+    const visibleOrigin = originFocus?.isConnected && !originFocus.closest('.chapter[hidden]') && originFocus.getClientRects().length;
+    (visibleOrigin ? originFocus : document.querySelector('[data-phone-action="dictionary"]')?.getClientRects().length ? document.querySelector('[data-phone-action="dictionary"]') : dictionaryOpen)?.focus({preventScroll:true});
 }
 let activeCommand=null;
 function card(command, analysis) {
@@ -2711,6 +2712,12 @@ function render() {
         (analysis.matchedIndices.length ? '<span>Подходящие формы: ' + analysis.matchedIndices.map(index => escapeHTML(command.flags[index].flag)).join('; ') + '</span>' : '') +
         '</button>').join('') : '<p>Совпадений нет. Попробуйте имя команды, отдельный параметр или русское описание действия.</p>';
 }
+function focusReferenceSearch() {
+    if (matchMedia('(max-width:750px), (pointer:coarse)').matches) {
+        const heading = drawer.querySelector('.command-card h2') || drawer.querySelector('.drawer-head h2');
+        if (heading) { heading.tabIndex = -1; heading.focus({preventScroll:true}); }
+    } else input.focus({preventScroll:true});
+}
 function open(query, element) {
     rememberOrigin(element || document.activeElement);
     if (!drawer.contains(element || document.activeElement)) navigation = [];
@@ -2718,7 +2725,7 @@ function open(query, element) {
     input.value = query;
     manualTerms = false;
     setMode('commands');
-    input.focus({ preventScroll: true });
+    focusReferenceSearch();
     drawer.scrollTop = 0;
 }
 function selectCommand(name) {
@@ -2759,12 +2766,12 @@ terms.addEventListener('click', event => {
     if (item) { selectCommand(item.dataset.commandName); return; }
     if (event.target.closest('[data-reference-back]')) {
         const previous = navigation.pop();
-        if (previous) { input.value = previous.query; render(); drawer.scrollTop = previous.scrollTop; input.focus({ preventScroll: true }); }
+        if (previous) { input.value = previous.query; render(); drawer.scrollTop = previous.scrollTop; focusReferenceSearch(); }
         return;
     }
     if (event.target.closest('[data-reference-catalog]')) {
         navigation.push({ query: input.value, scrollTop: drawer.scrollTop });
-        input.value = ''; render(); drawer.scrollTop = 0; input.focus({ preventScroll: true }); return;
+        input.value = ''; render(); drawer.scrollTop = 0; focusReferenceSearch(); return;
     }
     if (event.target.closest('[data-expand-reference]')) {const button=event.target.closest('[data-expand-reference]');const expand=button.dataset.expanded!=='true';terms.querySelectorAll('.flag-detail').forEach(detail=>{if(!detail.hidden)detail.open=expand;});button.dataset.expanded=String(expand);button.textContent=expand?'Свернуть все':'Раскрыть все';return;}
     if (event.target.closest('[data-reference-chapter]')) closeReference(false);
@@ -2892,7 +2899,7 @@ function mount(container,command){for(const details of container.querySelectorAl
  }}
 root.FlagComparison={mount,runPair,fileChanges};
 })(typeof globalThis==='object'?globalThis:this);
-</script><div id="library-phone-controls"><button id="phone-backdrop" class="phone-backdrop" aria-label="Закрыть панель" hidden></button><section id="phone-view" class="phone-view" role="dialog" aria-modal="true" aria-labelledby="phone-view-title" hidden><div class="phone-view-head"><h2 id="phone-view-title">Как читать</h2><button type="button" data-phone-close aria-label="Закрыть настройки чтения">×</button></div><div class="phone-font-row"><button type="button" data-phone-font="down" aria-label="Уменьшить шрифт">A−</button><output>Размер текста</output><button type="button" data-phone-font="up" aria-label="Увеличить шрифт">A+</button></div><button type="button" class="phone-theme-toggle" data-phone-theme>Тема</button></section><nav id="phone-tools" class="phone-tools" aria-label="Управление чтением"><button type="button" data-phone-action="prev"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg><span>Назад</span></button><button type="button" data-phone-action="chapters" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg><span>Главы</span></button><button type="button" data-phone-action="dictionary" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7a3 3 0 0 1 3 3v14a4 4 0 0 0-4-2H4zM14 7a3 3 0 0 1 3-3h3v15h-3a4 4 0 0 0-3 2"/></svg><span>Справка</span></button><button type="button" data-phone-action="view" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 18 5-12 5 12M5 14h6M16 18l3-8 3 8M17 15h4"/></svg><span>Вид</span></button><button type="button" data-phone-action="next"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 6 6 6-6 6"/></svg><span>Дальше</span></button></nav><script>(()=>{'use strict';
+</script><div id="library-phone-controls"><button id="phone-backdrop" class="phone-backdrop" aria-label="Закрыть панель" hidden></button><section id="phone-view" class="phone-view" role="dialog" aria-modal="true" aria-labelledby="phone-view-title" hidden><div class="phone-view-head"><h2 id="phone-view-title">Текст и тема</h2><button type="button" data-phone-close aria-label="Закрыть настройки чтения"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div><div class="phone-font-row"><button type="button" data-phone-font="down" aria-label="Уменьшить шрифт">A−</button><output>Размер текста</output><button type="button" data-phone-font="up" aria-label="Увеличить шрифт">A+</button></div><button type="button" class="phone-theme-toggle" data-phone-theme>Тема</button></section><nav id="phone-tools" class="phone-tools" aria-label="Управление чтением"><button type="button" data-phone-action="prev"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg><span>Назад</span></button><button type="button" data-phone-action="chapters" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg><span>Главы</span></button><button type="button" data-phone-action="dictionary" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7a3 3 0 0 1 3 3v14a4 4 0 0 0-4-2H4zM14 7a3 3 0 0 1 3-3h3v15h-3a4 4 0 0 0-3 2"/></svg><span>Справка</span></button><button type="button" data-phone-action="view" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 18 5-12 5 12M5 14h6M16 18l3-8 3 8M17 15h4"/></svg><span>Вид</span></button><button type="button" data-phone-action="next"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 6 6 6-6 6"/></svg><span>Дальше</span></button></nav><script>(()=>{'use strict';
 const bar=document.getElementById('phone-tools'),view=document.getElementById('phone-view'),backdrop=document.getElementById('phone-backdrop'),side=document.getElementById('side-nav'),dictionary=document.getElementById('dictionary');
 if(!bar||!view||!side||!dictionary)return;
 const mq=matchMedia('(max-width:750px)'),button=name=>bar.querySelector('[data-phone-action="'+name+'"]');
@@ -2920,6 +2927,7 @@ bar.addEventListener('click',event=>{
  if(action==='view'){const was=view.hidden;closeAll();view.hidden=!was;button('view').setAttribute('aria-expanded',String(was));if(was)view.querySelector('[data-phone-close]').focus();sync();}
 });
 view.addEventListener('click',event=>{const target=event.target.closest('button');if(!target)return;if(target.hasAttribute('data-phone-close')){closeView();sync();button('view').focus();}if(target.dataset.phoneFont){document.getElementById(target.dataset.phoneFont==='up'?'font-up':'font-down').click();sync();}if(target.hasAttribute('data-phone-theme')){document.getElementById('theme').click();sync();}});
+view.addEventListener('dblclick',event=>{if(event.target.closest('button'))event.preventDefault();});
 view.addEventListener('keydown',event=>{if(event.key!=='Tab')return;const all=[...view.querySelectorAll('button')],first=all[0],last=all.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}});
 backdrop.addEventListener('click',closeAll);addEventListener('keydown',event=>{if(event.key==='Escape')closeAll();});
 const close=document.createElement('button');close.type='button';close.className='phone-sidebar-close';close.textContent='Закрыть главы ×';close.addEventListener('click',closeAll);side.prepend(close);

@@ -12,6 +12,7 @@ ICONS = {
 CSS = '''
 .phone-tools,.phone-view,.phone-backdrop,.phone-sidebar-close{display:none}
 @media(max-width:750px){
+.phone-view button,.phone-sidebar-close,.drawer button,.deep-sketch button{touch-action:manipulation}.phone-view .phone-view-head button{width:44px;height:44px;min-width:44px;min-height:44px;flex:0 0 44px;display:grid;place-items:center;padding:0;line-height:1;border-radius:50%;font-size:22px}.phone-view-head button svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
 .topbar{padding-top:calc(10px + env(safe-area-inset-top))!important}.sidebar{padding-top:calc(20px + env(safe-area-inset-top))!important}.drawer{padding-top:calc(22px + env(safe-area-inset-top))!important}html{scroll-padding-top:calc(76px + env(safe-area-inset-top))!important}
 .phone-reference-hint{display:none!important}.deep-sketch .ds-navigation>button{min-width:44px;min-height:44px}.deep-sketch .ds-steps{gap:5px}.deep-sketch .ds-steps button{width:38px;height:38px;min-width:38px;min-height:38px}
 html{scroll-padding-top:76px}body{padding-bottom:0}main{padding:24px 20px calc(112px + env(safe-area-inset-bottom))!important;min-width:0}.reader,.chapter{min-width:0;max-width:100%}.chapter{font-size:var(--size,19px);line-height:1.74}.chapter p,.chapter li,.chapter h1,.chapter h2,.chapter h3,.chapter dd{overflow-wrap:anywhere}.chapter h1{font-size:clamp(30px,8vw,39px);line-height:1.13}.chapter h2{font-size:26px;line-height:1.25}.chapter pre{max-width:100%;font-size:13px;line-height:1.65;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}.chapter table{font-size:14px}.table-wrap{width:100%;max-width:100%;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}.chapter .deep-sketch{min-width:0;max-width:100%}
@@ -50,6 +51,7 @@ bar.addEventListener('click',event=>{
  if(action==='view'){const was=view.hidden;closeAll();view.hidden=!was;button('view').setAttribute('aria-expanded',String(was));if(was)view.querySelector('[data-phone-close]').focus();sync();}
 });
 view.addEventListener('click',event=>{const target=event.target.closest('button');if(!target)return;if(target.hasAttribute('data-phone-close')){closeView();sync();button('view').focus();}if(target.dataset.phoneFont){document.getElementById(target.dataset.phoneFont==='up'?'font-up':'font-down').click();sync();}if(target.hasAttribute('data-phone-theme')){document.getElementById('theme').click();sync();}});
+view.addEventListener('dblclick',event=>{if(event.target.closest('button'))event.preventDefault();});
 view.addEventListener('keydown',event=>{if(event.key!=='Tab')return;const all=[...view.querySelectorAll('button')],first=all[0],last=all.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}});
 backdrop.addEventListener('click',closeAll);addEventListener('keydown',event=>{if(event.key==='Escape')closeAll();});
 const close=document.createElement('button');close.type='button';close.className='phone-sidebar-close';close.textContent='Закрыть главы ×';close.addEventListener('click',closeAll);side.prepend(close);
@@ -65,7 +67,23 @@ def enhance(page, *, home=False):
     if home:
         css = '''@media(max-width:750px){body{padding:26px 19px 40px}#home-theme-toggle{min-height:44px;padding:9px 16px!important;border-radius:24px!important}h1{font-size:clamp(37px,10vw,56px);line-height:1.04}.grid{grid-template-columns:minmax(0,1fr)!important;gap:15px}.volume{padding:24px!important;min-width:0;border-radius:20px!important}.volume h2{font-size:28px}.volume p{font-size:16px;line-height:1.6}.volume .open{display:inline-block;margin-top:12px}.notes{border-radius:20px!important;padding:24px!important}summary{min-height:44px;padding:10px 0}a,button{touch-action:manipulation}}'''
         return page.replace('</head>','<style id="library-phone-style">'+css+'</style></head>',1)
-    controls = '<div id="library-phone-controls"><button id="phone-backdrop" class="phone-backdrop" aria-label="Закрыть панель" hidden></button><section id="phone-view" class="phone-view" role="dialog" aria-modal="true" aria-labelledby="phone-view-title" hidden><div class="phone-view-head"><h2 id="phone-view-title">Как читать</h2><button type="button" data-phone-close aria-label="Закрыть настройки чтения">×</button></div><div class="phone-font-row"><button type="button" data-phone-font="down" aria-label="Уменьшить шрифт">A−</button><output>Размер текста</output><button type="button" data-phone-font="up" aria-label="Увеличить шрифт">A+</button></div><button type="button" class="phone-theme-toggle" data-phone-theme>Тема</button></section><nav id="phone-tools" class="phone-tools" aria-label="Управление чтением">'
+    # Opening a reference is a reading action on a phone, not a request to type.
+    # Focus a non-editable heading before Safari can summon the keyboard.
+    focus_helper = '''function focusReferenceSearch() {
+    if (matchMedia('(max-width:750px), (pointer:coarse)').matches) {
+        const heading = drawer.querySelector('.command-card h2') || drawer.querySelector('.drawer-head h2');
+        if (heading) { heading.tabIndex = -1; heading.focus({preventScroll:true}); }
+    } else input.focus({preventScroll:true});
+}
+'''
+    if 'function focusReferenceSearch() {' not in page:
+        assert page.count('function open(query, element) {') == 1
+        page = page.replace('function open(query, element) {',focus_helper+'function open(query, element) {',1)
+    page = page.replace('input.focus({ preventScroll: true });','focusReferenceSearch();')
+    page = page.replace("$('#term-search').focus();", "if(matchMedia('(max-width:750px), (pointer:coarse)').matches){const heading=$('#dictionary .drawer-head h2');heading.tabIndex=-1;heading.focus({preventScroll:true});}else $('#term-search').focus({preventScroll:true});")
+    page = page.replace("const visibleOrigin = originFocus?.isConnected && !originFocus.closest('.chapter[hidden]');", "const visibleOrigin = originFocus?.isConnected && !originFocus.closest('.chapter[hidden]') && originFocus.getClientRects().length;")
+    page = page.replace('(visibleOrigin ? originFocus : dictionaryOpen)?.focus({ preventScroll: true });', '(visibleOrigin ? originFocus : document.querySelector(\'[data-phone-action="dictionary"]\')?.getClientRects().length ? document.querySelector(\'[data-phone-action="dictionary"]\') : dictionaryOpen)?.focus({preventScroll:true});')
+    controls = '<div id="library-phone-controls"><button id="phone-backdrop" class="phone-backdrop" aria-label="Закрыть панель" hidden></button><section id="phone-view" class="phone-view" role="dialog" aria-modal="true" aria-labelledby="phone-view-title" hidden><div class="phone-view-head"><h2 id="phone-view-title">Текст и тема</h2><button type="button" data-phone-close aria-label="Закрыть настройки чтения"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div><div class="phone-font-row"><button type="button" data-phone-font="down" aria-label="Уменьшить шрифт">A−</button><output>Размер текста</output><button type="button" data-phone-font="up" aria-label="Увеличить шрифт">A+</button></div><button type="button" class="phone-theme-toggle" data-phone-theme>Тема</button></section><nav id="phone-tools" class="phone-tools" aria-label="Управление чтением">'
     for name,label in [('prev','Назад'),('chapters','Главы'),('dictionary','Справка'),('view','Вид'),('next','Дальше')]:
         attrs = ' aria-expanded="false"' if name in {'chapters','dictionary','view'} else ''
         controls += '<button type="button" data-phone-action="'+name+'"'+attrs+'><svg viewBox="0 0 24 24" aria-hidden="true">'+ICONS[name]+'</svg><span>'+label+'</span></button>'

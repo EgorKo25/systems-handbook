@@ -32,7 +32,11 @@
     "step diagram advance",
     "wide table contained inside horizontal wrapper in all eight volumes",
     "no page-wide horizontal overflow in tested chapters",
-    "top/bottom safe-area CSS and viewport-fit=cover included"
+    "top/bottom safe-area CSS and viewport-fit=cover included",
+    "command click focuses non-editable heading on phone; desktop retains search autofocus",
+    "explicit tap in search still focuses input",
+    "text/theme sheet close button measured 44x44, circular",
+    "font controls use touch-action:manipulation; repeated clicks change font only in viewport test"
   ],
   "not_verified": [
     "physical iPhone Safari",
