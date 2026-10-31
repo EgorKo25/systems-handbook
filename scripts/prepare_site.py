@@ -14,7 +14,7 @@ import tempfile
 ROOT_FILES = {
     ".nojekyll", "index.html", "library-stats.json",
     "КАК-ЧИТАТЬ.txt", "ПЛАН-ПРАКТИЧЕСКОГО-СТЕНДА.txt",
-    "ПРОВЕРКИ-БИБЛИОТЕКИ.txt",
+    "ПРОВЕРКИ-БИБЛИОТЕКИ.txt", "ПЛАН-РАЗВИТИЯ.txt",
 }
 BOOKS = {"networks", "linux", "bash", "postgres", "cache"}
 CACHE_LAB_MODELS = {"cache/sources/eviction.js", "cache/sources/resource-labs.js", "cache/sources/resp-lab.js"}
