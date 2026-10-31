@@ -1,0 +1,71 @@
+name: Check and publish handbook
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Do not interrupt a running check or publication when another push arrives.
+concurrency:
+  group: handbook-${{ github.ref }}
+  cancel-in-progress: false
+  queue: max
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: read
+    steps:
+      - name: Check out public sources
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Test validation and publication rules
+        run: python3 -m unittest discover -s tests -v
+      - name: Build cache volume and shared dictionary
+        run: python3 cache/build.py
+      - name: Check pages, anchors, JSON and JavaScript
+        run: python3 scripts/check_site.py . --node-check
+      - name: Check teaching models
+        run: |
+          node cache/labs/test-eviction.cjs
+          node cache/labs/test-resources.cjs
+      - name: Prepare public reading files
+        run: python3 scripts/prepare_site.py _site --revision "${{ github.sha }}"
+      - name: Check the exact publication artifact
+        run: python3 scripts/check_site.py _site --node-check
+      - name: Configure GitHub Pages
+        if: github.event_name != 'pull_request'
+        uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
+      - name: Upload checked site
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4
+        with:
+          path: _site
+          retention-days: 3
+
+  deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+      queue: max
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publish checked handbook
+        id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
