@@ -1,0 +1,179 @@
+{
+  "kind": "actual loopback servers",
+  "versions": {
+    "redis": "6.0.16",
+    "memcached": "VERSION 1.6.14"
+  },
+  "cases": [
+    {
+      "name": "redis ping",
+      "actual": "PONG",
+      "expected": "PONG",
+      "status": "PASS"
+    },
+    {
+      "name": "redis set ttl",
+      "actual": "OK",
+      "expected": "OK",
+      "status": "PASS"
+    },
+    {
+      "name": "redis value",
+      "actual": "hello",
+      "expected": "hello",
+      "status": "PASS"
+    },
+    {
+      "name": "redis ttl range",
+      "actual": true,
+      "expected": true,
+      "status": "PASS"
+    },
+    {
+      "name": "redis nx rejects",
+      "actual": null,
+      "expected": null,
+      "status": "PASS"
+    },
+    {
+      "name": "redis replace",
+      "actual": "OK",
+      "expected": "OK",
+      "status": "PASS"
+    },
+    {
+      "name": "redis plain set removes ttl",
+      "actual": -1,
+      "expected": -1,
+      "status": "PASS"
+    },
+    {
+      "name": "redis missing",
+      "actual": null,
+      "expected": null,
+      "status": "PASS"
+    },
+    {
+      "name": "redis empty",
+      "actual": "",
+      "expected": "",
+      "status": "PASS"
+    },
+    {
+      "name": "redis incr first",
+      "actual": 1,
+      "expected": 1,
+      "status": "PASS"
+    },
+    {
+      "name": "redis incr second",
+      "actual": 2,
+      "expected": 2,
+      "status": "PASS"
+    },
+    {
+      "name": "redis hash fields",
+      "actual": 2,
+      "expected": 2,
+      "status": "PASS"
+    },
+    {
+      "name": "redis hash read",
+      "actual": "120",
+      "expected": "120",
+      "status": "PASS"
+    },
+    {
+      "name": "redis exec per-command error",
+      "actual": true,
+      "expected": true,
+      "status": "PASS"
+    },
+    {
+      "name": "redis no rollback",
+      "actual": "written",
+      "expected": "written",
+      "status": "PASS"
+    },
+    {
+      "name": "redis lua count",
+      "actual": 1,
+      "expected": 1,
+      "status": "PASS"
+    },
+    {
+      "name": "redis lua ttl",
+      "actual": true,
+      "expected": true,
+      "status": "PASS"
+    },
+    {
+      "name": "memcached set",
+      "actual": "STORED",
+      "expected": "STORED",
+      "status": "PASS"
+    },
+    {
+      "name": "memcached get",
+      "actual": "hello",
+      "expected": "hello",
+      "status": "PASS"
+    },
+    {
+      "name": "memcached add rejects",
+      "actual": "NOT_STORED",
+      "expected": "NOT_STORED",
+      "status": "PASS"
+    },
+    {
+      "name": "memcached cas conflict",
+      "actual": "EXISTS",
+      "expected": "EXISTS",
+      "status": "PASS"
+    },
+    {
+      "name": "memcached cas preserves",
+      "actual": "new",
+      "expected": "new",
+      "status": "PASS"
+    },
+    {
+      "name": "memcached cas success",
+      "actual": "STORED",
+      "expected": "STORED",
+      "status": "PASS"
+    },
+    {
+      "name": "memcached missing",
+      "actual": null,
+      "expected": null,
+      "status": "PASS"
+    },
+    {
+      "name": "memcached empty",
+      "actual": "",
+      "expected": "",
+      "status": "PASS"
+    },
+    {
+      "name": "memcached byte framing",
+      "actual": "hello\r\nEND\r\nworld",
+      "expected": "hello\r\nEND\r\nworld",
+      "status": "PASS"
+    },
+    {
+      "name": "memcached absolute expiration",
+      "actual": null,
+      "expected": null,
+      "status": "PASS"
+    },
+    {
+      "name": "redis-cli actual",
+      "actual": "PONG",
+      "expected": "PONG",
+      "status": "PASS"
+    }
+  ],
+  "status": "PASS",
+  "limits": "No throughput, persistence, power-loss, Sentinel, Cluster, TLS or production-load claims."
+}

@@ -1,0 +1,41 @@
+{
+  "status": "PASS",
+  "date": "2026-10-31",
+  "volume": "cache",
+  "book_sha256": "78642046b71cd27dac67f5e9bb056b1479b3485b4c39e7137554a460f90b833b",
+  "parts": 3,
+  "chapters": 40,
+  "words": 53949,
+  "terms": 203,
+  "illustrations": 17,
+  "step_diagrams": 4,
+  "steps": 24,
+  "replication_scenarios": 3,
+  "replication_steps": 21,
+  "eviction_policies": 5,
+  "interactive_calculators": [
+    "load",
+    "TTL bounds",
+    "slab memory"
+  ],
+  "live_cases": {
+    "basic": 28,
+    "advanced": 27,
+    "redis_semantics": 20,
+    "memcached_semantics": 16,
+    "persistence": 19
+  },
+  "total_live_cases": 110,
+  "browser_states": 48,
+  "limits": [
+    "No network-partition test",
+    "No power-loss test",
+    "No Memcached SASL or built-in proxy execution",
+    "TLS and cluster tested separately, not combined production topology",
+    "No host power loss",
+    "No disk corruption",
+    "AOF always mode; no everysec RPO measurement",
+    "Versions outside recorded binary were not executed"
+  ],
+  "manifest": "SHA256SUMS excludes IDE/Git metadata, Python bytecode and itself"
+}

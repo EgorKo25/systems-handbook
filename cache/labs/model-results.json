@@ -1,0 +1,72 @@
+{
+  "kind": "deterministic model, not live server",
+  "status": "PASS",
+  "economics": {
+    "mean_ms": 1.0200000000000005,
+    "required_hit": 0.875,
+    "source_rps": 1500.000000000001,
+    "concurrency": 20.40000000000001
+  },
+  "invalidation_race": [
+    {
+      "action": "reader obtains",
+      "reader": 7,
+      "source": 7,
+      "cache": null
+    },
+    {
+      "action": "writer commits",
+      "reader": 7,
+      "source": 8,
+      "cache": null
+    },
+    {
+      "action": "writer invalidates",
+      "reader": 7,
+      "source": 8,
+      "cache": null
+    },
+    {
+      "action": "reader fills",
+      "reader": 7,
+      "source": 8,
+      "cache": 7
+    }
+  ],
+  "lru": {
+    "trace": [
+      "A",
+      "B",
+      "A",
+      "C",
+      "A",
+      "B"
+    ],
+    "results": [
+      {
+        "capacity": 1,
+        "hits": 0,
+        "misses": 6
+      },
+      {
+        "capacity": 2,
+        "hits": 2,
+        "misses": 4
+      },
+      {
+        "capacity": 3,
+        "hits": 3,
+        "misses": 3
+      }
+    ]
+  },
+  "single_flight": {
+    "simultaneous_requests": 200,
+    "without": 200,
+    "with_local": 1
+  },
+  "memory": {
+    "bytes": 2216000000,
+    "gib": 2.0638108253479004
+  }
+}

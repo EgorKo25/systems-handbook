@@ -1,0 +1,185 @@
+{
+  "status": "PASS",
+  "kind": "actual owned loopback Memcached process",
+  "started_at_utc": "2026-10-31T09:03:51.635576+00:00",
+  "versions": {
+    "python": "3.10.12",
+    "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.35",
+    "memcached": "1.6.14"
+  },
+  "binary": "/tmp/cache-book-runtime/root/usr/bin/memcached",
+  "cases": [
+    {
+      "name": "missing",
+      "status": "PASS",
+      "actual": {},
+      "expected": {}
+    },
+    {
+      "name": "UTF-8 and embedded CRLF",
+      "status": "PASS",
+      "actual": {
+        "utf8": "Привет\r\nEND\r\nworld",
+        "length_bytes": 24
+      },
+      "expected": {
+        "utf8": "Привет\r\nEND\r\nworld",
+        "length_bytes": 24
+      }
+    },
+    {
+      "name": "empty differs from missing",
+      "status": "PASS",
+      "actual": {
+        "utf8": "",
+        "length_bytes": 0
+      },
+      "expected": {
+        "utf8": "",
+        "length_bytes": 0
+      }
+    },
+    {
+      "name": "add does not replace",
+      "status": "PASS",
+      "actual": {
+        "utf8": "NOT_STORED",
+        "length_bytes": 10
+      },
+      "expected": {
+        "utf8": "NOT_STORED",
+        "length_bytes": 10
+      }
+    },
+    {
+      "name": "CAS conflict",
+      "status": "PASS",
+      "actual": {
+        "utf8": "EXISTS",
+        "length_bytes": 6
+      },
+      "expected": {
+        "utf8": "EXISTS",
+        "length_bytes": 6
+      }
+    },
+    {
+      "name": "CAS current token",
+      "status": "PASS",
+      "actual": {
+        "utf8": "STORED",
+        "length_bytes": 6
+      },
+      "expected": {
+        "utf8": "STORED",
+        "length_bytes": 6
+      }
+    },
+    {
+      "name": "increment",
+      "status": "PASS",
+      "actual": {
+        "utf8": "13",
+        "length_bytes": 2
+      },
+      "expected": {
+        "utf8": "13",
+        "length_bytes": 2
+      }
+    },
+    {
+      "name": "decrement stops at zero",
+      "status": "PASS",
+      "actual": {
+        "utf8": "0",
+        "length_bytes": 1
+      },
+      "expected": {
+        "utf8": "0",
+        "length_bytes": 1
+      }
+    },
+    {
+      "name": "absolute date in the past",
+      "status": "PASS",
+      "actual": {},
+      "expected": {}
+    },
+    {
+      "name": "relative expiration",
+      "status": "PASS",
+      "actual": {},
+      "expected": {}
+    },
+    {
+      "name": "multiget keys",
+      "status": "PASS",
+      "actual": [
+        "book:mc:d139e2eced184363879288d81336aaa9:empty",
+        "book:mc:d139e2eced184363879288d81336aaa9:value"
+      ],
+      "expected": [
+        "book:mc:d139e2eced184363879288d81336aaa9:empty",
+        "book:mc:d139e2eced184363879288d81336aaa9:value"
+      ]
+    },
+    {
+      "name": "multiget hit delta",
+      "status": "PASS",
+      "actual": 2,
+      "expected": 2
+    },
+    {
+      "name": "multiget miss delta",
+      "status": "PASS",
+      "actual": 1,
+      "expected": 1
+    },
+    {
+      "name": "cmd_get counts keys in tested server",
+      "status": "PASS",
+      "actual": 3,
+      "expected": 3
+    },
+    {
+      "name": "delete",
+      "status": "PASS",
+      "actual": {
+        "utf8": "DELETED",
+        "length_bytes": 7
+      },
+      "expected": {
+        "utf8": "DELETED",
+        "length_bytes": 7
+      }
+    },
+    {
+      "name": "deleted missing",
+      "status": "PASS",
+      "actual": {},
+      "expected": {}
+    }
+  ],
+  "limits": [
+    "Basic text protocol only; no SASL, TLS, meta or built-in proxy execution",
+    "No eviction benchmark, network partition, replication or power-loss test",
+    "cmd_get expectation is verified for this server version, not inferred from the field name"
+  ],
+  "command": [
+    "/tmp/cache-book-runtime/root/usr/bin/memcached",
+    "-l",
+    "127.0.0.1",
+    "-p",
+    "42371",
+    "-U",
+    "0",
+    "-m",
+    "32",
+    "-t",
+    "2"
+  ],
+  "server_pid": 1674,
+  "owned_process_stopped": true,
+  "completed_at_utc": "2026-10-31T09:03:54.916950+00:00",
+  "elapsed_seconds": 3.28
+}

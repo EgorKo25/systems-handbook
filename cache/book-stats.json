@@ -1,0 +1,282 @@
+[
+  {
+    "id": "00-route",
+    "title": "Кэширование: теория и два самостоятельных руководства",
+    "words": 401,
+    "part": "Начало",
+    "number": "1"
+  },
+  {
+    "id": "01-why",
+    "title": "Назначение кэша и условия его применения",
+    "words": 1050,
+    "part": "I. Кэширование",
+    "number": "I.1"
+  },
+  {
+    "id": "31-locality",
+    "title": "Локальность обращений и рабочий набор",
+    "words": 1123,
+    "part": "I. Кэширование",
+    "number": "I.2"
+  },
+  {
+    "id": "32-cache-structure",
+    "title": "Структуры данных и операции кэша",
+    "words": 1007,
+    "part": "I. Кэширование",
+    "number": "I.3"
+  },
+  {
+    "id": "33-eviction",
+    "title": "Алгоритмы вытеснения записей",
+    "words": 1593,
+    "part": "I. Кэширование",
+    "number": "I.4"
+  },
+  {
+    "id": "34-admission",
+    "title": "Допуск, адаптация и цена сохранённого объекта",
+    "words": 1187,
+    "part": "I. Кэширование",
+    "number": "I.5"
+  },
+  {
+    "id": "06-memory",
+    "title": "Память, вытеснение и рабочий набор",
+    "words": 1528,
+    "part": "I. Кэширование",
+    "number": "I.6"
+  },
+  {
+    "id": "35-time-model",
+    "title": "Время в кэше: срок, обновление и вероятность попадания",
+    "words": 1137,
+    "part": "I. Кэширование",
+    "number": "I.7"
+  },
+  {
+    "id": "03-consistency",
+    "title": "Ключи кэша и требования к согласованности",
+    "words": 1127,
+    "part": "I. Кэширование",
+    "number": "I.8"
+  },
+  {
+    "id": "04-patterns",
+    "title": "Чтение, запись и гонка инвалидации",
+    "words": 1466,
+    "part": "I. Кэширование",
+    "number": "I.9"
+  },
+  {
+    "id": "05-overload",
+    "title": "Защита источника от массовых промахов",
+    "words": 1447,
+    "part": "I. Кэширование",
+    "number": "I.10"
+  },
+  {
+    "id": "02-economics",
+    "title": "Как рассчитать, что кэш уже нужен",
+    "words": 1225,
+    "part": "I. Кэширование",
+    "number": "I.11"
+  },
+  {
+    "id": "36-effectiveness",
+    "title": "Расчёт ресурсной и экономической эффективности",
+    "words": 1137,
+    "part": "I. Кэширование",
+    "number": "I.12"
+  },
+  {
+    "id": "37-hierarchy",
+    "title": "Многоуровневое кэширование и обработка отказов",
+    "words": 1038,
+    "part": "I. Кэширование",
+    "number": "I.13"
+  },
+  {
+    "id": "11-scaling",
+    "title": "Масштабирование кэша и неравномерная нагрузка",
+    "words": 1003,
+    "part": "I. Кэширование",
+    "number": "I.14"
+  },
+  {
+    "id": "12-hardware",
+    "title": "Аппаратные ограничения производительности кэша",
+    "words": 1274,
+    "part": "I. Кэширование",
+    "number": "I.15"
+  },
+  {
+    "id": "14-benchmark",
+    "title": "Методика сравнительного нагрузочного испытания",
+    "words": 1426,
+    "part": "I. Кэширование",
+    "number": "I.16"
+  },
+  {
+    "id": "16-operation",
+    "title": "Внедрение, защита и эксплуатационное решение",
+    "words": 1307,
+    "part": "I. Кэширование",
+    "number": "I.17"
+  },
+  {
+    "id": "17-redis-start",
+    "title": "Установка и первый запуск Redis",
+    "words": 1153,
+    "part": "II. Redis",
+    "number": "II.1"
+  },
+  {
+    "id": "07-redis",
+    "title": "Redis: от соединения до структуры данных",
+    "words": 1163,
+    "part": "II. Redis",
+    "number": "II.2"
+  },
+  {
+    "id": "18-redis-data",
+    "title": "Структуры Redis и организация клиентских запросов",
+    "words": 1404,
+    "part": "II. Redis",
+    "number": "II.3"
+  },
+  {
+    "id": "08-atomicity",
+    "title": "Атомарность, пакеты и повторные запросы",
+    "words": 1246,
+    "part": "II. Redis",
+    "number": "II.4"
+  },
+  {
+    "id": "19-redis-acl",
+    "title": "Аутентификация и авторизация Redis",
+    "words": 1227,
+    "part": "II. Redis",
+    "number": "II.5"
+  },
+  {
+    "id": "20-redis-tls",
+    "title": "Защита соединений Redis с помощью TLS",
+    "words": 1122,
+    "part": "II. Redis",
+    "number": "II.6"
+  },
+  {
+    "id": "21-redis-storage",
+    "title": "Настройка сохранения и восстановления Redis",
+    "words": 1278,
+    "part": "II. Redis",
+    "number": "II.7"
+  },
+  {
+    "id": "09-durability",
+    "title": "Redis после остановки и потери узла",
+    "words": 1068,
+    "part": "II. Redis",
+    "number": "II.8"
+  },
+  {
+    "id": "22-redis-sentinel",
+    "title": "Репликация Redis и автоматическое переключение Sentinel",
+    "words": 2696,
+    "part": "II. Redis",
+    "number": "II.9"
+  },
+  {
+    "id": "23-redis-cluster",
+    "title": "Создание и эксплуатация Redis Cluster",
+    "words": 1374,
+    "part": "II. Redis",
+    "number": "II.10"
+  },
+  {
+    "id": "24-redis-operation",
+    "title": "Эксплуатация и диагностика Redis",
+    "words": 1091,
+    "part": "II. Redis",
+    "number": "II.11"
+  },
+  {
+    "id": "13-metrics",
+    "title": "Метрики Redis и оценка результатов внедрения",
+    "words": 1091,
+    "part": "II. Redis",
+    "number": "II.12"
+  },
+  {
+    "id": "15-lab",
+    "title": "Практикум Redis: команды, конфликты и восстановление",
+    "words": 1076,
+    "part": "II. Redis",
+    "number": "II.13"
+  },
+  {
+    "id": "25-mc-start",
+    "title": "Установка и первый запуск Memcached",
+    "words": 1153,
+    "part": "III. Memcached",
+    "number": "III.1"
+  },
+  {
+    "id": "10-memcached",
+    "title": "Модель данных и организация памяти Memcached",
+    "words": 1746,
+    "part": "III. Memcached",
+    "number": "III.2"
+  },
+  {
+    "id": "26-mc-protocol",
+    "title": "Команды Memcached и обработка ответов",
+    "words": 1595,
+    "part": "III. Memcached",
+    "number": "III.3"
+  },
+  {
+    "id": "27-mc-security",
+    "title": "Аутентификация и защищённый доступ к Memcached",
+    "words": 1340,
+    "part": "III. Memcached",
+    "number": "III.4"
+  },
+  {
+    "id": "28-mc-sharding",
+    "title": "Кластер Memcached: распределение ключей клиентом",
+    "words": 1475,
+    "part": "III. Memcached",
+    "number": "III.5"
+  },
+  {
+    "id": "29-mc-proxy",
+    "title": "Прокси Memcached: маршрутизация и проверка конфигурации",
+    "words": 1414,
+    "part": "III. Memcached",
+    "number": "III.6"
+  },
+  {
+    "id": "30-mc-operation",
+    "title": "Эксплуатация и настройка памяти Memcached",
+    "words": 1570,
+    "part": "III. Memcached",
+    "number": "III.7"
+  },
+  {
+    "id": "38-mc-lab",
+    "title": "Практикум Memcached: протокол, память и отказ узла",
+    "words": 1623,
+    "part": "III. Memcached",
+    "number": "III.8"
+  },
+  {
+    "id": "99-glossary",
+    "title": "Словарь терминов и англицизмов",
+    "words": 3568,
+    "part": "Справочник",
+    "number": "1"
+  }
+]

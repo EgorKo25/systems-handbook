@@ -1,0 +1,22 @@
+{
+  "status": "PASS",
+  "assets": [
+    "benchmark-phases.svg",
+    "book-map.svg",
+    "cache-hierarchy.svg",
+    "cache-internals.svg",
+    "eviction-trace.svg",
+    "locality.svg",
+    "memcached-access.svg",
+    "memcached-proxy.svg",
+    "memcached-shards.svg",
+    "memcached-slabs.svg",
+    "memcached-system.svg",
+    "redis-access.svg",
+    "redis-cluster.svg",
+    "redis-cow.svg",
+    "redis-system.svg",
+    "tls-chain.svg",
+    "ttl-timeline.svg"
+  ]
+}

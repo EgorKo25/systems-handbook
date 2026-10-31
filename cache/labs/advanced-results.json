@@ -1,0 +1,152 @@
+{
+  "status": "PASS",
+  "kind": "actual owned loopback processes",
+  "cases": [
+    {
+      "name": "ACL create",
+      "status": "PASS",
+      "actual": "OK"
+    },
+    {
+      "name": "ACL AUTH",
+      "status": "PASS",
+      "actual": "OK"
+    },
+    {
+      "name": "ACL permitted GET",
+      "status": "PASS",
+      "actual": "120"
+    },
+    {
+      "name": "ACL command denied",
+      "status": "PASS",
+      "actual": true
+    },
+    {
+      "name": "ACL key denied",
+      "status": "PASS",
+      "actual": true
+    },
+    {
+      "name": "ACL bad password",
+      "status": "PASS",
+      "actual": true
+    },
+    {
+      "name": "ACL SAVE",
+      "status": "PASS",
+      "actual": "OK"
+    },
+    {
+      "name": "ACL survives restart",
+      "status": "PASS",
+      "actual": "OK"
+    },
+    {
+      "name": "Redis mTLS PING",
+      "status": "PASS",
+      "actual": "PONG"
+    },
+    {
+      "name": "Redis rejects missing client certificate",
+      "status": "PASS",
+      "actual": true
+    },
+    {
+      "name": "Memcached mTLS set",
+      "status": "PASS",
+      "actual": "STORED"
+    },
+    {
+      "name": "Memcached mTLS get",
+      "status": "PASS",
+      "actual": "secure"
+    },
+    {
+      "name": "Memcached rejects missing client certificate",
+      "status": "PASS",
+      "actual": true
+    },
+    {
+      "name": "WAIT confirms replica",
+      "status": "PASS",
+      "actual": 1
+    },
+    {
+      "name": "Replica value",
+      "status": "PASS",
+      "actual": "43"
+    },
+    {
+      "name": "Sentinel promotes owned replica",
+      "status": "PASS",
+      "actual": "master"
+    },
+    {
+      "name": "Sentinel surviving value",
+      "status": "PASS",
+      "actual": "43"
+    },
+    {
+      "name": "Cluster all slots assigned",
+      "status": "PASS",
+      "actual": true
+    },
+    {
+      "name": "Cluster routed SET",
+      "status": "PASS",
+      "actual": "OK"
+    },
+    {
+      "name": "Cluster routed GET",
+      "status": "PASS",
+      "actual": "150"
+    },
+    {
+      "name": "Cluster hash-tag MSET",
+      "status": "PASS",
+      "actual": "OK"
+    },
+    {
+      "name": "Cluster CROSSSLOT rejected",
+      "status": "PASS",
+      "actual": true
+    },
+    {
+      "name": "Cluster replica confirms probe",
+      "status": "PASS",
+      "actual": 1
+    },
+    {
+      "name": "Cluster planned failover accepted",
+      "status": "PASS",
+      "actual": "OK"
+    },
+    {
+      "name": "Cluster planned failover role",
+      "status": "PASS",
+      "actual": "master"
+    },
+    {
+      "name": "Cluster value after role change",
+      "status": "PASS",
+      "actual": "150"
+    },
+    {
+      "name": "Promoted shard retains confirmed probe",
+      "status": "PASS",
+      "actual": "confirmed"
+    }
+  ],
+  "limits": [
+    "No network-partition test",
+    "No power-loss test",
+    "No Memcached SASL or built-in proxy execution",
+    "TLS and cluster tested separately, not combined production topology"
+  ],
+  "versions": {
+    "redis": "6.0.16",
+    "memcached": "VERSION 1.6.14"
+  },
+  "cases_count": 27
+}

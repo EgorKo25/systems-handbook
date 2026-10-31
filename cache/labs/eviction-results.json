@@ -1,0 +1,5 @@
+{
+  "status": "PASS",
+  "cases": 12397,
+  "scope": "Belady FIFO anomaly, exhaustive 729 traces, OPT lower bound, LRU stack property, resident invariants, invalid inputs"
+}

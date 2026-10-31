@@ -1,0 +1,120 @@
+{
+  "status": "PASS",
+  "kind": "actual owned loopback Redis process",
+  "cases": [
+    {
+      "name": "set non-integer",
+      "status": "PASS",
+      "actual": "OK"
+    },
+    {
+      "name": "begin transaction",
+      "status": "PASS",
+      "actual": "OK"
+    },
+    {
+      "name": "first EXEC result",
+      "status": "PASS",
+      "actual": "OK"
+    },
+    {
+      "name": "middle EXEC runtime error",
+      "status": "PASS",
+      "actual": true
+    },
+    {
+      "name": "last EXEC result",
+      "status": "PASS",
+      "actual": "OK"
+    },
+    {
+      "name": "successful effects survive neighboring runtime error",
+      "status": "PASS",
+      "actual": [
+        "done",
+        "text",
+        "done"
+      ]
+    },
+    {
+      "name": "watched read",
+      "status": "PASS",
+      "actual": "10"
+    },
+    {
+      "name": "WATCH conflict aborts EXEC",
+      "status": "PASS",
+      "actual": null
+    },
+    {
+      "name": "list count",
+      "status": "PASS",
+      "actual": 2
+    },
+    {
+      "name": "list left-to-right order",
+      "status": "PASS",
+      "actual": [
+        "job-B",
+        "job-A"
+      ]
+    },
+    {
+      "name": "opposite ends implement FIFO",
+      "status": "PASS",
+      "actual": "job-A"
+    },
+    {
+      "name": "stream group created",
+      "status": "PASS",
+      "actual": "OK"
+    },
+    {
+      "name": "pending before acknowledgement",
+      "status": "PASS",
+      "actual": 1
+    },
+    {
+      "name": "XACK acknowledges one entry",
+      "status": "PASS",
+      "actual": 1
+    },
+    {
+      "name": "pending after acknowledgement",
+      "status": "PASS",
+      "actual": 0
+    },
+    {
+      "name": "XACK retains stream data",
+      "status": "PASS",
+      "actual": 1
+    },
+    {
+      "name": "initial ACL authentication",
+      "status": "PASS",
+      "actual": "OK"
+    },
+    {
+      "name": "old password rejected for new authentication",
+      "status": "PASS",
+      "actual": true
+    },
+    {
+      "name": "new password accepted",
+      "status": "PASS",
+      "actual": "OK"
+    },
+    {
+      "name": "previously authenticated connection remains usable",
+      "status": "PASS",
+      "actual": "PONG"
+    }
+  ],
+  "limits": [
+    "No load test",
+    "No persistence or power-loss test",
+    "No network partition or cluster in this script"
+  ],
+  "redis_version": "6.0.16",
+  "cases_count": 20
+}

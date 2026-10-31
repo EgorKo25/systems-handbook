@@ -1,0 +1,11 @@
+{
+  "status": "PASS",
+  "book_sha256": "78642046b71cd27dac67f5e9bb056b1479b3485b4c39e7137554a460f90b833b",
+  "links": 524,
+  "anchors": 716,
+  "diagrams": 4,
+  "steps": 24,
+  "replication_scenarios": 3,
+  "failures": [],
+  "scope": "Static local links, diagram state references, text transcripts, shared dictionary anchors; not server performance."
+}

@@ -1,0 +1,163 @@
+<header><h1>Практикум Memcached: протокол, память и отказ узла</h1><p>Самостоятельные опыты, ожидаемые ответы и разбор наблюдений</p></header>
+<h2>Что проверяется в практикуме</h2>
+<p>Цель — связать устройство протокола с наблюдаемым поведением. Сначала поднимают свой процесс, затем проверяют точные байты, конкуренцию CAS, сроки и счётчики. После этого отдельно исследуют распределение ключей и холодный запуск. Тест не требует Redis-клиента, netcat или telnet; основной клиент использует стандартную библиотеку Python. Он намеренно мал и не заменяет промышленную библиотеку с пулом, TLS, маршрутизацией и мониторингом.</p>
+<p>Нужны Linux или WSL, Python 3 и Memcached. Порт 11222 должен принадлежать только этому учебному процессу. Примеры запускаются под обычным пользователем, не меняют системную службу. Если порт занят, выбирают другой у сервера и задают клиенту MC_PORT. Для каждого запуска создаётся случайный префикс, поэтому повтор опыта не зависит от прежних значений.</p>
+<h2>Запуск собственного сервера</h2>
+<pre><code>memcached -l 127.0.0.1 -p 11222 -U 0 -m 32 -t 2</code></pre>
+<p>Оставляют этот терминал открытым; второй используют для клиента. -m задаёт бюджет объектов, -U 0 отключает UDP, -t выбирает рабочие потоки. Ctrl+C в первом терминале завершит именно данный процесс. В начале фиксируют <code>memcached --version</code>. Опыт с auth/TLS выполняется отдельно: к защищённому порту нельзя подключать приведённый ниже незашифрованный клиент.</p>
+<h2>Минимальный клиент и шестнадцать проверок</h2>
+<p>Сохраните следующий код в новый файл mc-lab.py или передайте Python через защищённый разделитель Bash <code>python3 - &lt;&lt;'PY'</code> с завершающей строкой PY. Часть get читает сначала заголовок, затем заданную длину. После ошибки границы исключение завершает опыт и соединения закрываются; файл не пытается продолжить работу с повреждённым потоком.</p>
+<pre><code>import os
+import socket
+import time
+import uuid
+
+PORT = int(os.environ.get("MC_PORT", "11222"))
+PREFIX = "book:mc:" + uuid.uuid4().hex
+
+class Client:
+    def __enter__(self):
+        self.socket = socket.create_connection(("127.0.0.1", PORT), timeout=3)
+        self.file = self.socket.makefile("rb")
+        return self
+
+    def __exit__(self, *args):
+        self.file.close()
+        self.socket.close()
+
+    def line(self):
+        line = self.file.readline(8193)
+        if len(line) &gt; 8192 or not line.endswith(b"\r\n"):
+            raise RuntimeError("Incomplete or oversized response line")
+        return line[:-2]
+
+    def simple(self, command):
+        self.socket.sendall(command.encode("ascii") + b"\r\n")
+        return self.line()
+
+    def store(self, operation, key, value, ttl=60, token=None):
+        data = value.encode("utf-8") if isinstance(value, str) else value
+        header = f"{operation} {key} 0 {ttl} {len(data)}"
+        if token is not None:
+            header += " " + str(token)
+        self.socket.sendall(header.encode("ascii") + b"\r\n" + data + b"\r\n")
+        return self.line()
+
+    def get(self, *keys, cas=False):
+        command = ("gets " if cas else "get ") + " ".join(keys)
+        self.socket.sendall(command.encode("ascii") + b"\r\n")
+        result = {}
+        while True:
+            line = self.line()
+            if line == b"END":
+                return result
+            parts = line.split()
+            if len(parts) not in (4, 5) or parts[0] != b"VALUE":
+                raise RuntimeError("Unexpected reply: " + repr(line))
+            length = int(parts[3])
+            if not 0 &lt;= length &lt;= 16 * 1024 * 1024:
+                raise RuntimeError("Unexpected payload length")
+            data = self.file.read(length)
+            if len(data) != length or self.file.read(2) != b"\r\n":
+                raise RuntimeError("Incomplete value")
+            token = int(parts[4]) if len(parts) == 5 else None
+            result[parts[1].decode("ascii")] = data, token
+
+    def stats(self):
+        self.socket.sendall(b"stats\r\n")
+        result = {}
+        while True:
+            line = self.line()
+            if line == b"END":
+                return result
+            parts = line.split(maxsplit=2)
+            if len(parts) != 3 or parts[0] != b"STAT":
+                raise RuntimeError("Unexpected stats reply")
+            result[parts[1].decode()] = parts[2].decode()
+
+def check(label, actual, expected):
+    if actual != expected:
+        raise AssertionError(f"{label}: {actual!r} != {expected!r}")
+    print("PASS", label)
+
+with Client() as a, Client() as b:
+    key = PREFIX + ":value"
+    empty = PREFIX + ":empty"
+    counter = PREFIX + ":counter"
+    absent = PREFIX + ":absent"
+    check("missing", a.get(absent), {})
+
+    value = "Привет\r\nEND\r\nworld".encode("utf-8")
+    assert a.store("set", key, value) == b"STORED"
+    check("UTF-8 and embedded CRLF", a.get(key)[key][0], value)
+
+    assert a.store("set", empty, b"") == b"STORED"
+    check("empty differs from missing", a.get(empty)[empty][0], b"")
+    check("add does not replace", a.store("add", key, "other"), b"NOT_STORED")
+
+    token = a.get(key, cas=True)[key][1]
+    assert b.store("set", key, "newer") == b"STORED"
+    check("CAS conflict", a.store("cas", key, "old", token=token), b"EXISTS")
+    token = a.get(key, cas=True)[key][1]
+    check("CAS current token", a.store("cas", key, "current", token=token), b"STORED")
+
+    assert a.store("set", counter, "10") == b"STORED"
+    check("increment", a.simple("incr " + counter + " 3"), b"13")
+    check("decrement stops at zero", a.simple("decr " + counter + " 99"), b"0")
+
+    past = PREFIX + ":past"
+    assert a.store("set", past, "gone", ttl=2592001) == b"STORED"
+    check("absolute date in the past", a.get(past), {})
+
+    short = PREFIX + ":short"
+    assert a.store("set", short, "temporary", ttl=1) == b"STORED"
+    time.sleep(2.2)
+    check("relative expiration", a.get(short), {})
+
+    before = a.stats()
+    found = a.get(key, absent, empty)
+    after = a.stats()
+    check("multiget keys", set(found), {key, empty})
+    check("multiget hit delta", int(after["get_hits"]) - int(before["get_hits"]), 2)
+    check("multiget miss delta", int(after["get_misses"]) - int(before["get_misses"]), 1)
+    check("cmd_get counts keys in tested server", int(after["cmd_get"]) - int(before["cmd_get"]), 3)
+
+    check("delete", a.simple("delete " + key), b"DELETED")
+    check("deleted missing", a.get(key), {})
+    for cleanup_key in (empty, counter):
+        a.simple("delete " + cleanup_key)
+print("Completed: 16 checks; no flush_all was used")</code></pre>
+<pre><code>python3 mc-lab.py
+# Если сервер намеренно запущен на другом порту:
+MC_PORT=11228 python3 mc-lab.py</code></pre>
+<p>Успешный запуск выводит 16 строк PASS и итог Completed. Номера CAS и версия сервера заранее не подставляются: токен берётся из актуального ответа. Два соединения моделируют разных клиентов. Проверка короткого срока ждёт 2,2 секунды, чтобы не утверждать точность исчезновения до миллисекунды. Для разностей статистики нужен выделенный экземпляр без параллельной нагрузки: чужие запросы между снимками нарушат ожидаемые числа.</p>
+<h2>Разбор результатов протокола</h2>
+<p>Первая пара опытов различает отсутствие ключа и найденное пустое значение. В обоих случаях полезных байтов может быть ноль, но протокольные исходы разные: отсутствующий ключ не имеет VALUE, пустой имеет VALUE с длиной 0. Следующий опыт сохраняет UTF-8 и CRLF, включая строку END внутри значения. Он обнаруживает ошибку клиента, который прекращает разбор по строкам вместо количества байтов.</p>
+<p>В CAS-опыте A получает токен, B заменяет значение, затем A получает EXISTS. Это штатная защита от перезаписи более нового состояния. Повтор с токеном после перечитывания проходит, потому что между чтением и записью в этой детерминированной последовательности нет другого изменения. В настоящем конкурентном приложении новый конфликт по-прежнему возможен; число повторов ограничивают.</p>
+<p>Срок 2592001 специально попадает по другую сторону границы 30 суток: это абсолютная дата прошлого. После STORED чтение уже не находит живую запись. Контроль по статистике показывает другой важный случай: в проверенном 1.6.14 один get с тремя ключами добавляет два попадания, один промах и три единицы cmd_get. Название поля не означает число строк сетевых команд. Это подтверждено и исполненным опытом, и <a href="https://github.com/memcached/memcached/blob/1.6.14/proto_text.c">обработчиком basic get этой версии</a>. Если новая версия покажет другой результат, сначала сверяют семантику счётчика, а не объявляют протокол сломанным.</p>
+<h2>Наблюдение вытеснения на собственном экземпляре</h2>
+<p>У основного опыта слишком мало данных для предсказуемого вытеснения. Для отдельного опыта оставляют небольшой собственный сервер, получают stats slabs и stats items, затем последовательно сохраняют множество уникальных значений одинакового размера с TTL 0. После нескольких порций снимают статистику. Размер порции ограничивают, чтобы не зависнуть в бесконечном генераторе. Это одноразовая учебная нагрузка; её смысл — создать давление на конкретный класс.</p>
+<p>Предсказание до опыта: число живых объектов сначала растёт; после исчерпания доступного для класса пространства часть новых записей вызывает evictions. TTL 0 не препятствует вытеснению. При повторном чтении старых ключей появляются промахи. Нельзя заранее назвать последний сохранившийся ключ по точному LRU из тренажёра: сервер использует реальные сегменты и фоновое обслуживание.</p>
+<p>В отчёт записывают размер значения и ключа, доступные классы, total_pages, used_chunks, bytes, RSS, изменения evictions и cmd_set. Если сервер раньше возвращает ошибку слишком большого элемента, исследуется предел -I, а не успешное заполнение памяти. Если при запуске использован -M, сервер может отказывать новым записям вместо обычного вытеснения; это другой опыт и другой результат.</p>
+<h2>Два независимых сервера и выбор владельца</h2>
+<p>Поднимите второй собственный экземпляр на отдельном свободном порту 11229 без TLS, сохранив первый 11222. Запишите один ключ только на 11222 и запросите его непосредственно у 11229. Ожидаемый результат второго — промах: соседство процессов не включает репликацию. Затем используйте модель выбора владельца из <a href="#28-mc-sharding">главы распределения</a>, но подставляйте тот же список и те же идентификаторы у всех читателей и писателей.</p>
+<p>Перестройте список после удаления одного узла и вычислите долю переместившихся контрольных ключей, не обращаясь к серверам. Только после понимания маршрута начинайте сетевой опыт. Проверка таким порядком отделяет ошибку хеша от потери записи. Если два клиента выбирают разных владельцев, оба сервера могут быть полностью исправны.</p>
+<h2>Холодный запуск и восстановление приложения</h2>
+<p>Сохраните контрольное значение, остановите его собственный процесс Ctrl+C, запустите той же командой и прочитайте ключ. В базовом режиме ожидается отсутствие. Эта проверка успешна, когда приложение распознаёт промах и ограниченно восстанавливает данные, а не когда кэш притворяется постоянным хранилищем. Сам сервер Memcached SQL-загрузку не выполнит.</p>
+<p>Для прикладного опыта задают ограниченный поток и измеряют время восстановления hit ratio, запросы/с и CPU источника, длину очереди загрузок, p99 и число отклонённых запросов. Сравнивают свободный прогрев и ограниченный, сохраняя одинаковые исходные данные. Числа получаются из опыта; книга не подставляет чужие результаты производительности как свойства любой машины.</p>
+<h2>Автоматический стенд библиотеки</h2>
+<pre><code># Самостоятельные 16 проверок только Memcached, запуск из корня библиотеки:
+python3 cache/labs/memcached-semantics.py
+# Если сервер распакован отдельно:
+python3 cache/labs/memcached-semantics.py --memcached /absolute/path/to/memcached
+
+# Общие опыты: оба сервера должны быть доступны в PATH:
+python3 cache/labs/live.py
+# Дополнительно нужен OpenSSL:
+python3 cache/labs/advanced.py</code></pre>
+<p>Memcached-semantics.py содержит те же шестнадцать проверок, самостоятельно запускает отдельный процесс на свободном локальном порту и сверяет его PID через stats до записи данных. В блоке завершения останавливает только созданный процесс. Отчёт memcached-semantics-results.json содержит фактическую версию сервера, ожидаемые и полученные ответы, длительность и результат остановки; путь можно изменить параметром --output. Сохранённый отчёт этой редакции фиксирует 16 успешных проверок на Memcached 1.6.14. Он доказывает перечисленные семантические случаи, а не производительность кэша.</p>
+<p>Live.py запускает свои Redis и Memcached, проверяет протоколы и завершает созданные процессы. Advanced.py проверяет, среди прочего, Memcached mTLS и отказ без клиентского сертификата. Чтобы указать распакованный бинарный файл, используются параметры --memcached, --redis-server и --redis-cli. Точные исполненные случаи и версии находятся в отчётах JSON, а не выводятся из наличия текста упражнения.</p>
+<p>В этой редакции базовый Memcached и mTLS проверялись на 1.6.14. Это зафиксированная версия опыта, а не рекомендация для нового развёртывания. SASL, современный proxy, сетевой раздел и потеря питания не включены в эти результаты. Запуск одного учебного процесса также не доказывает работоспособность производственной схемы с балансировщиком и несколькими сетями.</p>
+<aside class="exercise"><h3>Итоговая задача</h3><p>После изменения списка серверов hit ratio упал, но у каждого узла нет evictions и RSS ниже лимита. Оператор предлагает удвоить -m. Какой опыт выполнить первым?</p><details><summary>Разбор</summary><p>Сравнить владельцев контрольных ключей у клиентов до и после изменения, затем проверить прямое чтение на прежнем и новом владельце. Возможен холодный маршрут или несовпадение списков, а не нехватка RAM. После исправления маршрута отдельно оценивают скорость прогрева и бюджет источника. Больший кэш не исправляет чтение с неправильного адреса.</p></details></aside>
+<p class="sources"><a href="https://docs.memcached.org/protocols/basic/">Протокол</a> · <a href="https://docs.memcached.org/serverguide/maintenance/">Статистика и обслуживание</a> · <a href="https://docs.memcached.org/features/tls/">TLS</a>. Практические программы библиотеки являются самостоятельными учебными клиентами.</p>
+

@@ -1,0 +1,42 @@
+[
+  {
+    "slug": "networks",
+    "title": "Сети: от программы до программы",
+    "volume": "I",
+    "words": 81381,
+    "chapters": 20,
+    "terms": 307
+  },
+  {
+    "slug": "linux",
+    "title": "Linux: от команды процессора до работающей службы",
+    "volume": "II",
+    "words": 49842,
+    "chapters": 19,
+    "terms": 341
+  },
+  {
+    "slug": "bash",
+    "title": "Bash: от объектов ядра до надёжного сценария",
+    "volume": "III",
+    "words": 46576,
+    "chapters": 19,
+    "terms": 273
+  },
+  {
+    "slug": "postgres",
+    "title": "PostgreSQL: от SQL до эксплуатации и высокой доступности",
+    "volume": "IV",
+    "words": 72934,
+    "chapters": 25,
+    "terms": 441
+  },
+  {
+    "slug": "cache",
+    "title": "Кэш и базы данных в памяти: от ускорения чтения до Redis и Memcached",
+    "volume": "V",
+    "words": 53949,
+    "chapters": 40,
+    "terms": 203
+  }
+]

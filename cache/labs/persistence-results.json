@@ -1,0 +1,128 @@
+{
+  "status": "PASS",
+  "kind": "owned process crash and file restore",
+  "cases": [
+    {
+      "name": "RDB seed value",
+      "actual": "OK",
+      "expected": "OK",
+      "status": "PASS"
+    },
+    {
+      "name": "RDB expiry seed",
+      "actual": "OK",
+      "expected": "OK",
+      "status": "PASS"
+    },
+    {
+      "name": "SAVE returns after snapshot write",
+      "actual": "OK",
+      "expected": "OK",
+      "status": "PASS"
+    },
+    {
+      "name": "RDB file exists",
+      "actual": true,
+      "expected": true,
+      "status": "PASS"
+    },
+    {
+      "name": "Post-snapshot mutation",
+      "actual": "OK",
+      "expected": "OK",
+      "status": "PASS"
+    },
+    {
+      "name": "RDB restores snapshot value",
+      "actual": "before-snapshot",
+      "expected": "before-snapshot",
+      "status": "PASS"
+    },
+    {
+      "name": "Expired absolute deadline remains expired",
+      "actual": null,
+      "expected": null,
+      "status": "PASS"
+    },
+    {
+      "name": "AOF SET",
+      "actual": "OK",
+      "expected": "OK",
+      "status": "PASS"
+    },
+    {
+      "name": "AOF HSET",
+      "actual": 1,
+      "expected": 1,
+      "status": "PASS"
+    },
+    {
+      "name": "AOF INCR",
+      "actual": 1,
+      "expected": 1,
+      "status": "PASS"
+    },
+    {
+      "name": "AOF write status",
+      "actual": true,
+      "expected": true,
+      "status": "PASS"
+    },
+    {
+      "name": "AOF restores string",
+      "actual": "persisted",
+      "expected": "persisted",
+      "status": "PASS"
+    },
+    {
+      "name": "AOF restores hash",
+      "actual": "7",
+      "expected": "7",
+      "status": "PASS"
+    },
+    {
+      "name": "AOF restores counter",
+      "actual": "1",
+      "expected": "1",
+      "status": "PASS"
+    },
+    {
+      "name": "AOF rewrite accepted",
+      "actual": "Background append only file rewriting started",
+      "expected": "Background append only file rewriting started",
+      "status": "PASS"
+    },
+    {
+      "name": "AOF rewrite preserves value",
+      "actual": "persisted",
+      "expected": "persisted",
+      "status": "PASS"
+    },
+    {
+      "name": "Rewritten AOF restores string",
+      "actual": "persisted",
+      "expected": "persisted",
+      "status": "PASS"
+    },
+    {
+      "name": "Rewritten AOF restores hash",
+      "actual": "7",
+      "expected": "7",
+      "status": "PASS"
+    },
+    {
+      "name": "Rewritten AOF restores counter",
+      "actual": "1",
+      "expected": "1",
+      "status": "PASS"
+    }
+  ],
+  "limits": [
+    "No host power loss",
+    "No disk corruption",
+    "AOF always mode; no everysec RPO measurement",
+    "Versions outside recorded binary were not executed"
+  ],
+  "redis_version": "6.0.16",
+  "cases_count": 19
+}

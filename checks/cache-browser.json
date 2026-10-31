@@ -1,0 +1,555 @@
+{
+  "status": "PASS",
+  "book_sha256": "78642046b71cd27dac67f5e9bb056b1479b3485b4c39e7137554a460f90b833b",
+  "chapters": 40,
+  "diagramStates": 48,
+  "states": [
+    {
+      "id": "cache-memory",
+      "width": 1440,
+      "step": 1,
+      "geometry": {
+        "width": 1440,
+        "scroll": 1440,
+        "svgWidth": 810,
+        "box": "0 0 810 328"
+      }
+    },
+    {
+      "id": "cache-memory",
+      "width": 1440,
+      "step": 2,
+      "geometry": {
+        "width": 1440,
+        "scroll": 1440,
+        "svgWidth": 810,
+        "box": "0 0 810 328"
+      }
+    },
+    {
+      "id": "cache-memory",
+      "width": 1440,
+      "step": 3,
+      "geometry": {
+        "width": 1440,
+        "scroll": 1440,
+        "svgWidth": 810,
+        "box": "0 0 810 328"
+      }
+    },
+    {
+      "id": "cache-memory",
+      "width": 1440,
+      "step": 4,
+      "geometry": {
+        "width": 1440,
+        "scroll": 1440,
+        "svgWidth": 810,
+        "box": "0 0 810 328"
+      }
+    },
+    {
+      "id": "cache-memory",
+      "width": 1440,
+      "step": 5,
+      "geometry": {
+        "width": 1440,
+        "scroll": 1440,
+        "svgWidth": 810,
+        "box": "0 0 810 328"
+      }
+    },
+    {
+      "id": "cache-memory",
+      "width": 1440,
+      "step": 6,
+      "geometry": {
+        "width": 1440,
+        "scroll": 1440,
+        "svgWidth": 810,
+        "box": "0 0 810 328"
+      }
+    },
+    {
+      "id": "cache-race",
+      "width": 1440,
+      "step": 1,
+      "geometry": {
+        "width": 1440,
+        "scroll": 1440,
+        "svgWidth": 810,
+        "box": "0 0 810 328"
+      }
+    },
+    {
+      "id": "cache-race",
+      "width": 1440,
+      "step": 2,
+      "geometry": {
+        "width": 1440,
+        "scroll": 1440,
+        "svgWidth": 810,
+        "box": "0 0 810 328"
+      }
+    },
+    {
+      "id": "cache-race",
+      "width": 1440,
+      "step": 3,
+      "geometry": {
+        "width": 1440,
+        "scroll": 1440,
+        "svgWidth": 810,
+        "box": "0 0 810 328"
+      }
+    },
+    {
+      "id": "cache-race",
+      "width": 1440,
+      "step": 4,
+      "geometry": {
+        "width": 1440,
+        "scroll": 1440,
+        "svgWidth": 810,
+        "box": "0 0 810 328"
+      }
+    },
+    {
+      "id": "cache-race",
+      "width": 1440,
+      "step": 5,
+      "geometry": {
+        "width": 1440,
+        "scroll": 1440,
+        "svgWidth": 810,
+        "box": "0 0 810 328"
+      }
+    },
+    {
+      "id": "cache-race",
+      "width": 1440,
+      "step": 6,
+      "geometry": {
+        "width": 1440,
+        "scroll": 1440,
+        "svgWidth": 810,
+        "box": "0 0 810 328"
+      }
+    },
+    {
+      "id": "cache-stampede",
+      "width": 1440,
+      "step": 1,
+      "geometry": {
+        "width": 1440,
+        "scroll": 1440,
+        "svgWidth": 810,
+        "box": "0 0 810 328"
+      }
+    },
+    {
+      "id": "cache-stampede",
+      "width": 1440,
+      "step": 2,
+      "geometry": {
+        "width": 1440,
+        "scroll": 1440,
+        "svgWidth": 810,
+        "box": "0 0 810 328"
+      }
+    },
+    {
+      "id": "cache-stampede",
+      "width": 1440,
+      "step": 3,
+      "geometry": {
+        "width": 1440,
+        "scroll": 1440,
+        "svgWidth": 810,
+        "box": "0 0 810 328"
+      }
+    },
+    {
+      "id": "cache-stampede",
+      "width": 1440,
+      "step": 4,
+      "geometry": {
+        "width": 1440,
+        "scroll": 1440,
+        "svgWidth": 810,
+        "box": "0 0 810 328"
+      }
+    },
+    {
+      "id": "cache-stampede",
+      "width": 1440,
+      "step": 5,
+      "geometry": {
+        "width": 1440,
+        "scroll": 1440,
+        "svgWidth": 810,
+        "box": "0 0 810 328"
+      }
+    },
+    {
+      "id": "cache-stampede",
+      "width": 1440,
+      "step": 6,
+      "geometry": {
+        "width": 1440,
+        "scroll": 1440,
+        "svgWidth": 810,
+        "box": "0 0 810 328"
+      }
+    },
+    {
+      "id": "cache-cas",
+      "width": 1440,
+      "step": 1,
+      "geometry": {
+        "width": 1440,
+        "scroll": 1440,
+        "svgWidth": 810,
+        "box": "0 0 810 160"
+      }
+    },
+    {
+      "id": "cache-cas",
+      "width": 1440,
+      "step": 2,
+      "geometry": {
+        "width": 1440,
+        "scroll": 1440,
+        "svgWidth": 810,
+        "box": "0 0 810 160"
+      }
+    },
+    {
+      "id": "cache-cas",
+      "width": 1440,
+      "step": 3,
+      "geometry": {
+        "width": 1440,
+        "scroll": 1440,
+        "svgWidth": 810,
+        "box": "0 0 810 160"
+      }
+    },
+    {
+      "id": "cache-cas",
+      "width": 1440,
+      "step": 4,
+      "geometry": {
+        "width": 1440,
+        "scroll": 1440,
+        "svgWidth": 810,
+        "box": "0 0 810 160"
+      }
+    },
+    {
+      "id": "cache-cas",
+      "width": 1440,
+      "step": 5,
+      "geometry": {
+        "width": 1440,
+        "scroll": 1440,
+        "svgWidth": 810,
+        "box": "0 0 810 160"
+      }
+    },
+    {
+      "id": "cache-cas",
+      "width": 1440,
+      "step": 6,
+      "geometry": {
+        "width": 1440,
+        "scroll": 1440,
+        "svgWidth": 810,
+        "box": "0 0 810 160"
+      }
+    },
+    {
+      "id": "cache-memory",
+      "width": 390,
+      "step": 1,
+      "geometry": {
+        "width": 390,
+        "scroll": 390,
+        "svgWidth": 330,
+        "box": "0 0 330 664"
+      }
+    },
+    {
+      "id": "cache-memory",
+      "width": 390,
+      "step": 2,
+      "geometry": {
+        "width": 390,
+        "scroll": 390,
+        "svgWidth": 330,
+        "box": "0 0 330 664"
+      }
+    },
+    {
+      "id": "cache-memory",
+      "width": 390,
+      "step": 3,
+      "geometry": {
+        "width": 390,
+        "scroll": 390,
+        "svgWidth": 330,
+        "box": "0 0 330 664"
+      }
+    },
+    {
+      "id": "cache-memory",
+      "width": 390,
+      "step": 4,
+      "geometry": {
+        "width": 390,
+        "scroll": 390,
+        "svgWidth": 330,
+        "box": "0 0 330 664"
+      }
+    },
+    {
+      "id": "cache-memory",
+      "width": 390,
+      "step": 5,
+      "geometry": {
+        "width": 390,
+        "scroll": 390,
+        "svgWidth": 330,
+        "box": "0 0 330 664"
+      }
+    },
+    {
+      "id": "cache-memory",
+      "width": 390,
+      "step": 6,
+      "geometry": {
+        "width": 390,
+        "scroll": 390,
+        "svgWidth": 330,
+        "box": "0 0 330 664"
+      }
+    },
+    {
+      "id": "cache-race",
+      "width": 390,
+      "step": 1,
+      "geometry": {
+        "width": 390,
+        "scroll": 390,
+        "svgWidth": 330,
+        "box": "0 0 330 664"
+      }
+    },
+    {
+      "id": "cache-race",
+      "width": 390,
+      "step": 2,
+      "geometry": {
+        "width": 390,
+        "scroll": 390,
+        "svgWidth": 330,
+        "box": "0 0 330 664"
+      }
+    },
+    {
+      "id": "cache-race",
+      "width": 390,
+      "step": 3,
+      "geometry": {
+        "width": 390,
+        "scroll": 390,
+        "svgWidth": 330,
+        "box": "0 0 330 664"
+      }
+    },
+    {
+      "id": "cache-race",
+      "width": 390,
+      "step": 4,
+      "geometry": {
+        "width": 390,
+        "scroll": 390,
+        "svgWidth": 330,
+        "box": "0 0 330 664"
+      }
+    },
+    {
+      "id": "cache-race",
+      "width": 390,
+      "step": 5,
+      "geometry": {
+        "width": 390,
+        "scroll": 390,
+        "svgWidth": 330,
+        "box": "0 0 330 664"
+      }
+    },
+    {
+      "id": "cache-race",
+      "width": 390,
+      "step": 6,
+      "geometry": {
+        "width": 390,
+        "scroll": 390,
+        "svgWidth": 330,
+        "box": "0 0 330 664"
+      }
+    },
+    {
+      "id": "cache-stampede",
+      "width": 390,
+      "step": 1,
+      "geometry": {
+        "width": 390,
+        "scroll": 390,
+        "svgWidth": 330,
+        "box": "0 0 330 664"
+      }
+    },
+    {
+      "id": "cache-stampede",
+      "width": 390,
+      "step": 2,
+      "geometry": {
+        "width": 390,
+        "scroll": 390,
+        "svgWidth": 330,
+        "box": "0 0 330 664"
+      }
+    },
+    {
+      "id": "cache-stampede",
+      "width": 390,
+      "step": 3,
+      "geometry": {
+        "width": 390,
+        "scroll": 390,
+        "svgWidth": 330,
+        "box": "0 0 330 664"
+      }
+    },
+    {
+      "id": "cache-stampede",
+      "width": 390,
+      "step": 4,
+      "geometry": {
+        "width": 390,
+        "scroll": 390,
+        "svgWidth": 330,
+        "box": "0 0 330 664"
+      }
+    },
+    {
+      "id": "cache-stampede",
+      "width": 390,
+      "step": 5,
+      "geometry": {
+        "width": 390,
+        "scroll": 390,
+        "svgWidth": 330,
+        "box": "0 0 330 664"
+      }
+    },
+    {
+      "id": "cache-stampede",
+      "width": 390,
+      "step": 6,
+      "geometry": {
+        "width": 390,
+        "scroll": 390,
+        "svgWidth": 330,
+        "box": "0 0 330 664"
+      }
+    },
+    {
+      "id": "cache-cas",
+      "width": 390,
+      "step": 1,
+      "geometry": {
+        "width": 390,
+        "scroll": 390,
+        "svgWidth": 330,
+        "box": "0 0 330 496"
+      }
+    },
+    {
+      "id": "cache-cas",
+      "width": 390,
+      "step": 2,
+      "geometry": {
+        "width": 390,
+        "scroll": 390,
+        "svgWidth": 330,
+        "box": "0 0 330 496"
+      }
+    },
+    {
+      "id": "cache-cas",
+      "width": 390,
+      "step": 3,
+      "geometry": {
+        "width": 390,
+        "scroll": 390,
+        "svgWidth": 330,
+        "box": "0 0 330 496"
+      }
+    },
+    {
+      "id": "cache-cas",
+      "width": 390,
+      "step": 4,
+      "geometry": {
+        "width": 390,
+        "scroll": 390,
+        "svgWidth": 330,
+        "box": "0 0 330 496"
+      }
+    },
+    {
+      "id": "cache-cas",
+      "width": 390,
+      "step": 5,
+      "geometry": {
+        "width": 390,
+        "scroll": 390,
+        "svgWidth": 330,
+        "box": "0 0 330 496"
+      }
+    },
+    {
+      "id": "cache-cas",
+      "width": 390,
+      "step": 6,
+      "geometry": {
+        "width": 390,
+        "scroll": 390,
+        "svgWidth": 330,
+        "box": "0 0 330 496"
+      }
+    }
+  ],
+  "errors": [],
+  "external": [],
+  "checks": [
+    "file://",
+    "navigation",
+    "mobile",
+    "dark theme",
+    "diagrams",
+    "calculator",
+    "commands",
+    "shared glossary",
+    "notes",
+    "print",
+    "illustrations",
+    "replication scenarios",
+    "eviction trainer",
+    "TTL budget",
+    "slab budget"
+  ]
+}
