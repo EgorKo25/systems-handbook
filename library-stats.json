@@ -11,7 +11,7 @@
     "slug": "linux",
     "title": "Linux: от команды процессора до работающей службы",
     "volume": "II",
-    "words": 49842,
+    "words": 49543,
     "chapters": 19,
     "terms": 341
   },
@@ -19,7 +19,7 @@
     "slug": "bash",
     "title": "Bash: от объектов ядра до надёжного сценария",
     "volume": "III",
-    "words": 46576,
+    "words": 46387,
     "chapters": 19,
     "terms": 273
   },
@@ -27,7 +27,7 @@
     "slug": "postgres",
     "title": "PostgreSQL: от SQL до эксплуатации и высокой доступности",
     "volume": "IV",
-    "words": 72934,
+    "words": 72535,
     "chapters": 25,
     "terms": 441
   },

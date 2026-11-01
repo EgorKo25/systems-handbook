@@ -75,6 +75,68 @@ function queryForFlag(command, index, form, value) {
     ? owner + ' ' + invocation + ' ' + command.name.slice(owner.length + 1)
     : command.name + ' ' + invocation;
 }
+function commaAliasRegressions(search, commands, label) {
+  // Use real frozen source cards. Expected spellings/operands are specified
+  // explicitly, not discovered by flagForms (which would hide a lost alias).
+  const template=commands.find(c=>c.name==='helm template');
+  const get=commands.find(c=>c.name==='kubectl get');
+  if(template && get) {
+    ok(template.flags.some(f=>f.flag==='-f, --values <файл>'),label+': real Helm comma label');
+    ok(get.flags.some(f=>f.flag==='--watch, -w'),label+': real kubectl boolean label');
+    const check=(query,name,options,words,help) => {
+      const result=resultFor(search,commands,query,name,label+': comma alias');
+      equal(result.analysis.unmatched.length,0,label+': all requested aliases known');
+      equal(JSON.stringify(result.analysis.words),JSON.stringify(words),label+': operands neither lost nor eaten');
+      for(const [option,value]of options) {
+        const found=result.analysis.options.find(item=>item.name===option);
+        ok(found,label+': explicit expected option '+option);
+        equal(found.hasValue,value!==null,label+': expected arity '+option);
+        if(value!==null)equal(found.value,value,label+': exact option value '+option);
+      }
+      for(const text of help)ok(result.analysis.matchedIndices.some(i=>result.command.flags[i].flag===text),label+': correct explanation '+text);
+      return result;
+    };
+    for(const invocation of ['-f "env[prod],east.yaml"','--values="env[prod],east.yaml"','-fenv[prod],east.yaml'])
+      check('helm template ledger ./chart '+invocation,'helm template',
+        [[invocation.startsWith('--')?'--values':'-f','env[prod],east.yaml']],['ledger','./chart'],['-f, --values <файл>']);
+    for(const option of ['--namespace','-n'])
+      check('kubectl '+option+' helm-lab get pods','kubectl get',[[option,'helm-lab']],['pods'],['--namespace NAME, -n NAME']);
+    for(const watch of ['--watch','-w'])
+      check('kubectl -n lab get '+watch+' pods -l app=ledger-api','kubectl get',
+        [['-n','lab'],[watch,null],['-l','app=ledger-api']],['pods'],['--watch, -w']);
+    for(const output of ['yaml','json']) {
+      const result=check('kubectl --namespace lab get pods -o '+output,'kubectl get',
+        [['--namespace','lab'],['-o',output]],['pods'],['-o yaml, -o json']);
+      ok(!result.analysis.matchedIndices.some(i=>result.command.flags[i].flag==='-o wide'),label+': output qualifiers stay separate');
+    }
+    for(const follow of ['--follow','-f'])
+      check('kubectl -n lab logs ledger-api '+follow+' -c api','kubectl logs',
+        [['-n','lab'],[follow,null],['-c','api']],['ledger-api'],['--follow, -f']);
+    const root=commands.find(c=>c.name==='helm');
+    for(const continuation of ['\\'+String.fromCharCode(10),'\\'+String.fromCharCode(13,10)]) {
+      const query=search.queryFromCode(root,' template ledger ./chart '+continuation+' --values "env[prod],a|b.yaml" | ignored');
+      check(query,'helm template',[['--values','env[prod],a|b.yaml']],['ledger','./chart'],['-f, --values <файл>']);
+      ok(!query.includes('ignored'),label+': alias code roundtrip ends at real separator');
+    }
+  }
+  // Bracketed operand notation is metadata, not an alias delimiter. Test the
+  // resulting command interpretation, including no accidental -VALUE option.
+  const fixture={name:'alias-probe',aliases:[],purpose:'probe',syntax:'probe',flags:[
+    {flag:'--map <KEY,-VALUE>, -m',action:'map',when:'probe'},
+    {flag:'-F, --field [<LEFT,RIGHT>]',action:'field',when:'probe'},
+    {flag:'--limit <[MIN / MAX]>, -l',action:'limit',when:'probe'},
+  ]};
+  const result=resultFor(search,[fixture],'alias-probe -m "key,-value [x]" --field "left,right" -l "1 / 2"','alias-probe',label+': bracketed metadata');
+  equal(result.analysis.unmatched.length,0,label+': bracketed metadata aliases known');
+  equal(result.analysis.options.length,3,label+': no phantom option from operand notation');
+  equal(result.analysis.options[0].value,'key,-value [x]',label+': comma and brackets in actual value preserved');
+  equal(result.analysis.options[1].value,'left,right',label+': shared bracketed operand arity');
+  equal(result.analysis.options[2].value,'1 / 2',label+': slash within metadata operand does not split aliases');
+  equal(JSON.stringify(result.analysis.matchedIndices),JSON.stringify([0,1,2]),label+': correct three help records');
+  const slash=search.flagForms('-l [NUMBER] / -L');
+  equal(slash.find(f=>f.name==='-l').expectsValue,true,label+': existing optional list operand retained');
+  equal(slash.find(f=>f.name==='-L').expectsValue,false,label+': slash-separated action does not inherit operand');
+}
 function parserRegressions(search, commands, label) {
   const lf='\\' + String.fromCharCode(10), crlf='\\' + String.fromCharCode(13,10);
   const docker=commands.find(c=>c.name==='docker');
@@ -171,14 +233,32 @@ function parserRegressions(search, commands, label) {
   equal(inherited.analysis.options.find(o=>o.name==='--context')?.value,'lab',label+': declared root persistence before child');
   equal(inherited.analysis.options.find(o=>o.name==='--file')?.value,'after',label+': unshadowed long persistent spelling after child');
   equal(inherited.analysis.options.find(o=>o.name==='-f')?.hasValue,false,label+': local short spelling shadows persistent parent');
+  commaAliasRegressions(search,commands,label);
 
 }
 if(process.argv.includes('--source-only')) {
-  const generated=JSON.parse(cp.execFileSync('python3',['-c',
-    'import json;from pathlib import Path;from scripts.build_volume import reader_commands,command_catalog;print(json.dumps(dict(page=reader_commands(Path("cache/sources/reader-shell.html").read_text()),commands=command_catalog())))'
-  ],{cwd:root,encoding:'utf8',maxBuffer:16*1024*1024}));
+  const generated=JSON.parse(cp.execFileSync('python3',['-c',`
+import sys,json
+from pathlib import Path
+sys.dont_write_bytecode=True
+import scripts.build_volume as b
+page=b.reader_commands(Path("cache/sources/reader-shell.html").read_text())
+commands=b.command_catalog()
+# Frozen source cards may await publication. Load through the real catalog in
+# memory only, without registering files or changing native UI guards.
+b.CONFIGS=dict(b.CONFIGS)
+b.TARGETS=dict(b.TARGETS)
+for slug in ("helm","kubernetes"):
+    source=Path(slug)/"volume_config.py"
+    if source.is_file():
+        cfg=b.module(source).CONFIG
+        b.CONFIGS[slug]=cfg
+        b.TARGETS.update({i:slug for _,ids in cfg["sections"] for i in ids if i not in {"00-route","99-glossary"}})
+print(json.dumps(dict(page=page,commands=commands,aliasCommands=b.command_catalog())))
+  `],{cwd:root,encoding:'utf8',maxBuffer:20*1024*1024}));
   const search=shippedSearch(generated.page,'production-transform');
   parserRegressions(search,generated.commands,'source production parser');
+  commaAliasRegressions(search,generated.aliasCommands,'real pending source cards');
   // Exercise every actual source card and inherited form before a full site
   // build. Prefix-owned flags must be queried at their declared position.
   for(const command of generated.commands) {

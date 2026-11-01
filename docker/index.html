@@ -2003,17 +2003,47 @@ function tokenizeQuery(value) {
     return tokens;
 }
 function flagForms(label) {
+    // Commas separate aliases only before another option and outside operand
+    // notation. A comma in <key,value>, N[SUFFIX], or a literal value survives.
+    // Slash-separated entries remain independent: kill's -l [NUMBER] / -L do
+    // not share arity. Comma aliases can share a trailing operand declaration.
+    const text = String(label), groups = [[]], brackets = [];
+    const closing = {'<':'>','[':']','(':')','{':'}'};
+    let start = 0, quote = null;
+    for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        if (char === '\\') { i++; continue; }
+        if (quote) { if (char === quote) quote = null; continue; }
+        if (char === '"' || char === "'") { quote = char; continue; }
+        if (closing[char]) { brackets.push(closing[char]); continue; }
+        if (brackets.length && char === brackets[brackets.length - 1]) { brackets.pop(); continue; }
+        if (brackets.length) continue;
+        const comma = char === ',' && /^\s*[+-]{1,2}(?:[A-Za-z0-9_]|[%+])/.test(text.slice(i + 1));
+        const slash = char === '/' && /\s/.test(text[i - 1] || '') && /\s/.test(text[i + 1] || '');
+        if (!comma && !slash) continue;
+        groups[groups.length - 1].push(text.slice(start,i)); start = i + 1;
+        if (slash) groups.push([]);
+    }
+    groups[groups.length - 1].push(text.slice(start));
     const forms = [];
-    for (const alternative of String(label).split(/\s+\/\s+/)) {
-        const expression = /(?:^|\s)([+-]{1,2}(?:[A-Za-z0-9_][A-Za-z0-9_-]*|[%+]))(?:=([^\s]+))?/g;
-        const match = expression.exec(alternative);
-        if (match) {
+    for (const alternatives of groups) {
+        const group = [];
+        for (const alternative of alternatives) {
+            const expression = /(?:^|\s)([+-]{1,2}(?:[A-Za-z0-9_][A-Za-z0-9_-]*|[%+]))(?:=([^\s]+))?/g;
+            const match = expression.exec(alternative);
+            if (!match) continue;
             const tail = alternative.slice(expression.lastIndex).trim().split(/\s+/)[0] || '';
             const operand = match[2] !== undefined ? match[2] : tail;
             const expectsValue = match[2] !== undefined || (!!tail && !/^[+-]/.test(tail));
             const qualifier = match[2] === undefined && /^[a-z][a-z0-9_-]*$/.test(operand) ? operand : null;
-            forms.push({name: match[1], expectsValue, qualifier});
+            group.push({name:match[1],expectsValue,qualifier});
         }
+        // -f, --values <FILE> declares one operand for both spellings. Preserve
+        // explicit fixed variants such as -o yaml, -o json rather than replacing
+        // their qualifiers with a single flat specification.
+        const shared = group.find(form => form.expectsValue);
+        for (const form of group) forms.push(shared && !form.expectsValue
+            ? {...form,expectsValue:true,qualifier:shared.qualifier} : form);
     }
     return forms;
 }

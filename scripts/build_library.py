@@ -7,6 +7,8 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from scripts.publication import PUBLISHED
+from scripts.legacy_reading import refresh_legacy
+print('Legacy reading metadata:', refresh_legacy(ROOT))
 subprocess.run([sys.executable, str(ROOT / 'scripts/build_networks.py')], cwd=ROOT, check=True)
 for book in (row['slug'] for row in PUBLISHED if row['build'] in {'cache', 'managed'}):
     subprocess.run([sys.executable, str(ROOT / book / 'build.py')], cwd=ROOT, check=True)

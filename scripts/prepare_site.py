@@ -54,9 +54,13 @@ def is_reading_file(name: str) -> bool:
         return True
     if name in CACHE_LAB_MODELS:
         return True  # Node laboratory checks require these same browser models.
-    if name in {"git/labs/template/.gitignore", "go/labs/service/.gitignore",
-                "gitlab/labs/service/.gitignore", "gitlab/labs/service/.gitlab-ci.yml",
-                "docker/labs/echo/.dockerignore", "sonarqube/labs/.gitignore"}:
+    if path.parts[0] in BOOKS and name in {
+            "git/labs/template/.gitignore", "go/labs/service/.gitignore",
+            "gitlab/labs/service/.gitignore", "gitlab/labs/service/.gitlab-ci.yml",
+            "docker/labs/echo/.dockerignore", "sonarqube/labs/.gitignore",
+            "terraform/.gitignore", "terraform/labs/foundation/.gitignore",
+            "terraform/labs/adapters/libvirt/.terraform.lock.hcl",
+            "helm/labs/chart/.helmignore"}:
         return True
     if any(p.startswith(".") or p in {"__pycache__", "node_modules"} for p in path.parts):
         return False
@@ -72,6 +76,8 @@ def is_reading_file(name: str) -> bool:
         return not any(part.casefold() in private for part in path.parts[1:]) and path.suffix.lower() not in binary
     if path.parts[0] not in BOOKS:
         return False
+    if path.parts[0] == "terraform" and re.search(r"\.(?:tfstate|tfplan)(?:\.|$)", path.name.casefold()):
+        return False  # State, saved plans and their backups remain private even if tracked.
     if len(path.parts) > 1 and path.parts[1] == "sources":
         return False
     if len(path.parts) == 2 and path.suffix in {".py", ".cjs"}:

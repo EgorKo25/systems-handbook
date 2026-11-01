@@ -5,6 +5,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 import unittest
+from unittest.mock import patch
 
 SPEC = importlib.util.spec_from_file_location("prepare_site", Path(__file__).resolve().parents[1] / "scripts/prepare_site.py")
 MODULE = importlib.util.module_from_spec(SPEC)
@@ -122,6 +123,68 @@ class ExportTests(unittest.TestCase):
                 self.assertFalse(name in exported, name)
                 self.assertNotIn('  ' + name + '\n', (output / 'SHA256SUMS').read_text())
 
+    def test_registered_terraform_preserves_source_metadata_without_state_or_plans(self):
+        public = {
+            'terraform/.gitignore': '.terraform/\n*.tfstate\n*.tfstate.*\n*.tfplan\n',
+            'terraform/labs/foundation/.gitignore': '*.tfstate\n*.tfplan\n',
+            'terraform/labs/adapters/libvirt/.terraform.lock.hcl': '# Authored public provider hashes\n',
+        }
+        private = [
+            'terraform/.terraformrc',
+            'terraform/labs/foundation/.terraform.tfstate.lock.info',
+            'terraform/labs/foundation/.terraform/terraform.tfstate',
+            'terraform/labs/foundation/terraform.tfstate',
+            'terraform/labs/foundation/terraform.tfstate.backup',
+            'terraform/labs/foundation/checkpoint.tfstate.json',
+            'terraform/labs/foundation/checkpoint.TFSTATE',
+            'terraform/labs/foundation/first.tfplan',
+            'terraform/labs/foundation/first.tfplan.json',
+            'terraform/labs/adapters/libvirt/.terraform.lock.hcl.backup',
+        ]
+        for name, data in public.items():
+            self.write(name, data)
+        for name in private:
+            self.write(name, 'synthetic private state fixture\n')
+        subprocess.run(['git', '-C', str(self.source), 'add', '-f', '--',
+                        *public, *private], check=True)
+        with patch.object(MODULE, 'BOOKS', MODULE.BOOKS - {'terraform'}):
+            unpublished = self.root / 'terraform-unpublished'
+            MODULE.export_site(self.source, unpublished, 'a' * 40)
+        self.assertFalse((unpublished / 'terraform').exists())
+        with patch.object(MODULE, 'BOOKS', MODULE.BOOKS | {'terraform'}):
+            published = self.root / 'terraform-published'
+            MODULE.export_site(self.source, published, 'b' * 40)
+        for name, data in public.items():
+            self.assertEqual((published / name).read_bytes(), data.encode('utf-8'))
+        for name in private:
+            self.assertFalse((published / name).exists(), name)
+
+    def test_registered_helm_preserves_packaging_rules_and_template_helpers(self):
+        public = {
+            'helm/labs/chart/.helmignore': '.git/\nrendered/\n',
+            'helm/labs/chart/templates/_helpers.tpl': '{{ define "lab.name" }}demo{{ end }}\n',
+            'helm/labs/dependency/lab-labels/templates/_labels.tpl': '{{ define "lab.labels" }}owner: reader{{ end }}\n',
+        }
+        private = ['helm/.kube/config', 'helm/labs/chart/.env',
+                   'helm/labs/chart/.helmignore.local']
+        for name, data in public.items():
+            self.write(name, data)
+        for name in private:
+            self.write(name, 'synthetic private access fixture\n')
+        subprocess.run(['git', '-C', str(self.source), 'add', '-f', '--',
+                        *public, *private], check=True)
+        with patch.object(MODULE, 'BOOKS', MODULE.BOOKS - {'helm'}):
+            unpublished = self.root / 'helm-unpublished'
+            MODULE.export_site(self.source, unpublished, 'a' * 40)
+        self.assertFalse((unpublished / 'helm').exists())
+        with patch.object(MODULE, 'BOOKS', MODULE.BOOKS | {'helm'}):
+            published = self.root / 'helm-published'
+            MODULE.export_site(self.source, published, 'b' * 40)
+        for name, data in public.items():
+            self.assertEqual((published / name).read_bytes(), data.encode('utf-8'))
+        for name in private:
+            self.assertFalse((published / name).exists(), name)
+
     def test_container_recipes_keep_authored_ignore_files_without_runtime_dotfiles(self):
         public = {
             'docker/labs/echo/.dockerignore': '.git\n.env\nsecrets\n',
@@ -140,6 +203,11 @@ class ExportTests(unittest.TestCase):
             self.assertEqual((output / name).read_text(), data)
         for name in private:
             self.assertFalse((output / name).exists(), name)
+        with patch.object(MODULE, 'BOOKS', MODULE.BOOKS - {'docker', 'sonarqube'}):
+            unpublished = self.root / 'containers-unpublished'
+            MODULE.export_site(self.source, unpublished, 'b' * 40)
+        for book in ('docker', 'sonarqube'):
+            self.assertFalse((unpublished / book).exists(), book)
 
     def test_authored_vm_recipes_and_practicum_helpers_keep_their_exact_bytes(self):
         public = {

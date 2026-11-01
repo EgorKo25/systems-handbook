@@ -10,77 +10,77 @@
     {
       "id": "01-machine",
       "title": "Из чего исполняется программа",
-      "words": 1814
+      "words": 1812
     },
     {
       "id": "02-kernel-boundary",
       "title": "Как программа обращается к ядру",
-      "words": 2671
+      "words": 2633
     },
     {
       "id": "03-process",
       "title": "Как появляется и живёт процесс",
-      "words": 1702
+      "words": 1696
     },
     {
       "id": "04-scheduling",
       "title": "Потоки, планировщик и совместная работа",
-      "words": 3716
+      "words": 3671
     },
     {
       "id": "05-memory",
       "title": "Виртуальная память по шагам",
-      "words": 3911
+      "words": 3867
     },
     {
       "id": "06-vfs",
       "title": "От имени файла к его байтам",
-      "words": 1813
+      "words": 1807
     },
     {
       "id": "07-storage",
       "title": "Как запись достигает накопителя",
-      "words": 3723
+      "words": 3672
     },
     {
       "id": "08-rights",
       "title": "Откуда берётся право выполнить действие",
-      "words": 1761
+      "words": 1753
     },
     {
       "id": "09-signals-terminal",
       "title": "Сигналы, сеансы и терминал",
-      "words": 1331
+      "words": 1329
     },
     {
       "id": "10-ipc",
       "title": "Как процессы договариваются",
-      "words": 3172
+      "words": 3129
     },
     {
       "id": "11-boot",
       "title": "От включения до первой службы",
-      "words": 1192
+      "words": 1190
     },
     {
       "id": "12-services",
       "title": "Как служба работает под наблюдением",
-      "words": 1281
+      "words": 1278
     },
     {
       "id": "13-devices-network",
       "title": "Устройства и сеть внутри Linux",
-      "words": 1712
+      "words": 1709
     },
     {
       "id": "14-isolation",
       "title": "Как собирается контейнер",
-      "words": 1702
+      "words": 1692
     },
     {
       "id": "15-observation",
       "title": "Как читать состояние системы",
-      "words": 2117
+      "words": 2105
     },
     {
       "id": "16-investigation",
@@ -90,12 +90,12 @@
     {
       "id": "17-experiments",
       "title": "Шестнадцать автономных опытов",
-      "words": 1576
+      "words": 1570
     },
     {
       "id": "18-reference",
       "title": "Справочник и проверка понимания",
-      "words": 4450
+      "words": 4432
     },
     {
       "id": "99-glossary",
@@ -103,7 +103,7 @@
       "words": 8381
     }
   ],
-  "words": 49842,
+  "words": 49543,
   "terms": 341,
   "external_assets": 0
 }

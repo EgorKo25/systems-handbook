@@ -10,97 +10,97 @@
     {
       "id": "01-cluster",
       "title": "Сервер, кластер и работающий сеанс",
-      "words": 3696
+      "words": 3683
     },
     {
       "id": "02-relational",
       "title": "Данные, типы и трёхзначная логика",
-      "words": 2276
+      "words": 2273
     },
     {
       "id": "03-sql",
       "title": "Как читать и строить SQL-запрос",
-      "words": 1957
+      "words": 1954
     },
     {
       "id": "04-transactions",
       "title": "Изменения, ограничения и миграции",
-      "words": 1735
+      "words": 1731
     },
     {
       "id": "05-protocol",
       "title": "Клиентский протокол и жизнь соединения",
-      "words": 4167
+      "words": 4128
     },
     {
       "id": "06-query-path",
       "title": "Путь SELECT и UPDATE внутри сервера",
-      "words": 3283
+      "words": 3243
     },
     {
       "id": "07-catalog-objects",
       "title": "Системные каталоги: устройство объектов",
-      "words": 1820
+      "words": 1815
     },
     {
       "id": "08-catalog-system",
       "title": "Системные каталоги: связи и работа сервера",
-      "words": 1651
+      "words": 1649
     },
     {
       "id": "09-storage",
       "title": "Файлы, страницы и версии строк",
-      "words": 1783
+      "words": 1782
     },
     {
       "id": "10-buffers",
       "title": "Память, запись и контрольные точки",
-      "words": 3605
+      "words": 3562
     },
     {
       "id": "11-wal",
       "title": "WAL: журнал от байта до восстановления",
-      "words": 2292
+      "words": 2284
     },
     {
       "id": "12-mvcc",
       "title": "MVCC: как выбирается видимая версия",
-      "words": 1758
+      "words": 1755
     },
     {
       "id": "13-isolation",
       "title": "Уровни изоляции на двух сеансах",
-      "words": 1605
+      "words": 1603
     },
     {
       "id": "14-locks",
       "title": "Блокировки и взаимные ожидания",
-      "words": 1540
+      "words": 1539
     },
     {
       "id": "15-vacuum",
       "title": "Очистка, заморозка и разрастание",
-      "words": 4339
+      "words": 4261
     },
     {
       "id": "16-plans",
       "title": "Индексы, оценки и EXPLAIN",
-      "words": 1643
+      "words": 1641
     },
     {
       "id": "17-security",
       "title": "Проверка личности и права",
-      "words": 2352
+      "words": 2339
     },
     {
       "id": "18-recovery",
       "title": "Резервирование и восстановление",
-      "words": 2275
+      "words": 2267
     },
     {
       "id": "19-operations",
       "title": "Конфигурация и эксплуатация приложения",
-      "words": 2382
+      "words": 2370
     },
     {
       "id": "20-laboratory",
@@ -110,22 +110,22 @@
     {
       "id": "21-replication",
       "title": "Репликация и ветви истории",
-      "words": 1447
+      "words": 1444
     },
     {
       "id": "22-index-internals",
       "title": "Внутреннее устройство индексов",
-      "words": 1544
+      "words": 1539
     },
     {
       "id": "23-monitoring-capacity",
       "title": "Наблюдение, нагрузка и запас ёмкости",
-      "words": 7474
+      "words": 7429
     },
     {
       "id": "24-ha-patroni",
       "title": "Высокая доступность и Patroni",
-      "words": 6019
+      "words": 5953
     },
     {
       "id": "99-glossary",
@@ -133,7 +133,7 @@
       "words": 8927
     }
   ],
-  "words": 72934,
+  "words": 72535,
   "terms": 441,
   "external_assets": 0
 }
