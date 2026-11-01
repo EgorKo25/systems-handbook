@@ -5,7 +5,8 @@ Default: show help. Explicit run:
   python3 postgres-lab.py --run --pg-bin /absolute/path/to/postgresql/bin
 Needs PostgreSQL 18 tools and optional contrib extensions listed in README.
 The cluster is created under /tmp, listens only on its own Unix socket, and is
-stopped and deleted on exit unless --keep is explicitly requested.
+deleted only after confirmed shutdown and successful experiments, unless --keep
+is explicitly requested. Failures preserve the directory and return an error.
 """
 import argparse
 import contextlib
@@ -157,9 +158,19 @@ class Lab:
         try:
             detail=function()
             result={'number':number,'name':name,'status':'PASS','seconds':round(time.monotonic()-started,3),'detail':detail}
-        except Exception as exc:
+        except BaseException as exc:
+            # Record the original failure before reporting can fail too. Always
+            # re-raise it, including KeyboardInterrupt; this is not a recovery.
+            print('EXPERIMENT FAILED:', number, name, '-',
+                  type(exc).__name__ + ':', exc, file=sys.stderr)
             result={'number':number,'name':name,'status':'FAIL','seconds':round(time.monotonic()-started,3),'error':str(exc)}
-            self.results.append(result);self.write_results();raise
+            self.results.append(result)
+            try:
+                self.write_results()
+            except BaseException as report_exc:
+                print('Cannot save failed experiment result:',
+                      type(report_exc).__name__ + ':', report_exc, file=sys.stderr)
+            raise
         self.results.append(result);self.write_results()
         print(f'{number:02d} PASS {name}',flush=True)
 
@@ -167,11 +178,44 @@ class Lab:
         (self.root/'results.json').write_text(json.dumps(self.results,ensure_ascii=False,indent=2)+'\n')
 
     def cleanup(self):
+        """Return False on uncertain shutdown; never delete its data/evidence."""
+        failures = []
         for path in list(reversed(self.started)):
-            with contextlib.suppress(Exception):self.stop(path)
-        self.write_results()
+            try:
+                self.stop(path)
+            except Exception as exc:
+                failures.append((path, exc))
+        # stop() removes a path only after pg_ctl confirms success. Keeping an
+        # unresolved entry means deletion is forbidden, including after timeout.
+        if failures or self.started:
+            self.keep = True
+            self.results.append({'cleanup': {
+                'status': 'FAIL',
+                'unconfirmed_datadirs': [str(path) for path in self.started],
+                'stop_errors': [{'data_directory': str(path), 'error': str(exc)}
+                                for path, exc in failures]}})
+            for path, exc in failures:
+                print('STOP FAILED:', path, '-', exc, file=sys.stderr)
+            print('Shutdown not confirmed; lab files retained at:', self.root,
+                  file=sys.stderr)
+        try:
+            self.write_results()
+        except Exception as exc:
+            self.keep = True
+            print('Cannot save results; lab files retained at:', self.root,
+                  '-', exc, file=sys.stderr)
+            return False
+        if failures or self.started:
+            return False
         if not self.keep:
-            shutil.rmtree(self.root)
+            try:
+                shutil.rmtree(self.root)
+            except Exception as exc:
+                self.keep = True
+                print('Cannot finish cleanup; remaining lab files at:', self.root,
+                      '-', exc, file=sys.stderr)
+                return False
+        return True
 
 
 def experiments(lab):
@@ -394,17 +438,25 @@ def main():
     if hasattr(os,'geteuid') and os.geteuid()==0:parser.error('run as an ordinary user; PostgreSQL refuses root')
     lab=Lab(args.pg_bin,args.keep)
     print('Private lab directory:',lab.root,flush=True)
+    failed = False
     try:
         lab.init();experiments(lab)
-        print('OK: all 16 experiments passed. TCP listener disabled.',flush=True)
-        if args.keep:print('Stopped lab and evidence retained at:',lab.root,flush=True)
-        return 0
     except Exception as exc:
+        failed = True
+        lab.keep = True
         print('FAIL:',exc,file=sys.stderr)
-        print('Evidence directory:',lab.root,'(use --keep to retain it)',file=sys.stderr)
-        return 1
+        print('Evidence directory retained at:',lab.root,file=sys.stderr)
     finally:
-        lab.cleanup()
+        # Also preserve evidence when KeyboardInterrupt/SystemExit propagates.
+        # Do not replace that original exception with an apparent success.
+        if sys.exc_info()[0] is not None:
+            lab.keep = True
+        cleanup_ok = lab.cleanup()
+    if failed or not cleanup_ok:
+        return 1
+    print('OK: all 16 experiments passed; lab servers stopped. TCP listener disabled.',flush=True)
+    if args.keep:print('Stopped lab and evidence retained at:',lab.root,flush=True)
+    return 0
 
 if __name__=='__main__':
     raise SystemExit(main())

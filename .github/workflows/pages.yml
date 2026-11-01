@@ -50,6 +50,10 @@ jobs:
           python3 -m unittest discover -s docker/labs -p 'test_*.py' -v
           python3 docker/labs/check-static.py --reader docker/index.html
           python3 -m unittest discover -s sonarqube/labs -p 'test_*.py' -v
+      - name: Check PostgreSQL lab failure handling without a server
+        run: |
+          python3 -I -B postgres/labs/test_cleanup.py
+          python3 -I -B postgres/labs/test_experiment_errors.py
       - name: Check the stateful Git laboratory
         run: python3 git/labs/check_lab.py
       - name: Check personal-world lifecycle and practice helpers
