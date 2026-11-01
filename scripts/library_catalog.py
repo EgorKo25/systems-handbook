@@ -8,11 +8,13 @@ if __package__:
     from .reader_theme_picker import enhance as theme_picker
     from .reader_selection import enhance as selection_lookup
     from .reader_navigation import normalize_reader_navigation
+    from .reader_reading_time import enhance as reading_time
 else:
     from reader_preferences import enhance as theme_preferences
     from reader_theme_picker import enhance as theme_picker
     from reader_selection import enhance as selection_lookup
     from reader_navigation import normalize_reader_navigation
+    from reader_reading_time import enhance as reading_time
 
 ROOT = Path(__file__).resolve().parents[1]
 VOLUMES = {'networks': 'Сети', 'linux': 'Linux', 'bash': 'Bash',
@@ -53,7 +55,7 @@ def refresh():
             from .reader_mobile import enhance as mobile_preferences
         else:
             from reader_mobile import enhance as mobile_preferences
-        write(path, theme_picker(selection_lookup(mobile_preferences(normalize_reader_navigation(page)))))
+        write(path, reading_time(theme_picker(selection_lookup(mobile_preferences(normalize_reader_navigation(page))))))
     home_path = ROOT / 'index.html'
     if home_path.exists():
         home = theme_preferences(home_path.read_text(encoding='utf-8'), home=True)

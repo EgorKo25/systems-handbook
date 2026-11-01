@@ -38,6 +38,9 @@ def palette_css(*, home=False):
 
 CSS = '''
 .drawer h2[tabindex="-1"]:focus,.sidebar .bookname[tabindex="-1"]:focus{outline:0}
+#dictionary-close{display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;min-width:44px;min-height:44px;padding:0;border:0;border-radius:12px;background:transparent;color:var(--muted)}
+#dictionary-close svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
+#dictionary-close:hover,#dictionary-close:focus-visible{background:var(--soft);color:var(--text)}
 .phone-tools,.phone-view,.phone-backdrop,.phone-sidebar-close{display:none}.phone-backdrop{border:0;border-radius:0;padding:0}
 body{background:var(--reader-page,var(--bg))}.chapter{font-family:var(--reader-font,var(--serif))}.chapter p,.chapter li,.command-card p,.term p{text-align:justify;text-align-last:start;text-justify:inter-word;hyphens:auto;-webkit-hyphens:auto;overflow-wrap:break-word}.chapter pre,.chapter code{hyphens:none;-webkit-hyphens:none;text-align:start}
 @media(max-width:750px){
@@ -140,6 +143,15 @@ def enhance(page, *, home=False):
         css = '''.home-masthead{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-bottom:30px}.home-masthead .eyebrow{font-size:18px;line-height:1.35;letter-spacing:.06em}.home-masthead .home-toolbar{margin:0;flex-shrink:0}#home-theme-toggle{min-height:44px;padding:9px 13px!important;border-radius:12px!important;font:600 13px/1.3 system-ui!important;background:transparent;box-shadow:none}#home-theme-toggle::before{content:'◐';font-size:18px;vertical-align:-1px;margin-right:7px}@media(max-width:750px){body{padding:26px 19px 40px}.home-masthead{gap:14px;margin-bottom:30px}.home-masthead .eyebrow{font-size:16px}h1{font-size:clamp(37px,10vw,56px);line-height:1.04}.grid{grid-template-columns:minmax(0,1fr)!important;gap:15px}.volume{padding:24px!important;min-width:0;border-radius:20px!important}.volume h2{font-size:28px}.volume p{font-size:16px;line-height:1.6}.volume .open{display:inline-block;margin-top:12px}.notes{border-radius:20px!important;padding:24px!important}summary{min-height:44px;padding:10px 0}a,button{touch-action:manipulation}}'''
         return page.replace('</head>','<style id="library-phone-style">'+palette_css(home=True)+css+'</style></head>',1)
     # Opening a reference is a reading action on a phone, not a request to type.
+    close_icon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>'
+    def replace_close(match):
+        opening=match[1]
+        if 'aria-label=' not in opening:
+            opening=opening[:-1]+' aria-label="Закрыть словарь">'
+        return opening+close_icon+match[2]
+    page, close_count = re.subn(r'(<button\b[^>]*\bid="dictionary-close"[^>]*>).*?(</button>)',replace_close,page,count=1,flags=re.S)
+    if close_count != 1:
+        raise ValueError('Expected one dictionary close button')
     # Focus a non-editable heading before Safari can summon the keyboard.
     focus_helper = '''function focusReferenceSearch() {
     if (matchMedia('(max-width:750px), (pointer:coarse)').matches) {

@@ -55,6 +55,7 @@ jobs:
           node cache/labs/test-resp.cjs
           node git/labs/check-reader.cjs
           node tests/check-selection-reader.cjs
+          node tests/check-reading-time.cjs
           node tests/check-reader-palette.cjs
       - name: Prepare public reading files
         run: python3 scripts/prepare_site.py _site --revision "${{ github.sha }}"
