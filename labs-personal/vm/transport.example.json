@@ -1,0 +1,9 @@
+{
+  "format": 1,
+  "repo": "OWNER/PRIVATE-LAB-REPOSITORY",
+  "branch": "main",
+  "root": "~/.personal-lab/state",
+  "instructor_console": false,
+  "allow_network": false,
+  "ssh_identity": null
+}

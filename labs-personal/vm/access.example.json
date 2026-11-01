@@ -1,0 +1,5 @@
+{
+  "profile": "bastion-student",
+  "role": "student",
+  "services": {"ssh": false, "rdp": false, "vnc": false}
+}

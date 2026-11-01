@@ -1,0 +1,3 @@
+#!/bin/sh
+# Local wrapper; does not install an alias or change the host configuration.
+exec python3 -B "$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)/lab.py" "$@"
