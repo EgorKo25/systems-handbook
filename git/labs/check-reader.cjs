@@ -137,6 +137,70 @@ function commaAliasRegressions(search, commands, label) {
   equal(slash.find(f=>f.name==='-l').expectsValue,true,label+': existing optional list operand retained');
   equal(slash.find(f=>f.name==='-L').expectsValue,false,label+': slash-separated action does not inherit operand');
 }
+function pythonArgvRegressions(search, commands, label) {
+  const probe=(query,name,mode,args,options) => {
+    const result=resultFor(search,commands,query,name,label+': Python interface');
+    equal(result.analysis.interfaceMode,mode,label+': interface mode');
+    equal(JSON.stringify(result.analysis.programArgs),JSON.stringify(args),label+': untouched program argv');
+    equal(JSON.stringify(result.analysis.options.map(o=>[o.name,o.hasValue?o.value:null])),JSON.stringify(options),label+': only owned options');
+    equal(search.queryForCommand(result.command,query),query,label+': original invocation retained');
+    return result;
+  };
+  for(const [query,mode,args,options]of[
+    ['python3 labs/check.py --terraform terraform --mirror "dir [1], x" -B','script',['--terraform','terraform','--mirror','dir [1], x','-B'],[]],
+    ['python3 -B -u labs/check.py --terraform terraform -- -c ignored','script',['--terraform','terraform','--','-c','ignored'],[['-B',null],['-u',null]]],
+    ["python3 -c 'import sys; print(sys.argv)' --terraform x -m unittest -B",'command',['--terraform','x','-m','unittest','-B'],[['-c','import sys; print(sys.argv)']]],
+    ["python3 -c'print(1)' -- -m unittest",'command',['--','-m','unittest'],[['-c','print(1)']]],
+    ['python3 -m json.tool --help -B','module',['--help','-B'],[['-m','json.tool']]],
+    ['python3 - stdin --help','stdin',['stdin','--help'],[]],
+    ['python3 -- -helper.py -B','script',['-B'],[]],
+    ['python3 -- -m unittest -v','script',['unittest','-v'],[]],
+    ['python3 -B','stdin',[],[['-B',null]]],
+    ['python3 --','stdin',[],[]],
+    ["python3 -c '' --help -m unittest",'command',['--help','-m','unittest'],[['-c','']]],
+    ['python3 -- - -B','stdin',['-B'],[]],
+    ['python3 -W -m unittest -v','script',['-v'],[['-W','-m']]],
+  ]) {
+    const result=probe(query,'python3',mode,args,options);
+    equal(result.analysis.unmatched.length,query.startsWith('python3 -W ')?1:0,label+': script/module args never unknown interpreter flags');
+  }
+  probe('python3 -Bm unittest -v','python3 -m unittest','module',['-v'],[['-B',null],['-v',null]]);
+  probe('python3 -munittest -v','python3 -m unittest','module',['-v'],[['-v',null]]);
+  const unit=probe('python3 -B -m unittest -v -B','python3 -m unittest','module',['-v','-B'],[['-B',null],['-v',null],['-B',null]]);
+  equal(unit.analysis.unmatched.length,1,label+': post-module B is a module option, not inherited Python flag');
+  equal(unit.analysis.unmatched[0].name,'-B',label+': module unknown retains name');
+  const known=commands.find(c=>c.name==='python3 -m unittest');
+  ok(!known.flags.some((f,i)=>known.flagScopes[i]==='python3' && f.flag.startsWith('-c ')),label+': mutually exclusive c not inherited by named m card');
+  for(const [query,mode,args,options]of[
+    ['python3 --help -m unittest','help',['-m','unittest'],[['--help',null]]],
+    ['python3 -V -m unittest','version',[],[['-V',null],['-m','unittest']]],
+    ['python3 --unknown -m unittest','invalid',['-m','unittest'],[['--unknown',null]]],
+    ['python3 -m','invalid',[],[['-m',null]]],
+    ['python3 -m -B unittest','module',['unittest'],[['-m','-B']]],
+    ['python3 -c=CODE -m unittest','command',['-m','unittest'],[['-c','=CODE']]],
+  ])probe(query,'python3',mode,args,options);
+  const advanced=probe('python3 -W ignore -X dev --check-hash-based-pycs default -m unittest -v',
+    'python3 -m unittest','module',['-v'],[['-W','ignore'],['-X','dev'],['--check-hash-based-pycs','default'],['-v',null]]);
+  equal(advanced.analysis.unmatched.length,3,label+': absent interpreter help entries remain visible, not mistaken for program argv');
+  // http.server is a module-card fixture: --help must stay with the selected
+  // module and must not trigger the interpreter's terminal help mode.
+  const own=[{flag:'--help',action:'help',when:'probe'},{flag:'--bind ADDRESS',action:'bind',when:'probe'}];
+  const inherited=known.flags.filter((_,i)=>known.flagScopes[i]==='python3');
+  const http={...known,name:'python3 -m http.server',flags:[...own,...inherited],
+    flagScopes:[...own.map(()=> 'python3 -m http.server'),...inherited.map(()=> 'python3')]};
+  const selected=resultFor(search,[...commands,http],'python3 -B -mhttp.server --help --bind 127.0.0.1','python3 -m http.server',label+': module help');
+  equal(selected.analysis.interfaceMode,'module',label+': module help is not interpreter help');
+  equal(selected.analysis.unmatched.length,0,label+': module help/bind owned by module');
+  const root=commands.find(c=>c.name==='python3');
+  for(const continuation of ['\\'+String.fromCharCode(10),'\\'+String.fromCharCode(13,10)]) {
+    const query=search.queryFromCode(root,' -B '+continuation+' labs/check.py --terraform terraform --mirror "a|b [x]" | ignored');
+    const result=resultFor(search,commands,query,'python3',label+': Python raw scanner');
+    equal(result.analysis.unmatched.length,0,label+': raw scanner script flags stay argv');
+    equal(JSON.stringify(result.analysis.programArgs),JSON.stringify(['--terraform','terraform','--mirror','a|b [x]']),label+': raw scanner values retained');
+    equal(search.queryForCommand(result.command,query),query,label+': raw continued invocation retained');
+    ok(!query.includes('ignored'),label+': raw real separator stops');
+  }
+}
 function parserRegressions(search, commands, label) {
   const lf='\\' + String.fromCharCode(10), crlf='\\' + String.fromCharCode(13,10);
   const docker=commands.find(c=>c.name==='docker');
@@ -234,6 +298,7 @@ function parserRegressions(search, commands, label) {
   equal(inherited.analysis.options.find(o=>o.name==='--file')?.value,'after',label+': unshadowed long persistent spelling after child');
   equal(inherited.analysis.options.find(o=>o.name==='-f')?.hasValue,false,label+': local short spelling shadows persistent parent');
   commaAliasRegressions(search,commands,label);
+  pythonArgvRegressions(search,commands,label);
 
 }
 if(process.argv.includes('--source-only')) {
@@ -248,7 +313,7 @@ commands=b.command_catalog()
 # memory only, without registering files or changing native UI guards.
 b.CONFIGS=dict(b.CONFIGS)
 b.TARGETS=dict(b.TARGETS)
-for slug in ("helm","kubernetes"):
+for slug in ("helm","kubernetes","nexus"):
     source=Path(slug)/"volume_config.py"
     if source.is_file():
         cfg=b.module(source).CONFIG
@@ -259,6 +324,21 @@ print(json.dumps(dict(page=page,commands=commands,aliasCommands=b.command_catalo
   const search=shippedSearch(generated.page,'production-transform');
   parserRegressions(search,generated.commands,'source production parser');
   commaAliasRegressions(search,generated.aliasCommands,'real pending source cards');
+  pythonArgvRegressions(search,generated.aliasCommands,'real pending Python helpers');
+  for(const command of generated.aliasCommands.filter(c=>c.name.startsWith('python3'))) {
+    resultFor(search,generated.aliasCommands,command.name,command.name,'pending Python card');
+    for(const alias of command.aliases || [])resultFor(search,generated.aliasCommands,alias,command.name,'pending Python alias');
+    for(const [i,flag]of command.flags.entries())for(const form of search.flagForms(flag.flag)) {
+      const result=resultFor(search,generated.aliasCommands,queryForFlag(command,i,form,form.qualifier || 'bookvalue'),command.name,'pending Python scoped flag');
+      ok(result.analysis.matchedIndices.includes(i),'pending Python flag is reachable in its actual mode');
+    }
+  }
+  if(generated.aliasCommands.some(c=>c.name==='python3 artifacts.py verify')) {
+    const helper=optionResult(search,generated.aliasCommands,'python3 -B labs/artifacts.py verify --manifest "own [x].json"','python3 artifacts.py verify','--manifest','own [x].json','real helper alias');
+    equal(helper.analysis.unmatched.length,0,'helper options parsed by helper card');
+    const root=resultFor(search,generated.aliasCommands,'python3 -c "pass" labs/artifacts.py verify --manifest own.json','python3','c selector excludes named helper');
+    equal(root.analysis.unmatched.length,0,'named helper-looking text after c remains program argv');
+  }
   // Exercise every actual source card and inherited form before a full site
   // build. Prefix-owned flags must be queried at their declared position.
   for(const command of generated.commands) {

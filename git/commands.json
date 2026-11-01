@@ -8338,13 +8338,6 @@
         "result": "В учебном проекте выбирается проверка русского имени, а успешный итог относится только к выбранной группе."
       },
       {
-        "flag": "-c КОД",
-        "action": "Исполнить программу из одного аргумента.",
-        "when": "Наблюдать точные границы argv.",
-        "example": "python3 -c 'import sys; print(repr(sys.argv))' 'two words' ''",
-        "result": "Будут видны отдельный аргумент с пробелом и отдельная пустая строка."
-      },
-      {
         "flag": "-u",
         "action": "Отключить обычную буферизацию stdout/stderr Python.",
         "when": "Уменьшить задержку сообщений в конвейере.",
@@ -8366,13 +8359,11 @@
       "python3 -m unittest",
       "python3 -m unittest",
       "python3",
-      "python3",
       "python3"
     ],
     "parentOptions": "prefix-only",
     "prefixFlags": {
       "python3": [
-        "-c КОД",
         "-u",
         "-B"
       ],

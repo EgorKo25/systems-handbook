@@ -130,7 +130,69 @@ function prefixScope(command, parts, count) {
     }
     return actual;
 }
+// CPython 3.12 interface lexer only: never executes code or expands shell text.
+// -c/-m consume one argument and end interpreter option parsing; a filename,
+// directory/zip, '-' or '--' also separates the program's argv.
+function pythonInterface(tokens) {
+    if (tokens[0] !== 'python3') return null;
+    const options = [], noValue = 'bBdEhiIOPqRsStuvVx?';
+    let version = false;
+    const finish = (mode,start,target=null,targetIndex=null) => ({
+        mode:version && mode !== 'invalid' ? 'version' : mode,
+        options, start, target, targetIndex, args:tokens.slice(start)
+    });
+    for (let i=1;i<tokens.length;i++) {
+        const token=tokens[i];
+        if (token==='--') {
+            if(i+1===tokens.length)return finish('stdin',i+1);
+            return finish(tokens[i+1]==='-'?'stdin':'script',i+2,tokens[i+1],i+1);
+        }
+        if (token==='-' || !token.startsWith('-') || token==='')
+            return finish(token==='-'?'stdin':'script',i+1,token,i);
+        if(token.startsWith('--')) {
+            const option={name:token,hasValue:false};options.push(option);
+            if(['--help','--help-env','--help-xoptions','--help-all'].includes(token))return finish('help',i+1);
+            if(token==='--version'){version=true;continue;}
+            if(token==='--check-hash-based-pycs' && i+1<tokens.length) {
+                option.value=tokens[++i];option.hasValue=true;
+                if(['always','default','never'].includes(option.value))continue;
+            }
+            return finish('invalid',i+1);
+        }
+        for(let j=1;j<token.length;j++) {
+            const name='-'+token[j], option={name,hasValue:false};options.push(option);
+            if('cmWX'.includes(token[j])) {
+                const attached=token.slice(j+1), targetIndex=attached?i:i+1;
+                if(attached){option.value=attached;option.hasValue=true;option.attached=true;}
+                else if(i+1<tokens.length){option.value=tokens[++i];option.hasValue=true;}
+                else return finish('invalid',i+1);
+                if(name==='-c' || name==='-m')return finish(name==='-c'?'command':'module',i+1,option.value,targetIndex);
+                break;
+            }
+            if(!noValue.includes(token[j]))return finish('invalid',i+1);
+            if(name==='-h' || name==='-?')return finish('help',i+1);
+            if(name==='-V')version=true;
+        }
+    }
+    return finish('stdin',tokens.length);
+}
 function commandMatch(command, tokens) {
+    const python=pythonInterface(tokens), canonical=tokenizeQuery(command.name);
+    if(python && canonical[0]==='python3' && canonical.length>1) {
+        if(canonical[1]==='-m') {
+            if(python.mode!=='module' || python.target!==canonical[2])return {prefix:0,depth:0,indices:[],segments:[]};
+            // Named module cards already contain the selector; module options
+            // start after its operand, even with -Bm or -munittest spelling.
+            let cursor=python.start;
+            for(const word of canonical.slice(3))if(tokens[cursor++]!==word)return {prefix:0,depth:0,indices:[],segments:[]};
+            return {prefix:cursor,depth:canonical.length,indices:[0],segments:[],python};
+        }
+        // A named script/helper card cannot be selected from -c/-m program argv.
+        const scripts=[command.name,...(command.aliases || [])].map(tokenizeQuery)
+            .filter(parts=>parts[0]==='python3' && parts[1] && !isOption(parts[1])).map(parts=>parts[1]);
+        if(scripts.length && (python.mode!=='script' || !scripts.includes(python.target)))
+            return {prefix:0,depth:0,indices:[],segments:[]};
+    }
     let best = {prefix:0, depth:0, indices:[], segments:[]};
     for (const name of [command.name,...(command.aliases || [])]) {
         const parts = tokenizeQuery(name);
@@ -196,7 +258,17 @@ function analyzeQuery(command, query, sharedParsed = null) {
     const tokens = tokenizeQuery(query), match = commandMatch(command,tokens), explicit = match.prefix > 0;
     const specifications = optionSpecifications(command), optionScopes = new Map();
     let parsed;
+    const python=explicit && tokens[0]==='python3' && (command.name==='python3' || match.python) ? pythonInterface(tokens) : null;
     if (sharedParsed) parsed=sharedParsed;
+    else if(python) {
+        const root=command.name==='python3';
+        const interpreter=python.options.filter(option=>root || option.name!=='-m');
+        for(const option of interpreter)optionScopes.set(option,optionSpecifications(command,'python3'));
+        const local=root ? {options:[],words:python.targetIndex!==null && ['script','stdin'].includes(python.mode)
+            ? [python.target,...python.args] : python.args}
+            : parseOptions(tokens.slice(match.prefix),specifications);
+        parsed={options:[...interpreter,...local.options],words:local.words};
+    }
     else {
         parsed={options:[],words:[]};
         if (explicit) for (const segment of match.segments) {
@@ -221,7 +293,7 @@ function analyzeQuery(command, query, sharedParsed = null) {
     const searchable=normalizeText([command.name,...(command.aliases || []),command.purpose,command.syntax,
                                    ...command.flags.flatMap(flag => [flag.flag,flag.action,flag.when])].join(' '));
     const wordsMatch=parsed.words.every(word => searchable.includes(normalizeText(word)));
-    return {explicit,options:parsed.options,words:parsed.words,matchedIndices:[...matched].sort((a,b)=>a-b),unmatched,wordsMatch};
+    return {explicit,options:parsed.options,words:parsed.words,matchedIndices:[...matched].sort((a,b)=>a-b),unmatched,wordsMatch,...(python?{interfaceMode:python.mode,programArgs:python.args}: {})};
 }
 function searchCommands(commands, query) {
     const tokens=tokenizeQuery(query);

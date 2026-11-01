@@ -70,6 +70,11 @@ def command_catalog():
         c.pop('prefixFlags', None)
         parts = name.split()
         selectors = {part for part in parts[1:] if re.match(r'^[+-][^\s]', part)}
+        if parts[0] == 'python3' and len(parts) > 1:
+            # Alternative execution modes and terminal help/version cannot
+            # precede a fixed module or script. Keep these on the root card.
+            selectors.update({'-c', '-m', '-h', '-?', '--help', '--help-all',
+                              '--help-env', '--help-xoptions', '-V', '--version'})
         if selectors:
             # A named invocation such as python3 -m unittest fixes a selector,
             # rather than defining an ordinary nested namespace. Interpreter
