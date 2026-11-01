@@ -1,0 +1,363 @@
+<article id="07-byte-autopsy" class="chapter" hidden><header class="hero"><div class="eyebrow">Том I · Сети · Глава 07</div><h1>Один кадр: разобрать каждый байт</h1><div class="meta">Настоящие числа, суммы и весь обмен · 4 381 слово · 29 мин чтения без опытов</div></header><details class="local-toc"><summary>В этой главе: 10 разделов</summary><ol><li><a href="#bytes-scene">Место наблюдения: что именно мы записали</a></li><li><a href="#bytes-hex">Как читать шестнадцатеричную запись</a></li><li><a href="#bytes-ethernet">Ethernet: конверт для одного участка пути</a></li><li><a href="#bytes-ipv4">IPv4: границы, путь и ограничения пересылки</a></li><li><a href="#bytes-tcp">TCP: какой разговор продолжается и какие байты пришли</a></li><li><a href="#bytes-http">Прикладные данные: где начинается и заканчивается запрос</a></li><li><a href="#bytes-checksums">Контрольные суммы: проверяем арифметикой</a></li><li><a href="#bytes-conversation">Десять кадров: арифметика всего разговора</a></li><li><a href="#bytes-not-captured">Чего нет в файле и почему длины различаются</a></li><li><a href="#bytes-primary">Границы модели и первичные источники</a></li></ol></details><p>До этого мы рассматривали действия участников сети. Теперь разберём конкретные байты и восстановим по ним отправку запроса. Мы найдём длину каждого вложенного заголовка, номер первого байта TCP-данных и адрес следующего узла. Все границы будем вычислять по значениям полей. Такой способ позволяет самостоятельно проверить разбор, который показывает программа анализа трафика.</p>
+<p>В комплекте находится файл <a href="labs/document-flow-http.pcap"><code>labs/document-flow-http.pcap</code></a>. PCAP — формат сохранения записанных сетевых кадров вместе со сведениями о времени и длине записи. Это искусственно построенная, полностью согласованная запись десяти кадров. Она не получена с рабочего стенда и не доказывает поведение конкретной установки ДО. Зато в ней известны все исходные условия, проверены длины и контрольные суммы, а результат воспроизводится без интернета и сторонних библиотек. Текст ниже описывает именно этот файл.</p>
+
+<h2 id="bytes-scene">Место наблюдения: что именно мы записали</h2>
+<p>У клиента адрес <code>192.0.2.10/24</code>, у сервера — <code>198.51.100.20/24</code>. Между двумя подсетями стоит один маршрутизатор: со стороны клиента у него адрес <code>192.0.2.1</code>, со стороны сервера — <code>198.51.100.1</code>. Преобразования адресов нет. Эти адреса выбраны из диапазонов для документационных примеров; их не следует переносить в настоящую конфигурацию объекта без отдельного проектирования.</p>
+<pre>клиент                  маршрутизатор                       сервер
+192.0.2.10/24           192.0.2.1/24 | 198.51.100.1/24        198.51.100.20/24
+MAC 02:00:00:00:00:10   02:00:00:00:00:01 | 02:00:00:01:00:01  02:00:00:01:00:20
+        Ethernet №1       → маршрутизация →        Ethernet №2
+             ↑
+     место нашего захвата</pre>
+<p>Сетевая карта клиента отправляет кадр ближайшему маршрутизатору. Конечным получателем вложенного IP-пакета остаётся сервер. Это два разных вопроса: «Кому передать сейчас?» и «Куда доставить в итоге?». Удалённый MAC сервера не требуется, чтобы начать передачу из клиентской подсети. Выбор шлюза и получение его MAC уже состоялись; обмен ARP в этот небольшой файл не включён. Разрешение имени <code>app.lab.test</code> в адрес сервера также считается выполненным. Отсутствие DNS и ARP в короткой записи не означает, что они вообще не нужны: запись начинается после подготовки.</p>
+<p>Клиент соединяется с TCP-портом <code>7000</code> сервера, а для своего конца использует порт <code>49152</code>. Начальные номера последовательности выбраны маленькими специально для арифметики: клиент начинает с <code>1000</code>, сервер — с <code>9000</code>. Настоящий стек выбирает начальные номера иначе. В примере нет дополнительных параметров TCP, тегов VLAN, туннелей и шифрования. Благодаря этому размеры заголовков во всех кадрах одинаковы, и сначала можно освоить их основные поля.</p>
+
+<section id="network-packet-journey" class="packet-sketch">
+  <h3 id="network-packet-journey-title">Один HTTP-запрос — два Ethernet-участка</h3>
+  <div class="text-small text-muted np-conditions">Синтетический пример · TCP уже установлен · без NAT и TLS</div>
+  <div class="viz-controls np-navigation">
+    <button type="button" class="btn" data-prev aria-label="Предыдущий шаг">←</button>
+    <div class="np-stage" aria-live="polite"><span class="text-small text-muted tabular-nums" data-step-count></span><strong data-stage-title></strong></div>
+    <button type="button" class="btn btn-primary" data-next aria-label="Следующий шаг">Дальше →</button>
+  </div>
+  <svg class="np-topology" role="img" aria-label="Клиент, маршрутизатор и сервер. Маркер показывает положение данных."></svg>
+  <div class="np-packet-heading"><span data-packet-title></span><span class="tabular-nums" data-size></span></div>
+  <div class="np-packet-track" role="img" aria-label="Состав передаваемых данных по протоколам">
+    <div class="np-segment" data-layer-mark="ethernet"></div>
+    <div class="np-segment" data-layer-mark="ip"></div>
+    <div class="np-segment" data-layer-mark="tcp"></div>
+    <div class="np-segment" data-layer-mark="http"></div>
+  </div>
+  <div class="viz-controls np-layer-controls" aria-label="Выбрать протокол">
+    <button type="button" class="btn" data-layer="ethernet"><span class="np-swatch" data-color="ethernet" aria-hidden="true"></span>Ethernet · 14 Б</button>
+    <button type="button" class="btn" data-layer="ip"><span class="np-swatch" data-color="ip" aria-hidden="true"></span>IPv4 · 20 Б</button>
+    <button type="button" class="btn" data-layer="tcp"><span class="np-swatch" data-color="tcp" aria-hidden="true"></span>TCP · 20 Б</button>
+    <button type="button" class="btn" data-layer="http"><span class="np-swatch" data-color="http" aria-hidden="true"></span>HTTP · 73 Б</button>
+  </div>
+  <div class="np-stage-note text-small" data-stage-note aria-live="polite"></div>
+  <hr>
+  <div class="np-field-heading"><strong data-field-heading></strong><span class="text-small text-muted" data-actor></span></div>
+  <div class="table-responsive np-fields-wrap">
+    <div class="table-wrap"><table class="table table-sm"><thead><tr><th>Поле</th><th>Значение сейчас</th><th>Байты слоя</th></tr></thead><tbody data-fields></tbody></table></div>
+  </div>
+  <div class="np-byte-inspector" aria-live="polite">
+    <span class="text-small text-muted" data-byte-label></span>
+    <div data-byte-value></div>
+    <div class="text-small np-field-note" data-field-note></div>
+  </div>
+  <div class="text-small text-muted np-footnote">DNS и ARP завершены · схема логическая · FCS в размерах нет · выходной кадр вычислен</div>
+<details class="np-transcript"><summary>Все восемь шагов текстом</summary><h4>1. Процесс клиента: 73 байта</h4><p>HTTP-запрос состоит из строки GET, заголовков Host и Connection и завершающей пустой строки. Его передаёт процесс через TCP-сокет.</p><h4>2. TCP клиента: 93 байта</h4><p>Добавлен заголовок TCP длиной 20 байт: порты 49152 → 7000, SEQ=1001, ACK=9001, окно 64240, checksum=0xdf89. Это один выбранный сегмент, а не обещание одной границы TCP для любого write.</p><h4>3. IPv4 клиента: 113 байт</h4><p>Добавлены 20 байт IPv4. Адреса 192.0.2.10 → 198.51.100.20, TTL=64, checksum=0x3c01. Выбран шлюз 192.0.2.1.</p><h4>4. Ethernet до шлюза: 127 байт</h4><p>14 байт Ethernet содержат MAC источника 02:00:00:00:00:10, назначения 02:00:00:00:00:01 и EtherType=0x0800. Внутри сетевой адрес назначения всё ещё сервер.</p><h4>5. IPv4 в маршрутизаторе: 113 байт</h4><p>При пересылке старый канальный конверт больше не используется; TTL уменьшается 64 → 63, checksum IPv4 меняется 0x3c01 → 0x3d01. В этой модели TCP и HTTP не изменяются.</p><h4>6. Новый Ethernet до сервера: 127 байт</h4><p>MAC источника 02:00:00:01:00:01, назначения 02:00:00:01:00:20. Выходной кадр вычислен из исходного; он не является дополнительным измерением на реальном маршрутизаторе. Меняются шесть позиций байтов: 3, 5, 9, 11, 22, 24 при отсчёте с нуля.</p><h4>7. TCP сервера: 93 байта</h4><p>После канальной и сетевой обработки TCP проверяет свой сегмент и помещает непрерывные принятые данные в очередь сокета. Это не означает, что процесс уже получил их в recv.</p><h4>8. Процесс сервера: 73 байта</h4><p>Полученные байты HTTP разбирает серверное приложение. TCP не сохраняет обязательной границы сообщения или одной отправки; приложение собирает сообщение по правилам HTTP.</p><p>Логическая схема добавления и снятия заголовков не предписывает буквальное копирование памяти на каждом слое. Не изображены DNS, ARP, рукопожатие TCP, NAT, TLS, VLAN, TCP/IP-опции, очереди, потери и разгрузка сетевой карты. Размеры исключают FCS, преамбулу и межкадровый интервал. MTU достаточен.</p></details></section>
+<style>
+#network-packet-journey{--foreground:var(--text);--muted-foreground:var(--muted);--border:var(--line);--primary:var(--accent);--primary-foreground:var(--paper);--viz-series-1:#608f7b;--viz-series-2:#6f86a7;--viz-series-3:#b19664;--viz-series-4:#a18aaf;color:var(--text);overflow-wrap:anywhere;background:var(--paper);border:1px solid var(--line);padding:24px;border-radius:12px;margin:35px 0;font:14px/1.6 var(--sans);box-shadow:var(--shadow)}
+#network-packet-journey h3{padding-right:0}
+#network-packet-journey .np-conditions{margin:6px 0 16px;padding-right:0}
+#network-packet-journey .np-navigation{margin:14px 0 12px}
+#network-packet-journey .np-stage{display:flex;flex:1;min-width:100px;flex-direction:column;gap:4px}
+#network-packet-journey strong{font-weight:500}
+#network-packet-journey .np-topology{display:block;width:100%;overflow:visible}
+#network-packet-journey .np-topology text{fill:var(--foreground);font:inherit}
+#network-packet-journey .np-topology .np-svg-secondary{fill:var(--muted-foreground)}
+#network-packet-journey .np-topology .np-moving{transition:transform .45s ease}
+#network-packet-journey .np-packet-heading{display:flex;justify-content:space-between;gap:16px;margin:10px 0}
+#network-packet-journey .np-packet-track{position:relative;height:30px;background:transparent;overflow:hidden}
+#network-packet-journey .np-segment{position:absolute;top:0;bottom:0;transition:left .4s ease,width .4s ease,opacity .3s ease}
+#network-packet-journey [data-layer-mark="ethernet"],#network-packet-journey [data-color="ethernet"]{background:var(--viz-series-4)}
+#network-packet-journey [data-layer-mark="ip"],#network-packet-journey [data-color="ip"]{background:var(--viz-series-3)}
+#network-packet-journey [data-layer-mark="tcp"],#network-packet-journey [data-color="tcp"]{background:var(--viz-series-2)}
+#network-packet-journey [data-layer-mark="http"],#network-packet-journey [data-color="http"]{background:var(--viz-series-1)}
+#network-packet-journey .np-swatch{display:inline-block;width:9px;height:9px;margin-right:5px}
+#network-packet-journey .np-layer-controls{margin:10px 0}
+#network-packet-journey .np-stage-note{margin:10px 0 18px;min-height:1.5em}
+#network-packet-journey .np-field-heading{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:14px 0 8px}
+#network-packet-journey .np-current-value{display:block;word-break:break-all}
+#network-packet-journey .np-byte-inspector{margin-top:14px}
+#network-packet-journey .np-byte-inspector code{white-space:pre-wrap;overflow-wrap:anywhere}
+#network-packet-journey .np-byte-inspector>div{margin-top:7px}
+#network-packet-journey .np-footnote{margin-top:20px}
+@media(prefers-reduced-motion:reduce){#network-packet-journey .np-moving,#network-packet-journey .np-segment{transition:none}}
+
+#network-packet-journey .viz-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}#network-packet-journey .text-small{font-size:12px}#network-packet-journey .text-muted{color:var(--muted)}#network-packet-journey .tabular-nums{font-variant-numeric:tabular-nums}#network-packet-journey .np-navigation{flex-wrap:nowrap}#network-packet-journey button{font:12px var(--sans);padding:7px 9px}#network-packet-journey button[aria-pressed=true]{background:var(--soft);border-color:var(--accent)}#network-packet-journey button:disabled{opacity:.35;cursor:default}#network-packet-journey .table{width:100%;border-collapse:collapse}#network-packet-journey .table td,#network-packet-journey .table th{padding:8px;min-width:75px;font-size:12px}#network-packet-journey .np-fields-wrap{max-width:100%;overflow:auto}#network-packet-journey hr{border:0;border-top:1px solid var(--line)}#network-packet-journey .np-byte-inspector code{font-size:12px}#network-packet-journey h3{font-size:24px;margin:0 0 12px}@media(max-width:550px){#network-packet-journey{padding:16px 12px}#network-packet-journey .np-layer-controls button{flex:1 1 100px}#network-packet-journey .np-stage{min-width:0}#network-packet-journey .np-navigation button{white-space:nowrap}}
+
+#network-packet-journey .np-transcript{font-size:12px;margin-top:18px}#network-packet-journey .np-transcript h4{font-size:14px;margin:18px 0 8px}#network-packet-journey summary{cursor:pointer;color:var(--accent)}@media print{#network-packet-journey .np-navigation,#network-packet-journey .np-topology,#network-packet-journey .np-layer-controls,#network-packet-journey .np-fields-wrap,#network-packet-journey .np-byte-inspector,#network-packet-journey .np-field-heading,#network-packet-journey .np-stage-note,#network-packet-journey .np-packet-heading,#network-packet-journey .np-packet-track{display:none!important}#network-packet-journey .np-transcript>*{display:block!important}}
+</style>
+<script>
+(function(){
+'use strict';
+const root=document.getElementById('network-packet-journey');
+const q=s=>root.querySelector(s),qa=s=>[...root.querySelectorAll(s)];
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const before=Uint8Array.from('0200000000010200000000100800450000711234400040063c01c000020ac6336414c0001b58000003e9000023295018faf0df890000474554202f6170692f73657373696f6e20485454502f312e310d0a486f73743a206170702e6c61622e746573743a373030300d0a436f6e6e656374696f6e3a20636c6f73650d0a0d0a'.match(/../g),x=>parseInt(x,16));
+const after=before.slice();
+after.set([2,0,0,1,0,32],0);after.set([2,0,0,1,0,1],6);after[22]=63;after[24]=0;after[25]=0;
+function checksum(bytes){let sum=0;for(let i=0;i<bytes.length;i+=2)sum+=(bytes[i]<<8)+(bytes[i+1]||0);while(sum>65535)sum=(sum&65535)+(sum>>>16);return (~sum)&65535;}
+const ipSum=checksum(after.slice(14,34));after[24]=ipSum>>>8;after[25]=ipSum&255;
+const layers={ethernet:{name:'Ethernet',length:14,base:0},ip:{name:'IPv4',length:20,base:14},tcp:{name:'TCP',length:20,base:34},http:{name:'HTTP',length:73,base:54}};
+const steps=[
+ {title:'Программа клиента',node:0,layers:['http'],packet:'Данные приложения',note:'Процесс передаёт TCP 73 байта HTTP-запроса через сокет.',actor:'Создаёт: процесс клиента'},
+ {title:'TCP в ядре клиента',node:0,layers:['tcp','http'],packet:'TCP-сегмент',note:'TCP добавляет свой заголовок: порты, номера байтов, окно и контрольную сумму.',actor:'Заполняет: TCP-стек клиента'},
+ {title:'IPv4 в ядре клиента',node:0,layers:['ip','tcp','http'],packet:'IPv4-пакет',note:'Назначение вне подсети клиента: следующий узел — шлюз 192.0.2.1.',actor:'Заполняет: IP-стек клиента'},
+ {title:'Первый Ethernet-участок',node:-1,layers:['ethernet','ip','tcp','http'],packet:'Ethernet-кадр №1',note:'MAC назначения — шлюз. IP назначения — по-прежнему сервер.',actor:'Читает: интерфейс шлюза'},
+ {title:'Маршрутизатор',node:1,layers:['ip','tcp','http'],packet:'Пакет после обработки IPv4',note:'TTL: 64 → 63. Сумма IPv4: 0x3c01 → 0x3d01. TCP и HTTP сохранены.',actor:'Изменяет: IP-маршрутизатор'},
+ {title:'Второй Ethernet-участок',node:-1,layers:['ethernet','ip','tcp','http'],packet:'Новый Ethernet-кадр №2',note:'Новый заголовок Ethernet: MAC выхода шлюза → MAC сервера.',actor:'Формирует: выходной интерфейс шлюза'},
+ {title:'TCP в ядре сервера',node:2,layers:['tcp','http'],packet:'TCP-сегмент в принимающем стеке',note:'После проверок TCP данные поступают в очередь сокета; процесс ещё может их не прочитать.',actor:'Читает: TCP-стек сервера'},
+ {title:'Программа сервера',node:2,layers:['http'],packet:'Данные приложения',note:'Процесс собирает HTTP-сообщение из байтов TCP-потока.',actor:'Разбирает: процесс HTTP-сервера'}
+];
+const fields={
+ ethernet:[
+  {id:'dst',name:'MAC назначения',offset:0,length:6,type:'mac',note:'Канальный адрес получателя именно на этом Ethernet-участке.'},
+  {id:'src',name:'MAC источника',offset:6,length:6,type:'mac',note:'Показывает интерфейс, отправивший кадр в этом Ethernet-сегменте.'},
+  {id:'type',name:'Тип содержимого',offset:12,length:2,type:'ethertype',note:'0x0800 передаёт полезную нагрузку разборщику IPv4.'}
+ ],
+ ip:[
+  {id:'dst',name:'IP назначения',offset:16,length:4,type:'ip',note:'По этому адресу маршрутизатор выбирает маршрут.'},
+  {id:'src',name:'IP источника',offset:12,length:4,type:'ip',note:'Без NAT этот адрес сохраняется при обычной пересылке.'},
+  {id:'ttl',name:'TTL · предел переходов',offset:8,length:1,type:'number',note:'Маршрутизатор уменьшает TTL; при исчерпании пакет не пересылается.'},
+  {id:'sum',name:'Сумма IPv4',offset:10,length:2,type:'hex',note:'Защищает только IP-заголовок; изменение TTL требует обновления суммы.'}
+ ],
+ tcp:[
+  {id:'dst',name:'Порт назначения',offset:2,length:2,type:'number',note:'Участвует в выборе TCP-сокета на стороне сервера.'},
+  {id:'src',name:'Порт источника',offset:0,length:2,type:'number',note:'Вместе с IP-адресами и вторым портом определяет пару концов TCP.'},
+  {id:'seq',name:'SEQ · номер байта',offset:4,length:4,type:'number',note:'Номер первого байта данных в отправляемом направлении: 1001.'},
+  {id:'ack',name:'ACK · ожидаемый байт',offset:8,length:4,type:'number',note:'Клиент ждёт от сервера байт 9001; это встречное направление.'},
+  {id:'window',name:'Окно приёма',offset:14,length:2,type:'number',note:'Клиент объявляет окно для данных, которые отправит сервер.'},
+  {id:'sum',name:'Сумма TCP',offset:16,length:2,type:'hex',note:'В псевдозаголовке TCP нет TTL: здесь сумма остаётся 0xdf89.'}
+ ],
+ http:[
+  {id:'request',name:'Строка запроса',offset:0,length:27,type:'ascii',note:'Метод, путь и версию разбирает HTTP-сервер в процессе.'},
+  {id:'host',name:'Заголовок Host',offset:27,length:25,type:'ascii',note:'Имя прикладного узла читает HTTP-сервер; маршрутизатору оно не нужно.'},
+  {id:'connection',name:'Заголовок Connection',offset:52,length:19,type:'ascii',note:'В этом запросе клиент просит завершить соединение после ответа.'},
+  {id:'end',name:'Конец заголовков',offset:71,length:2,type:'ascii',note:'Пустая строка завершает блок заголовков HTTP/1.1.'}
+ ]
+};
+let state={step:3,layer:'ethernet',field:'dst'};
+let topology=null,marker=null,positions=[],nodeRects=[],linkLines=[];
+function restore(saved){const value=saved?.modelContent||saved;if(!value||!Number.isInteger(value.step)||value.step<0||value.step>=steps.length)return;state.step=value.step;state.layer=steps[value.step].layers.includes(value.layer)?value.layer:steps[value.step].layers[0];state.field=fields[state.layer].some(f=>f.id===value.field)?value.field:fields[state.layer][0].id;}
+try{restore(JSON.parse(localStorage.getItem('network-packet-journey-v1')));}catch(e){}
+function persist(){try{localStorage.setItem('network-packet-journey-v1',JSON.stringify(state));}catch(e){}}
+function bytesFor(field,isAfter){const bytes=isAfter?after:before,start=layers[state.layer].base+field.offset;return bytes.slice(start,start+field.length);}
+function hex(bytes){return Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join(' ');}
+function valueOf(field,bytes){
+ if(field.type==='mac')return Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join(':');
+ if(field.type==='ip')return Array.from(bytes).join('.');
+ if(field.type==='ascii')return String.fromCharCode(...bytes).replace(/\r/g,'\\r').replace(/\n/g,'\\n');
+ let value=0;for(const byte of bytes)value=value*256+byte;
+ if(field.type==='hex')return '0x'+value.toString(16).padStart(4,'0');
+ if(field.type==='ethertype')return '0x0800 · IPv4';
+ return String(value);
+}
+function changed(field){return state.step>=4&&hex(bytesFor(field,false))!==hex(bytesFor(field,true));}
+function showField(){
+ const f=fields[state.layer].find(f=>f.id===state.field)||fields[state.layer][0];
+ const index=steps[state.step].layers.indexOf(state.layer);
+ const base=steps[state.step].layers.slice(0,index).reduce((n,l)=>n+layers[l].length,0)+f.offset;
+ q('[data-byte-label]').textContent='Байты в показанном блоке: '+base+(f.length>1?'–'+(base+f.length-1):'')+' · отсчёт с нуля';
+ q('[data-byte-value]').innerHTML=changed(f)?'<span class="text-small text-muted">до </span><code>'+hex(bytesFor(f,false))+'</code><span class="text-small text-muted"> → после </span><code>'+hex(bytesFor(f,true))+'</code>':'<code>'+hex(bytesFor(f,state.step>=4))+'</code>';
+ q('[data-field-note]').textContent=f.note;
+ qa('[data-field]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.field===f.id)));
+}
+function byteWord(n){return n%10===1&&n%100!==11?'байт':n%10>=2&&n%10<=4&&!(n%100>=12&&n%100<=14)?'байта':'байт';}
+function render(){
+ const stage=steps[state.step];
+ q('[data-prev]').disabled=state.step===0;q('[data-next]').disabled=state.step===steps.length-1;
+ q('[data-step-count]').textContent='ШАГ '+(state.step+1)+' / '+steps.length;
+ q('[data-stage-title]').textContent=stage.title;
+ q('[data-stage-note]').textContent=stage.note;
+ q('[data-packet-title]').textContent=stage.packet;
+ const total=stage.layers.reduce((n,l)=>n+layers[l].length,0);q('[data-size]').textContent=total+' '+byteWord(total);
+ let x=0;for(const [id,layer] of Object.entries(layers)){
+  const segment=q('[data-layer-mark="'+id+'"]');const present=stage.layers.includes(id);
+  segment.style.left=x/127*100+'%';segment.style.width=(present?layer.length:0)/127*100+'%';segment.style.opacity=present?'1':'0';
+  if(present)x+=layer.length;
+ }
+ q('.np-packet-track').setAttribute('aria-label',stage.packet+': '+stage.layers.map(id=>layers[id].name+' '+layers[id].length+' '+byteWord(layers[id].length)).join(', '));
+ qa('[data-layer]').forEach(b=>{b.disabled=!stage.layers.includes(b.dataset.layer);b.setAttribute('aria-pressed',String(b.dataset.layer===state.layer));});
+ q('[data-field-heading]').textContent='Ключевые поля '+layers[state.layer].name;
+ const actors={ethernet:state.step===5?'Шлюз создаёт → сервер получает':'Клиент создаёт → шлюз получает',ip:state.step>=4?'Шлюз изменил TTL и сумму; адреса сохранены':'Формирует IP-стек клиента',tcp:'TCP клиента создаёт → TCP сервера проверяет',http:'Процесс клиента → процесс HTTP-сервера'};
+ q('[data-actor]').textContent=actors[state.layer];
+ q('[data-fields]').innerHTML=fields[state.layer].map(f=>'<tr><td><button type="button" class="btn btn-ghost" data-field="'+f.id+'" aria-pressed="'+(f.id===state.field)+'">'+esc(f.name)+'</button></td><td><code class="np-current-value">'+esc(valueOf(f,bytesFor(f,state.step>=4)))+'</code>'+(changed(f)?'<span class="viz-badge">изменено</span>':'')+'</td><td class="text-small tabular-nums">'+f.offset+(f.length>1?'–'+(f.offset+f.length-1):'')+'</td></tr>').join('');
+ showField();updateTopology();
+}
+const NS='http://www.w3.org/2000/svg';
+function element(tag,attrs,text){const el=document.createElementNS(NS,tag);for(const [k,v] of Object.entries(attrs))el.setAttribute(k,v);if(text!==undefined)el.textContent=text;return el;}
+function drawTopology(){
+ const svg=q('.np-topology'),w=Math.max(1,svg.getBoundingClientRect().width),vertical=w<680;
+ svg.replaceChildren();nodeRects=[];linkLines=[];
+ const h=vertical?360:152;svg.setAttribute('viewBox','0 0 '+w+' '+h);svg.setAttribute('height',h);
+ svg.append(element('title',{},'Путь данных от клиента через маршрутизатор к серверу'));
+ svg.append(element('desc',{},'Один маршрутизатор без NAT; три узла и два Ethernet-участка. Адреса IP сохраняются, канальные адреса меняются. Слои показаны логически, без обязательного копирования памяти.'));
+ const defs=element('defs',{}),arrow=element('marker',{id:'np-route-arrow',viewBox:'0 0 10 10',refX:'8',refY:'5',markerWidth:'6',markerHeight:'6',orient:'auto-start-reverse'});
+ arrow.append(element('path',{d:'M 0 0 L 10 5 L 0 10 z',fill:'var(--border)'}));defs.append(arrow);svg.append(defs);
+ const pad=12,gap=72,boxW=vertical?w-24:(w-24-gap*2)/3,boxH=vertical?84:108;
+ const nodes=[['Клиент','192.0.2.10/24','TCP-порт 49152'],['Маршрутизатор','192.0.2.1/24','198.51.100.1/24'],['Сервер','198.51.100.20/24','TCP-порт 7000']];
+ const boxPositions=nodes.map((n,i)=>({x:vertical?pad:pad+i*(boxW+gap),y:vertical?i*132:0}));
+ for(let i=0;i<2;i++){
+  const a=boxPositions[i],b=boxPositions[i+1];
+  const attrs=vertical?{x1:w-62,y1:a.y+boxH,x2:w-62,y2:b.y-6}:{x1:a.x+boxW,y1:85,x2:b.x-6,y2:85};
+  const line=element('line',{...attrs,stroke:'var(--border)','stroke-width':'1.5','marker-end':'url(#np-route-arrow)'});linkLines.push(line);svg.append(line);
+  svg.append(element('text',vertical?{x:24,y:a.y+boxH+27,class:'np-svg-secondary'}:{x:a.x+boxW+gap/2,y:137,'text-anchor':'middle',class:'np-svg-secondary'},'Ethernet '+(i+1)));
+ }
+ nodes.forEach((n,i)=>{
+  const p=boxPositions[i],g=element('g',{}),rect=element('rect',{x:p.x,y:p.y,width:boxW,height:boxH,rx:5,fill:'transparent',stroke:'var(--border)','stroke-width':'1'});nodeRects.push(rect);g.append(rect);
+  g.append(element('text',{x:p.x+14,y:p.y+23,'font-weight':'500'},n[0]));
+  g.append(element('text',{x:p.x+14,y:p.y+45,class:'np-svg-secondary'},n[1]));
+  g.append(element('text',{x:p.x+14,y:p.y+64,class:'np-svg-secondary'},n[2]));svg.append(g);
+ });
+ let centers=boxPositions.map(p=>vertical?{x:w-62,y:p.y+42}:{x:p.x+boxW/2,y:85});
+ let mids=[0,1].map(i=>vertical?{x:w-62,y:boxPositions[i].y+boxH+24}:{x:boxPositions[i].x+boxW+gap/2,y:85});
+ positions=[centers[0],centers[0],centers[0],mids[0],centers[1],mids[1],centers[2],centers[2]];
+ marker=element('g',{});marker.append(element('rect',{x:-29,y:-12,width:58,height:24,rx:4,fill:'var(--primary)'}));
+ marker.append(element('text',{'text-anchor':'middle',y:5,style:'fill:var(--primary-foreground)'},''));svg.append(marker);
+ topology=svg;updateTopology();requestAnimationFrame(()=>marker?.classList.add('np-moving'));
+}
+function updateTopology(){
+ if(!marker)return;
+ const stage=steps[state.step],p=positions[state.step];
+ marker.style.transform='translate('+p.x+'px,'+p.y+'px)';marker.querySelector('text').textContent=stage.layers.reduce((n,id)=>n+layers[id].length,0)+' Б';
+ nodeRects.forEach((r,i)=>r.setAttribute('fill',i===stage.node?'var(--soft)':'transparent'));
+ linkLines.forEach((line,i)=>line.setAttribute('stroke',state.step===(i===0?3:5)?'var(--primary)':'var(--border)'));
+}
+function stepBy(delta){state.step=Math.max(0,Math.min(steps.length-1,state.step+delta));state.layer=steps[state.step].layers[0];state.field=state.step===4?'ttl':fields[state.layer][0].id;render();persist();}
+q('[data-prev]').onclick=()=>stepBy(-1);q('[data-next]').onclick=()=>stepBy(1);
+root.addEventListener('click',event=>{const layer=event.target.closest('[data-layer]');if(layer&&!layer.disabled){state.layer=layer.dataset.layer;state.field=fields[state.layer][0].id;render();persist();}const field=event.target.closest('[data-field]');if(field){state.field=field.dataset.field;showField();persist();}});
+
+render();drawTopology();
+let lastWidth=0;new ResizeObserver(entries=>{const width=entries[0].contentRect.width;if(Math.abs(width-lastWidth)>1){lastWidth=width;drawTopology();}}).observe(q('.np-topology'));
+})();
+</script>
+<h2 id="bytes-hex">Как читать шестнадцатеричную запись</h2>
+<p>Байт — восемь двоичных разрядов, каждый равен нулю или единице. Поэтому один байт имеет 256 возможных значений: от 0 до 255. В шестнадцатеричной системе один знак представляет четыре разряда; два знака представляют целый байт. После цифры <code>9</code> идут <code>a, b, c, d, e, f</code>, то есть значения 10–15. Запись <code>0x</code> перед числом обозначает основание системы: <code>0x10</code> — это шестнадцать, а не десять.</p>
+<p><strong>Шестнадцатеричный дамп</strong> — таблица байтов с их позициями. Английское слово <em>hexdump</em> в командах обозначает то же представление. Слева указано <strong>смещение</strong>: сколько байтов пропущено от начала рассматриваемого объекта. Первый байт имеет смещение 0, второй — 1. Здесь смещения отсчитываются от начала Ethernet-кадра, а не от начала файла PCAP. Общий заголовок файла и заголовки записей в эту таблицу не попали.</p>
+<p>Посередине лежат байты, справа — их условное отображение как печатных символов. Точка справа означает «не показываемый здесь символ», а не настоящий байт точки. Например, <code>0d 0a</code> справа станет двумя точками: это возврат каретки и перевод строки. Буква <code>E</code> в первой строке возникла потому, что байт <code>45</code> случайно совпал с кодом этой буквы. В том месте это начало IP-заголовка, а не текст.</p>
+<pre>0000  02 00 00 00 00 01 02 00 00 00 00 10 08 00 45 00  ..............E.
+0010  00 71 12 34 40 00 40 06 3c 01 c0 00 02 0a c6 33  .q.4@.@.&lt;......3
+0020  64 14 c0 00 1b 58 00 00 03 e9 00 00 23 29 50 18  d....X......#)P.
+0030  fa f0 df 89 00 00 47 45 54 20 2f 61 70 69 2f 73  ......GET /api/s
+0040  65 73 73 69 6f 6e 20 48 54 54 50 2f 31 2e 31 0d  ession HTTP/1.1.
+0050  0a 48 6f 73 74 3a 20 61 70 70 2e 6c 61 62 2e 74  .Host: app.lab.t
+0060  65 73 74 3a 37 30 30 30 0d 0a 43 6f 6e 6e 65 63  est:7000..Connec
+0070  74 69 6f 6e 3a 20 63 6c 6f 73 65 0d 0a 0d 0a     tion: close....</pre>
+<p>Это четвёртый кадр, с запросом. Число <code>0010</code> слева означает смещение 16 в десятичной записи; <code>0020</code> — 32; <code>0070</code> — 112. Последняя строка содержит 15 байтов, поэтому вся запись занимает <code>112 + 15 = 127</code> байтов.</p>
+<p>Для многобайтных чисел в рассматриваемых заголовках действует <strong>сетевой порядок байтов</strong>: сначала старший байт. Два байта <code>1b 58</code> — это <code>27 × 256 + 88 = 7000</code>. Если ошибочно переставить их, получится <code>0x581b = 22555</code>. Порядок байтов многобайтного числа не следует путать с порядком передачи отдельных битов физическим устройством. Сейчас мы работаем с байтами, уже восстановленными принимающей аппаратурой.</p>
+<div class="exercise"><p><strong>Проверьте себя.</strong> Почему порт 49152 записан <code>c0 00</code>, а не <code>49 15 2</code>? Почему 192 в IP-адресе превратилось в <code>c0</code>?</p><details><summary>Разбор</summary><p>Значения полей передаются двоичными числами, а не строками десятичных цифр. 49152 = 192 × 256, поэтому его старший байт равен 192, младший — нулю: <code>c0 00</code>. Каждый компонент IPv4-адреса тоже представляет один байт; десятичное 192 равно шестнадцатеричному <code>c0</code>. Текстовое число «49152» потребовало бы пяти ASCII-байтов <code>34 39 31 35 32</code> и было бы другим представлением.</p></details></div>
+
+<h2 id="bytes-ethernet">Ethernet: конверт для одного участка пути</h2>
+<p>Первый заголовок занимает 14 байтов. Отправляющий стек формирует его для выбранного интерфейса и следующего узла. Получающая сетевая карта использует адрес назначения при приёме; коммутатор использует адреса для обучения и пересылки. Для наблюдателя эти поля помогают проверить именно ближайший переход. По ним нельзя установить всю цепочку маршрутизаторов.</p>
+<div class="table-wrap"><table><thead><tr><th>Смещение от кадра</th><th>Размер</th><th>Байты и значение</th><th>Как поле создаётся и используется</th></tr></thead><tbody>
+<tr><td>0</td><td>6 байтов</td><td><code>02 00 00 00 00 01</code>, MAC назначения</td><td>Ядро клиента подставило MAC шлюза. Кадр принимается интерфейсом маршрутизатора на этом участке.</td></tr>
+<tr><td>6</td><td>6 байтов</td><td><code>02 00 00 00 00 10</code>, MAC источника</td><td>MAC клиентского интерфейса. Коммутатор может запомнить, за каким своим портом расположен этот адрес.</td></tr>
+<tr><td>12</td><td>2 байта</td><td><code>08 00</code>, тип вложенного протокола</td><td>Отправитель обозначил IPv4. Принимающий стек выбирает разборщик IPv4; для ARP значение было бы <code>08 06</code>.</td></tr>
+</tbody></table></div>
+<p>MAC — адрес интерфейса канального уровня. В записи с двоеточиями каждый фрагмент обозначает один байт. Начальное <code>02</code> здесь соответствует локально назначенному индивидуальному адресу: такие адреса удобно использовать в искусственном стенде. Это не случайно выбранный номер изготовителя оборудования.</p>
+<p>Когда маршрутизатор примет кадр, он не «исправит внутри него адрес получателя и пошлёт тот же кадр». В логической модели он завершит приём одного канального конверта, примет решение по IP, затем создаст конверт для выходного участка. На Ethernet №2 MAC источника будет <code>02:00:00:01:00:01</code>, MAC назначения — <code>02:00:00:01:00:20</code>. IP-адреса останутся прежними. На обратном пути в нашем захвате источником Ethernet будет клиентский интерфейс маршрутизатора <code>02:00:00:00:00:01</code>, хотя источником IP окажется сервер <code>198.51.100.20</code>.</p>
+<p>Практический вывод: несовпадение источника Ethernet и источника IP нормально при маршрутизации. Зато если клиент пытается отправлять запрос к этой удалённой подсети непосредственно на MAC какого-то другого клиента, надо проверить маску, маршрут, выбор шлюза и таблицу соседей. Один только текст URL не объяснит такую ошибку.</p>
+
+<h2 id="bytes-ipv4">IPv4: границы, путь и ограничения пересылки</h2>
+<p>Заголовок IPv4 начинается на смещении 14 и здесь занимает 20 байтов. Его создаёт IP-стек отправителя. Маршрутизатор читает адрес назначения, учитывает ограничения пересылки и меняет некоторые поля. Конечный IP-стек проверяет структуру и передаёт вложенное содержимое нужному протоколу. Заголовок не содержит имени файла, названия страницы или номера пользователя: это сведения другого уровня.</p>
+<div class="table-wrap"><table><thead><tr><th>Смещение</th><th>Байты</th><th>Расшифровка</th></tr></thead><tbody>
+<tr><td>14, 1 байт</td><td><code>45</code></td><td>Версия 4; длина заголовка 5 единиц по 4 байта: 20 байтов.</td></tr>
+<tr><td>15, 1 байт</td><td><code>00</code></td><td>Пометки обслуживания DSCP = 0; признаки явного уведомления о перегрузке ECN = 0.</td></tr>
+<tr><td>16, 2 байта</td><td><code>00 71</code></td><td>Полная длина IPv4: 113 байтов.</td></tr>
+<tr><td>18, 2 байта</td><td><code>12 34</code></td><td>Поле идентификации: <code>0x1234</code>, десятичное 4660.</td></tr>
+<tr><td>20, 2 байта</td><td><code>40 00</code></td><td>DF = 1; MF = 0; смещение фрагмента = 0.</td></tr>
+<tr><td>22, 1 байт</td><td><code>40</code></td><td>Остаток допустимых пересылок TTL = 64.</td></tr>
+<tr><td>23, 1 байт</td><td><code>06</code></td><td>Вложенный транспортный протокол — TCP.</td></tr>
+<tr><td>24, 2 байта</td><td><code>3c 01</code></td><td>Контрольная сумма IPv4-заголовка.</td></tr>
+<tr><td>26, 4 байта</td><td><code>c0 00 02 0a</code></td><td>Источник: 192.0.2.10.</td></tr>
+<tr><td>30, 4 байта</td><td><code>c6 33 64 14</code></td><td>Назначение: 198.51.100.20.</td></tr>
+</tbody></table></div>
+<p><strong>Версия и длина.</strong> Один байт <code>45</code> разделён на две половины. Старшие четыре разряда содержат 4, младшие — 5. Длина записана не в байтах, чтобы небольшим полем описывать заголовки с дополнительными параметрами. Получатель умножает её на четыре и получает начало вложенных данных. Если механически считать IPv4-заголовок всегда двадцатибайтным, разборщик ошибётся при наличии параметров. В нашем примере <code>14 + 20 = 34</code>: там начинается TCP.</p>
+<p><strong>Обслуживание и перегрузка.</strong> DSCP — кодовая пометка для выбранного режима обслуживания, а не команда «обязательно пропустить первым». Смысл зависит от политики сети. ECN позволяет участвующим сторонам обозначать перегрузку через заголовки. Отправитель формирует исходные значения, некоторые сетевые узлы могут применять согласованные изменения. Здесь оба значения нулевые; пакет не помечен как способный использовать ECN. Эти нули не доказывают отсутствие очередей и перегрузки на пути.</p>
+<p><strong>Полная длина.</strong> Значение 113 складывается из 20 байтов IP, 20 байтов TCP и 73 байтов запроса. Заголовок Ethernet сюда не входит. Получатель использует число, чтобы отделить данные IP от канального дополнения. Если в записи кадр длиннее, нельзя автоматически считать все хвостовые байты данными приложения. Если запись короче объявленной IP-длины, возможны усечение захвата либо повреждение; сначала надо проверить длину сохранённой записи.</p>
+<p><strong>Идентификация и фрагменты.</strong> Поле Identification исторически помогает узнавать фрагменты одного исходного пакета вместе с другими признаками. Но <code>0x1234</code> не является глобальным номером запроса, номером TCP-байта или доказательством количества пакетов, отправленных системой. В нашем примере фрагментации нет и установлен запрет на неё. Такой целый пакет с DF = 1, MF = 0 и нулевым смещением называют атомарным: он не является частью другого пакета и не разрешает дальнейшее дробление. Для таких пакетов современные правила не требуют использовать идентификацию как уникальный счётчик. Мы задали значение явно для удобства узнавания.</p>
+<p>Следующие два байта объединяют три управляющих разряда и тринадцать разрядов смещения. <code>0x4000</code> означает установленный DF, <em>Don't Fragment</em>, то есть «не фрагментировать». MF, <em>More Fragments</em>, означает наличие следующих фрагментов; здесь он равен нулю. Смещение показывает положение данных фрагмента в исходных IP-данных единицами по восемь байтов. Здесь оно нулевое. Отправитель установил запрет, поэтому маршрутизатор с меньшим допустимым размером пакета не вправе просто разрезать его на части. Он должен отказаться от такой пересылки и при допустимых условиях сообщить о необходимости уменьшить размер через ICMP.</p>
+<p><strong>TTL.</strong> Источник выбрал 64. Каждый маршрутизатор уменьшает ограничитель при пересылке. Поэтому на выходе нашего единственного маршрутизатора будет 63. Когда продолжить пересылку нельзя из-за исчерпания ограничителя, узел отбрасывает пакет; это мешает пакетам бесконечно ходить по петле. В современных сетях нельзя читать TTL как секундомер. В ответах нашего файла значение 63: сервер отправил с 64, а маршрутизатор уже уменьшил его до попадания кадра в клиентский сегмент.</p>
+<p><strong>Протокол.</strong> Число 6 не имеет отношения к порту 7000. Оно выбирает протокол вложенных IP-данных: TCP. Число 17 означало бы UDP. Сначала получатель разбирает IP, затем на основании этого поля выбирает обработчик, и уже тот понимает свои порты. Если читать на фиксированном смещении «TCP-порт» в любом IPv4-пакете, можно принять чужие поля за номер службы.</p>
+<p><strong>Адреса.</strong> Назначение задаёт клиент при создании соединения; стек выбирает подходящий исходный адрес по маршруту и настройкам. Маршрутизаторы читают назначение для выбора следующего перехода. Адресат использует исходный адрес вместе с другими параметрами соединения, в том числе для обратного направления. В нашем пути они не изменяются; преобразование адресов было бы отдельной операцией и потребовало бы согласованного исправления контрольных сумм.</p>
+
+<h2 id="bytes-tcp">TCP: какой разговор продолжается и какие байты пришли</h2>
+<p>Заголовок TCP начинается на смещении 34. Он соединяет сведения о двух направлениях: SEQ нумерует отправляемые байты, а ACK и окно сообщают о приёме встречного потока. Отправляющий TCP-стек ведёт номера отправленных байтов, принимает подтверждения, оценивает доступное окно и повторяет недоставленное. Принимающий стек проверяет сегмент, сопоставляет его соединению, упорядочивает данные и делает непрерывную последовательность доступной приложению. Приложение обычно пишет и читает байты через сокет; оно не заполняет эти поля вручную.</p>
+<div class="table-wrap"><table><thead><tr><th>Смещение</th><th>Размер и байты</th><th>Значение</th></tr></thead><tbody>
+<tr><td>34</td><td>2, <code>c0 00</code></td><td>Порт источника 49152.</td></tr>
+<tr><td>36</td><td>2, <code>1b 58</code></td><td>Порт назначения 7000.</td></tr>
+<tr><td>38</td><td>4, <code>00 00 03 e9</code></td><td>Номер первого байта данных SEQ = 1001.</td></tr>
+<tr><td>42</td><td>4, <code>00 00 23 29</code></td><td>Следующий ожидаемый номер встречного потока ACK = 9001.</td></tr>
+<tr><td>46</td><td>1, <code>50</code></td><td>Длина заголовка 5 × 4 = 20 байтов; зарезервированные биты нулевые.</td></tr>
+<tr><td>47</td><td>1, <code>18</code></td><td>Установлены признаки ACK и PSH.</td></tr>
+<tr><td>48</td><td>2, <code>fa f0</code></td><td>Объявленное окно приёма 64240.</td></tr>
+<tr><td>50</td><td>2, <code>df 89</code></td><td>Контрольная сумма TCP.</td></tr>
+<tr><td>52</td><td>2, <code>00 00</code></td><td>Указатель срочных данных, здесь не используется.</td></tr>
+</tbody></table></div>
+<p><strong>Порты.</strong> Клиент передал ядру адрес сервера и порт 7000. Порт 49152 ядро могло выбрать автоматически из доступных временных портов; в учебной записи мы закрепили его заранее. Порт не является номером процесса: один процесс способен обслуживать множество соединений, несколько процессов могут участвовать в приёме соединений при специальных настройках. Для данного TCP-разговора нужны оба IP-адреса и оба порта, а также принадлежность протоколу TCP. Одинокое число 7000 не определяет соединение.</p>
+<p><strong>Номер последовательности.</strong> Клиентский SYN имел номер 1000 и занял одну позицию. Поэтому первый байт запроса имеет номер 1001. В запросе 73 байта; их номера — от 1001 до 1073 включительно. Следующий номер равен <code>1001 + 73 = 1074</code>. Принимающий TCP не обязан передавать данные приложению такими же кусками, какими они лежали в сегментах. Ему требуется сохранить значения и порядок потока. Если кусок потеряется, последующие куски могут находиться в буфере, а непрерывная граница приёма ещё не сдвинется.</p>
+<p><strong>Подтверждение.</strong> В исходящем запросе ACK равен 9001, потому что клиент уже принял серверный SYN с номером 9000. Поле относится к противоположному направлению. Оно не означает «мой пакет номер 9001». Сервер после принятия запроса ответит ACK 1074: «Все позиции до 1073 включительно непрерывно приняты; следующая ожидаемая — 1074». Это утверждение TCP-стека. Оно не доказывает, что приложение уже прочитало запрос, прошло авторизацию, записало документ в базу или сохранило файл на диск.</p>
+<p><strong>Длина TCP-заголовка.</strong> Старшая половина <code>50</code> равна 5. Получатель умножает её на четыре и отделяет заголовок от прикладных данных. TCP-параметры, если они есть, увеличивают эту длину. В нашем примере начало HTTP получается <code>14 + 20 + 20 = 54</code>. Это вычисление имеет смысл только после проверки типа Ethernet, версии IP, длины IP-заголовка и протокола. Оно не является универсальным правилом «HTTP всегда начинается с байта 54».</p>
+<p><strong>Управляющие признаки.</strong> <code>0x18 = 0x10 + 0x08</code>: ACK показывает значимость поля подтверждения. PSH относится к функции PUSH из RFC: отправитель помечает данные для продвижения к получателю без дальнейшего накопления. Получатель не обязан передавать приложению сам признак PUSH. В Linux обычный <code>recv()</code> может вернуть доступные байты и без PSH. Флаг не является прямой командой для <code>recv()</code>, не отменяет алгоритм Nagle и не задаёт границ чтения или HTTP-запроса; границы сообщения определяет HTTP. Остальные признаки здесь нулевые: SYN устанавливает начальное состояние, FIN завершает направление потока, RST прерывает соединение, URG делает значимым указатель срочных данных; признаки ECN относятся к механизму уведомления о перегрузке.</p>
+<p class="source-note">Смысл полей SEQ, ACK и окна определён в <a href="https://www.rfc-editor.org/rfc/rfc9293.html#section-3.1">RFC 9293, раздел 3.1</a>; функция PUSH и её связь с Nagle — в <a href="https://www.rfc-editor.org/rfc/rfc9293.html#section-3.9.1.2">разделе 3.9.1.2</a>, необязательность передачи признака приложению — в <a href="https://www.rfc-editor.org/rfc/rfc9293.html#section-3.9.1.3">разделе 3.9.1.3</a>. Правило обычного чтения доступных байтов в Linux описано в <a href="https://man7.org/linux/man-pages/man2/recv.2.html">recv(2)</a>.</p>
+<p><strong>Окно.</strong> Поле 64240 говорит о принимающей стороне отправителя этого сегмента. Клиент одновременно отправляет запрос и сообщает, сколько встречных байтов сервер может направить в пределах объявленного окна. При ACK 9001 правый край в этом упрощённом случае соответствует номеру 73241: <code>9001 + 64240</code>. Это не длина запроса и не текущая скорость линии. В настоящем соединении масштаб окна может согласовываться в SYN: тогда поле нужно умножать на соответствующий коэффициент. Наши SYN не содержат такой опции, коэффициент равен единице. С другой стороны отправку дополнительно ограничивает управление перегрузкой; большое окно получателя не даёт права игнорировать состояние сети.</p>
+<p><strong>Указатель срочных данных.</strong> Два нуля в конце заголовка ничего не добавляют к нашему HTTP. Поле имеет специальный смысл при установленном URG; этот признак отсутствует. Увидев нули, нельзя прибавлять их к телу запроса или принимать за признак завершения строки. Их место и смысл определены структурой TCP.</p>
+
+<h2 id="bytes-http">Прикладные данные: где начинается и заканчивается запрос</h2>
+<p>Начиная со смещения 54 лежат 73 ASCII-байта. ASCII — таблица соответствия кодов и базовых латинских символов; в этом запросе каждый видимый символ занимает один байт. TCP не знает, что <code>GET</code> является командой, а <code>Host</code> — именем заголовка. Эти значения интерпретирует серверное приложение после чтения сокета.</p>
+<pre>GET /api/session HTTP/1.1\r\n
+Host: app.lab.test:7000\r\n
+Connection: close\r\n
+\r\n</pre>
+<p>Здесь <code>\r\n</code> — учебная запись двух настоящих байтов <code>0d 0a</code>, а не четыре печатных символа обратной косой черты и букв. Первая строка занимает 27 байтов вместе с окончанием строки, строка Host — 25, строка Connection — 19, пустая строка — 2: всего <code>27 + 25 + 19 + 2 = 73</code>. Последовательность <code>0d 0a 0d 0a</code> завершает блок заголовков. У этого конкретного запроса нет тела.</p>
+<p><code>GET</code> — метод запроса. <code>/api/session</code> — путь ресурса внутри службы. <code>HTTP/1.1</code> задаёт версию прикладного протокола. Заголовок <code>Host: app.lab.test:7000</code> сообщает серверу, к какому имени и порту обращались; это позволяет выбирать нужный сайт или обработчик, когда один сетевой адрес обслуживает несколько имён. DNS к этому моменту уже отработал: текст Host сам по себе не ищет маршрут и не заменяет IP-адрес назначения. Заголовок <code>Connection: close</code> сообщает намерение не сохранять это соединение для дальнейшего обмена после ответа.</p>
+<p>Сервер в записи отвечает 106 байтами: 90 байтов строки состояния и заголовков плюс 16 байтов тела <code>{"user":"alice"}</code>. Поле <code>Content-Length: 16</code> относится к телу ответа, не к полному TCP-сегменту и не ко всему HTTP-сообщению. Нельзя переносить смысл одного слова «длина» между уровнями без уточнения, какую область считают. Здесь одновременно верны четыре числа: тело ответа 16, HTTP-ответ 106, TCP-сегмент ответа 126, IP-пакет ответа 146.</p>
+<div class="callout"><p><strong>Существенное ограничение примера.</strong> Это открытый HTTP. В HTTPS прикладные байты защищены TLS: наблюдатель без подходящих ключей не увидит таким способом путь и Host внутри зашифрованного HTTP. Сам порт 7000 не доказывает наличие или отсутствие шифрования. Мы выбрали открытый текст, чтобы можно было вручную проследить вложение.</p></div>
+
+<h2 id="bytes-checksums">Контрольные суммы: проверяем арифметикой</h2>
+<p><strong>Контрольная сумма</strong>, по-английски <em>checksum</em>, — число, вычисленное по выбранной области байтов. Получатель повторяет расчёт и проверяет согласованность. Это средство обнаружения ошибок, а не подпись и не доказательство личности. Человек, способный изменить пакет, обычно способен пересчитать такую сумму. При разборе сначала всегда надо спросить: «Какую именно область она защищает?»</p>
+<p>IP-сумма защищает только IP-заголовок. Перед вычислением поле суммы устанавливают в ноль, складывают 16-битные слова, возвращают переносы из старших разрядов в младшие, затем инвертируют все разряды результата. В нашем заголовке слова такие:</p>
+<pre>4500 0071 1234 4000 4006 0000 c000 020a c633 6414
+обычная сумма = 0x2c3fc
+перенос: 0xc3fc + 0x0002 = 0xc3fe
+инверсия 16 разрядов: 0xffff - 0xc3fe = 0x3c01</pre>
+<p>Если выполнить сложение уже с заполненным полем <code>3c01</code>, свёрнутая сумма даст <code>ffff</code>, а функция, возвращающая её инверсию, — ноль. Когда маршрутизатор уменьшит TTL с 64 до 63, слово <code>4006</code> станет <code>3f06</code>. Заголовок изменился, его сумма должна измениться на <code>3d01</code>. Маршрутизатор может обновлять результат арифметически, ему необязательно заново суммировать каждый байт. TCP-сумма от уменьшения TTL не меняется: TTL не входит в защищаемую ею область.</p>
+<p>TCP-сумма охватывает TCP-заголовок, TCP-данные и <strong>псевдозаголовок</strong> — временно добавленную при расчёте служебную последовательность. В него входят исходный и конечный IP-адреса, нулевой байт, номер протокола и длина TCP. Псевдозаголовок не передаётся отдельным куском перед TCP: обе стороны составляют его из имеющихся IP-полей. Так проверка связывает сегмент с сетевыми адресами, а не только с портами.</p>
+<pre>Псевдозаголовок запроса, 12 байтов:
+c0 00 02 0a  c6 33 64 14  00 06 00 5d
+192.0.2.10   198.51.100.20  0  TCP  длина TCP 93
+
+93 = 20 байтов TCP-заголовка + 73 байта HTTP
+12 + 93 = 105 байтов в расчёте
+для парного сложения мысленно дописываем один нулевой байт
+обычная сумма 16-битных слов с нулём в поле TCP checksum = 0xf2067
+перенос: 0x2067 + 0x000f = 0x2076
+инверсия: 0xffff - 0x2076 = 0xdf89</pre>
+<p>Дополнительный ноль нужен только алгоритму при нечётной длине. В нашем кадре он не является семьдесят четвёртым байтом HTTP, не увеличивает IP-длину и не должен попадать приложению. Проверить все вычисления можно приложенным Python-разборщиком. Он выделяет IP по объявленной длине, TCP — по длине IP-заголовка и отдельно исключает канальное дополнение.</p>
+<p>В реальном исходящем захвате программа иногда видит пакет до того, как сетевая карта заполнила TCP-сумму. Такое делегирование вычислений аппаратуре называется <em>checksum offload</em>. Поэтому надпись «неверная сумма» в локальном захвате сама по себе ещё не доказывает, что в провод ушли неверные байты. Нужно установить точку захвата и сравнить приём на другой стороне. Аналогично аппаратное объединение и разбиение могут делать локальную картину размеров непохожей на фактические кадры линии. В нашем искусственном файле таких промежуточных состояний нет: обе суммы уже окончательные и проверяются программно.</p>
+
+<h2 id="bytes-conversation">Десять кадров: арифметика всего разговора</h2>
+<p>Два направления TCP имеют независимые номера. SYN и FIN занимают по одной позиции, хотя не являются байтами прикладного содержимого. Сегмент, содержащий только подтверждение, не расходует позиции в последовательности. Поэтому следующий номер определяется количеством переданных байтов и наличием SYN или FIN. Проследим этот расчёт для всех кадров записи.</p>
+<div class="table-wrap"><table><thead><tr><th>№</th><th>Направление и назначение</th><th>SEQ</th><th>ACK</th><th>Данные</th></tr></thead><tbody>
+<tr><td>1</td><td>Клиент → сервер, SYN</td><td>1000</td><td>0, незначим</td><td>0</td></tr>
+<tr><td>2</td><td>Сервер → клиент, SYN + ACK</td><td>9000</td><td>1001</td><td>0</td></tr>
+<tr><td>3</td><td>Клиент → сервер, ACK</td><td>1001</td><td>9001</td><td>0</td></tr>
+<tr><td>4</td><td>Клиент → сервер, запрос</td><td>1001</td><td>9001</td><td>73</td></tr>
+<tr><td>5</td><td>Сервер → клиент, подтверждение запроса</td><td>9001</td><td>1074</td><td>0</td></tr>
+<tr><td>6</td><td>Сервер → клиент, ответ</td><td>9001</td><td>1074</td><td>106</td></tr>
+<tr><td>7</td><td>Сервер → клиент, FIN + ACK</td><td>9107</td><td>1074</td><td>0</td></tr>
+<tr><td>8</td><td>Клиент → сервер, ACK</td><td>1074</td><td>9108</td><td>0</td></tr>
+<tr><td>9</td><td>Клиент → сервер, FIN + ACK</td><td>1074</td><td>9108</td><td>0</td></tr>
+<tr><td>10</td><td>Сервер → клиент, ACK</td><td>9108</td><td>1075</td><td>0</td></tr>
+</tbody></table></div>
+<p>После кадра 4 сервер ожидает 1074. После кадра 6 клиент ожидает <code>9001 + 106 = 9107</code>. Кадр 7 занимает позицию 9107 признаком FIN, и клиент подтверждает 9108. Клиентский FIN в кадре 9 занимает его позицию 1074, поэтому последним подтверждением становится 1075. Числа в направлениях не обязаны быть близкими: каждое начало выбиралось независимо.</p>
+<p>Десять кадров — один допустимый вариант, а не требование TCP. В настоящем обмене подтверждение запроса может соединяться с ответом, FIN — с последними данными, некоторые подтверждения могут задерживаться, сегменты — повторяться или приходить вне порядка. Из примера надо переносить отношения между байтами, состояниями и подтверждениями, а не ожидание ровно десяти строк в любом захвате.</p>
+
+<h2 id="bytes-not-captured">Чего нет в файле и почему длины различаются</h2>
+<p>Файл PCAP хранит записанные кадры и служебные сведения о записи: время, сохранённую длину и исходную длину. Он не является фотографией каждого электрического или оптического изменения. В нашей записи Ethernet-данные начинаются прямо с MAC назначения. Преамбула и разделитель начала кадра, которые помогают физическому приёмнику синхронизироваться, отсутствуют. Межкадровый интервал тоже не лежит в файле как последовательность обычных байтов.</p>
+<p>В конце реального Ethernet-кадра применяется FCS — проверочная последовательность кадра на основе циклического кода CRC. Она относится к канальному участку; при построении нового кадра на другом участке проверка формируется заново. Сетевые карты и драйверы часто не передают её программе захвата. В нашем файле FCS намеренно отсутствует, поэтому вычислять её «по последним четырём байтам файла» было бы ошибкой: там лежат другие данные.</p>
+<p>Минимальный обычный Ethernet-кадр без FCS занимает 60 байтов. Пустой TCP-сегмент без параметров вместе с IPv4 и Ethernet занимает только <code>20 + 20 + 14 = 54</code>. Поэтому короткие кадры нашего файла имеют шесть нулевых байтов дополнения после IP-пакета. С FCS на линии такой кадр имеет 64 байта. Дополнение не является TCP-данными: IP-длина по-прежнему 40. Большой кадр запроса имеет 127 байтов без FCS и не нуждается в дополнении; с FCS было бы 131. Преамбула и интервалы считаются отдельно, когда оценивают занятие линии.</p>
+<div class="exercise"><p><strong>Проверьте понимание.</strong> В третьем кадре записано 60 байтов, IPv4 сообщает 40, а IP-заголовок — 20. Сколько байтов данных получит HTTP-разборщик? Что сломается, если отдать ему всё после смещения 54?</p><details><summary>Разбор</summary><p>Ноль. Из 40 IP-байтов 20 заняты IP, оставшиеся 20 — TCP-заголовком. Шесть хвостовых нулей нужны Ethernet и находятся за пределами IP. Ошибочный разборщик передаст приложению несуществующие данные и может принять чистое подтверждение за начало прикладного сообщения.</p></details></div>
+
+<h2 id="bytes-primary">Границы модели и первичные источники</h2>
+<p>Главу можно читать и проверять полностью автономно. Внешние адреса ниже нужны для дальнейшей сверки спецификаций, когда появится сеть. По байтам пакета можно установить значения полей и проверить их согласованность. Устройство очереди сокета и работу алгоритма управления перегрузкой изучают дополнительно: например, по статистике ядра и последовательности кадров. В дальнейшем мы будем явно указывать, что видно в записи, а для какого вывода нужны дополнительные наблюдения.</p>
+<ul>
+<li><a href="https://www.rfc-editor.org/rfc/rfc791">RFC 791, раздел 3.1</a>: исходный формат заголовка IPv4. Правила идентификации для современных атомарных пакетов уточняет <a href="https://www.rfc-editor.org/rfc/rfc6864">RFC 6864</a>.</li>
+<li><a href="https://www.rfc-editor.org/rfc/rfc9293">RFC 9293, разделы 3.1 и 3.4</a>: TCP-заголовок и пространство номеров последовательности.</li>
+<li><a href="https://www.rfc-editor.org/rfc/rfc1071">RFC 1071</a>: алгоритм интернет-контрольной суммы; <a href="https://www.rfc-editor.org/rfc/rfc9112">RFC 9112</a>: синтаксис HTTP/1.1.</li>
+<li><a href="https://www.kernel.org/doc/html/latest/networking/checksum-offloads.html">Документация ядра Linux о вычислении сумм аппаратурой</a>: почему локальная запись может содержать промежуточные значения.</li>
+</ul>
+<section class="interactive" data-widget="packet"><h3>Интерактивный разбор полного учебного кадра</h3><p>Здесь все 127 байт четвёртого кадра из приложенного синтетического файла. Нажмите поле или байт: подсветится его диапазон, появится точный смысл и способ использования. Подробная арифметика остаётся в тексте выше и доступна при печати.</p><div class="byte-fields" aria-label="Поля кадра"></div><div class="byte-grid" aria-label="Байты кадра"></div><div class="widget-result field-card" aria-live="polite"></div></section><footer class="chapter-footer"><button class="read-toggle" aria-pressed="false">Отметить прочитанной</button><div style="margin-top:20px"><label for="note-07-byte-autopsy">Свои вопросы и заметки к главе</label><textarea id="note-07-byte-autopsy" class="note" placeholder="Что хочется проверить или перечитать…"></textarea><div class="note-state">Заметки хранятся только в этом браузере. Их можно выгрузить кнопкой в оглавлении.</div></div><div class="footer-nav"><a href="#06-host-receive">← Предыдущая глава</a><a href="#08-beyond-lan">Следующая глава →</a></div></footer></article>

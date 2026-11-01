@@ -45,6 +45,7 @@ jobs:
         run: python3 scripts/check_site.py . --node-check
       - name: Check teaching models
         run: |
+          node networks/labs/check-theory-models.cjs
           node cache/labs/test-eviction.cjs
           node cache/labs/test-resources.cjs
           node cache/labs/test-resp.cjs

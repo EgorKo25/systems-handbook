@@ -1,6 +1,6 @@
 {
-  "date": "2026-10-28",
-  "words": 81381,
+  "date": "2026-11-01",
+  "words": 93518,
   "chapters": [
     {
       "id": "01-foundations",
@@ -16,6 +16,16 @@
       "id": "03-wire-ethernet",
       "title": "Что происходит на линии",
       "words": 3315
+    },
+    {
+      "id": "20-physical-channel",
+      "title": "Физический канал: из измерения получается бит",
+      "words": 2592
+    },
+    {
+      "id": "21-link-reliability",
+      "title": "Границы, ошибки и надёжность одного канала",
+      "words": 2539
     },
     {
       "id": "04-ip-routing",
@@ -68,6 +78,11 @@
       "words": 2574
     },
     {
+      "id": "22-wireless-medium",
+      "title": "Общий эфир: как участники договариваются о времени",
+      "words": 2554
+    },
+    {
       "id": "18-routing-control",
       "title": "Откуда берутся маршруты",
       "words": 3063
@@ -76,6 +91,11 @@
       "id": "19-performance",
       "title": "Скорость, задержка и очереди",
       "words": 3893
+    },
+    {
+      "id": "23-queueing-math",
+      "title": "Математика пути: конвейер, очередь и обратная связь",
+      "words": 2637
     },
     {
       "id": "16-nat-lab",
@@ -100,10 +120,10 @@
     {
       "id": "12-glossary",
       "title": "Словарь сетевых терминов",
-      "words": 8266
+      "words": 10081
     }
   ],
-  "terms": 307,
+  "terms": 374,
   "external_assets": 0,
-  "edition": "expanded-network-foundations"
+  "edition": "physical-link-wireless-depth"
 }

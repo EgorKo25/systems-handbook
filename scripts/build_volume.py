@@ -257,6 +257,12 @@ def home():
         diagrams = [d for name in cfg['diagram_modules'] for d in module(ROOT/slug/'sources'/f'{name}.py').DIAGRAMS]
         links = '<details data-'+slug+'-map><summary>'+cfg['short']+' · '+str(len(diagrams))+' схем</summary><ul>'+''.join(f'<li><a href="{slug}/index.html#{d["id"]}">{escape(d["title"])}</a> <span class="small">· {len(d["steps"])} шагов</span></li>' for d in diagrams)+'</ul></details>'
         page = page.replace('</section><section class="notes" style="margin-top:22px"><h2>Как читать',links+'</section><section class="notes" style="margin-top:22px"><h2>Как читать',1)
+    depth_path = ROOT/'networks/sources/depth-diagrams.json'
+    if depth_path.exists():
+        page = re.sub(r'<li data-network-depth>.*?</li>', '', page, flags=re.S)
+        diagrams = json.loads(depth_path.read_text())
+        links = ''.join('<li data-network-depth><a href="networks/index.html#'+d['id']+'">'+escape(d['title'])+'</a> <span class="small">· '+str(len(d['steps']))+' шагов</span></li>' for d in diagrams)
+        page = re.sub(r'<details><summary>Сети · \d+ схем</summary><ul>(.*?)</ul></details>', lambda m:'<details><summary>Сети · '+str(m[1].count('<li')+len(diagrams))+' схем</summary><ul>'+m[1]+links+'</ul></details>', page, count=1, flags=re.S)
     write_text(ROOT/'index.html',page)
 
 
