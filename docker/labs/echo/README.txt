@@ -10,7 +10,7 @@
 
 Сначала выберите официальный GO_IMAGE и сохраните его в паспорте. Из этого
 каталога сборка:
-  docker --context study buildx build --build-arg GO_IMAGE="$GO_IMAGE" \
+  docker --context study buildx build --builder default --build-arg GO_IMAGE="$GO_IMAGE" \
     --platform linux/amd64 --load --tag study/echo:lesson1 .
 Платформа должна соответствовать вашей среде. GO_IMAGE не имеет скрытого latest.
 Базовый образ, Dockerfile frontend и будущие tools нужно подготовить до офлайна.
