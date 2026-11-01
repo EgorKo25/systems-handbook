@@ -55,56 +55,73 @@ def command_catalog():
         c = dict(c)
         c['volume'] = TARGETS.get(c['chapter'], c['volume'])
         merged[c['name']] = c
+    # Keep ownership rather than flattening meanings. Compose's global -f FILE
+    # and logs' local -f/--follow are different options with different arity.
+    own = {}
+    for name, c in merged.items():
+        flags = list(c['flags'])
+        scopes = c.get('flagScopes')
+        if isinstance(scopes, list) and len(scopes) == len(flags):
+            flags = [flag for flag, scope in zip(flags, scopes) if scope == name]
+        own[name] = [dict(flag) for flag in flags]
+    for name, c in merged.items():
+        c['flags'] = [dict(flag) for flag in own[name]]
+        c['flagScopes'] = [name] * len(c['flags'])
+        c.pop('prefixFlags', None)
+        parts = name.split()
+        selectors = {part for part in parts[1:] if re.match(r'^[+-][^\s]', part)}
+        if selectors:
+            # A named invocation such as python3 -m unittest fixes a selector,
+            # rather than defining an ordinary nested namespace. Interpreter
+            # flags stay before it; its own -m cannot be offered a second time.
+            c['parentOptions'] = 'prefix-only'
+        inherited, prefixes = [], {}
+        persistent = [parent for parent in (' '.join(parts[:length]) for length in range(1, len(parts)))
+                      if merged.get(parent, {}).get('persistentOptions') is True]
+        c.pop('persistentScopes', None)
+        if persistent:
+            c['persistentScopes'] = persistent
+        for length in range(1, len(parts)):
+            parent = ' '.join(parts[:length])
+            inherited.extend((parent, flag) for flag in own.get(parent, [])
+                             if not selectors.intersection(re.findall(r'(?:^|\s)([+-]{1,2}[A-Za-z0-9_][A-Za-z0-9_-]*)', flag['flag'])))
+            # Merely inheriting help does not make options valid everywhere.
+            # Default scope is strict; a CLI can explicitly declare persistence.
+            prefixes[parent] = list(dict.fromkeys(flag['flag'] for owner, flag in inherited
+                                                  if owner == parent or owner in persistent))
+        if prefixes:
+            c['prefixFlags'] = prefixes
+            for owner, flag in inherited:
+                c['flags'].append(dict(flag))
+                c['flagScopes'].append(owner)
     return list(merged.values())
 
 
 def reader_commands(page):
     native = "['"+"','".join(CONFIGS)+"']"
-    # Go also has the punctuation-named compiler flags -% and -+.
-    page = page.replace(r'([+-]{1,2}[A-Za-z0-9][A-Za-z0-9-]*)',
-                        r'([+-]{1,2}(?:[A-Za-z0-9_][A-Za-z0-9_-]*|[%+]))')
-    # Preserve = for boolean Go options: -N=false must not become -N false.
-    page = page.replace('options.push({ name: wholeName, value, hasValue });',
-                        'options.push({ name: wholeName, value, hasValue, equals: equals > 0 });')
-    page = page.replace("option.name.startsWith('--') ? '=' :", "option.equals || option.name.startsWith('--') ? '=' :")
-    old_line = "const line = String(followingText).split(/[\\n|;&]/, 1)[0].slice(0, 240);"
-    new_line = r'''const text = String(followingText).slice(0, 240);
-    let quote = null, escaped = false, end = text.length;
-    for (let i=0;i<text.length;i++) {
-        const c=text[i];
-        if (escaped) {escaped=false;continue;}
-        if (c==='\\' && quote!=="'") {escaped=true;continue;}
-        if (quote) {if(c===quote)quote=null;continue;}
-        if (c==='"'||c==="'") {quote=c;continue;}
-        if ('\n|;&'.includes(c)) {end=i;break;}
-    }
-    const line=text.slice(0,end);'''
-    assert page.count(old_line) == 1
-    page = page.replace(old_line,new_line)
-    # A subcommand is part of the name. Select the longest matching token prefix.
-    marker = 'function parseOptions(tokens, specifications, settings = {}) {'
-    helper = '''function commandPrefix(command, tokens) {
-    return Math.max(0, ...[command.name, ...(command.aliases || [])].map(name => {
-        const parts = tokenizeQuery(name);
-        return parts.length && parts.every((part, i) => normalizeText(part) === normalizeText(tokens[i] || '')) ? parts.length : 0;
-    }));
+    # The same parser source is injected in production and exercised by the
+    # source-only regression test. No alternate testing implementation exists.
+    start_marker = 'function tokenizeQuery(value) {'
+    end_marker = '// Mark only a command position, not words inside strings or configuration fields.'
+    assert page.count(start_marker) == page.count(end_marker) == 1
+    start, end = page.index(start_marker), page.index(end_marker)
+    parser = Path(__file__).with_name('command_reference_parser.js').read_text(encoding='utf-8')
+    page = page[:start] + parser + '\n' + page[end:]
+    # A parent flag appears in the card for discoverability, with its actual
+    # position explained when expanded; inheritance alone is not persistence.
+    hint = """function flagScopeHint(command,index) {
+    const owner=command.flagScopes?.[index];
+    if(!owner || owner===command.name)return '';
+    const persistent=(command.persistentScopes || []).includes(owner);
+    return '<p class="small">Параметр <code>'+escapeHTML(owner)+'</code>: '+
+      (persistent?'доступен подкомандам; совпадающая локальная форма имеет приоритет.':'ставится после этого префикса и перед следующей подкомандой.')+'</p>';
 }
-'''
-    assert page.count(marker) == 1
-    page = page.replace(marker, helper + marker)
-    old = '''const explicit = !!tokens.length && matchesCommand(command, tokens[0]);
-    if (explicit) tokens = tokens.slice(1);'''
-    assert old in page
-    page = page.replace(old, '''const prefix = commandPrefix(command, tokens);
-    const explicit = prefix > 0;
-    if (explicit) tokens = tokens.slice(prefix);''')
-    old = '''const tokens = tokenizeQuery(query), first = tokens[0];
-    const exact = first === undefined ? null : commands.find(command => matchesCommand(command, first));'''
-    assert old in page
-    page = page.replace(old, '''const tokens = tokenizeQuery(query);
-    const candidates = commands.map(command => ({command, prefix: commandPrefix(command, tokens)})).filter(item => item.prefix);
-    candidates.sort((a,b) => b.prefix-a.prefix);
-    const exact = candidates[0]?.command || null;''')
+"""
+    assert page.count('function card(command, analysis) {') == 1
+    page = page.replace('function card(command, analysis) {', hint + 'function card(command, analysis) {')
+    old_body = '</summary><div class="flag-body"><div class="flag-use">'
+    assert page.count(old_body) == 1
+    page = page.replace(old_body, '</summary><div class="flag-body">\'+flagScopeHint(command,flagIndex)+\'<div class="flag-use">')
     old = "'<div data-learning-terminal></div>'+"
     assert page.count(old) == 1
     page = page.replace(old, "("+native+".includes(command.volume)?'<p class=\"callout\">Эта команда выполняется в отдельном учебном окружении. <a href=\"'+escapeHTML(chapter)+'\" data-reference-chapter>Условия и практический разбор →</a></p>':'<div data-learning-terminal></div>')+")

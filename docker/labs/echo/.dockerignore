@@ -1,0 +1,5 @@
+.git
+out
+backups
+.env
+secrets

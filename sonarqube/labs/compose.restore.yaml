@@ -1,0 +1,5 @@
+# Merge with compose.yaml only for the isolated restore rehearsal.
+# Also select another project name and SONAR_BIND_PORT=19001.
+networks:
+  backend:
+    internal: true

@@ -322,10 +322,9 @@ class SiteChecker:
         if any(part.startswith('.') for part in parts) or parts[0] == '_site':
             return False
         # Chapter fragments resolve links from the eventual book, not sources/.
-        # An unregistered author may already have a volume_config.py; it does
-        # not grant export permission or hide that author's built index.html.
-        return not (len(parts) >= 2 and parts[1] == 'sources' and
-                    (parts[0] in VOLUMES or (self.root/parts[0]/'volume_config.py').is_file()))
+        # This applies to unfinished volumes too, even before their metadata
+        # exists. Export permission is separate; a built index stays checked.
+        return not (len(parts) >= 2 and parts[1] == 'sources')
 
     def check(self):
         if not (self.root / "index.html").is_file():

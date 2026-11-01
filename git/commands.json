@@ -35,6 +35,11 @@
         "title": "GNU Bash: встроенные команды; также проверено по Bash help 5.2",
         "url": "https://www.gnu.org/software/bash/manual/html_node/Bourne-Shell-Builtins.html"
       }
+    ],
+    "flagScopes": [
+      ":",
+      ":",
+      ":"
     ]
   },
   {
@@ -86,7 +91,13 @@
         "url": "https://www.gnu.org/software/bash/manual/html_node/Conditional-Constructs.html"
       }
     ],
-    "volume": "bash"
+    "volume": "bash",
+    "flagScopes": [
+      "[[",
+      "[[",
+      "[[",
+      "[["
+    ]
   },
   {
     "name": "awk",
@@ -137,7 +148,13 @@
         "url": "https://www.gnu.org/software/gawk/manual/gawk.html"
       }
     ],
-    "volume": "bash"
+    "volume": "bash",
+    "flagScopes": [
+      "awk",
+      "awk",
+      "awk",
+      "awk"
+    ]
   },
   {
     "name": "bash",
@@ -188,7 +205,13 @@
         "url": "https://www.gnu.org/software/bash/manual/html_node/Invoking-Bash.html"
       }
     ],
-    "volume": "bash"
+    "volume": "bash",
+    "flagScopes": [
+      "bash",
+      "bash",
+      "bash",
+      "bash"
+    ]
   },
   {
     "name": "break",
@@ -219,6 +242,10 @@
         "title": "GNU Bash: встроенные команды; также проверено по Bash help 5.2",
         "url": "https://www.gnu.org/software/bash/manual/html_node/Bourne-Shell-Builtins.html"
       }
+    ],
+    "flagScopes": [
+      "break",
+      "break"
     ]
   },
   {
@@ -271,6 +298,13 @@
         "title": "GNU Coreutils: руководство и локальный --help",
         "url": "https://www.gnu.org/software/coreutils/manual/html_node/index.html"
       }
+    ],
+    "flagScopes": [
+      "cat",
+      "cat",
+      "cat",
+      "cat",
+      "cat"
     ]
   },
   {
@@ -315,7 +349,12 @@
         "url": "https://www.gnu.org/software/bash/manual/html_node/Bourne-Shell-Builtins.html"
       }
     ],
-    "volume": "bash"
+    "volume": "bash",
+    "flagScopes": [
+      "cd",
+      "cd",
+      "cd"
+    ]
   },
   {
     "name": "chmod",
@@ -360,6 +399,12 @@
         "title": "GNU Coreutils: руководство и локальный --help",
         "url": "https://www.gnu.org/software/coreutils/manual/html_node/index.html"
       }
+    ],
+    "flagScopes": [
+      "chmod",
+      "chmod",
+      "chmod",
+      "chmod"
     ]
   },
   {
@@ -405,6 +450,12 @@
         "title": "GNU Coreutils: руководство и локальный --help",
         "url": "https://www.gnu.org/software/coreutils/manual/html_node/index.html"
       }
+    ],
+    "flagScopes": [
+      "chown",
+      "chown",
+      "chown",
+      "chown"
     ]
   },
   {
@@ -461,7 +512,13 @@
         "url": "https://www.gnu.org/software/bash/manual/html_node/Bash-Builtins.html"
       }
     ],
-    "volume": "bash"
+    "volume": "bash",
+    "flagScopes": [
+      "command",
+      "command",
+      "command",
+      "command"
+    ]
   },
   {
     "name": "continue",
@@ -492,6 +549,10 @@
         "title": "GNU Bash: встроенные команды; также проверено по Bash help 5.2",
         "url": "https://www.gnu.org/software/bash/manual/html_node/Bourne-Shell-Builtins.html"
       }
+    ],
+    "flagScopes": [
+      "continue",
+      "continue"
     ]
   },
   {
@@ -544,6 +605,13 @@
         "title": "GNU Coreutils: руководство и локальный --help",
         "url": "https://www.gnu.org/software/coreutils/manual/html_node/index.html"
       }
+    ],
+    "flagScopes": [
+      "cp",
+      "cp",
+      "cp",
+      "cp",
+      "cp"
     ]
   },
   {
@@ -588,6 +656,11 @@
         "title": "Официальное руководство PostgreSQL 18: createdb",
         "url": "https://www.postgresql.org/docs/18/app-createdb.html"
       }
+    ],
+    "flagScopes": [
+      "createdb",
+      "createdb",
+      "createdb"
     ]
   },
   {
@@ -674,6 +747,17 @@
         "title": "Официальное руководство curl",
         "url": "https://curl.se/docs/manpage.html"
       }
+    ],
+    "flagScopes": [
+      "curl",
+      "curl",
+      "curl",
+      "curl",
+      "curl",
+      "curl",
+      "curl",
+      "curl",
+      "curl"
     ]
   },
   {
@@ -725,7 +809,13 @@
         "url": "https://www.gnu.org/software/coreutils/manual/html_node/cut-invocation.html"
       }
     ],
-    "volume": "bash"
+    "volume": "bash",
+    "flagScopes": [
+      "cut",
+      "cut",
+      "cut",
+      "cut"
+    ]
   },
   {
     "name": "declare",
@@ -770,6 +860,12 @@
         "title": "GNU Bash: встроенные команды; также проверено по Bash help 5.2",
         "url": "https://www.gnu.org/software/bash/manual/html_node/Bash-Builtins.html"
       }
+    ],
+    "flagScopes": [
+      "declare",
+      "declare",
+      "declare",
+      "declare"
     ]
   },
   {
@@ -821,6 +917,12 @@
         "title": "Официальное руководство BIND: dig",
         "url": "https://bind9.readthedocs.io/en/stable/manpages.html#dig-dns-lookup-utility"
       }
+    ],
+    "flagScopes": [
+      "dig",
+      "dig",
+      "dig",
+      "dig"
     ]
   },
   {
@@ -872,6 +974,12 @@
         "title": "Официальное руководство dnsmasq",
         "url": "https://thekelleys.org.uk/dnsmasq/docs/dnsmasq-man.html"
       }
+    ],
+    "flagScopes": [
+      "dnsmasq",
+      "dnsmasq",
+      "dnsmasq",
+      "dnsmasq"
     ]
   },
   {
@@ -910,6 +1018,11 @@
         "title": "GNU Bash: руководство и локальный help",
         "url": "https://www.gnu.org/software/bash/manual/html_node/Bash-Builtins.html"
       }
+    ],
+    "flagScopes": [
+      "echo",
+      "echo",
+      "echo"
     ]
   },
   {
@@ -947,7 +1060,11 @@
         "url": "https://www.gnu.org/software/coreutils/manual/html_node/env-invocation.html"
       }
     ],
-    "volume": "bash"
+    "volume": "bash",
+    "flagScopes": [
+      "env",
+      "env"
+    ]
   },
   {
     "name": "ethtool",
@@ -991,6 +1108,11 @@
         "title": "Руководство ethtool проекта Linux",
         "url": "https://man7.org/linux/man-pages/man8/ethtool.8.html"
       }
+    ],
+    "flagScopes": [
+      "ethtool",
+      "ethtool",
+      "ethtool"
     ]
   },
   {
@@ -1028,6 +1150,10 @@
         "title": "GNU Bash: встроенные команды; также проверено по Bash help 5.2",
         "url": "https://www.gnu.org/software/bash/manual/html_node/Bourne-Shell-Builtins.html"
       }
+    ],
+    "flagScopes": [
+      "eval",
+      "eval"
     ]
   },
   {
@@ -1079,7 +1205,13 @@
         "url": "https://www.gnu.org/software/bash/manual/html_node/Bourne-Shell-Builtins.html"
       }
     ],
-    "volume": "bash"
+    "volume": "bash",
+    "flagScopes": [
+      "exec",
+      "exec",
+      "exec",
+      "exec"
+    ]
   },
   {
     "name": "exit",
@@ -1110,6 +1242,10 @@
         "title": "GNU Bash: встроенные команды; также проверено по Bash help 5.2",
         "url": "https://www.gnu.org/software/bash/manual/html_node/Bourne-Shell-Builtins.html"
       }
+    ],
+    "flagScopes": [
+      "exit",
+      "exit"
     ]
   },
   {
@@ -1154,7 +1290,12 @@
         "url": "https://www.gnu.org/software/bash/manual/html_node/Bourne-Shell-Builtins.html"
       }
     ],
-    "volume": "bash"
+    "volume": "bash",
+    "flagScopes": [
+      "export",
+      "export",
+      "export"
+    ]
   },
   {
     "name": "false",
@@ -1185,6 +1326,10 @@
         "title": "GNU Bash: руководство и локальный help",
         "url": "https://www.gnu.org/software/bash/manual/html_node/Bash-Builtins.html"
       }
+    ],
+    "flagScopes": [
+      "false",
+      "false"
     ]
   },
   {
@@ -1396,7 +1541,33 @@
         "url": "https://www.gnu.org/software/findutils/manual/html_mono/find.html"
       }
     ],
-    "volume": "bash"
+    "volume": "bash",
+    "flagScopes": [
+      "find",
+      "find",
+      "find",
+      "find",
+      "find",
+      "find",
+      "find",
+      "find",
+      "find",
+      "find",
+      "find",
+      "find",
+      "find",
+      "find",
+      "find",
+      "find",
+      "find",
+      "find",
+      "find",
+      "find",
+      "find",
+      "find",
+      "find",
+      "find"
+    ]
   },
   {
     "name": "flock",
@@ -1447,7 +1618,13 @@
         "url": "https://man7.org/linux/man-pages/man1/flock.1.html"
       }
     ],
-    "volume": "bash"
+    "volume": "bash",
+    "flagScopes": [
+      "flock",
+      "flock",
+      "flock",
+      "flock"
+    ]
   },
   {
     "name": "gcc",
@@ -1499,6 +1676,13 @@
         "title": "GCC: Invoking GCC; локальный --help",
         "url": "https://gcc.gnu.org/onlinedocs/gcc/Invoking-GCC.html"
       }
+    ],
+    "flagScopes": [
+      "gcc",
+      "gcc",
+      "gcc",
+      "gcc",
+      "gcc"
     ]
   },
   {
@@ -1537,6 +1721,11 @@
         "title": "GNU C Library NSS; локальный getent --help",
         "url": "https://www.gnu.org/software/libc/manual/html_node/Name-Service-Switch.html"
       }
+    ],
+    "flagScopes": [
+      "getent",
+      "getent",
+      "getent"
     ]
   },
   {
@@ -1769,7 +1958,36 @@
         "url": "https://www.gnu.org/software/grep/manual/grep.html"
       }
     ],
-    "volume": "bash"
+    "volume": "bash",
+    "flagScopes": [
+      "grep",
+      "grep",
+      "grep",
+      "grep",
+      "grep",
+      "grep",
+      "grep",
+      "grep",
+      "grep",
+      "grep",
+      "grep",
+      "grep",
+      "grep",
+      "grep",
+      "grep",
+      "grep",
+      "grep",
+      "grep",
+      "grep",
+      "grep",
+      "grep",
+      "grep",
+      "grep",
+      "grep",
+      "grep",
+      "grep",
+      "grep"
+    ]
   },
   {
     "name": "head",
@@ -1807,6 +2025,11 @@
         "title": "GNU Coreutils: руководство и локальный --help",
         "url": "https://www.gnu.org/software/coreutils/manual/html_node/index.html"
       }
+    ],
+    "flagScopes": [
+      "head",
+      "head",
+      "head"
     ]
   },
   {
@@ -1852,6 +2075,12 @@
         "title": "GNU Bash: встроенные команды; также проверено по Bash help 5.2",
         "url": "https://www.gnu.org/software/bash/manual/html_node/Bash-Builtins.html"
       }
+    ],
+    "flagScopes": [
+      "help",
+      "help",
+      "help",
+      "help"
     ]
   },
   {
@@ -1897,6 +2126,12 @@
         "title": "hostname 3.23: локальный --help и руководство пакета Debian",
         "url": "https://manpages.debian.org/hostname/hostname.1.en.html"
       }
+    ],
+    "flagScopes": [
+      "hostname",
+      "hostname",
+      "hostname",
+      "hostname"
     ]
   },
   {
@@ -1949,6 +2184,13 @@
         "title": "GNU Coreutils: руководство и локальный --help",
         "url": "https://www.gnu.org/software/coreutils/manual/html_node/index.html"
       }
+    ],
+    "flagScopes": [
+      "id",
+      "id",
+      "id",
+      "id",
+      "id"
     ]
   },
   {
@@ -2000,6 +2242,12 @@
         "title": "Официальное руководство PostgreSQL 18: initdb",
         "url": "https://www.postgresql.org/docs/18/app-initdb.html"
       }
+    ],
+    "flagScopes": [
+      "initdb",
+      "initdb",
+      "initdb",
+      "initdb"
     ]
   },
   {
@@ -2154,6 +2402,25 @@
         "title": "Руководство iproute2: интерфейсы",
         "url": "https://man7.org/linux/man-pages/man8/ip-link.8.html"
       }
+    ],
+    "flagScopes": [
+      "ip",
+      "ip",
+      "ip",
+      "ip",
+      "ip",
+      "ip",
+      "ip",
+      "ip",
+      "ip",
+      "ip",
+      "ip",
+      "ip",
+      "ip",
+      "ip",
+      "ip",
+      "ip",
+      "ip"
     ]
   },
   {
@@ -2206,6 +2473,13 @@
         "title": "systemd: journalctl; локальный --help",
         "url": "https://www.freedesktop.org/software/systemd/man/latest/journalctl.html"
       }
+    ],
+    "flagScopes": [
+      "journalctl",
+      "journalctl",
+      "journalctl",
+      "journalctl",
+      "journalctl"
     ]
   },
   {
@@ -2288,7 +2562,16 @@
         "url": "https://www.gnu.org/software/bash/manual/html_node/Job-Control-Builtins.html"
       }
     ],
-    "volume": "bash"
+    "volume": "bash",
+    "flagScopes": [
+      "kill",
+      "kill",
+      "kill",
+      "kill",
+      "kill",
+      "kill",
+      "kill"
+    ]
   },
   {
     "name": "ln",
@@ -2326,6 +2609,11 @@
         "title": "GNU Coreutils: руководство и локальный --help",
         "url": "https://www.gnu.org/software/coreutils/manual/html_node/index.html"
       }
+    ],
+    "flagScopes": [
+      "ln",
+      "ln",
+      "ln"
     ]
   },
   {
@@ -2374,6 +2662,11 @@
         "title": "GNU Bash: функции и динамическая область видимости",
         "url": "https://www.gnu.org/software/bash/manual/html_node/Shell-Functions.html"
       }
+    ],
+    "flagScopes": [
+      "local",
+      "local",
+      "local"
     ]
   },
   {
@@ -2426,6 +2719,13 @@
         "title": "GNU Coreutils: руководство и локальный --help",
         "url": "https://www.gnu.org/software/coreutils/manual/html_node/index.html"
       }
+    ],
+    "flagScopes": [
+      "ls",
+      "ls",
+      "ls",
+      "ls",
+      "ls"
     ]
   },
   {
@@ -2470,7 +2770,12 @@
         "url": "https://www.gnu.org/software/bash/manual/html_node/Bash-Builtins.html"
       }
     ],
-    "volume": "bash"
+    "volume": "bash",
+    "flagScopes": [
+      "mapfile",
+      "mapfile",
+      "mapfile"
+    ]
   },
   {
     "name": "mkdir",
@@ -2508,6 +2813,11 @@
         "title": "GNU Coreutils: руководство и локальный --help",
         "url": "https://www.gnu.org/software/coreutils/manual/html_node/index.html"
       }
+    ],
+    "flagScopes": [
+      "mkdir",
+      "mkdir",
+      "mkdir"
     ]
   },
   {
@@ -2545,7 +2855,11 @@
         "url": "https://www.gnu.org/software/coreutils/manual/html_node/mktemp-invocation.html"
       }
     ],
-    "volume": "bash"
+    "volume": "bash",
+    "flagScopes": [
+      "mktemp",
+      "mktemp"
+    ]
   },
   {
     "name": "mv",
@@ -2590,6 +2904,12 @@
         "title": "GNU Coreutils: руководство и локальный --help",
         "url": "https://www.gnu.org/software/coreutils/manual/html_node/index.html"
       }
+    ],
+    "flagScopes": [
+      "mv",
+      "mv",
+      "mv",
+      "mv"
     ]
   },
   {
@@ -2641,6 +2961,12 @@
         "title": "Официальная документация nftables",
         "url": "https://netfilter.org/projects/nftables/manpage.html"
       }
+    ],
+    "flagScopes": [
+      "nft",
+      "nft",
+      "nft",
+      "nft"
     ]
   },
   {
@@ -2730,7 +3056,17 @@
         "url": "https://www.gnu.org/software/coreutils/manual/html_node/od-invocation.html"
       }
     ],
-    "volume": "bash"
+    "volume": "bash",
+    "flagScopes": [
+      "od",
+      "od",
+      "od",
+      "od",
+      "od",
+      "od",
+      "od",
+      "od"
+    ]
   },
   {
     "name": "openssl",
@@ -2788,6 +3124,13 @@
         "title": "Официальное руководство OpenSSL s_client",
         "url": "https://docs.openssl.org/3.0/man1/openssl-s_client/"
       }
+    ],
+    "flagScopes": [
+      "openssl",
+      "openssl",
+      "openssl",
+      "openssl",
+      "openssl"
     ]
   },
   {
@@ -2839,6 +3182,12 @@
         "title": "Официальное руководство PostgreSQL 18: pg_basebackup",
         "url": "https://www.postgresql.org/docs/18/app-pgbasebackup.html"
       }
+    ],
+    "flagScopes": [
+      "pg_basebackup",
+      "pg_basebackup",
+      "pg_basebackup",
+      "pg_basebackup"
     ]
   },
   {
@@ -2883,6 +3232,11 @@
         "title": "Официальное руководство PostgreSQL 18: pg_config",
         "url": "https://www.postgresql.org/docs/18/app-pgconfig.html"
       }
+    ],
+    "flagScopes": [
+      "pg_config",
+      "pg_config",
+      "pg_config"
     ]
   },
   {
@@ -2934,6 +3288,12 @@
         "title": "Официальное руководство PostgreSQL 18: pg_ctl",
         "url": "https://www.postgresql.org/docs/18/app-pg-ctl.html"
       }
+    ],
+    "flagScopes": [
+      "pg_ctl",
+      "pg_ctl",
+      "pg_ctl",
+      "pg_ctl"
     ]
   },
   {
@@ -3069,6 +3429,24 @@
         "title": "Официальное руководство PostgreSQL 18: pg_dump",
         "url": "https://www.postgresql.org/docs/18/app-pgdump.html"
       }
+    ],
+    "flagScopes": [
+      "pg_dump",
+      "pg_dump",
+      "pg_dump",
+      "pg_dump",
+      "pg_dump",
+      "pg_dump",
+      "pg_dump",
+      "pg_dump",
+      "pg_dump",
+      "pg_dump",
+      "pg_dump",
+      "pg_dump",
+      "pg_dump",
+      "pg_dump",
+      "pg_dump",
+      "pg_dump"
     ]
   },
   {
@@ -3127,6 +3505,13 @@
         "title": "Официальное руководство PostgreSQL 18: pg_isready",
         "url": "https://www.postgresql.org/docs/18/app-pg-isready.html"
       }
+    ],
+    "flagScopes": [
+      "pg_isready",
+      "pg_isready",
+      "pg_isready",
+      "pg_isready",
+      "pg_isready"
     ]
   },
   {
@@ -3178,6 +3563,12 @@
         "title": "Официальное руководство PostgreSQL 18: pg_restore",
         "url": "https://www.postgresql.org/docs/18/app-pgrestore.html"
       }
+    ],
+    "flagScopes": [
+      "pg_restore",
+      "pg_restore",
+      "pg_restore",
+      "pg_restore"
     ]
   },
   {
@@ -3222,6 +3613,11 @@
         "title": "Официальное руководство PostgreSQL 18: pg_verifybackup",
         "url": "https://www.postgresql.org/docs/18/app-pgverifybackup.html"
       }
+    ],
+    "flagScopes": [
+      "pg_verifybackup",
+      "pg_verifybackup",
+      "pg_verifybackup"
     ]
   },
   {
@@ -3273,6 +3669,12 @@
         "title": "Официальное руководство PostgreSQL 18: pg_waldump",
         "url": "https://www.postgresql.org/docs/18/pgwaldump.html"
       }
+    ],
+    "flagScopes": [
+      "pg_waldump",
+      "pg_waldump",
+      "pg_waldump",
+      "pg_waldump"
     ]
   },
   {
@@ -3324,6 +3726,12 @@
         "title": "Официальное руководство iputils ping",
         "url": "https://github.com/iputils/iputils/blob/master/doc/ping.xml"
       }
+    ],
+    "flagScopes": [
+      "ping",
+      "ping",
+      "ping",
+      "ping"
     ]
   },
   {
@@ -3375,7 +3783,13 @@
         "url": "https://www.gnu.org/software/bash/manual/html_node/Bash-Builtins.html"
       }
     ],
-    "volume": "bash"
+    "volume": "bash",
+    "flagScopes": [
+      "printf",
+      "printf",
+      "printf",
+      "printf"
+    ]
   },
   {
     "name": "ps",
@@ -3419,7 +3833,12 @@
         "url": "https://man7.org/linux/man-pages/man1/ps.1.html"
       }
     ],
-    "volume": "bash"
+    "volume": "bash",
+    "flagScopes": [
+      "ps",
+      "ps",
+      "ps"
+    ]
   },
   {
     "name": "psql",
@@ -3526,6 +3945,20 @@
         "title": "Официальное руководство PostgreSQL 18: psql",
         "url": "https://www.postgresql.org/docs/18/app-psql.html"
       }
+    ],
+    "flagScopes": [
+      "psql",
+      "psql",
+      "psql",
+      "psql",
+      "psql",
+      "psql",
+      "psql",
+      "psql",
+      "psql",
+      "psql",
+      "psql",
+      "psql"
     ]
   },
   {
@@ -3557,6 +3990,10 @@
         "title": "GNU Bash: руководство и локальный help",
         "url": "https://www.gnu.org/software/bash/manual/html_node/Bash-Builtins.html"
       }
+    ],
+    "flagScopes": [
+      "pwd",
+      "pwd"
     ]
   },
   {
@@ -3602,6 +4039,12 @@
         "title": "Python Command line and environment; локальный --help",
         "url": "https://docs.python.org/3/using/cmdline.html"
       }
+    ],
+    "flagScopes": [
+      "python3",
+      "python3",
+      "python3",
+      "python3"
     ]
   },
   {
@@ -3736,7 +4179,22 @@
         "url": "https://www.gnu.org/software/bash/manual/html_node/Bash-Builtins.html"
       }
     ],
-    "volume": "bash"
+    "volume": "bash",
+    "flagScopes": [
+      "read",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read"
+    ]
   },
   {
     "name": "readlink",
@@ -3774,6 +4232,11 @@
         "title": "GNU Coreutils: руководство и локальный --help",
         "url": "https://www.gnu.org/software/coreutils/manual/html_node/index.html"
       }
+    ],
+    "flagScopes": [
+      "readlink",
+      "readlink",
+      "readlink"
     ]
   },
   {
@@ -3812,6 +4275,11 @@
         "title": "GNU Bash: встроенные команды; также проверено по Bash help 5.2",
         "url": "https://www.gnu.org/software/bash/manual/html_node/Bourne-Shell-Builtins.html"
       }
+    ],
+    "flagScopes": [
+      "readonly",
+      "readonly",
+      "readonly"
     ]
   },
   {
@@ -3843,6 +4311,10 @@
         "title": "GNU Bash: встроенные команды; также проверено по Bash help 5.2",
         "url": "https://www.gnu.org/software/bash/manual/html_node/Bourne-Shell-Builtins.html"
       }
+    ],
+    "flagScopes": [
+      "return",
+      "return"
     ]
   },
   {
@@ -3888,6 +4360,12 @@
         "title": "GNU Coreutils: руководство и локальный --help",
         "url": "https://www.gnu.org/software/coreutils/manual/html_node/index.html"
       }
+    ],
+    "flagScopes": [
+      "rm",
+      "rm",
+      "rm",
+      "rm"
     ]
   },
   {
@@ -4022,7 +4500,22 @@
         "url": "https://www.gnu.org/software/sed/manual/sed.html"
       }
     ],
-    "volume": "bash"
+    "volume": "bash",
+    "flagScopes": [
+      "sed",
+      "sed",
+      "sed",
+      "sed",
+      "sed",
+      "sed",
+      "sed",
+      "sed",
+      "sed",
+      "sed",
+      "sed",
+      "sed",
+      "sed"
+    ]
   },
   {
     "name": "set",
@@ -4205,7 +4698,29 @@
         "url": "https://www.gnu.org/software/bash/manual/html_node/The-Set-Builtin.html"
       }
     ],
-    "volume": "bash"
+    "volume": "bash",
+    "flagScopes": [
+      "set",
+      "set",
+      "set",
+      "set",
+      "set",
+      "set",
+      "set",
+      "set",
+      "set",
+      "set",
+      "set",
+      "set",
+      "set",
+      "set",
+      "set",
+      "set",
+      "set",
+      "set",
+      "set",
+      "set"
+    ]
   },
   {
     "name": "shift",
@@ -4236,6 +4751,10 @@
         "title": "GNU Bash: встроенные команды; также проверено по Bash help 5.2",
         "url": "https://www.gnu.org/software/bash/manual/html_node/Bourne-Shell-Builtins.html"
       }
+    ],
+    "flagScopes": [
+      "shift",
+      "shift"
     ]
   },
   {
@@ -4391,7 +4910,25 @@
         "url": "https://www.gnu.org/software/bash/manual/html_node/The-Shopt-Builtin.html"
       }
     ],
-    "volume": "bash"
+    "volume": "bash",
+    "flagScopes": [
+      "shopt",
+      "shopt",
+      "shopt",
+      "shopt",
+      "shopt",
+      "shopt",
+      "shopt",
+      "shopt",
+      "shopt",
+      "shopt",
+      "shopt",
+      "shopt",
+      "shopt",
+      "shopt",
+      "shopt",
+      "shopt"
+    ]
   },
   {
     "name": "sleep",
@@ -4422,6 +4959,10 @@
         "title": "GNU Coreutils: руководство и локальный --help",
         "url": "https://www.gnu.org/software/coreutils/manual/html_node/index.html"
       }
+    ],
+    "flagScopes": [
+      "sleep",
+      "sleep"
     ]
   },
   {
@@ -4480,7 +5021,14 @@
         "url": "https://www.gnu.org/software/coreutils/manual/html_node/sort-invocation.html"
       }
     ],
-    "volume": "bash"
+    "volume": "bash",
+    "flagScopes": [
+      "sort",
+      "sort",
+      "sort",
+      "sort",
+      "sort"
+    ]
   },
   {
     "name": "source",
@@ -4526,7 +5074,12 @@
         "url": "https://www.gnu.org/software/bash/manual/html_node/Bourne-Shell-Builtins.html"
       }
     ],
-    "volume": "bash"
+    "volume": "bash",
+    "flagScopes": [
+      "source",
+      "source",
+      "source"
+    ]
   },
   {
     "name": "ss",
@@ -4577,6 +5130,12 @@
         "title": "Руководство iproute2: ss",
         "url": "https://man7.org/linux/man-pages/man8/ss.8.html"
       }
+    ],
+    "flagScopes": [
+      "ss",
+      "ss",
+      "ss",
+      "ss"
     ]
   },
   {
@@ -4621,7 +5180,12 @@
         "url": "https://www.gnu.org/software/coreutils/manual/html_node/stat-invocation.html"
       }
     ],
-    "volume": "bash"
+    "volume": "bash",
+    "flagScopes": [
+      "stat",
+      "stat",
+      "stat"
+    ]
   },
   {
     "name": "strace",
@@ -4673,6 +5237,13 @@
         "title": "strace: официальный проект; локальный --help",
         "url": "https://strace.io/"
       }
+    ],
+    "flagScopes": [
+      "strace",
+      "strace",
+      "strace",
+      "strace",
+      "strace"
     ]
   },
   {
@@ -4718,6 +5289,12 @@
         "title": "procps-ng: проект и локальный sysctl --help",
         "url": "https://gitlab.com/procps-ng/procps"
       }
+    ],
+    "flagScopes": [
+      "sysctl",
+      "sysctl",
+      "sysctl",
+      "sysctl"
     ]
   },
   {
@@ -4770,6 +5347,13 @@
         "title": "systemd: systemctl; локальный --help",
         "url": "https://www.freedesktop.org/software/systemd/man/latest/systemctl.html"
       }
+    ],
+    "flagScopes": [
+      "systemctl",
+      "systemctl",
+      "systemctl",
+      "systemctl",
+      "systemctl"
     ]
   },
   {
@@ -4808,6 +5392,11 @@
         "title": "GNU Coreutils: руководство и локальный --help",
         "url": "https://www.gnu.org/software/coreutils/manual/html_node/index.html"
       }
+    ],
+    "flagScopes": [
+      "tail",
+      "tail",
+      "tail"
     ]
   },
   {
@@ -4852,6 +5441,11 @@
         "title": "Руководство iproute2: tc",
         "url": "https://man7.org/linux/man-pages/man8/tc.8.html"
       }
+    ],
+    "flagScopes": [
+      "tc",
+      "tc",
+      "tc"
     ]
   },
   {
@@ -4945,6 +5539,18 @@
         "title": "Официальное руководство tcpdump",
         "url": "https://www.tcpdump.org/manpages/tcpdump.1.html"
       }
+    ],
+    "flagScopes": [
+      "tcpdump",
+      "tcpdump",
+      "tcpdump",
+      "tcpdump",
+      "tcpdump",
+      "tcpdump",
+      "tcpdump",
+      "tcpdump",
+      "tcpdump",
+      "tcpdump"
     ]
   },
   {
@@ -4989,7 +5595,12 @@
         "url": "https://www.gnu.org/software/coreutils/manual/html_node/tee-invocation.html"
       }
     ],
-    "volume": "bash"
+    "volume": "bash",
+    "flagScopes": [
+      "tee",
+      "tee",
+      "tee"
+    ]
   },
   {
     "name": "test",
@@ -5042,7 +5653,13 @@
         "url": "https://www.gnu.org/software/bash/manual/html_node/Bourne-Shell-Builtins.html"
       }
     ],
-    "volume": "bash"
+    "volume": "bash",
+    "flagScopes": [
+      "test",
+      "test",
+      "test",
+      "test"
+    ]
   },
   {
     "name": "touch",
@@ -5080,6 +5697,11 @@
         "title": "GNU Coreutils: руководство и локальный --help",
         "url": "https://www.gnu.org/software/coreutils/manual/html_node/index.html"
       }
+    ],
+    "flagScopes": [
+      "touch",
+      "touch",
+      "touch"
     ]
   },
   {
@@ -5124,7 +5746,12 @@
         "url": "https://www.gnu.org/software/coreutils/manual/html_node/tr-invocation.html"
       }
     ],
-    "volume": "bash"
+    "volume": "bash",
+    "flagScopes": [
+      "tr",
+      "tr",
+      "tr"
+    ]
   },
   {
     "name": "traceroute",
@@ -5175,6 +5802,12 @@
         "title": "Руководство проекта traceroute для Linux",
         "url": "https://traceroute.sourceforge.net/traceroute.8.html"
       }
+    ],
+    "flagScopes": [
+      "traceroute",
+      "traceroute",
+      "traceroute",
+      "traceroute"
     ]
   },
   {
@@ -5226,7 +5859,13 @@
         "url": "https://www.gnu.org/software/bash/manual/html_node/Bourne-Shell-Builtins.html"
       }
     ],
-    "volume": "bash"
+    "volume": "bash",
+    "flagScopes": [
+      "trap",
+      "trap",
+      "trap",
+      "trap"
+    ]
   },
   {
     "name": "true",
@@ -5257,6 +5896,10 @@
         "title": "GNU Bash: руководство и локальный help",
         "url": "https://www.gnu.org/software/bash/manual/html_node/Bash-Builtins.html"
       }
+    ],
+    "flagScopes": [
+      "true",
+      "true"
     ]
   },
   {
@@ -5320,7 +5963,14 @@
         "url": "https://www.gnu.org/software/bash/manual/html_node/Bash-Builtins.html"
       }
     ],
-    "volume": "bash"
+    "volume": "bash",
+    "flagScopes": [
+      "type",
+      "type",
+      "type",
+      "type",
+      "type"
+    ]
   },
   {
     "name": "umask",
@@ -5395,7 +6045,15 @@
         "url": "https://www.gnu.org/software/bash/manual/html_node/Bourne-Shell-Builtins.html"
       }
     ],
-    "volume": "bash"
+    "volume": "bash",
+    "flagScopes": [
+      "umask",
+      "umask",
+      "umask",
+      "umask",
+      "umask",
+      "umask"
+    ]
   },
   {
     "name": "uniq",
@@ -5446,7 +6104,13 @@
         "url": "https://www.gnu.org/software/coreutils/manual/html_node/uniq-invocation.html"
       }
     ],
-    "volume": "bash"
+    "volume": "bash",
+    "flagScopes": [
+      "uniq",
+      "uniq",
+      "uniq",
+      "uniq"
+    ]
   },
   {
     "name": "unset",
@@ -5484,6 +6148,11 @@
         "title": "GNU Bash: встроенные команды; также проверено по Bash help 5.2",
         "url": "https://www.gnu.org/software/bash/manual/html_node/Bourne-Shell-Builtins.html"
       }
+    ],
+    "flagScopes": [
+      "unset",
+      "unset",
+      "unset"
     ]
   },
   {
@@ -5576,7 +6245,16 @@
         "url": "https://www.gnu.org/software/bash/manual/html_node/Job-Control-Builtins.html"
       }
     ],
-    "volume": "bash"
+    "volume": "bash",
+    "flagScopes": [
+      "wait",
+      "wait",
+      "wait",
+      "wait",
+      "wait",
+      "wait",
+      "wait"
+    ]
   },
   {
     "name": "wc",
@@ -5651,7 +6329,15 @@
         "url": "https://www.gnu.org/software/coreutils/manual/html_node/wc-invocation.html"
       }
     ],
-    "volume": "bash"
+    "volume": "bash",
+    "flagScopes": [
+      "wc",
+      "wc",
+      "wc",
+      "wc",
+      "wc",
+      "wc"
+    ]
   },
   {
     "name": "xargs",
@@ -5773,7 +6459,21 @@
         "url": "https://www.gnu.org/software/findutils/manual/html_mono/find.html"
       }
     ],
-    "volume": "bash"
+    "volume": "bash",
+    "flagScopes": [
+      "xargs",
+      "xargs",
+      "xargs",
+      "xargs",
+      "xargs",
+      "xargs",
+      "xargs",
+      "xargs",
+      "xargs",
+      "xargs",
+      "xargs",
+      "xargs"
+    ]
   },
   {
     "name": "git add",
@@ -5819,7 +6519,16 @@
         "example": "git add --renormalize .",
         "result": "В индексе появляется результат нормализации; проверьте git diff --cached перед коммитом."
       }
-    ]
+    ],
+    "flagScopes": [
+      "git add",
+      "git add",
+      "git add",
+      "git add"
+    ],
+    "prefixFlags": {
+      "git": []
+    }
   },
   {
     "name": "git status",
@@ -5865,7 +6574,16 @@
         "example": "git status --short --untracked-files=all",
         "result": "Вместо одного имени каталога видны его новые файлы."
       }
-    ]
+    ],
+    "flagScopes": [
+      "git status",
+      "git status",
+      "git status",
+      "git status"
+    ],
+    "prefixFlags": {
+      "git": []
+    }
   },
   {
     "name": "git diff",
@@ -5911,7 +6629,16 @@
         "example": "git diff --cached --check",
         "result": "При замечаниях появляется диагностика и неуспешный код; чистый результат не доказывает корректность программы."
       }
-    ]
+    ],
+    "flagScopes": [
+      "git diff",
+      "git diff",
+      "git diff",
+      "git diff"
+    ],
+    "prefixFlags": {
+      "git": []
+    }
   },
   {
     "name": "git commit",
@@ -5964,7 +6691,17 @@
         "example": "git commit --allow-empty -m \"Metadata only\"",
         "result": "Новая запись истории при прежних файлах; корректно ограниченный ZIP может остаться побайтно прежним."
       }
-    ]
+    ],
+    "flagScopes": [
+      "git commit",
+      "git commit",
+      "git commit",
+      "git commit",
+      "git commit"
+    ],
+    "prefixFlags": {
+      "git": []
+    }
   },
   {
     "name": "git log",
@@ -6010,7 +6747,16 @@
         "example": "git log -p -n 1 -- app.py",
         "result": "После записи показано изменение файла; особенности merge требуют отдельного выбора сравнения."
       }
-    ]
+    ],
+    "flagScopes": [
+      "git log",
+      "git log",
+      "git log",
+      "git log"
+    ],
+    "prefixFlags": {
+      "git": []
+    }
   },
   {
     "name": "git show",
@@ -6049,7 +6795,15 @@
         "example": "git show --no-patch HEAD",
         "result": "Остаётся описание коммита, без полного содержимого правки."
       }
-    ]
+    ],
+    "flagScopes": [
+      "git show",
+      "git show",
+      "git show"
+    ],
+    "prefixFlags": {
+      "git": []
+    }
   },
   {
     "name": "git branch",
@@ -6095,7 +6849,16 @@
         "example": "git branch -D lab-old",
         "result": "Имя исчезает даже при собственной истории; сохранность объектов после обслуживания не обещается."
       }
-    ]
+    ],
+    "flagScopes": [
+      "git branch",
+      "git branch",
+      "git branch",
+      "git branch"
+    ],
+    "prefixFlags": {
+      "git": []
+    }
   },
   {
     "name": "git switch",
@@ -6134,7 +6897,15 @@
         "example": "git switch --track origin/topic",
         "result": "При свободном локальном имени создаётся topic, связанная с origin/topic."
       }
-    ]
+    ],
+    "flagScopes": [
+      "git switch",
+      "git switch",
+      "git switch"
+    ],
+    "prefixFlags": {
+      "git": []
+    }
   },
   {
     "name": "git checkout",
@@ -6173,7 +6944,15 @@
         "example": "git checkout -- notes.txt",
         "result": "Рабочие байты заменяются индексом; это не переключение на ветку с именем файла."
       }
-    ]
+    ],
+    "flagScopes": [
+      "git checkout",
+      "git checkout",
+      "git checkout"
+    ],
+    "prefixFlags": {
+      "git": []
+    }
   },
   {
     "name": "git merge",
@@ -6219,7 +6998,16 @@
         "example": "git merge --abort",
         "result": "Служебное состояние слияния снято; смешанная несохранённая работа усложняет восстановление."
       }
-    ]
+    ],
+    "flagScopes": [
+      "git merge",
+      "git merge",
+      "git merge",
+      "git merge"
+    ],
+    "prefixFlags": {
+      "git": []
+    }
   },
   {
     "name": "git rebase",
@@ -6265,7 +7053,16 @@
         "example": "git rebase --abort",
         "result": "Возвращается исходная линия; отдельные правки решения конфликта не считаются сохранёнными коммитами."
       }
-    ]
+    ],
+    "flagScopes": [
+      "git rebase",
+      "git rebase",
+      "git rebase",
+      "git rebase"
+    ],
+    "prefixFlags": {
+      "git": []
+    }
   },
   {
     "name": "git revert",
@@ -6311,7 +7108,16 @@
         "example": "git revert --abort",
         "result": "Возвращается состояние до последовательности; уже отдельно завершённые старые отмены не удаляются."
       }
-    ]
+    ],
+    "flagScopes": [
+      "git revert",
+      "git revert",
+      "git revert",
+      "git revert"
+    ],
+    "prefixFlags": {
+      "git": []
+    }
   },
   {
     "name": "git reset",
@@ -6350,7 +7156,15 @@
         "example": "git reset --hard HEAD",
         "result": "Рабочие правки отслеживаемых файлов исчезают; мешающие восстановлению неотслеживаемые пути тоже могут быть удалены."
       }
-    ]
+    ],
+    "flagScopes": [
+      "git reset",
+      "git reset",
+      "git reset"
+    ],
+    "prefixFlags": {
+      "git": []
+    }
   },
   {
     "name": "git restore",
@@ -6396,7 +7210,16 @@
         "example": "git restore --source=HEAD --staged --worktree -- notes.txt",
         "result": "Обе области совпадают с HEAD для данного пути; экспериментальные рабочие байты отброшены."
       }
-    ]
+    ],
+    "flagScopes": [
+      "git restore",
+      "git restore",
+      "git restore",
+      "git restore"
+    ],
+    "prefixFlags": {
+      "git": []
+    }
   },
   {
     "name": "git reflog",
@@ -6435,7 +7258,15 @@
         "example": "git reflog show --format=\"%h %gs\" HEAD",
         "result": "Короткий идентификатор и сообщение каждой имеющейся записи; новых объектов команда не создаёт."
       }
-    ]
+    ],
+    "flagScopes": [
+      "git reflog",
+      "git reflog",
+      "git reflog"
+    ],
+    "prefixFlags": {
+      "git": []
+    }
   },
   {
     "name": "git fsck",
@@ -6474,7 +7305,15 @@
         "example": "git fsck --unreachable --no-reflogs",
         "result": "Объекты, сохраняемые только reflog, могут появиться среди недостижимых."
       }
-    ]
+    ],
+    "flagScopes": [
+      "git fsck",
+      "git fsck",
+      "git fsck"
+    ],
+    "prefixFlags": {
+      "git": []
+    }
   },
   {
     "name": "git fetch",
@@ -6520,7 +7359,16 @@
         "example": "git fetch --depth=10 origin main",
         "result": "Граница доступных предков может измениться; это не полная автономная история."
       }
-    ]
+    ],
+    "flagScopes": [
+      "git fetch",
+      "git fetch",
+      "git fetch",
+      "git fetch"
+    ],
+    "prefixFlags": {
+      "git": []
+    }
   },
   {
     "name": "git pull",
@@ -6559,7 +7407,15 @@
         "example": "git pull --no-rebase origin main",
         "result": "При расхождении возможно слияние с несколькими родителями вместо переигрывания."
       }
-    ]
+    ],
+    "flagScopes": [
+      "git pull",
+      "git pull",
+      "git pull"
+    ],
+    "prefixFlags": {
+      "git": []
+    }
   },
   {
     "name": "git push",
@@ -6612,7 +7468,17 @@
         "example": "git push origin --delete lab-old",
         "result": "Ветка удаляется у получателя; это не удаление лишь локального имени."
       }
-    ]
+    ],
+    "flagScopes": [
+      "git push",
+      "git push",
+      "git push",
+      "git push",
+      "git push"
+    ],
+    "prefixFlags": {
+      "git": []
+    }
   },
   {
     "name": "git remote",
@@ -6658,7 +7524,16 @@
         "example": "git remote set-url --push origin ../remote.git",
         "result": "Будущая отправка использует этот адрес; объекты сейчас не передаются."
       }
-    ]
+    ],
+    "flagScopes": [
+      "git remote",
+      "git remote",
+      "git remote",
+      "git remote"
+    ],
+    "prefixFlags": {
+      "git": []
+    }
   },
   {
     "name": "git tag",
@@ -6704,7 +7579,16 @@
         "example": "git tag -v v1.2",
         "result": "Диагностика проверки; доверие владельцу ключа оценивается отдельно от совпадения подписи."
       }
-    ]
+    ],
+    "flagScopes": [
+      "git tag",
+      "git tag",
+      "git tag",
+      "git tag"
+    ],
+    "prefixFlags": {
+      "git": []
+    }
   },
   {
     "name": "git stash",
@@ -6750,7 +7634,16 @@
         "example": "git stash show -p stash@{0}",
         "result": "Показано отличие сохранённых отслеживаемых файлов, а не команда восстановления."
       }
-    ]
+    ],
+    "flagScopes": [
+      "git stash",
+      "git stash",
+      "git stash",
+      "git stash"
+    ],
+    "prefixFlags": {
+      "git": []
+    }
   },
   {
     "name": "git clean",
@@ -6796,7 +7689,16 @@
         "example": "git clean -ndx",
         "result": "Предварительный список включает игнорируемый dist; без -n такое действие могло бы удалить его."
       }
-    ]
+    ],
+    "flagScopes": [
+      "git clean",
+      "git clean",
+      "git clean",
+      "git clean"
+    ],
+    "prefixFlags": {
+      "git": []
+    }
   },
   {
     "name": "git worktree",
@@ -6842,7 +7744,16 @@
         "example": "git worktree prune --dry-run --verbose",
         "result": "Диагностика подходящих записей; действующие рабочие каталоги не создаются заново."
       }
-    ]
+    ],
+    "flagScopes": [
+      "git worktree",
+      "git worktree",
+      "git worktree",
+      "git worktree"
+    ],
+    "prefixFlags": {
+      "git": []
+    }
   },
   {
     "name": "git rev-parse",
@@ -6888,7 +7799,16 @@
         "example": "git rev-parse --short=12 HEAD",
         "result": "Обычно двенадцать знаков, но при неоднозначности может потребоваться больше."
       }
-    ]
+    ],
+    "flagScopes": [
+      "git rev-parse",
+      "git rev-parse",
+      "git rev-parse",
+      "git rev-parse"
+    ],
+    "prefixFlags": {
+      "git": []
+    }
   },
   {
     "name": "git cat-file",
@@ -6934,7 +7854,16 @@
         "example": "printf \"HEAD\\nHEAD:app.py\\n\" | git cat-file --batch-check",
         "result": "По одной строке сведений на запрос без полного содержимого файлов."
       }
-    ]
+    ],
+    "flagScopes": [
+      "git cat-file",
+      "git cat-file",
+      "git cat-file",
+      "git cat-file"
+    ],
+    "prefixFlags": {
+      "git": []
+    }
   },
   {
     "name": "git hash-object",
@@ -6973,7 +7902,15 @@
         "example": "git hash-object --no-filters app.py",
         "result": "Хеш отражает прочитанные байты; он может отличаться от подготовленной фильтром версии."
       }
-    ]
+    ],
+    "flagScopes": [
+      "git hash-object",
+      "git hash-object",
+      "git hash-object"
+    ],
+    "prefixFlags": {
+      "git": []
+    }
   },
   {
     "name": "git ls-files",
@@ -7019,7 +7956,16 @@
         "example": "git ls-files --others --exclude-standard",
         "result": "Игнорируемые результаты не входят в этот список; отслеживаемые файлы от правила не перестают отслеживаться."
       }
-    ]
+    ],
+    "flagScopes": [
+      "git ls-files",
+      "git ls-files",
+      "git ls-files",
+      "git ls-files"
+    ],
+    "prefixFlags": {
+      "git": []
+    }
   },
   {
     "name": "git check-ignore",
@@ -7065,7 +8011,16 @@
         "example": "printf \"dist/handbook-demo.zip\\n\" | git check-ignore -v --stdin",
         "result": "Сведения для переданных путей; для произвольных имён с переводами строк требуется отдельный нулевой формат."
       }
-    ]
+    ],
+    "flagScopes": [
+      "git check-ignore",
+      "git check-ignore",
+      "git check-ignore",
+      "git check-ignore"
+    ],
+    "prefixFlags": {
+      "git": []
+    }
   },
   {
     "name": "git config",
@@ -7111,7 +8066,16 @@
         "example": "git config --local --unset user.email",
         "result": "Локальное переопределение исчезает; может стать видимым значение из другой области."
       }
-    ]
+    ],
+    "flagScopes": [
+      "git config",
+      "git config",
+      "git config",
+      "git config"
+    ],
+    "prefixFlags": {
+      "git": []
+    }
   },
   {
     "name": "git gc",
@@ -7150,7 +8114,15 @@
         "example": "git gc --aggressive",
         "result": "Время и нагрузка могут вырасти; меньший размер и ускорение всех операций не гарантированы."
       }
-    ]
+    ],
+    "flagScopes": [
+      "git gc",
+      "git gc",
+      "git gc"
+    ],
+    "prefixFlags": {
+      "git": []
+    }
   },
   {
     "name": "git clone",
@@ -7196,7 +8168,16 @@
         "example": "git clone --no-local --depth 1 ../remote.git ../shallow-demo",
         "result": "Доступен неглубокий набор истории; --no-local нужен здесь, чтобы местная оптимизация не проигнорировала глубину."
       }
-    ]
+    ],
+    "flagScopes": [
+      "git clone",
+      "git clone",
+      "git clone",
+      "git clone"
+    ],
+    "prefixFlags": {
+      "git": []
+    }
   },
   {
     "name": "git init",
@@ -7235,7 +8216,15 @@
         "example": "git init --template= -b main demo-repo",
         "result": "Пользовательские шаблонные обработчики не добавлены; другие настройки Git требуют отдельной изоляции."
       }
-    ]
+    ],
+    "flagScopes": [
+      "git init",
+      "git init",
+      "git init"
+    ],
+    "prefixFlags": {
+      "git": []
+    }
   },
   {
     "name": "mvn",
@@ -7288,6 +8277,13 @@
         "example": "mvn -Drevision=1.2.3 package",
         "result": "Версия меняется только если описание проекта использует revision; произвольное свойство само ничего не переписывает."
       }
+    ],
+    "flagScopes": [
+      "mvn",
+      "mvn",
+      "mvn",
+      "mvn",
+      "mvn"
     ]
   },
   {
@@ -7340,8 +8336,48 @@
         "when": "Повторить проверку конкретного поведения.",
         "example": "python3 -m unittest discover -s tests -k unicode -v",
         "result": "В учебном проекте выбирается проверка русского имени, а успешный итог относится только к выбранной группе."
+      },
+      {
+        "flag": "-c КОД",
+        "action": "Исполнить программу из одного аргумента.",
+        "when": "Наблюдать точные границы argv.",
+        "example": "python3 -c 'import sys; print(repr(sys.argv))' 'two words' ''",
+        "result": "Будут видны отдельный аргумент с пробелом и отдельная пустая строка."
+      },
+      {
+        "flag": "-u",
+        "action": "Отключить обычную буферизацию stdout/stderr Python.",
+        "when": "Уменьшить задержку сообщений в конвейере.",
+        "example": "python3 -u worker.py",
+        "result": "Записи не ждут обычного заполнения буфера Python; буферы следующей программы остаются отдельными."
+      },
+      {
+        "flag": "-B",
+        "action": "Не записывать .pyc при импортах.",
+        "when": "Не оставлять новые кеши байткода в автономном комплекте.",
+        "example": "python3 -B linux_labs.py 01",
+        "result": "Лаборатория выполнится без обычной записи новых .pyc её импортов."
       }
-    ]
+    ],
+    "flagScopes": [
+      "python3 -m unittest",
+      "python3 -m unittest",
+      "python3 -m unittest",
+      "python3 -m unittest",
+      "python3 -m unittest",
+      "python3",
+      "python3",
+      "python3"
+    ],
+    "parentOptions": "prefix-only",
+    "prefixFlags": {
+      "python3": [
+        "-c КОД",
+        "-u",
+        "-B"
+      ],
+      "python3 -m": []
+    }
   },
   {
     "name": "go build",
@@ -7594,7 +8630,45 @@
         "example": "go build -toolexec='./tool-wrapper' .",
         "result": "Исполняемый wrapper обязан запускать переданный инструмент и сохранять его код выхода; произвольная команда вместо него сломает цепочку."
       }
-    ]
+    ],
+    "flagScopes": [
+      "go build",
+      "go build",
+      "go build",
+      "go build",
+      "go build",
+      "go build",
+      "go build",
+      "go build",
+      "go build",
+      "go build",
+      "go build",
+      "go build",
+      "go build",
+      "go build",
+      "go build",
+      "go build",
+      "go build",
+      "go build",
+      "go build",
+      "go build",
+      "go build",
+      "go build",
+      "go build",
+      "go build",
+      "go build",
+      "go build",
+      "go build",
+      "go build",
+      "go build",
+      "go build",
+      "go build",
+      "go build",
+      "go build"
+    ],
+    "prefixFlags": {
+      "go": []
+    }
   },
   {
     "name": "go test",
@@ -8071,7 +9145,77 @@
         "example": "go test -toolexec='./tool-wrapper' .",
         "result": "Исполняемый wrapper обязан запускать переданный инструмент и сохранять его код выхода; произвольная команда вместо него сломает цепочку."
       }
-    ]
+    ],
+    "flagScopes": [
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test",
+      "go test"
+    ],
+    "prefixFlags": {
+      "go": []
+    }
   },
   {
     "name": "go list",
@@ -8131,7 +9275,18 @@
         "title": "Официальная документация Go",
         "url": "https://pkg.go.dev/cmd/go"
       }
-    ]
+    ],
+    "flagScopes": [
+      "go list",
+      "go list",
+      "go list",
+      "go list",
+      "go list",
+      "go list"
+    ],
+    "prefixFlags": {
+      "go": []
+    }
   },
   {
     "name": "go env",
@@ -8177,7 +9332,16 @@
         "title": "Официальная документация Go",
         "url": "https://pkg.go.dev/cmd/go"
       }
-    ]
+    ],
+    "flagScopes": [
+      "go env",
+      "go env",
+      "go env",
+      "go env"
+    ],
+    "prefixFlags": {
+      "go": []
+    }
   },
   {
     "name": "go clean",
@@ -8230,7 +9394,17 @@
         "title": "Официальная документация Go",
         "url": "https://pkg.go.dev/cmd/go"
       }
-    ]
+    ],
+    "flagScopes": [
+      "go clean",
+      "go clean",
+      "go clean",
+      "go clean",
+      "go clean"
+    ],
+    "prefixFlags": {
+      "go": []
+    }
   },
   {
     "name": "go mod tidy",
@@ -8283,7 +9457,18 @@
         "title": "Официальная документация Go",
         "url": "https://pkg.go.dev/cmd/go"
       }
-    ]
+    ],
+    "flagScopes": [
+      "go mod tidy",
+      "go mod tidy",
+      "go mod tidy",
+      "go mod tidy",
+      "go mod tidy"
+    ],
+    "prefixFlags": {
+      "go": [],
+      "go mod": []
+    }
   },
   {
     "name": "go mod download",
@@ -8322,7 +9507,16 @@
         "title": "Официальная документация Go",
         "url": "https://pkg.go.dev/cmd/go"
       }
-    ]
+    ],
+    "flagScopes": [
+      "go mod download",
+      "go mod download",
+      "go mod download"
+    ],
+    "prefixFlags": {
+      "go": [],
+      "go mod": []
+    }
   },
   {
     "name": "go mod graph",
@@ -8361,7 +9555,16 @@
         "title": "Официальная документация Go",
         "url": "https://pkg.go.dev/cmd/go"
       }
-    ]
+    ],
+    "flagScopes": [
+      "go mod graph",
+      "go mod graph",
+      "go mod graph"
+    ],
+    "prefixFlags": {
+      "go": [],
+      "go mod": []
+    }
   },
   {
     "name": "go mod verify",
@@ -8400,7 +9603,16 @@
         "title": "Официальная документация Go",
         "url": "https://pkg.go.dev/cmd/go"
       }
-    ]
+    ],
+    "flagScopes": [
+      "go mod verify",
+      "go mod verify",
+      "go mod verify"
+    ],
+    "prefixFlags": {
+      "go": [],
+      "go mod": []
+    }
   },
   {
     "name": "go mod vendor",
@@ -8439,7 +9651,16 @@
         "title": "Официальная документация Go",
         "url": "https://pkg.go.dev/cmd/go"
       }
-    ]
+    ],
+    "flagScopes": [
+      "go mod vendor",
+      "go mod vendor",
+      "go mod vendor"
+    ],
+    "prefixFlags": {
+      "go": [],
+      "go mod": []
+    }
   },
   {
     "name": "go work edit",
@@ -8485,7 +9706,17 @@
         "title": "Официальная документация Go",
         "url": "https://pkg.go.dev/cmd/go"
       }
-    ]
+    ],
+    "flagScopes": [
+      "go work edit",
+      "go work edit",
+      "go work edit",
+      "go work edit"
+    ],
+    "prefixFlags": {
+      "go": [],
+      "go work": []
+    }
   },
   {
     "name": "go version",
@@ -8524,7 +9755,15 @@
         "title": "Официальная документация Go",
         "url": "https://pkg.go.dev/cmd/go"
       }
-    ]
+    ],
+    "flagScopes": [
+      "go version",
+      "go version",
+      "go version"
+    ],
+    "prefixFlags": {
+      "go": []
+    }
   },
   {
     "name": "go vet",
@@ -8570,7 +9809,16 @@
         "title": "Официальная документация Go",
         "url": "https://pkg.go.dev/cmd/go"
       }
-    ]
+    ],
+    "flagScopes": [
+      "go vet",
+      "go vet",
+      "go vet",
+      "go vet"
+    ],
+    "prefixFlags": {
+      "go": []
+    }
   },
   {
     "name": "go doc",
@@ -8616,7 +9864,16 @@
         "title": "Официальная документация Go",
         "url": "https://pkg.go.dev/cmd/go"
       }
-    ]
+    ],
+    "flagScopes": [
+      "go doc",
+      "go doc",
+      "go doc",
+      "go doc"
+    ],
+    "prefixFlags": {
+      "go": []
+    }
   },
   {
     "name": "go tool compile",
@@ -9121,7 +10378,82 @@
         "example": "go tool compile -help",
         "result": "Для службы оставляем wb=true; ложное отключение может нарушить учёт указателей конкурентным GC и корректность памяти."
       }
-    ]
+    ],
+    "flagScopes": [
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile",
+      "go tool compile"
+    ],
+    "prefixFlags": {
+      "go": [],
+      "go tool": []
+    }
   },
   {
     "name": "go tool link",
@@ -9563,7 +10895,73 @@
         "example": "go build -ldflags='-w' -o ./out/no-dwarf .",
         "result": "Исчезают отладочные секции; таблица обычных символов может остаться, если отдельно не задан -s."
       }
-    ]
+    ],
+    "flagScopes": [
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link",
+      "go tool link"
+    ],
+    "prefixFlags": {
+      "go": [],
+      "go tool": []
+    }
   },
   {
     "name": "go tool asm",
@@ -9704,7 +11102,30 @@
         "example": "go tool asm -v -I \"$(go env GOROOT)/pkg/include\" -p example.org/flaglab -o ret.o ret.s",
         "result": "Объём и вид служебных сообщений зависит от входа/версии; стабильным интерфейсом анализа является не любой такой текст."
       }
-    ]
+    ],
+    "flagScopes": [
+      "go tool asm",
+      "go tool asm",
+      "go tool asm",
+      "go tool asm",
+      "go tool asm",
+      "go tool asm",
+      "go tool asm",
+      "go tool asm",
+      "go tool asm",
+      "go tool asm",
+      "go tool asm",
+      "go tool asm",
+      "go tool asm",
+      "go tool asm",
+      "go tool asm",
+      "go tool asm",
+      "go tool asm"
+    ],
+    "prefixFlags": {
+      "go": [],
+      "go tool": []
+    }
   },
   {
     "name": "go tool cover",
@@ -9743,7 +11164,16 @@
         "title": "Официальная документация Go",
         "url": "https://pkg.go.dev/cmd/cover"
       }
-    ]
+    ],
+    "flagScopes": [
+      "go tool cover",
+      "go tool cover",
+      "go tool cover"
+    ],
+    "prefixFlags": {
+      "go": [],
+      "go tool": []
+    }
   },
   {
     "name": "go tool pprof",
@@ -9789,7 +11219,17 @@
         "title": "Официальная документация Go",
         "url": "https://pkg.go.dev/cmd/pprof"
       }
-    ]
+    ],
+    "flagScopes": [
+      "go tool pprof",
+      "go tool pprof",
+      "go tool pprof",
+      "go tool pprof"
+    ],
+    "prefixFlags": {
+      "go": [],
+      "go tool": []
+    }
   },
   {
     "name": "gofmt",
@@ -9835,6 +11275,12 @@
         "title": "Официальная документация Go",
         "url": "https://pkg.go.dev/cmd/gofmt"
       }
+    ],
+    "flagScopes": [
+      "gofmt",
+      "gofmt",
+      "gofmt",
+      "gofmt"
     ]
   },
   {
@@ -9997,7 +11443,33 @@
         "example": "go tool cgo -trimpath=/tmp/flaglab -objdir=./cgo-out demo.go",
         "result": "Записанные позиции с этим префиксом меняются; конечная воспроизводимость смешанного бинарника требует также учёта C-компилятора и link."
       }
-    ]
+    ],
+    "flagScopes": [
+      "go tool cgo",
+      "go tool cgo",
+      "go tool cgo",
+      "go tool cgo",
+      "go tool cgo",
+      "go tool cgo",
+      "go tool cgo",
+      "go tool cgo",
+      "go tool cgo",
+      "go tool cgo",
+      "go tool cgo",
+      "go tool cgo",
+      "go tool cgo",
+      "go tool cgo",
+      "go tool cgo",
+      "go tool cgo",
+      "go tool cgo",
+      "go tool cgo",
+      "go tool cgo",
+      "go tool cgo"
+    ],
+    "prefixFlags": {
+      "go": [],
+      "go tool": []
+    }
   },
   {
     "name": "gitlab-ctl status",
@@ -10016,7 +11488,11 @@
     "flags": [],
     "situations": [
       "Проверить, поднялись ли Puma, Gitaly и другие службы после собственного запуска."
-    ]
+    ],
+    "flagScopes": [],
+    "prefixFlags": {
+      "gitlab-ctl": []
+    }
   },
   {
     "name": "gitlab-ctl tail",
@@ -10035,7 +11511,11 @@
     "flags": [],
     "situations": [
       "Сопоставить отказ HTTP с журналом puma или nginx; прекратить просмотр Ctrl+C."
-    ]
+    ],
+    "flagScopes": [],
+    "prefixFlags": {
+      "gitlab-ctl": []
+    }
   },
   {
     "name": "gitlab-ctl reconfigure",
@@ -10054,7 +11534,11 @@
     "flags": [],
     "situations": [
       "После проверенного изменения конфигурации в личном стенде; сначала иметь её сохранённую копию."
-    ]
+    ],
+    "flagScopes": [],
+    "prefixFlags": {
+      "gitlab-ctl": []
+    }
   },
   {
     "name": "gitlab-ctl stop",
@@ -10071,7 +11555,11 @@
       }
     ],
     "flags": [],
-    "situations": []
+    "situations": [],
+    "flagScopes": [],
+    "prefixFlags": {
+      "gitlab-ctl": []
+    }
   },
   {
     "name": "gitlab-ctl start",
@@ -10088,7 +11576,11 @@
       }
     ],
     "flags": [],
-    "situations": []
+    "situations": [],
+    "flagScopes": [],
+    "prefixFlags": {
+      "gitlab-ctl": []
+    }
   },
   {
     "name": "gitlab-ctl backup-etc",
@@ -10105,7 +11597,11 @@
       }
     ],
     "flags": [],
-    "situations": []
+    "situations": [],
+    "flagScopes": [],
+    "prefixFlags": {
+      "gitlab-ctl": []
+    }
   },
   {
     "name": "gitlab-rake",
@@ -10130,7 +11626,10 @@
         "result": "Получен список; изучение описания не выдаёт право произвольно менять данные. Присутствуют и изменяющие задачи."
       }
     ],
-    "situations": []
+    "situations": [],
+    "flagScopes": [
+      "gitlab-rake"
+    ]
   },
   {
     "name": "gitlab-backup create",
@@ -10147,7 +11646,11 @@
       }
     ],
     "flags": [],
-    "situations": []
+    "situations": [],
+    "flagScopes": [],
+    "prefixFlags": {
+      "gitlab-backup": []
+    }
   },
   {
     "name": "gitlab-runner",
@@ -10179,7 +11682,11 @@
         "result": "Больше диагностических данных; секреты и приватные параметры нужно защитить. Не требуется для обычной работы."
       }
     ],
-    "situations": []
+    "situations": [],
+    "flagScopes": [
+      "gitlab-runner",
+      "gitlab-runner"
+    ]
   },
   {
     "name": "gitlab-runner register",
@@ -10223,9 +11730,37 @@
         "when": "Только подготовленная автоматизация с безопасным источником токена.",
         "example": "gitlab-runner register --non-interactive ...",
         "result": "Нужен полный допустимый набор параметров; многоточие обозначает пропущенные входы, а не готовую команду."
+      },
+      {
+        "flag": "--version",
+        "action": "Вывести версию программы и завершиться без регистрации или запуска job.",
+        "when": "Зафиксировать Runner отдельно от GitLab Server.",
+        "example": "gitlab-runner --version",
+        "result": "Выведен используемый Runner; это не версия удалённого сервера."
+      },
+      {
+        "flag": "--debug",
+        "action": "Включить подробное журналирование применимого вызова.",
+        "when": "Короткий диагностический опыт в своём стенде.",
+        "example": "gitlab-runner --debug verify --config \"$LAB_RUNNER_CONFIG\"",
+        "result": "Больше диагностических данных; секреты и приватные параметры нужно защитить. Не требуется для обычной работы."
       }
     ],
-    "situations": []
+    "situations": [],
+    "flagScopes": [
+      "gitlab-runner register",
+      "gitlab-runner register",
+      "gitlab-runner register",
+      "gitlab-runner register",
+      "gitlab-runner",
+      "gitlab-runner"
+    ],
+    "prefixFlags": {
+      "gitlab-runner": [
+        "--version",
+        "--debug"
+      ]
+    }
   },
   {
     "name": "gitlab-runner verify",
@@ -10248,9 +11783,34 @@
         "when": "Проверить именно личную конфигурацию.",
         "example": "gitlab-runner verify --config \"$LAB_RUNNER_CONFIG\"",
         "result": "Проверена аутентификация указанных записей; доступ к образам, модулям и целям доставки проверяется другими действиями."
+      },
+      {
+        "flag": "--version",
+        "action": "Вывести версию программы и завершиться без регистрации или запуска job.",
+        "when": "Зафиксировать Runner отдельно от GitLab Server.",
+        "example": "gitlab-runner --version",
+        "result": "Выведен используемый Runner; это не версия удалённого сервера."
+      },
+      {
+        "flag": "--debug",
+        "action": "Включить подробное журналирование применимого вызова.",
+        "when": "Короткий диагностический опыт в своём стенде.",
+        "example": "gitlab-runner --debug verify --config \"$LAB_RUNNER_CONFIG\"",
+        "result": "Больше диагностических данных; секреты и приватные параметры нужно защитить. Не требуется для обычной работы."
       }
     ],
-    "situations": []
+    "situations": [],
+    "flagScopes": [
+      "gitlab-runner verify",
+      "gitlab-runner",
+      "gitlab-runner"
+    ],
+    "prefixFlags": {
+      "gitlab-runner": [
+        "--version",
+        "--debug"
+      ]
+    }
   },
   {
     "name": "gitlab-runner run",
@@ -10273,8 +11833,3383 @@
         "when": "Учебный запуск в выделенной VM, который легко остановить.",
         "example": "gitlab-runner run --config \"$LAB_RUNNER_CONFIG\"",
         "result": "Процесс запрашивает работу; файлы, сеть и лимиты определяются этим конфигом. Сервисная автозагрузка этим не создаётся."
+      },
+      {
+        "flag": "--version",
+        "action": "Вывести версию программы и завершиться без регистрации или запуска job.",
+        "when": "Зафиксировать Runner отдельно от GitLab Server.",
+        "example": "gitlab-runner --version",
+        "result": "Выведен используемый Runner; это не версия удалённого сервера."
+      },
+      {
+        "flag": "--debug",
+        "action": "Включить подробное журналирование применимого вызова.",
+        "when": "Короткий диагностический опыт в своём стенде.",
+        "example": "gitlab-runner --debug verify --config \"$LAB_RUNNER_CONFIG\"",
+        "result": "Больше диагностических данных; секреты и приватные параметры нужно защитить. Не требуется для обычной работы."
       }
     ],
-    "situations": []
+    "situations": [],
+    "flagScopes": [
+      "gitlab-runner run",
+      "gitlab-runner",
+      "gitlab-runner"
+    ],
+    "prefixFlags": {
+      "gitlab-runner": [
+        "--version",
+        "--debug"
+      ]
+    }
+  },
+  {
+    "name": "docker",
+    "aliases": [],
+    "purpose": "Клиент управляющего API выбранного Engine. Локальная команда может изменять процессы и данные удалённого сервера.",
+    "syntax": "docker [ОПЦИИ КЛИЕНТА] КОМАНДА",
+    "chapter": "02-client-daemon-runtime",
+    "volume": "docker",
+    "source": "https://docs.docker.com/reference/cli/docker/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.docker.com/reference/cli/docker/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-c ИМЯ / --context ИМЯ",
+        "action": "Выбрать сохранённую точку управления для одного вызова.",
+        "when": "Адресно обращаться к личной VM.",
+        "example": "docker --context study info",
+        "result": "Ответит Engine context study, а не обязательно локальный сервер."
+      },
+      {
+        "flag": "-H АДРЕС / --host АДРЕС",
+        "action": "Явно выбрать endpoint поддерживаемого транспорта.",
+        "when": "Диагностика заранее подготовленной точки, с осмысленными правами и TLS.",
+        "example": "docker --host unix:///var/run/docker.sock version",
+        "result": "Проверяется именно указанный сокет; право доступа не возникает от флага."
+      },
+      {
+        "flag": "-v / --version",
+        "action": "Вывести версию клиента без обязательной проверки сервера.",
+        "when": "Зафиксировать установленный CLI.",
+        "example": "docker --version",
+        "result": "Это не полная проверка версии Engine; для обеих сторон используют docker version."
+      },
+      {
+        "flag": "-D / --debug",
+        "action": "Включить подробную клиентскую диагностику.",
+        "when": "Короткий опыт проблемы подключения без публикации чувствительных деталей.",
+        "example": "docker --debug --context study info",
+        "result": "Диагностика расширяется, конфигурация сервера от этого не меняется."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "docker",
+      "docker",
+      "docker",
+      "docker"
+    ]
+  },
+  {
+    "name": "docker run",
+    "aliases": [],
+    "purpose": "Создать объект контейнера и запустить задачу по выбранному образу и конфигурации.",
+    "syntax": "docker --context study run [ОПЦИИ] ОБРАЗ [КОМАНДА [АРГУМЕНТЫ]]",
+    "chapter": "02-client-daemon-runtime",
+    "volume": "docker",
+    "source": "https://docs.docker.com/reference/cli/docker/container/run/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.docker.com/reference/cli/docker/container/run/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "--name ИМЯ",
+        "action": "Назначить уникальное на сервере имя объекта.",
+        "when": "Связный опыт с адресной диагностикой.",
+        "example": "docker run --name study-echo study/echo:lesson1",
+        "result": "При занятом имени будет отказ; старый объект автоматически не подменяется."
+      },
+      {
+        "flag": "--pull ПОЛИТИКА",
+        "action": "Выбрать получение образа: never запрещает сеть, missing получает отсутствующий, always проверяет получение каждый раз.",
+        "when": "Проверить полноту автономного комплекта.",
+        "example": "docker run --pull=never study/echo:lesson1",
+        "result": "Нужен подходящий локальный образ выбранного Engine."
+      },
+      {
+        "flag": "-d / --detach",
+        "action": "Отсоединить клиент после запуска.",
+        "when": "Запустить сервис с основным процессом переднего плана.",
+        "example": "docker run -d --name study-echo study/echo:lesson1",
+        "result": "Выведенный ID не доказывает последующую готовность приложения."
+      },
+      {
+        "flag": "-i / --interactive",
+        "action": "Оставить стандартный ввод открытым.",
+        "when": "Передать поток процессу; отдельно решить, нужен ли терминал.",
+        "example": "docker run -i \"$TOOLS_IMAGE\" cat",
+        "result": "Программа получает stdin без обязательного псевдотерминала."
+      },
+      {
+        "flag": "-t / --tty",
+        "action": "Выделить псевдотерминал.",
+        "when": "Интерактивная shell в образе, где она есть.",
+        "example": "docker run -it \"$TOOLS_IMAGE\" sh",
+        "result": "Поведение потоков терминальное; для двоичного конвейера это может быть нежелательно."
+      },
+      {
+        "flag": "-p АДРЕС:ПОРТ:ПОРТ / --publish АДРЕС:ПОРТ:ПОРТ",
+        "action": "Создать предусмотренный сетевой путь порта хоста к порту контейнера.",
+        "when": "Доступ только через loopback своего Docker-хоста.",
+        "example": "docker run -p 127.0.0.1:18080:8080 study/echo:lesson1",
+        "result": "Go всё равно должен слушать подходящий адрес внутри; 18080 и 8080 относятся к разным сторонам."
+      },
+      {
+        "flag": "--network ИМЯ",
+        "action": "Подключить задачу к выбранной сети.",
+        "when": "Изучить имена и путь на пользовательском bridge.",
+        "example": "docker run --network study-net study/echo:lesson1",
+        "result": "Имя сети относится к выбранному Engine; это не автоматическое создание маршрута между хостами."
+      },
+      {
+        "flag": "--ip АДРЕС",
+        "action": "Выбрать допустимый адрес в подготовленной сети.",
+        "when": "Фиксированный учебный разбор пути.",
+        "example": "docker run --network study-net --ip 172.30.50.10 study/echo:lesson1",
+        "result": "Подсеть должна быть подготовлена и не конфликтовать; приложению обычно удобнее стабильное имя."
+      },
+      {
+        "flag": "--env ИМЯ=ЗНАЧЕНИЕ",
+        "action": "Задать переменную окружения процесса.",
+        "when": "Выбрать каталог данных собственной службы.",
+        "example": "docker run --env APP_DATA_DIR=/data study/echo:lesson1",
+        "result": "Нужный mount и права создают отдельно; переменная сама каталог не подключает."
+      },
+      {
+        "flag": "--mount ОПИСАНИЕ",
+        "action": "Подключить volume, bind либо поддерживаемый mount с явными полями.",
+        "when": "Вынести данные из жизненного цикла контейнера.",
+        "example": "docker run --mount type=volume,src=study-data,dst=/data study/echo:lesson1",
+        "result": "Процесс видит volume по/data; его содержимое остаётся отдельным объектом."
+      },
+      {
+        "flag": "--tmpfs ПУТЬ:ОПЦИИ",
+        "action": "Предоставить временную файловую область.",
+        "when": "Дать приложению ограниченный/tmp при read-only корне.",
+        "example": "docker run --read-only --tmpfs /tmp:rw,noexec,nosuid,size=16m study/echo:lesson1",
+        "result": "Область временная и потребляет ресурсы; не является backup."
+      },
+      {
+        "flag": "--read-only",
+        "action": "Запретить запись в корневую файловую систему контейнера.",
+        "when": "Ограничить необязательные изменения образа.",
+        "example": "docker run --read-only study/echo:lesson1",
+        "result": "Отдельный writable volume остаётся доступен по собственным правилам."
+      },
+      {
+        "flag": "--user UID:GID",
+        "action": "Задать идентификаторы запуска вместо defaults образа.",
+        "when": "Проверить права приложения к подготовленному volume.",
+        "example": "docker run --user 10001:10001 study/echo:lesson1",
+        "result": "Не меняет автоматически владельцев подключённых файлов."
+      },
+      {
+        "flag": "--cap-drop СПИСОК",
+        "action": "Убрать перечисленные capabilities; значение ALL убирает весь предусмотренный набор.",
+        "when": "Сервису на 8080 не нужны дополнительные системные привилегии.",
+        "example": "docker run --cap-drop ALL study/echo:lesson1",
+        "result": "Потребность каждой программы проверяют; обычные файловые права остаются отдельными."
+      },
+      {
+        "flag": "--security-opt НАСТРОЙКА",
+        "action": "Выбрать поддерживаемую настройку безопасности; no-new-privileges=true ограничивает получение новых привилегий при последующем исполнении.",
+        "when": "Дополнительная граница к USER и capabilities.",
+        "example": "docker run --security-opt no-new-privileges=true study/echo:lesson1",
+        "result": "Не забирает уже выданный доступ к mount или управляющему сокету."
+      },
+      {
+        "flag": "-c ЧИСЛО / --cpu-shares ЧИСЛО",
+        "action": "Задать относительный вес CPU при конкуренции, а не жёсткую квоту времени.",
+        "when": "Сравнить распределение процессора между одновременно готовыми группами.",
+        "example": "docker run -c 512 study/echo:lesson1",
+        "result": "Это локальный -c команды run; перед run корневой -c выбирает context. Без конкуренции вес сам по себе не ограничивает использование свободного CPU."
+      },
+      {
+        "flag": "-v ПОДКЛЮЧЕНИЕ / --volume ПОДКЛЮЧЕНИЕ",
+        "action": "Подключить volume или bind mount в сокращённой форме.",
+        "when": "Понять традиционный синтаксис и сравнить его с явным --mount.",
+        "example": "docker run -v study-data:/data study/echo:lesson1",
+        "result": "Здесь локальный -v подключает данные; перед run корневой -v выводит версию клиента. Для отсутствующего bind-источника -v может создать каталог."
+      },
+      {
+        "flag": "--memory ОБЪЁМ",
+        "action": "Задать жёсткий бюджет памяти по механизму среды.",
+        "when": "Защитить соседей после измерения пиков.",
+        "example": "docker run --memory 256m study/echo:lesson1",
+        "result": "Выход за доступный бюджет может привести к OOM; это не мягкая цель Go."
+      },
+      {
+        "flag": "--memory-swap ОБЪЁМ",
+        "action": "Управлять совокупной памятью/swap по семантике Docker.",
+        "when": "Явно запретить дополнительный swap при поддержанном контроллере.",
+        "example": "docker run --memory 256m --memory-swap 256m study/echo:lesson1",
+        "result": "При поддержке среды дополнительный swap для группы запрещён; проверяют info и cgroup."
+      },
+      {
+        "flag": "--cpus ЧИСЛО",
+        "action": "Задать долю CPU-времени через доступный механизм квот.",
+        "when": "Изучить задержку и throttling при ограниченном бюджете.",
+        "example": "docker run --cpus 1.5 study/echo:lesson1",
+        "result": "Это не выделенные эксклюзивные 1.5 физических ядра."
+      },
+      {
+        "flag": "--cpuset-cpus СПИСОК",
+        "action": "Ограничить допустимые логические CPU.",
+        "when": "Отдельный опыт размещения относительно квоты.",
+        "example": "docker run --cpuset-cpus 0-1 study/echo:lesson1",
+        "result": "Нужны существующие доступные CPU; эксклюзивность другим процессам не запрещается."
+      },
+      {
+        "flag": "--pids-limit ЧИСЛО",
+        "action": "Ограничить задачи ядра группы.",
+        "when": "Предотвратить неконтролируемый рост потоков/процессов в стенде.",
+        "example": "docker run --pids-limit 128 study/echo:lesson1",
+        "result": "Это не лимит числа goroutine Go; при исчерпании создание задач получает отказ."
+      },
+      {
+        "flag": "--init",
+        "action": "Добавить небольшой init для предусмотренного сбора потомков и сигналов.",
+        "when": "Программа запускает внешние дочерние процессы и нуждается в такой границе.",
+        "example": "docker run --init study/echo:lesson1",
+        "result": "Прикладное завершение HTTP и устойчивость данных приложение реализует само."
+      },
+      {
+        "flag": "--restart ПОЛИТИКА",
+        "action": "Выбрать правило повторного запуска контейнера.",
+        "when": "Сохраняемый сервис личного стенда.",
+        "example": "docker run --restart unless-stopped study/echo:lesson1",
+        "result": "Ручная остановка имеет особый смысл; unhealthy не означает автоматическое завершение."
+      },
+      {
+        "flag": "--rm",
+        "action": "Удалить завершившийся одноразовый объект контейнера.",
+        "when": "Административный помощник с явно подключёнными данными.",
+        "example": "docker run --rm --network none \"$TOOLS_IMAGE\" true",
+        "result": "Изменяемый слой помощника удалится; судьба подключённых томов определяется отдельно."
+      },
+      {
+        "flag": "-c ИМЯ / --context ИМЯ",
+        "action": "Выбрать сохранённую точку управления для одного вызова.",
+        "when": "Адресно обращаться к личной VM.",
+        "example": "docker --context study info",
+        "result": "Ответит Engine context study, а не обязательно локальный сервер."
+      },
+      {
+        "flag": "-H АДРЕС / --host АДРЕС",
+        "action": "Явно выбрать endpoint поддерживаемого транспорта.",
+        "when": "Диагностика заранее подготовленной точки, с осмысленными правами и TLS.",
+        "example": "docker --host unix:///var/run/docker.sock version",
+        "result": "Проверяется именно указанный сокет; право доступа не возникает от флага."
+      },
+      {
+        "flag": "-v / --version",
+        "action": "Вывести версию клиента без обязательной проверки сервера.",
+        "when": "Зафиксировать установленный CLI.",
+        "example": "docker --version",
+        "result": "Это не полная проверка версии Engine; для обеих сторон используют docker version."
+      },
+      {
+        "flag": "-D / --debug",
+        "action": "Включить подробную клиентскую диагностику.",
+        "when": "Короткий опыт проблемы подключения без публикации чувствительных деталей.",
+        "example": "docker --debug --context study info",
+        "result": "Диагностика расширяется, конфигурация сервера от этого не меняется."
+      }
+    ],
+    "situations": [],
+    "optionBoundary": "first-operand",
+    "flagScopes": [
+      "docker run",
+      "docker run",
+      "docker run",
+      "docker run",
+      "docker run",
+      "docker run",
+      "docker run",
+      "docker run",
+      "docker run",
+      "docker run",
+      "docker run",
+      "docker run",
+      "docker run",
+      "docker run",
+      "docker run",
+      "docker run",
+      "docker run",
+      "docker run",
+      "docker run",
+      "docker run",
+      "docker run",
+      "docker run",
+      "docker run",
+      "docker run",
+      "docker run",
+      "docker",
+      "docker",
+      "docker",
+      "docker"
+    ],
+    "prefixFlags": {
+      "docker": [
+        "-c ИМЯ / --context ИМЯ",
+        "-H АДРЕС / --host АДРЕС",
+        "-v / --version",
+        "-D / --debug"
+      ]
+    }
+  },
+  {
+    "name": "docker inspect",
+    "aliases": [],
+    "purpose": "Исследовать структурированное состояние объектов выбранного сервера.",
+    "syntax": "docker inspect [ОПЦИИ] ОБЪЕКТ",
+    "chapter": "02-client-daemon-runtime",
+    "volume": "docker",
+    "source": "https://docs.docker.com/reference/cli/docker/inspect/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.docker.com/reference/cli/docker/inspect/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "--format ШАБЛОН",
+        "action": "Вывести выбранные поля через Go template.",
+        "when": "Отдельно проверить запрошенные лимиты либо состояние.",
+        "example": "docker inspect --format '{{json .State}}' study-echo",
+        "result": "Структура состояния сохраняется; поле ExitCode оценивается вместе с Error/OOMKilled и журналом."
+      },
+      {
+        "flag": "--type ТИП",
+        "action": "Уточнить тип объекта при неоднозначности имени.",
+        "when": "Исследовать именно container, image или volume.",
+        "example": "docker inspect --type container study-echo",
+        "result": "Ограничивает поиск ожидаемым видом объекта."
+      },
+      {
+        "flag": "-c ИМЯ / --context ИМЯ",
+        "action": "Выбрать сохранённую точку управления для одного вызова.",
+        "when": "Адресно обращаться к личной VM.",
+        "example": "docker --context study info",
+        "result": "Ответит Engine context study, а не обязательно локальный сервер."
+      },
+      {
+        "flag": "-H АДРЕС / --host АДРЕС",
+        "action": "Явно выбрать endpoint поддерживаемого транспорта.",
+        "when": "Диагностика заранее подготовленной точки, с осмысленными правами и TLS.",
+        "example": "docker --host unix:///var/run/docker.sock version",
+        "result": "Проверяется именно указанный сокет; право доступа не возникает от флага."
+      },
+      {
+        "flag": "-v / --version",
+        "action": "Вывести версию клиента без обязательной проверки сервера.",
+        "when": "Зафиксировать установленный CLI.",
+        "example": "docker --version",
+        "result": "Это не полная проверка версии Engine; для обеих сторон используют docker version."
+      },
+      {
+        "flag": "-D / --debug",
+        "action": "Включить подробную клиентскую диагностику.",
+        "when": "Короткий опыт проблемы подключения без публикации чувствительных деталей.",
+        "example": "docker --debug --context study info",
+        "result": "Диагностика расширяется, конфигурация сервера от этого не меняется."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "docker inspect",
+      "docker inspect",
+      "docker",
+      "docker",
+      "docker",
+      "docker"
+    ],
+    "prefixFlags": {
+      "docker": [
+        "-c ИМЯ / --context ИМЯ",
+        "-H АДРЕС / --host АДРЕС",
+        "-v / --version",
+        "-D / --debug"
+      ]
+    }
+  },
+  {
+    "name": "docker ps",
+    "aliases": [],
+    "purpose": "Показать контейнеры с кратким состоянием.",
+    "syntax": "docker ps [ОПЦИИ]",
+    "chapter": "02-client-daemon-runtime",
+    "volume": "docker",
+    "source": "https://docs.docker.com/reference/cli/docker/container/ls/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.docker.com/reference/cli/docker/container/ls/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-a / --all",
+        "action": "Включить остановленные и созданные объекты.",
+        "when": "Найти контейнер после неудачного запуска.",
+        "example": "docker ps -a",
+        "result": "Без -a список только работающих может скрыть exited объект."
+      },
+      {
+        "flag": "--filter УСЛОВИЕ",
+        "action": "Ограничить набор по поддерживаемому признаку.",
+        "when": "Сузить расследование до нужных имён/labels.",
+        "example": "docker ps -a --filter name=study-echo",
+        "result": "Проверяют точные ID: условие имени может сопоставить несколько объектов."
+      },
+      {
+        "flag": "--no-trunc",
+        "action": "Не сокращать соответствующие поля вывода.",
+        "when": "Сопоставить идентификатор или команду.",
+        "example": "docker ps -a --no-trunc",
+        "result": "Удобно для расследования; не выводить лишние чувствительные параметры публично."
+      },
+      {
+        "flag": "-c ИМЯ / --context ИМЯ",
+        "action": "Выбрать сохранённую точку управления для одного вызова.",
+        "when": "Адресно обращаться к личной VM.",
+        "example": "docker --context study info",
+        "result": "Ответит Engine context study, а не обязательно локальный сервер."
+      },
+      {
+        "flag": "-H АДРЕС / --host АДРЕС",
+        "action": "Явно выбрать endpoint поддерживаемого транспорта.",
+        "when": "Диагностика заранее подготовленной точки, с осмысленными правами и TLS.",
+        "example": "docker --host unix:///var/run/docker.sock version",
+        "result": "Проверяется именно указанный сокет; право доступа не возникает от флага."
+      },
+      {
+        "flag": "-v / --version",
+        "action": "Вывести версию клиента без обязательной проверки сервера.",
+        "when": "Зафиксировать установленный CLI.",
+        "example": "docker --version",
+        "result": "Это не полная проверка версии Engine; для обеих сторон используют docker version."
+      },
+      {
+        "flag": "-D / --debug",
+        "action": "Включить подробную клиентскую диагностику.",
+        "when": "Короткий опыт проблемы подключения без публикации чувствительных деталей.",
+        "example": "docker --debug --context study info",
+        "result": "Диагностика расширяется, конфигурация сервера от этого не меняется."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "docker ps",
+      "docker ps",
+      "docker ps",
+      "docker",
+      "docker",
+      "docker",
+      "docker"
+    ],
+    "prefixFlags": {
+      "docker": [
+        "-c ИМЯ / --context ИМЯ",
+        "-H АДРЕС / --host АДРЕС",
+        "-v / --version",
+        "-D / --debug"
+      ]
+    }
+  },
+  {
+    "name": "docker logs",
+    "aliases": [],
+    "purpose": "Читать поддерживаемый журнал stdout/stderr контейнера.",
+    "syntax": "docker logs [ОПЦИИ] КОНТЕЙНЕР",
+    "chapter": "12-observability",
+    "volume": "docker",
+    "source": "https://docs.docker.com/reference/cli/docker/container/logs/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.docker.com/reference/cli/docker/container/logs/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "--tail N",
+        "action": "Вывести последние N строк.",
+        "when": "Ограничить объём перед исследованием.",
+        "example": "docker logs --tail 50 study-echo",
+        "result": "Ротация и драйвер определяют, какие события доступны."
+      },
+      {
+        "flag": "--since ВРЕМЯ",
+        "action": "Ограничить начало окна.",
+        "when": "Сопоставить с моментом инцидента.",
+        "example": "docker logs --since 15m study-echo",
+        "result": "Относительное время требует осмысленных часов; полноту аудита не гарантирует."
+      },
+      {
+        "flag": "--timestamps",
+        "action": "Показать временные отметки.",
+        "when": "Сравнить приложение с событием stop и метриками.",
+        "example": "docker logs --timestamps study-echo",
+        "result": "Уточняют происхождение часов и формат."
+      },
+      {
+        "flag": "-f / --follow",
+        "action": "Продолжать читать новые записи.",
+        "when": "Наблюдать короткий безопасный опыт.",
+        "example": "docker logs --follow --tail 20 study-echo",
+        "result": "Ctrl-C прекращает клиентский просмотр, а не обязательно приложение."
+      },
+      {
+        "flag": "-c ИМЯ / --context ИМЯ",
+        "action": "Выбрать сохранённую точку управления для одного вызова.",
+        "when": "Адресно обращаться к личной VM.",
+        "example": "docker --context study info",
+        "result": "Ответит Engine context study, а не обязательно локальный сервер."
+      },
+      {
+        "flag": "-H АДРЕС / --host АДРЕС",
+        "action": "Явно выбрать endpoint поддерживаемого транспорта.",
+        "when": "Диагностика заранее подготовленной точки, с осмысленными правами и TLS.",
+        "example": "docker --host unix:///var/run/docker.sock version",
+        "result": "Проверяется именно указанный сокет; право доступа не возникает от флага."
+      },
+      {
+        "flag": "-v / --version",
+        "action": "Вывести версию клиента без обязательной проверки сервера.",
+        "when": "Зафиксировать установленный CLI.",
+        "example": "docker --version",
+        "result": "Это не полная проверка версии Engine; для обеих сторон используют docker version."
+      },
+      {
+        "flag": "-D / --debug",
+        "action": "Включить подробную клиентскую диагностику.",
+        "when": "Короткий опыт проблемы подключения без публикации чувствительных деталей.",
+        "example": "docker --debug --context study info",
+        "result": "Диагностика расширяется, конфигурация сервера от этого не меняется."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "docker logs",
+      "docker logs",
+      "docker logs",
+      "docker logs",
+      "docker",
+      "docker",
+      "docker",
+      "docker"
+    ],
+    "prefixFlags": {
+      "docker": [
+        "-c ИМЯ / --context ИМЯ",
+        "-H АДРЕС / --host АДРЕС",
+        "-v / --version",
+        "-D / --debug"
+      ]
+    }
+  },
+  {
+    "name": "docker stop",
+    "aliases": [],
+    "purpose": "Штатно запросить завершение и применить принудительный предел после ожидания.",
+    "syntax": "docker stop [ОПЦИИ] КОНТЕЙНЕР",
+    "chapter": "05-process-kernel",
+    "volume": "docker",
+    "source": "https://docs.docker.com/reference/cli/docker/container/stop/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.docker.com/reference/cli/docker/container/stop/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-t СЕКУНДЫ / --timeout СЕКУНДЫ",
+        "action": "Выбрать время ожидания перед принудительным завершением.",
+        "when": "Согласовать с 10 секундами Shutdown своей службы.",
+        "example": "docker stop --timeout 15 study-echo",
+        "result": "Приложение должно обработать сигнал; истёкший бюджет не сохраняет данные сам."
+      },
+      {
+        "flag": "-c ИМЯ / --context ИМЯ",
+        "action": "Выбрать сохранённую точку управления для одного вызова.",
+        "when": "Адресно обращаться к личной VM.",
+        "example": "docker --context study info",
+        "result": "Ответит Engine context study, а не обязательно локальный сервер."
+      },
+      {
+        "flag": "-H АДРЕС / --host АДРЕС",
+        "action": "Явно выбрать endpoint поддерживаемого транспорта.",
+        "when": "Диагностика заранее подготовленной точки, с осмысленными правами и TLS.",
+        "example": "docker --host unix:///var/run/docker.sock version",
+        "result": "Проверяется именно указанный сокет; право доступа не возникает от флага."
+      },
+      {
+        "flag": "-v / --version",
+        "action": "Вывести версию клиента без обязательной проверки сервера.",
+        "when": "Зафиксировать установленный CLI.",
+        "example": "docker --version",
+        "result": "Это не полная проверка версии Engine; для обеих сторон используют docker version."
+      },
+      {
+        "flag": "-D / --debug",
+        "action": "Включить подробную клиентскую диагностику.",
+        "when": "Короткий опыт проблемы подключения без публикации чувствительных деталей.",
+        "example": "docker --debug --context study info",
+        "result": "Диагностика расширяется, конфигурация сервера от этого не меняется."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "docker stop",
+      "docker",
+      "docker",
+      "docker",
+      "docker"
+    ],
+    "prefixFlags": {
+      "docker": [
+        "-c ИМЯ / --context ИМЯ",
+        "-H АДРЕС / --host АДРЕС",
+        "-v / --version",
+        "-D / --debug"
+      ]
+    }
+  },
+  {
+    "name": "docker exec",
+    "aliases": [],
+    "purpose": "Запустить дополнительный процесс в существующем работающем контейнере.",
+    "syntax": "docker exec [ОПЦИИ] КОНТЕЙНЕР КОМАНДА",
+    "chapter": "02-client-daemon-runtime",
+    "volume": "docker",
+    "source": "https://docs.docker.com/reference/cli/docker/container/exec/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.docker.com/reference/cli/docker/container/exec/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-i",
+        "action": "Передавать stdin дополнительному процессу.",
+        "when": "Предусмотренный машинный ввод.",
+        "example": "docker exec -i study-tools cat",
+        "result": "Программа cat должна существовать в этом контейнере."
+      },
+      {
+        "flag": "-t",
+        "action": "Выделить псевдотерминал дополнительному процессу.",
+        "when": "Интерактивная shell подготовленного tools-образа.",
+        "example": "docker exec -it study-tools sh",
+        "result": "Scratch-служба не содержит sh и не становится неисправной из-за такого отказа."
+      },
+      {
+        "flag": "--user UID:GID",
+        "action": "Выбрать пользователя дополнительного процесса.",
+        "when": "Проверить конкретную границу прав на своём стенде.",
+        "example": "docker exec --user 10001:10001 study-echo /echo check",
+        "result": "Не меняет USER основного процесса или исходный образ."
+      },
+      {
+        "flag": "-c ИМЯ / --context ИМЯ",
+        "action": "Выбрать сохранённую точку управления для одного вызова.",
+        "when": "Адресно обращаться к личной VM.",
+        "example": "docker --context study info",
+        "result": "Ответит Engine context study, а не обязательно локальный сервер."
+      },
+      {
+        "flag": "-H АДРЕС / --host АДРЕС",
+        "action": "Явно выбрать endpoint поддерживаемого транспорта.",
+        "when": "Диагностика заранее подготовленной точки, с осмысленными правами и TLS.",
+        "example": "docker --host unix:///var/run/docker.sock version",
+        "result": "Проверяется именно указанный сокет; право доступа не возникает от флага."
+      },
+      {
+        "flag": "-v / --version",
+        "action": "Вывести версию клиента без обязательной проверки сервера.",
+        "when": "Зафиксировать установленный CLI.",
+        "example": "docker --version",
+        "result": "Это не полная проверка версии Engine; для обеих сторон используют docker version."
+      },
+      {
+        "flag": "-D / --debug",
+        "action": "Включить подробную клиентскую диагностику.",
+        "when": "Короткий опыт проблемы подключения без публикации чувствительных деталей.",
+        "example": "docker --debug --context study info",
+        "result": "Диагностика расширяется, конфигурация сервера от этого не меняется."
+      }
+    ],
+    "situations": [],
+    "optionBoundary": "first-operand",
+    "flagScopes": [
+      "docker exec",
+      "docker exec",
+      "docker exec",
+      "docker",
+      "docker",
+      "docker",
+      "docker"
+    ],
+    "prefixFlags": {
+      "docker": [
+        "-c ИМЯ / --context ИМЯ",
+        "-H АДРЕС / --host АДРЕС",
+        "-v / --version",
+        "-D / --debug"
+      ]
+    }
+  },
+  {
+    "name": "docker buildx build",
+    "aliases": [],
+    "purpose": "Вычислить образ выбранным builder и экспортировать результат.",
+    "syntax": "docker buildx build [ОПЦИИ] КОНТЕКСТ",
+    "chapter": "04-buildkit-cache",
+    "volume": "docker",
+    "source": "https://docs.docker.com/reference/cli/docker/buildx/build/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.docker.com/reference/cli/docker/buildx/build/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "--build-arg ИМЯ=ЗНАЧЕНИЕ",
+        "action": "Передать объявленный несекретный вход ARG.",
+        "when": "Выбрать закреплённый Go-образ.",
+        "example": "docker buildx build --build-arg GO_IMAGE=\"$GO_IMAGE\" .",
+        "result": "Параметр может участвовать в результате; секреты передают отдельным механизмом."
+      },
+      {
+        "flag": "-f ПУТЬ / --file ПУТЬ",
+        "action": "Выбрать Dockerfile.",
+        "when": "Описание лежит отдельно от корня контекста.",
+        "example": "docker buildx build -f deploy/Dockerfile .",
+        "result": "COPY по-прежнему видит контекст точки, а не любой файл вокруг Dockerfile."
+      },
+      {
+        "flag": "--tag ИМЯ",
+        "action": "Назначить ссылку экспортируемому образу.",
+        "when": "Удобное имя учебного результата.",
+        "example": "docker buildx build --load --tag study/echo:lesson1 .",
+        "result": "Tag изменяем; для выпуска фиксируют идентичность содержимого."
+      },
+      {
+        "flag": "--platform СПИСОК",
+        "action": "Выбрать целевые ОС и архитектуры.",
+        "when": "Собрать для Linux-сервера amd64.",
+        "example": "docker buildx build --platform linux/amd64 --load .",
+        "result": "Успех компиляции не равен проверке исполнения на каждой цели."
+      },
+      {
+        "flag": "--load",
+        "action": "Загрузить результат в поддерживаемое image store выбранного Engine.",
+        "when": "Одна платформа для учебного запуска.",
+        "example": "docker buildx build --platform linux/amd64 --load .",
+        "result": "Возможность зависит от экспортера и хранилища; удалённый Engine находится на сервере."
+      },
+      {
+        "flag": "--push",
+        "action": "Экспортировать результат в подготовленный registry.",
+        "when": "Многоплатформенная доставка с отдельной проверкой публикации.",
+        "example": "docker buildx build --platform linux/amd64,linux/arm64 --push --tag \"$RELEASE_IMAGE\" .",
+        "result": "Нужны доступ, TLS и права; без подготовленного сервиса это не автономная операция."
+      },
+      {
+        "flag": "--progress РЕЖИМ",
+        "action": "Выбрать представление хода сборки; plain печатает последовательный текст шагов.",
+        "when": "Сравнить холодную, повторную и изменённую сборки.",
+        "example": "docker buildx build --progress=plain .",
+        "result": "Вывод помогает различить кэш, передачу и вычисление; длительность определяется критическим путём."
+      },
+      {
+        "flag": "--no-cache",
+        "action": "Не использовать прежние результаты шагов.",
+        "when": "Отдельный опыт полного пересчёта.",
+        "example": "docker buildx build --no-cache .",
+        "result": "Сам не означает получение новой базы и не обязан очищать cache mounts."
+      },
+      {
+        "flag": "--pull",
+        "action": "Проверять получение используемых базовых образов.",
+        "when": "Осознанно обновить внешние входы при доступной сети.",
+        "example": "docker buildx build --pull .",
+        "result": "Изменяемый tag может дать новый вход; результат сверяют с паспортом."
+      },
+      {
+        "flag": "--secret ОПИСАНИЕ",
+        "action": "Передать источник временного секрета сборки.",
+        "when": "Подготовленная доверенная команда получает частный вход.",
+        "example": "docker buildx build --secret id=repo_token,src=/ЛИЧНЫЙ/ПУТЬ .",
+        "result": "RUN должен явно его использовать; секрету нельзя попадать в журнал или результат."
+      },
+      {
+        "flag": "--provenance ПАРАМЕТРЫ",
+        "action": "Настроить сведения о происхождении; mode=min запрашивает минимальный вариант при поддерживаемом экспорте, false отключает запрос.",
+        "when": "Связать опубликованный результат со средой сборки.",
+        "example": "docker buildx build --provenance=mode=min --push --tag \"$RELEASE_IMAGE\" .",
+        "result": "Сохранение утверждения и доверие к нему проверяют отдельно."
+      },
+      {
+        "flag": "--sbom ЗНАЧЕНИЕ",
+        "action": "Управлять запросом перечня программных компонентов: true включает, false отключает.",
+        "when": "Анализ состава выпуска подготовленным сканером.",
+        "example": "docker buildx build --sbom=true --push --tag \"$RELEASE_IMAGE\" .",
+        "result": "Может потребоваться дополнительный образ сканера; это не гарантия отсутствия вредного поведения."
+      },
+      {
+        "flag": "-c ИМЯ / --context ИМЯ",
+        "action": "Выбрать сохранённую точку управления для одного вызова.",
+        "when": "Адресно обращаться к личной VM.",
+        "example": "docker --context study info",
+        "result": "Ответит Engine context study, а не обязательно локальный сервер."
+      },
+      {
+        "flag": "-H АДРЕС / --host АДРЕС",
+        "action": "Явно выбрать endpoint поддерживаемого транспорта.",
+        "when": "Диагностика заранее подготовленной точки, с осмысленными правами и TLS.",
+        "example": "docker --host unix:///var/run/docker.sock version",
+        "result": "Проверяется именно указанный сокет; право доступа не возникает от флага."
+      },
+      {
+        "flag": "-v / --version",
+        "action": "Вывести версию клиента без обязательной проверки сервера.",
+        "when": "Зафиксировать установленный CLI.",
+        "example": "docker --version",
+        "result": "Это не полная проверка версии Engine; для обеих сторон используют docker version."
+      },
+      {
+        "flag": "-D / --debug",
+        "action": "Включить подробную клиентскую диагностику.",
+        "when": "Короткий опыт проблемы подключения без публикации чувствительных деталей.",
+        "example": "docker --debug --context study info",
+        "result": "Диагностика расширяется, конфигурация сервера от этого не меняется."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "docker buildx build",
+      "docker buildx build",
+      "docker buildx build",
+      "docker buildx build",
+      "docker buildx build",
+      "docker buildx build",
+      "docker buildx build",
+      "docker buildx build",
+      "docker buildx build",
+      "docker buildx build",
+      "docker buildx build",
+      "docker buildx build",
+      "docker",
+      "docker",
+      "docker",
+      "docker"
+    ],
+    "prefixFlags": {
+      "docker": [
+        "-c ИМЯ / --context ИМЯ",
+        "-H АДРЕС / --host АДРЕС",
+        "-v / --version",
+        "-D / --debug"
+      ],
+      "docker buildx": []
+    }
+  },
+  {
+    "name": "docker image save",
+    "aliases": [],
+    "purpose": "Сохранить образы и их метаданные в переносимый архив.",
+    "syntax": "docker image save [ОПЦИИ] ОБРАЗ",
+    "chapter": "10-distribution-provenance",
+    "volume": "docker",
+    "source": "https://docs.docker.com/reference/cli/docker/image/save/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.docker.com/reference/cli/docker/image/save/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-o ФАЙЛ / --output ФАЙЛ",
+        "action": "Записать архив в файл на стороне клиента.",
+        "when": "Подготовить образ на USB до автономного дня.",
+        "example": "docker image save --output echo-lesson1.tar study/echo:lesson1",
+        "result": "Файл не содержит volumes; клиентский путь отличается от bind source на daemon-хосте."
+      },
+      {
+        "flag": "-c ИМЯ / --context ИМЯ",
+        "action": "Выбрать сохранённую точку управления для одного вызова.",
+        "when": "Адресно обращаться к личной VM.",
+        "example": "docker --context study info",
+        "result": "Ответит Engine context study, а не обязательно локальный сервер."
+      },
+      {
+        "flag": "-H АДРЕС / --host АДРЕС",
+        "action": "Явно выбрать endpoint поддерживаемого транспорта.",
+        "when": "Диагностика заранее подготовленной точки, с осмысленными правами и TLS.",
+        "example": "docker --host unix:///var/run/docker.sock version",
+        "result": "Проверяется именно указанный сокет; право доступа не возникает от флага."
+      },
+      {
+        "flag": "-v / --version",
+        "action": "Вывести версию клиента без обязательной проверки сервера.",
+        "when": "Зафиксировать установленный CLI.",
+        "example": "docker --version",
+        "result": "Это не полная проверка версии Engine; для обеих сторон используют docker version."
+      },
+      {
+        "flag": "-D / --debug",
+        "action": "Включить подробную клиентскую диагностику.",
+        "when": "Короткий опыт проблемы подключения без публикации чувствительных деталей.",
+        "example": "docker --debug --context study info",
+        "result": "Диагностика расширяется, конфигурация сервера от этого не меняется."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "docker image save",
+      "docker",
+      "docker",
+      "docker",
+      "docker"
+    ],
+    "prefixFlags": {
+      "docker": [
+        "-c ИМЯ / --context ИМЯ",
+        "-H АДРЕС / --host АДРЕС",
+        "-v / --version",
+        "-D / --debug"
+      ],
+      "docker image": []
+    }
+  },
+  {
+    "name": "docker image load",
+    "aliases": [],
+    "purpose": "Загрузить подготовленный архив образов в выбранный Engine.",
+    "syntax": "docker image load [ОПЦИИ]",
+    "chapter": "10-distribution-provenance",
+    "volume": "docker",
+    "source": "https://docs.docker.com/reference/cli/docker/image/load/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.docker.com/reference/cli/docker/image/load/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-i ФАЙЛ / --input ФАЙЛ",
+        "action": "Прочитать архив на стороне клиента.",
+        "when": "Перенести проверенный образ без registry.",
+        "example": "docker image load --input echo-lesson1.tar",
+        "result": "После загрузки проверяют платформу, конфигурацию и идентичность; постоянные тома не появляются."
+      },
+      {
+        "flag": "-c ИМЯ / --context ИМЯ",
+        "action": "Выбрать сохранённую точку управления для одного вызова.",
+        "when": "Адресно обращаться к личной VM.",
+        "example": "docker --context study info",
+        "result": "Ответит Engine context study, а не обязательно локальный сервер."
+      },
+      {
+        "flag": "-H АДРЕС / --host АДРЕС",
+        "action": "Явно выбрать endpoint поддерживаемого транспорта.",
+        "when": "Диагностика заранее подготовленной точки, с осмысленными правами и TLS.",
+        "example": "docker --host unix:///var/run/docker.sock version",
+        "result": "Проверяется именно указанный сокет; право доступа не возникает от флага."
+      },
+      {
+        "flag": "-v / --version",
+        "action": "Вывести версию клиента без обязательной проверки сервера.",
+        "when": "Зафиксировать установленный CLI.",
+        "example": "docker --version",
+        "result": "Это не полная проверка версии Engine; для обеих сторон используют docker version."
+      },
+      {
+        "flag": "-D / --debug",
+        "action": "Включить подробную клиентскую диагностику.",
+        "when": "Короткий опыт проблемы подключения без публикации чувствительных деталей.",
+        "example": "docker --debug --context study info",
+        "result": "Диагностика расширяется, конфигурация сервера от этого не меняется."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "docker image load",
+      "docker",
+      "docker",
+      "docker",
+      "docker"
+    ],
+    "prefixFlags": {
+      "docker": [
+        "-c ИМЯ / --context ИМЯ",
+        "-H АДРЕС / --host АДРЕС",
+        "-v / --version",
+        "-D / --debug"
+      ],
+      "docker image": []
+    }
+  },
+  {
+    "name": "docker stats",
+    "aliases": [],
+    "purpose": "Наблюдать агрегированный учёт ресурсов контейнера.",
+    "syntax": "docker stats [ОПЦИИ] [КОНТЕЙНЕР]",
+    "chapter": "13-resource-efficiency",
+    "volume": "docker",
+    "source": "https://docs.docker.com/reference/cli/docker/container/stats/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.docker.com/reference/cli/docker/container/stats/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "--no-stream",
+        "action": "Получить один снимок вместо постоянного обновления.",
+        "when": "Сопоставить состояние с HostConfig или журналом.",
+        "example": "docker stats --no-stream study-echo",
+        "result": "Один снимок может пропустить пик; память в этой метрике отличается от RSS и Go-кучи."
+      },
+      {
+        "flag": "-c ИМЯ / --context ИМЯ",
+        "action": "Выбрать сохранённую точку управления для одного вызова.",
+        "when": "Адресно обращаться к личной VM.",
+        "example": "docker --context study info",
+        "result": "Ответит Engine context study, а не обязательно локальный сервер."
+      },
+      {
+        "flag": "-H АДРЕС / --host АДРЕС",
+        "action": "Явно выбрать endpoint поддерживаемого транспорта.",
+        "when": "Диагностика заранее подготовленной точки, с осмысленными правами и TLS.",
+        "example": "docker --host unix:///var/run/docker.sock version",
+        "result": "Проверяется именно указанный сокет; право доступа не возникает от флага."
+      },
+      {
+        "flag": "-v / --version",
+        "action": "Вывести версию клиента без обязательной проверки сервера.",
+        "when": "Зафиксировать установленный CLI.",
+        "example": "docker --version",
+        "result": "Это не полная проверка версии Engine; для обеих сторон используют docker version."
+      },
+      {
+        "flag": "-D / --debug",
+        "action": "Включить подробную клиентскую диагностику.",
+        "when": "Короткий опыт проблемы подключения без публикации чувствительных деталей.",
+        "example": "docker --debug --context study info",
+        "result": "Диагностика расширяется, конфигурация сервера от этого не меняется."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "docker stats",
+      "docker",
+      "docker",
+      "docker",
+      "docker"
+    ],
+    "prefixFlags": {
+      "docker": [
+        "-c ИМЯ / --context ИМЯ",
+        "-H АДРЕС / --host АДРЕС",
+        "-v / --version",
+        "-D / --debug"
+      ]
+    }
+  },
+  {
+    "name": "docker system df",
+    "aliases": [],
+    "purpose": "Показать учёт места объектов Docker.",
+    "syntax": "docker system df [ОПЦИИ]",
+    "chapter": "03-image-oci-layers",
+    "volume": "docker",
+    "source": "https://docs.docker.com/reference/cli/docker/system/df/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.docker.com/reference/cli/docker/system/df/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-v / --verbose",
+        "action": "Детализировать образы, контейнеры и тома в рамках учёта сервера.",
+        "when": "Различить общие слои и отдельно выделенные объекты.",
+        "example": "docker system df -v",
+        "result": "Сумма виртуальных размеров не равна уникальному месту; bind-данные требуют отдельной проверки."
+      },
+      {
+        "flag": "-c ИМЯ / --context ИМЯ",
+        "action": "Выбрать сохранённую точку управления для одного вызова.",
+        "when": "Адресно обращаться к личной VM.",
+        "example": "docker --context study info",
+        "result": "Ответит Engine context study, а не обязательно локальный сервер."
+      },
+      {
+        "flag": "-H АДРЕС / --host АДРЕС",
+        "action": "Явно выбрать endpoint поддерживаемого транспорта.",
+        "when": "Диагностика заранее подготовленной точки, с осмысленными правами и TLS.",
+        "example": "docker --host unix:///var/run/docker.sock version",
+        "result": "Проверяется именно указанный сокет; право доступа не возникает от флага."
+      },
+      {
+        "flag": "-v / --version",
+        "action": "Вывести версию клиента без обязательной проверки сервера.",
+        "when": "Зафиксировать установленный CLI.",
+        "example": "docker --version",
+        "result": "Это не полная проверка версии Engine; для обеих сторон используют docker version."
+      },
+      {
+        "flag": "-D / --debug",
+        "action": "Включить подробную клиентскую диагностику.",
+        "when": "Короткий опыт проблемы подключения без публикации чувствительных деталей.",
+        "example": "docker --debug --context study info",
+        "result": "Диагностика расширяется, конфигурация сервера от этого не меняется."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "docker system df",
+      "docker",
+      "docker",
+      "docker",
+      "docker"
+    ],
+    "prefixFlags": {
+      "docker": [
+        "-c ИМЯ / --context ИМЯ",
+        "-H АДРЕС / --host АДРЕС",
+        "-v / --version",
+        "-D / --debug"
+      ],
+      "docker system": []
+    }
+  },
+  {
+    "name": "docker compose",
+    "aliases": [],
+    "purpose": "Применять модель проекта Compose к выбранному Engine.",
+    "syntax": "docker --context study compose [ОПЦИИ] КОМАНДА",
+    "chapter": "11-compose-lifecycle",
+    "volume": "docker",
+    "source": "https://docs.docker.com/reference/cli/docker/compose/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.docker.com/reference/cli/docker/compose/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-f ФАЙЛ / --file ФАЙЛ",
+        "action": "Выбрать описание проекта Compose.",
+        "when": "Повторяемый путь из каталога тома.",
+        "example": "docker compose -f labs/echo/compose.yaml config",
+        "result": "Подстановки и пути зависят от выбранных файлов; config может вывести секреты."
+      },
+      {
+        "flag": "-p ИМЯ / --project-name ИМЯ",
+        "action": "Переопределить имя проекта.",
+        "when": "Осознанно создать отдельное развёртывание.",
+        "example": "docker compose -p study-restore config",
+        "result": "Другое имя может означать другие объекты и тома; основной проект случайно не переименовывают."
+      },
+      {
+        "flag": "-c ИМЯ / --context ИМЯ",
+        "action": "Выбрать сохранённую точку управления для одного вызова.",
+        "when": "Адресно обращаться к личной VM.",
+        "example": "docker --context study info",
+        "result": "Ответит Engine context study, а не обязательно локальный сервер."
+      },
+      {
+        "flag": "-H АДРЕС / --host АДРЕС",
+        "action": "Явно выбрать endpoint поддерживаемого транспорта.",
+        "when": "Диагностика заранее подготовленной точки, с осмысленными правами и TLS.",
+        "example": "docker --host unix:///var/run/docker.sock version",
+        "result": "Проверяется именно указанный сокет; право доступа не возникает от флага."
+      },
+      {
+        "flag": "-v / --version",
+        "action": "Вывести версию клиента без обязательной проверки сервера.",
+        "when": "Зафиксировать установленный CLI.",
+        "example": "docker --version",
+        "result": "Это не полная проверка версии Engine; для обеих сторон используют docker version."
+      },
+      {
+        "flag": "-D / --debug",
+        "action": "Включить подробную клиентскую диагностику.",
+        "when": "Короткий опыт проблемы подключения без публикации чувствительных деталей.",
+        "example": "docker --debug --context study info",
+        "result": "Диагностика расширяется, конфигурация сервера от этого не меняется."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "docker compose",
+      "docker compose",
+      "docker",
+      "docker",
+      "docker",
+      "docker"
+    ],
+    "prefixFlags": {
+      "docker": [
+        "-c ИМЯ / --context ИМЯ",
+        "-H АДРЕС / --host АДРЕС",
+        "-v / --version",
+        "-D / --debug"
+      ]
+    }
+  },
+  {
+    "name": "docker compose up",
+    "aliases": [],
+    "purpose": "Создать или согласовать ресурсы и процессы проекта.",
+    "syntax": "docker compose up [ОПЦИИ] [СЕРВИС]",
+    "chapter": "11-compose-lifecycle",
+    "volume": "docker",
+    "source": "https://docs.docker.com/reference/cli/docker/compose/up/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.docker.com/reference/cli/docker/compose/up/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-d / --detach",
+        "action": "Отсоединиться после запуска.",
+        "when": "Запустить сохраняемую службу.",
+        "example": "docker compose up -d",
+        "result": "Здоровье и операции данных проверяются отдельно."
+      },
+      {
+        "flag": "--no-deps",
+        "action": "Ограничить запуск выбранным сервисом без обычного подъёма зависимостей.",
+        "when": "Контролируемое обновление при уже проверенных зависимостях.",
+        "example": "docker compose up -d --no-deps echo",
+        "result": "Не обеспечивает готовность пропущенных служб."
+      },
+      {
+        "flag": "--force-recreate",
+        "action": "Пересоздать контейнеры даже без обнаруженного изменения.",
+        "when": "Явный опыт жизненного цикла с подготовленными данными.",
+        "example": "docker compose up -d --force-recreate echo",
+        "result": "Изменяемый слой заменяется; прежний volume нужно адресно подключить снова."
+      },
+      {
+        "flag": "-c ИМЯ / --context ИМЯ",
+        "action": "Выбрать сохранённую точку управления для одного вызова.",
+        "when": "Адресно обращаться к личной VM.",
+        "example": "docker --context study info",
+        "result": "Ответит Engine context study, а не обязательно локальный сервер."
+      },
+      {
+        "flag": "-H АДРЕС / --host АДРЕС",
+        "action": "Явно выбрать endpoint поддерживаемого транспорта.",
+        "when": "Диагностика заранее подготовленной точки, с осмысленными правами и TLS.",
+        "example": "docker --host unix:///var/run/docker.sock version",
+        "result": "Проверяется именно указанный сокет; право доступа не возникает от флага."
+      },
+      {
+        "flag": "-v / --version",
+        "action": "Вывести версию клиента без обязательной проверки сервера.",
+        "when": "Зафиксировать установленный CLI.",
+        "example": "docker --version",
+        "result": "Это не полная проверка версии Engine; для обеих сторон используют docker version."
+      },
+      {
+        "flag": "-D / --debug",
+        "action": "Включить подробную клиентскую диагностику.",
+        "when": "Короткий опыт проблемы подключения без публикации чувствительных деталей.",
+        "example": "docker --debug --context study info",
+        "result": "Диагностика расширяется, конфигурация сервера от этого не меняется."
+      },
+      {
+        "flag": "-f ФАЙЛ / --file ФАЙЛ",
+        "action": "Выбрать описание проекта Compose.",
+        "when": "Повторяемый путь из каталога тома.",
+        "example": "docker compose -f labs/echo/compose.yaml config",
+        "result": "Подстановки и пути зависят от выбранных файлов; config может вывести секреты."
+      },
+      {
+        "flag": "-p ИМЯ / --project-name ИМЯ",
+        "action": "Переопределить имя проекта.",
+        "when": "Осознанно создать отдельное развёртывание.",
+        "example": "docker compose -p study-restore config",
+        "result": "Другое имя может означать другие объекты и тома; основной проект случайно не переименовывают."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "docker compose up",
+      "docker compose up",
+      "docker compose up",
+      "docker",
+      "docker",
+      "docker",
+      "docker",
+      "docker compose",
+      "docker compose"
+    ],
+    "prefixFlags": {
+      "docker": [
+        "-c ИМЯ / --context ИМЯ",
+        "-H АДРЕС / --host АДРЕС",
+        "-v / --version",
+        "-D / --debug"
+      ],
+      "docker compose": [
+        "-f ФАЙЛ / --file ФАЙЛ",
+        "-p ИМЯ / --project-name ИМЯ"
+      ]
+    }
+  },
+  {
+    "name": "docker compose down",
+    "aliases": [],
+    "purpose": "Удалить предусмотренные контейнеры и сети проекта.",
+    "syntax": "docker compose down [ОПЦИИ]",
+    "chapter": "11-compose-lifecycle",
+    "volume": "docker",
+    "source": "https://docs.docker.com/reference/cli/docker/compose/down/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.docker.com/reference/cli/docker/compose/down/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-v / --volumes",
+        "action": "Включить удаление предусмотренных управляемых томов.",
+        "when": "Только осознанно завершить одноразовый проект после проверки резерва.",
+        "example": "docker compose down --volumes",
+        "result": "Для продолжаемого стенда не нужен; external volumes находятся за отдельной границей управления."
+      },
+      {
+        "flag": "-c ИМЯ / --context ИМЯ",
+        "action": "Выбрать сохранённую точку управления для одного вызова.",
+        "when": "Адресно обращаться к личной VM.",
+        "example": "docker --context study info",
+        "result": "Ответит Engine context study, а не обязательно локальный сервер."
+      },
+      {
+        "flag": "-H АДРЕС / --host АДРЕС",
+        "action": "Явно выбрать endpoint поддерживаемого транспорта.",
+        "when": "Диагностика заранее подготовленной точки, с осмысленными правами и TLS.",
+        "example": "docker --host unix:///var/run/docker.sock version",
+        "result": "Проверяется именно указанный сокет; право доступа не возникает от флага."
+      },
+      {
+        "flag": "-v / --version",
+        "action": "Вывести версию клиента без обязательной проверки сервера.",
+        "when": "Зафиксировать установленный CLI.",
+        "example": "docker --version",
+        "result": "Это не полная проверка версии Engine; для обеих сторон используют docker version."
+      },
+      {
+        "flag": "-D / --debug",
+        "action": "Включить подробную клиентскую диагностику.",
+        "when": "Короткий опыт проблемы подключения без публикации чувствительных деталей.",
+        "example": "docker --debug --context study info",
+        "result": "Диагностика расширяется, конфигурация сервера от этого не меняется."
+      },
+      {
+        "flag": "-f ФАЙЛ / --file ФАЙЛ",
+        "action": "Выбрать описание проекта Compose.",
+        "when": "Повторяемый путь из каталога тома.",
+        "example": "docker compose -f labs/echo/compose.yaml config",
+        "result": "Подстановки и пути зависят от выбранных файлов; config может вывести секреты."
+      },
+      {
+        "flag": "-p ИМЯ / --project-name ИМЯ",
+        "action": "Переопределить имя проекта.",
+        "when": "Осознанно создать отдельное развёртывание.",
+        "example": "docker compose -p study-restore config",
+        "result": "Другое имя может означать другие объекты и тома; основной проект случайно не переименовывают."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "docker compose down",
+      "docker",
+      "docker",
+      "docker",
+      "docker",
+      "docker compose",
+      "docker compose"
+    ],
+    "prefixFlags": {
+      "docker": [
+        "-c ИМЯ / --context ИМЯ",
+        "-H АДРЕС / --host АДРЕС",
+        "-v / --version",
+        "-D / --debug"
+      ],
+      "docker compose": [
+        "-f ФАЙЛ / --file ФАЙЛ",
+        "-p ИМЯ / --project-name ИМЯ"
+      ]
+    }
+  },
+  {
+    "name": "docker context ls",
+    "aliases": [],
+    "purpose": "Перечислить сохранённые клиентом точки управления. Звёздочка обозначает выбранную, если вызов не переопределён окружением или аргументом.",
+    "syntax": "docker context ls",
+    "chapter": "02-client-daemon-runtime",
+    "volume": "docker",
+    "source": "https://docs.docker.com/reference/cli/docker/context/ls/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.docker.com/reference/cli/docker/context/ls/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-c ИМЯ / --context ИМЯ",
+        "action": "Выбрать сохранённую точку управления для одного вызова.",
+        "when": "Адресно обращаться к личной VM.",
+        "example": "docker --context study info",
+        "result": "Ответит Engine context study, а не обязательно локальный сервер."
+      },
+      {
+        "flag": "-H АДРЕС / --host АДРЕС",
+        "action": "Явно выбрать endpoint поддерживаемого транспорта.",
+        "when": "Диагностика заранее подготовленной точки, с осмысленными правами и TLS.",
+        "example": "docker --host unix:///var/run/docker.sock version",
+        "result": "Проверяется именно указанный сокет; право доступа не возникает от флага."
+      },
+      {
+        "flag": "-v / --version",
+        "action": "Вывести версию клиента без обязательной проверки сервера.",
+        "when": "Зафиксировать установленный CLI.",
+        "example": "docker --version",
+        "result": "Это не полная проверка версии Engine; для обеих сторон используют docker version."
+      },
+      {
+        "flag": "-D / --debug",
+        "action": "Включить подробную клиентскую диагностику.",
+        "when": "Короткий опыт проблемы подключения без публикации чувствительных деталей.",
+        "example": "docker --debug --context study info",
+        "result": "Диагностика расширяется, конфигурация сервера от этого не меняется."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "docker",
+      "docker",
+      "docker",
+      "docker"
+    ],
+    "prefixFlags": {
+      "docker": [
+        "-c ИМЯ / --context ИМЯ",
+        "-H АДРЕС / --host АДРЕС",
+        "-v / --version",
+        "-D / --debug"
+      ],
+      "docker context": []
+    }
+  },
+  {
+    "name": "docker context inspect",
+    "aliases": [],
+    "purpose": "Прочитать адрес и параметры точки управления. Секретные материалы не публикуют вместе с диагностикой.",
+    "syntax": "docker context inspect ИМЯ",
+    "chapter": "02-client-daemon-runtime",
+    "volume": "docker",
+    "source": "https://docs.docker.com/reference/cli/docker/context/inspect/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.docker.com/reference/cli/docker/context/inspect/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-c ИМЯ / --context ИМЯ",
+        "action": "Выбрать сохранённую точку управления для одного вызова.",
+        "when": "Адресно обращаться к личной VM.",
+        "example": "docker --context study info",
+        "result": "Ответит Engine context study, а не обязательно локальный сервер."
+      },
+      {
+        "flag": "-H АДРЕС / --host АДРЕС",
+        "action": "Явно выбрать endpoint поддерживаемого транспорта.",
+        "when": "Диагностика заранее подготовленной точки, с осмысленными правами и TLS.",
+        "example": "docker --host unix:///var/run/docker.sock version",
+        "result": "Проверяется именно указанный сокет; право доступа не возникает от флага."
+      },
+      {
+        "flag": "-v / --version",
+        "action": "Вывести версию клиента без обязательной проверки сервера.",
+        "when": "Зафиксировать установленный CLI.",
+        "example": "docker --version",
+        "result": "Это не полная проверка версии Engine; для обеих сторон используют docker version."
+      },
+      {
+        "flag": "-D / --debug",
+        "action": "Включить подробную клиентскую диагностику.",
+        "when": "Короткий опыт проблемы подключения без публикации чувствительных деталей.",
+        "example": "docker --debug --context study info",
+        "result": "Диагностика расширяется, конфигурация сервера от этого не меняется."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "docker",
+      "docker",
+      "docker",
+      "docker"
+    ],
+    "prefixFlags": {
+      "docker": [
+        "-c ИМЯ / --context ИМЯ",
+        "-H АДРЕС / --host АДРЕС",
+        "-v / --version",
+        "-D / --debug"
+      ],
+      "docker context": []
+    }
+  },
+  {
+    "name": "docker context create",
+    "aliases": [],
+    "purpose": "Сохранить новую точку управления; сервер этой командой не устанавливается.",
+    "syntax": "docker context create ИМЯ --docker host=АДРЕС",
+    "chapter": "02-client-daemon-runtime",
+    "volume": "docker",
+    "source": "https://docs.docker.com/reference/cli/docker/context/create/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.docker.com/reference/cli/docker/context/create/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "--docker ПАРАМЕТРЫ",
+        "action": "Задать параметры подключения к Docker endpoint.",
+        "when": "Личный сервер с уже проверенным SSH-доступом.",
+        "example": "docker context create study --docker host=ssh://student@lab.example.invalid",
+        "result": "Имя сервера заменяют своим; учётная запись всё ещё должна иметь доступ к его Docker API."
+      },
+      {
+        "flag": "-c ИМЯ / --context ИМЯ",
+        "action": "Выбрать сохранённую точку управления для одного вызова.",
+        "when": "Адресно обращаться к личной VM.",
+        "example": "docker --context study info",
+        "result": "Ответит Engine context study, а не обязательно локальный сервер."
+      },
+      {
+        "flag": "-H АДРЕС / --host АДРЕС",
+        "action": "Явно выбрать endpoint поддерживаемого транспорта.",
+        "when": "Диагностика заранее подготовленной точки, с осмысленными правами и TLS.",
+        "example": "docker --host unix:///var/run/docker.sock version",
+        "result": "Проверяется именно указанный сокет; право доступа не возникает от флага."
+      },
+      {
+        "flag": "-v / --version",
+        "action": "Вывести версию клиента без обязательной проверки сервера.",
+        "when": "Зафиксировать установленный CLI.",
+        "example": "docker --version",
+        "result": "Это не полная проверка версии Engine; для обеих сторон используют docker version."
+      },
+      {
+        "flag": "-D / --debug",
+        "action": "Включить подробную клиентскую диагностику.",
+        "when": "Короткий опыт проблемы подключения без публикации чувствительных деталей.",
+        "example": "docker --debug --context study info",
+        "result": "Диагностика расширяется, конфигурация сервера от этого не меняется."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "docker context create",
+      "docker",
+      "docker",
+      "docker",
+      "docker"
+    ],
+    "prefixFlags": {
+      "docker": [
+        "-c ИМЯ / --context ИМЯ",
+        "-H АДРЕС / --host АДРЕС",
+        "-v / --version",
+        "-D / --debug"
+      ],
+      "docker context": []
+    }
+  },
+  {
+    "name": "docker version",
+    "aliases": [],
+    "purpose": "Показать версии клиента и доступного сервера отдельно.",
+    "syntax": "docker --context study version",
+    "chapter": "01-install-and-state",
+    "volume": "docker",
+    "source": "https://docs.docker.com/reference/cli/docker/version/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.docker.com/reference/cli/docker/version/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-c ИМЯ / --context ИМЯ",
+        "action": "Выбрать сохранённую точку управления для одного вызова.",
+        "when": "Адресно обращаться к личной VM.",
+        "example": "docker --context study info",
+        "result": "Ответит Engine context study, а не обязательно локальный сервер."
+      },
+      {
+        "flag": "-H АДРЕС / --host АДРЕС",
+        "action": "Явно выбрать endpoint поддерживаемого транспорта.",
+        "when": "Диагностика заранее подготовленной точки, с осмысленными правами и TLS.",
+        "example": "docker --host unix:///var/run/docker.sock version",
+        "result": "Проверяется именно указанный сокет; право доступа не возникает от флага."
+      },
+      {
+        "flag": "-v / --version",
+        "action": "Вывести версию клиента без обязательной проверки сервера.",
+        "when": "Зафиксировать установленный CLI.",
+        "example": "docker --version",
+        "result": "Это не полная проверка версии Engine; для обеих сторон используют docker version."
+      },
+      {
+        "flag": "-D / --debug",
+        "action": "Включить подробную клиентскую диагностику.",
+        "when": "Короткий опыт проблемы подключения без публикации чувствительных деталей.",
+        "example": "docker --debug --context study info",
+        "result": "Диагностика расширяется, конфигурация сервера от этого не меняется."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "docker",
+      "docker",
+      "docker",
+      "docker"
+    ],
+    "prefixFlags": {
+      "docker": [
+        "-c ИМЯ / --context ИМЯ",
+        "-H АДРЕС / --host АДРЕС",
+        "-v / --version",
+        "-D / --debug"
+      ]
+    }
+  },
+  {
+    "name": "docker info",
+    "aliases": [],
+    "purpose": "Прочитать сведения выбранного сервера, storage/cgroup и предупреждения.",
+    "syntax": "docker --context study info",
+    "chapter": "01-install-and-state",
+    "volume": "docker",
+    "source": "https://docs.docker.com/reference/cli/docker/info/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.docker.com/reference/cli/docker/info/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-c ИМЯ / --context ИМЯ",
+        "action": "Выбрать сохранённую точку управления для одного вызова.",
+        "when": "Адресно обращаться к личной VM.",
+        "example": "docker --context study info",
+        "result": "Ответит Engine context study, а не обязательно локальный сервер."
+      },
+      {
+        "flag": "-H АДРЕС / --host АДРЕС",
+        "action": "Явно выбрать endpoint поддерживаемого транспорта.",
+        "when": "Диагностика заранее подготовленной точки, с осмысленными правами и TLS.",
+        "example": "docker --host unix:///var/run/docker.sock version",
+        "result": "Проверяется именно указанный сокет; право доступа не возникает от флага."
+      },
+      {
+        "flag": "-v / --version",
+        "action": "Вывести версию клиента без обязательной проверки сервера.",
+        "when": "Зафиксировать установленный CLI.",
+        "example": "docker --version",
+        "result": "Это не полная проверка версии Engine; для обеих сторон используют docker version."
+      },
+      {
+        "flag": "-D / --debug",
+        "action": "Включить подробную клиентскую диагностику.",
+        "when": "Короткий опыт проблемы подключения без публикации чувствительных деталей.",
+        "example": "docker --debug --context study info",
+        "result": "Диагностика расширяется, конфигурация сервера от этого не меняется."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "docker",
+      "docker",
+      "docker",
+      "docker"
+    ],
+    "prefixFlags": {
+      "docker": [
+        "-c ИМЯ / --context ИМЯ",
+        "-H АДРЕС / --host АДРЕС",
+        "-v / --version",
+        "-D / --debug"
+      ]
+    }
+  },
+  {
+    "name": "docker create",
+    "aliases": [],
+    "purpose": "Создать объект с конфигурацией без запуска приложения.",
+    "syntax": "docker create [ОПЦИИ] ОБРАЗ [КОМАНДА]",
+    "chapter": "02-client-daemon-runtime",
+    "volume": "docker",
+    "source": "https://docs.docker.com/reference/cli/docker/container/create/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.docker.com/reference/cli/docker/container/create/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-c ЧИСЛО / --cpu-shares ЧИСЛО",
+        "action": "Задать относительный вес CPU будущей задачи.",
+        "when": "Сохранить бюджет до отдельного start.",
+        "example": "docker create -c 512 study/echo:lesson1",
+        "result": "Процесс ещё не запущен; это вес при конкуренции, а не предел числа CPU."
+      },
+      {
+        "flag": "-v ПОДКЛЮЧЕНИЕ / --volume ПОДКЛЮЧЕНИЕ",
+        "action": "Сохранить сокращённое описание подключения данных.",
+        "when": "Создать объект с прежним именованным томом.",
+        "example": "docker create -v study-data:/data study/echo:lesson1",
+        "result": "На этом месте -v является mount-опцией create, а не корневым выводом версии."
+      },
+      {
+        "flag": "--name ИМЯ",
+        "action": "Назначить уникальное имя нового объекта.",
+        "when": "Разделить создание и исполнение.",
+        "example": "docker create --name study-echo study/echo:lesson1",
+        "result": "Объект created ещё не обслуживает HTTP."
+      },
+      {
+        "flag": "--pull ПОЛИТИКА",
+        "action": "Выбрать получение входного образа; never требует имеющийся локальный.",
+        "when": "Проверить автономный комплект.",
+        "example": "docker create --pull=never study/echo:lesson1",
+        "result": "Наличие на клиентском диске tar само не означает загрузку в Engine."
+      },
+      {
+        "flag": "-c ИМЯ / --context ИМЯ",
+        "action": "Выбрать сохранённую точку управления для одного вызова.",
+        "when": "Адресно обращаться к личной VM.",
+        "example": "docker --context study info",
+        "result": "Ответит Engine context study, а не обязательно локальный сервер."
+      },
+      {
+        "flag": "-H АДРЕС / --host АДРЕС",
+        "action": "Явно выбрать endpoint поддерживаемого транспорта.",
+        "when": "Диагностика заранее подготовленной точки, с осмысленными правами и TLS.",
+        "example": "docker --host unix:///var/run/docker.sock version",
+        "result": "Проверяется именно указанный сокет; право доступа не возникает от флага."
+      },
+      {
+        "flag": "-v / --version",
+        "action": "Вывести версию клиента без обязательной проверки сервера.",
+        "when": "Зафиксировать установленный CLI.",
+        "example": "docker --version",
+        "result": "Это не полная проверка версии Engine; для обеих сторон используют docker version."
+      },
+      {
+        "flag": "-D / --debug",
+        "action": "Включить подробную клиентскую диагностику.",
+        "when": "Короткий опыт проблемы подключения без публикации чувствительных деталей.",
+        "example": "docker --debug --context study info",
+        "result": "Диагностика расширяется, конфигурация сервера от этого не меняется."
+      }
+    ],
+    "situations": [],
+    "optionBoundary": "first-operand",
+    "flagScopes": [
+      "docker create",
+      "docker create",
+      "docker create",
+      "docker create",
+      "docker",
+      "docker",
+      "docker",
+      "docker"
+    ],
+    "prefixFlags": {
+      "docker": [
+        "-c ИМЯ / --context ИМЯ",
+        "-H АДРЕС / --host АДРЕС",
+        "-v / --version",
+        "-D / --debug"
+      ]
+    }
+  },
+  {
+    "name": "docker start",
+    "aliases": [],
+    "purpose": "Запустить существующий объект с прежней конфигурацией и изменяемым слоем.",
+    "syntax": "docker start КОНТЕЙНЕР",
+    "chapter": "02-client-daemon-runtime",
+    "volume": "docker",
+    "source": "https://docs.docker.com/reference/cli/docker/container/start/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.docker.com/reference/cli/docker/container/start/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-c ИМЯ / --context ИМЯ",
+        "action": "Выбрать сохранённую точку управления для одного вызова.",
+        "when": "Адресно обращаться к личной VM.",
+        "example": "docker --context study info",
+        "result": "Ответит Engine context study, а не обязательно локальный сервер."
+      },
+      {
+        "flag": "-H АДРЕС / --host АДРЕС",
+        "action": "Явно выбрать endpoint поддерживаемого транспорта.",
+        "when": "Диагностика заранее подготовленной точки, с осмысленными правами и TLS.",
+        "example": "docker --host unix:///var/run/docker.sock version",
+        "result": "Проверяется именно указанный сокет; право доступа не возникает от флага."
+      },
+      {
+        "flag": "-v / --version",
+        "action": "Вывести версию клиента без обязательной проверки сервера.",
+        "when": "Зафиксировать установленный CLI.",
+        "example": "docker --version",
+        "result": "Это не полная проверка версии Engine; для обеих сторон используют docker version."
+      },
+      {
+        "flag": "-D / --debug",
+        "action": "Включить подробную клиентскую диагностику.",
+        "when": "Короткий опыт проблемы подключения без публикации чувствительных деталей.",
+        "example": "docker --debug --context study info",
+        "result": "Диагностика расширяется, конфигурация сервера от этого не меняется."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "docker",
+      "docker",
+      "docker",
+      "docker"
+    ],
+    "prefixFlags": {
+      "docker": [
+        "-c ИМЯ / --context ИМЯ",
+        "-H АДРЕС / --host АДРЕС",
+        "-v / --version",
+        "-D / --debug"
+      ]
+    }
+  },
+  {
+    "name": "docker wait",
+    "aliases": [],
+    "purpose": "Ожидать завершения выбранного контейнера и вывести его код.",
+    "syntax": "docker wait КОНТЕЙНЕР",
+    "chapter": "02-client-daemon-runtime",
+    "volume": "docker",
+    "source": "https://docs.docker.com/reference/cli/docker/container/wait/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.docker.com/reference/cli/docker/container/wait/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-c ИМЯ / --context ИМЯ",
+        "action": "Выбрать сохранённую точку управления для одного вызова.",
+        "when": "Адресно обращаться к личной VM.",
+        "example": "docker --context study info",
+        "result": "Ответит Engine context study, а не обязательно локальный сервер."
+      },
+      {
+        "flag": "-H АДРЕС / --host АДРЕС",
+        "action": "Явно выбрать endpoint поддерживаемого транспорта.",
+        "when": "Диагностика заранее подготовленной точки, с осмысленными правами и TLS.",
+        "example": "docker --host unix:///var/run/docker.sock version",
+        "result": "Проверяется именно указанный сокет; право доступа не возникает от флага."
+      },
+      {
+        "flag": "-v / --version",
+        "action": "Вывести версию клиента без обязательной проверки сервера.",
+        "when": "Зафиксировать установленный CLI.",
+        "example": "docker --version",
+        "result": "Это не полная проверка версии Engine; для обеих сторон используют docker version."
+      },
+      {
+        "flag": "-D / --debug",
+        "action": "Включить подробную клиентскую диагностику.",
+        "when": "Короткий опыт проблемы подключения без публикации чувствительных деталей.",
+        "example": "docker --debug --context study info",
+        "result": "Диагностика расширяется, конфигурация сервера от этого не меняется."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "docker",
+      "docker",
+      "docker",
+      "docker"
+    ],
+    "prefixFlags": {
+      "docker": [
+        "-c ИМЯ / --context ИМЯ",
+        "-H АДРЕС / --host АДРЕС",
+        "-v / --version",
+        "-D / --debug"
+      ]
+    }
+  },
+  {
+    "name": "docker attach",
+    "aliases": [],
+    "purpose": "Подключить клиент к потокам основного процесса. Отличается от запуска дополнительной shell через exec.",
+    "syntax": "docker attach КОНТЕЙНЕР",
+    "chapter": "02-client-daemon-runtime",
+    "volume": "docker",
+    "source": "https://docs.docker.com/reference/cli/docker/container/attach/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.docker.com/reference/cli/docker/container/attach/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-c ИМЯ / --context ИМЯ",
+        "action": "Выбрать сохранённую точку управления для одного вызова.",
+        "when": "Адресно обращаться к личной VM.",
+        "example": "docker --context study info",
+        "result": "Ответит Engine context study, а не обязательно локальный сервер."
+      },
+      {
+        "flag": "-H АДРЕС / --host АДРЕС",
+        "action": "Явно выбрать endpoint поддерживаемого транспорта.",
+        "when": "Диагностика заранее подготовленной точки, с осмысленными правами и TLS.",
+        "example": "docker --host unix:///var/run/docker.sock version",
+        "result": "Проверяется именно указанный сокет; право доступа не возникает от флага."
+      },
+      {
+        "flag": "-v / --version",
+        "action": "Вывести версию клиента без обязательной проверки сервера.",
+        "when": "Зафиксировать установленный CLI.",
+        "example": "docker --version",
+        "result": "Это не полная проверка версии Engine; для обеих сторон используют docker version."
+      },
+      {
+        "flag": "-D / --debug",
+        "action": "Включить подробную клиентскую диагностику.",
+        "when": "Короткий опыт проблемы подключения без публикации чувствительных деталей.",
+        "example": "docker --debug --context study info",
+        "result": "Диагностика расширяется, конфигурация сервера от этого не меняется."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "docker",
+      "docker",
+      "docker",
+      "docker"
+    ],
+    "prefixFlags": {
+      "docker": [
+        "-c ИМЯ / --context ИМЯ",
+        "-H АДРЕС / --host АДРЕС",
+        "-v / --version",
+        "-D / --debug"
+      ]
+    }
+  },
+  {
+    "name": "docker rm",
+    "aliases": [],
+    "purpose": "Удалить выбранный остановленный объект и его изменяемую файловую область. Перед этим выясняют судьбу данных.",
+    "syntax": "docker rm КОНТЕЙНЕР",
+    "chapter": "16-integrated-lab",
+    "volume": "docker",
+    "source": "https://docs.docker.com/reference/cli/docker/container/rm/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.docker.com/reference/cli/docker/container/rm/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-c ИМЯ / --context ИМЯ",
+        "action": "Выбрать сохранённую точку управления для одного вызова.",
+        "when": "Адресно обращаться к личной VM.",
+        "example": "docker --context study info",
+        "result": "Ответит Engine context study, а не обязательно локальный сервер."
+      },
+      {
+        "flag": "-H АДРЕС / --host АДРЕС",
+        "action": "Явно выбрать endpoint поддерживаемого транспорта.",
+        "when": "Диагностика заранее подготовленной точки, с осмысленными правами и TLS.",
+        "example": "docker --host unix:///var/run/docker.sock version",
+        "result": "Проверяется именно указанный сокет; право доступа не возникает от флага."
+      },
+      {
+        "flag": "-v / --version",
+        "action": "Вывести версию клиента без обязательной проверки сервера.",
+        "when": "Зафиксировать установленный CLI.",
+        "example": "docker --version",
+        "result": "Это не полная проверка версии Engine; для обеих сторон используют docker version."
+      },
+      {
+        "flag": "-D / --debug",
+        "action": "Включить подробную клиентскую диагностику.",
+        "when": "Короткий опыт проблемы подключения без публикации чувствительных деталей.",
+        "example": "docker --debug --context study info",
+        "result": "Диагностика расширяется, конфигурация сервера от этого не меняется."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "docker",
+      "docker",
+      "docker",
+      "docker"
+    ],
+    "prefixFlags": {
+      "docker": [
+        "-c ИМЯ / --context ИМЯ",
+        "-H АДРЕС / --host АДРЕС",
+        "-v / --version",
+        "-D / --debug"
+      ]
+    }
+  },
+  {
+    "name": "docker port",
+    "aliases": [],
+    "purpose": "Показать публикации портов контейнера. Не подтверждает, что приложение слушает и отвечает.",
+    "syntax": "docker port КОНТЕЙНЕР",
+    "chapter": "06-network-path",
+    "volume": "docker",
+    "source": "https://docs.docker.com/reference/cli/docker/container/port/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.docker.com/reference/cli/docker/container/port/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-c ИМЯ / --context ИМЯ",
+        "action": "Выбрать сохранённую точку управления для одного вызова.",
+        "when": "Адресно обращаться к личной VM.",
+        "example": "docker --context study info",
+        "result": "Ответит Engine context study, а не обязательно локальный сервер."
+      },
+      {
+        "flag": "-H АДРЕС / --host АДРЕС",
+        "action": "Явно выбрать endpoint поддерживаемого транспорта.",
+        "when": "Диагностика заранее подготовленной точки, с осмысленными правами и TLS.",
+        "example": "docker --host unix:///var/run/docker.sock version",
+        "result": "Проверяется именно указанный сокет; право доступа не возникает от флага."
+      },
+      {
+        "flag": "-v / --version",
+        "action": "Вывести версию клиента без обязательной проверки сервера.",
+        "when": "Зафиксировать установленный CLI.",
+        "example": "docker --version",
+        "result": "Это не полная проверка версии Engine; для обеих сторон используют docker version."
+      },
+      {
+        "flag": "-D / --debug",
+        "action": "Включить подробную клиентскую диагностику.",
+        "when": "Короткий опыт проблемы подключения без публикации чувствительных деталей.",
+        "example": "docker --debug --context study info",
+        "result": "Диагностика расширяется, конфигурация сервера от этого не меняется."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "docker",
+      "docker",
+      "docker",
+      "docker"
+    ],
+    "prefixFlags": {
+      "docker": [
+        "-c ИМЯ / --context ИМЯ",
+        "-H АДРЕС / --host АДРЕС",
+        "-v / --version",
+        "-D / --debug"
+      ]
+    }
+  },
+  {
+    "name": "docker network create",
+    "aliases": [],
+    "purpose": "Создать сеть выбранного Engine. Сначала проверяют отсутствие пересечения подсетей и маршрут стенда.",
+    "syntax": "docker network create [ОПЦИИ] ИМЯ",
+    "chapter": "06-network-path",
+    "volume": "docker",
+    "source": "https://docs.docker.com/reference/cli/docker/network/create/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.docker.com/reference/cli/docker/network/create/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "--driver ТИП",
+        "action": "Выбрать сетевой драйвер.",
+        "when": "Пользовательская bridge-сеть одного Linux Engine.",
+        "example": "docker network create --driver bridge study-net",
+        "result": "Не создаёт автоматически соединение разных физических хостов."
+      },
+      {
+        "flag": "--subnet CIDR",
+        "action": "Задать выбранную подсеть для поддерживаемого IPAM.",
+        "when": "Фиксированный учебный разбор адресов.",
+        "example": "docker network create --subnet 172.30.50.0/24 study-net",
+        "result": "CIDR должен быть свободен относительно хоста, VPN и прежних сетей; пример не гарантирует этого."
+      },
+      {
+        "flag": "-c ИМЯ / --context ИМЯ",
+        "action": "Выбрать сохранённую точку управления для одного вызова.",
+        "when": "Адресно обращаться к личной VM.",
+        "example": "docker --context study info",
+        "result": "Ответит Engine context study, а не обязательно локальный сервер."
+      },
+      {
+        "flag": "-H АДРЕС / --host АДРЕС",
+        "action": "Явно выбрать endpoint поддерживаемого транспорта.",
+        "when": "Диагностика заранее подготовленной точки, с осмысленными правами и TLS.",
+        "example": "docker --host unix:///var/run/docker.sock version",
+        "result": "Проверяется именно указанный сокет; право доступа не возникает от флага."
+      },
+      {
+        "flag": "-v / --version",
+        "action": "Вывести версию клиента без обязательной проверки сервера.",
+        "when": "Зафиксировать установленный CLI.",
+        "example": "docker --version",
+        "result": "Это не полная проверка версии Engine; для обеих сторон используют docker version."
+      },
+      {
+        "flag": "-D / --debug",
+        "action": "Включить подробную клиентскую диагностику.",
+        "when": "Короткий опыт проблемы подключения без публикации чувствительных деталей.",
+        "example": "docker --debug --context study info",
+        "result": "Диагностика расширяется, конфигурация сервера от этого не меняется."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "docker network create",
+      "docker network create",
+      "docker",
+      "docker",
+      "docker",
+      "docker"
+    ],
+    "prefixFlags": {
+      "docker": [
+        "-c ИМЯ / --context ИМЯ",
+        "-H АДРЕС / --host АДРЕС",
+        "-v / --version",
+        "-D / --debug"
+      ],
+      "docker network": []
+    }
+  },
+  {
+    "name": "docker network inspect",
+    "aliases": [],
+    "purpose": "Исследовать подсети, параметры и подключённые объекты сети.",
+    "syntax": "docker network inspect ИМЯ",
+    "chapter": "06-network-path",
+    "volume": "docker",
+    "source": "https://docs.docker.com/reference/cli/docker/network/inspect/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.docker.com/reference/cli/docker/network/inspect/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-c ИМЯ / --context ИМЯ",
+        "action": "Выбрать сохранённую точку управления для одного вызова.",
+        "when": "Адресно обращаться к личной VM.",
+        "example": "docker --context study info",
+        "result": "Ответит Engine context study, а не обязательно локальный сервер."
+      },
+      {
+        "flag": "-H АДРЕС / --host АДРЕС",
+        "action": "Явно выбрать endpoint поддерживаемого транспорта.",
+        "when": "Диагностика заранее подготовленной точки, с осмысленными правами и TLS.",
+        "example": "docker --host unix:///var/run/docker.sock version",
+        "result": "Проверяется именно указанный сокет; право доступа не возникает от флага."
+      },
+      {
+        "flag": "-v / --version",
+        "action": "Вывести версию клиента без обязательной проверки сервера.",
+        "when": "Зафиксировать установленный CLI.",
+        "example": "docker --version",
+        "result": "Это не полная проверка версии Engine; для обеих сторон используют docker version."
+      },
+      {
+        "flag": "-D / --debug",
+        "action": "Включить подробную клиентскую диагностику.",
+        "when": "Короткий опыт проблемы подключения без публикации чувствительных деталей.",
+        "example": "docker --debug --context study info",
+        "result": "Диагностика расширяется, конфигурация сервера от этого не меняется."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "docker",
+      "docker",
+      "docker",
+      "docker"
+    ],
+    "prefixFlags": {
+      "docker": [
+        "-c ИМЯ / --context ИМЯ",
+        "-H АДРЕС / --host АДРЕС",
+        "-v / --version",
+        "-D / --debug"
+      ],
+      "docker network": []
+    }
+  },
+  {
+    "name": "docker volume create",
+    "aliases": [],
+    "purpose": "Создать именованный объект хранения на выбранном сервере. Не делает его распределённым или резервированным.",
+    "syntax": "docker volume create ИМЯ",
+    "chapter": "08-volumes-consistency",
+    "volume": "docker",
+    "source": "https://docs.docker.com/reference/cli/docker/volume/create/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.docker.com/reference/cli/docker/volume/create/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-c ИМЯ / --context ИМЯ",
+        "action": "Выбрать сохранённую точку управления для одного вызова.",
+        "when": "Адресно обращаться к личной VM.",
+        "example": "docker --context study info",
+        "result": "Ответит Engine context study, а не обязательно локальный сервер."
+      },
+      {
+        "flag": "-H АДРЕС / --host АДРЕС",
+        "action": "Явно выбрать endpoint поддерживаемого транспорта.",
+        "when": "Диагностика заранее подготовленной точки, с осмысленными правами и TLS.",
+        "example": "docker --host unix:///var/run/docker.sock version",
+        "result": "Проверяется именно указанный сокет; право доступа не возникает от флага."
+      },
+      {
+        "flag": "-v / --version",
+        "action": "Вывести версию клиента без обязательной проверки сервера.",
+        "when": "Зафиксировать установленный CLI.",
+        "example": "docker --version",
+        "result": "Это не полная проверка версии Engine; для обеих сторон используют docker version."
+      },
+      {
+        "flag": "-D / --debug",
+        "action": "Включить подробную клиентскую диагностику.",
+        "when": "Короткий опыт проблемы подключения без публикации чувствительных деталей.",
+        "example": "docker --debug --context study info",
+        "result": "Диагностика расширяется, конфигурация сервера от этого не меняется."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "docker",
+      "docker",
+      "docker",
+      "docker"
+    ],
+    "prefixFlags": {
+      "docker": [
+        "-c ИМЯ / --context ИМЯ",
+        "-H АДРЕС / --host АДРЕС",
+        "-v / --version",
+        "-D / --debug"
+      ],
+      "docker volume": []
+    }
+  },
+  {
+    "name": "docker volume inspect",
+    "aliases": [],
+    "purpose": "Прочитать драйвер, Mountpoint и метаданные тома. Содержимое работающей БД не редактируют напрямую.",
+    "syntax": "docker volume inspect ИМЯ",
+    "chapter": "08-volumes-consistency",
+    "volume": "docker",
+    "source": "https://docs.docker.com/reference/cli/docker/volume/inspect/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.docker.com/reference/cli/docker/volume/inspect/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-c ИМЯ / --context ИМЯ",
+        "action": "Выбрать сохранённую точку управления для одного вызова.",
+        "when": "Адресно обращаться к личной VM.",
+        "example": "docker --context study info",
+        "result": "Ответит Engine context study, а не обязательно локальный сервер."
+      },
+      {
+        "flag": "-H АДРЕС / --host АДРЕС",
+        "action": "Явно выбрать endpoint поддерживаемого транспорта.",
+        "when": "Диагностика заранее подготовленной точки, с осмысленными правами и TLS.",
+        "example": "docker --host unix:///var/run/docker.sock version",
+        "result": "Проверяется именно указанный сокет; право доступа не возникает от флага."
+      },
+      {
+        "flag": "-v / --version",
+        "action": "Вывести версию клиента без обязательной проверки сервера.",
+        "when": "Зафиксировать установленный CLI.",
+        "example": "docker --version",
+        "result": "Это не полная проверка версии Engine; для обеих сторон используют docker version."
+      },
+      {
+        "flag": "-D / --debug",
+        "action": "Включить подробную клиентскую диагностику.",
+        "when": "Короткий опыт проблемы подключения без публикации чувствительных деталей.",
+        "example": "docker --debug --context study info",
+        "result": "Диагностика расширяется, конфигурация сервера от этого не меняется."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "docker",
+      "docker",
+      "docker",
+      "docker"
+    ],
+    "prefixFlags": {
+      "docker": [
+        "-c ИМЯ / --context ИМЯ",
+        "-H АДРЕС / --host АДРЕС",
+        "-v / --version",
+        "-D / --debug"
+      ],
+      "docker volume": []
+    }
+  },
+  {
+    "name": "docker image inspect",
+    "aliases": [],
+    "purpose": "Прочитать локально известные метаданные образа на выбранном Engine.",
+    "syntax": "docker image inspect [ОПЦИИ] ОБРАЗ",
+    "chapter": "03-image-oci-layers",
+    "volume": "docker",
+    "source": "https://docs.docker.com/reference/cli/docker/image/inspect/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.docker.com/reference/cli/docker/image/inspect/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "--format ШАБЛОН",
+        "action": "Выбрать конкретные поля метаданных образа.",
+        "when": "Сопоставить Config либо RootFS.Layers.",
+        "example": "docker image inspect --format '{{json .Config}}' study/echo:lesson1",
+        "result": "Локальный image ID и remote manifest digest обозначают разные объекты."
+      },
+      {
+        "flag": "-c ИМЯ / --context ИМЯ",
+        "action": "Выбрать сохранённую точку управления для одного вызова.",
+        "when": "Адресно обращаться к личной VM.",
+        "example": "docker --context study info",
+        "result": "Ответит Engine context study, а не обязательно локальный сервер."
+      },
+      {
+        "flag": "-H АДРЕС / --host АДРЕС",
+        "action": "Явно выбрать endpoint поддерживаемого транспорта.",
+        "when": "Диагностика заранее подготовленной точки, с осмысленными правами и TLS.",
+        "example": "docker --host unix:///var/run/docker.sock version",
+        "result": "Проверяется именно указанный сокет; право доступа не возникает от флага."
+      },
+      {
+        "flag": "-v / --version",
+        "action": "Вывести версию клиента без обязательной проверки сервера.",
+        "when": "Зафиксировать установленный CLI.",
+        "example": "docker --version",
+        "result": "Это не полная проверка версии Engine; для обеих сторон используют docker version."
+      },
+      {
+        "flag": "-D / --debug",
+        "action": "Включить подробную клиентскую диагностику.",
+        "when": "Короткий опыт проблемы подключения без публикации чувствительных деталей.",
+        "example": "docker --debug --context study info",
+        "result": "Диагностика расширяется, конфигурация сервера от этого не меняется."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "docker image inspect",
+      "docker",
+      "docker",
+      "docker",
+      "docker"
+    ],
+    "prefixFlags": {
+      "docker": [
+        "-c ИМЯ / --context ИМЯ",
+        "-H АДРЕС / --host АДРЕС",
+        "-v / --version",
+        "-D / --debug"
+      ],
+      "docker image": []
+    }
+  },
+  {
+    "name": "docker image history",
+    "aliases": [],
+    "purpose": "Показать доступную историю формирования образа. Не является полным доверенным восстановлением исходного Dockerfile.",
+    "syntax": "docker image history [ОПЦИИ] ОБРАЗ",
+    "chapter": "03-image-oci-layers",
+    "volume": "docker",
+    "source": "https://docs.docker.com/reference/cli/docker/image/history/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.docker.com/reference/cli/docker/image/history/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "--no-trunc",
+        "action": "Не сокращать предусмотренные поля.",
+        "when": "Изучить сохранённые команды и метаданные.",
+        "example": "docker image history --no-trunc study/echo:lesson1",
+        "result": "Поля могут содержать чувствительные входы ошибочно устроенной сборки; вывод не публикуют вслепую."
+      },
+      {
+        "flag": "-c ИМЯ / --context ИМЯ",
+        "action": "Выбрать сохранённую точку управления для одного вызова.",
+        "when": "Адресно обращаться к личной VM.",
+        "example": "docker --context study info",
+        "result": "Ответит Engine context study, а не обязательно локальный сервер."
+      },
+      {
+        "flag": "-H АДРЕС / --host АДРЕС",
+        "action": "Явно выбрать endpoint поддерживаемого транспорта.",
+        "when": "Диагностика заранее подготовленной точки, с осмысленными правами и TLS.",
+        "example": "docker --host unix:///var/run/docker.sock version",
+        "result": "Проверяется именно указанный сокет; право доступа не возникает от флага."
+      },
+      {
+        "flag": "-v / --version",
+        "action": "Вывести версию клиента без обязательной проверки сервера.",
+        "when": "Зафиксировать установленный CLI.",
+        "example": "docker --version",
+        "result": "Это не полная проверка версии Engine; для обеих сторон используют docker version."
+      },
+      {
+        "flag": "-D / --debug",
+        "action": "Включить подробную клиентскую диагностику.",
+        "when": "Короткий опыт проблемы подключения без публикации чувствительных деталей.",
+        "example": "docker --debug --context study info",
+        "result": "Диагностика расширяется, конфигурация сервера от этого не меняется."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "docker image history",
+      "docker",
+      "docker",
+      "docker",
+      "docker"
+    ],
+    "prefixFlags": {
+      "docker": [
+        "-c ИМЯ / --context ИМЯ",
+        "-H АДРЕС / --host АДРЕС",
+        "-v / --version",
+        "-D / --debug"
+      ],
+      "docker image": []
+    }
+  },
+  {
+    "name": "docker buildx ls",
+    "aliases": [],
+    "purpose": "Показать builders, драйверы и известные платформы. Выбранный builder имеет собственное состояние.",
+    "syntax": "docker buildx ls",
+    "chapter": "04-buildkit-cache",
+    "volume": "docker",
+    "source": "https://docs.docker.com/reference/cli/docker/buildx/ls/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.docker.com/reference/cli/docker/buildx/ls/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-c ИМЯ / --context ИМЯ",
+        "action": "Выбрать сохранённую точку управления для одного вызова.",
+        "when": "Адресно обращаться к личной VM.",
+        "example": "docker --context study info",
+        "result": "Ответит Engine context study, а не обязательно локальный сервер."
+      },
+      {
+        "flag": "-H АДРЕС / --host АДРЕС",
+        "action": "Явно выбрать endpoint поддерживаемого транспорта.",
+        "when": "Диагностика заранее подготовленной точки, с осмысленными правами и TLS.",
+        "example": "docker --host unix:///var/run/docker.sock version",
+        "result": "Проверяется именно указанный сокет; право доступа не возникает от флага."
+      },
+      {
+        "flag": "-v / --version",
+        "action": "Вывести версию клиента без обязательной проверки сервера.",
+        "when": "Зафиксировать установленный CLI.",
+        "example": "docker --version",
+        "result": "Это не полная проверка версии Engine; для обеих сторон используют docker version."
+      },
+      {
+        "flag": "-D / --debug",
+        "action": "Включить подробную клиентскую диагностику.",
+        "when": "Короткий опыт проблемы подключения без публикации чувствительных деталей.",
+        "example": "docker --debug --context study info",
+        "result": "Диагностика расширяется, конфигурация сервера от этого не меняется."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "docker",
+      "docker",
+      "docker",
+      "docker"
+    ],
+    "prefixFlags": {
+      "docker": [
+        "-c ИМЯ / --context ИМЯ",
+        "-H АДРЕС / --host АДРЕС",
+        "-v / --version",
+        "-D / --debug"
+      ],
+      "docker buildx": []
+    }
+  },
+  {
+    "name": "docker buildx inspect",
+    "aliases": [],
+    "purpose": "Исследовать выбранный builder и его возможности.",
+    "syntax": "docker buildx inspect [ОПЦИИ]",
+    "chapter": "04-buildkit-cache",
+    "volume": "docker",
+    "source": "https://docs.docker.com/reference/cli/docker/buildx/inspect/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.docker.com/reference/cli/docker/buildx/inspect/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "--bootstrap",
+        "action": "Подготовить или запустить предусмотренные компоненты builder.",
+        "when": "Проверить готовность собственной сборочной среды.",
+        "example": "docker buildx inspect --bootstrap",
+        "result": "Может менять состояние среды; это шире простого чтения строки конфигурации."
+      },
+      {
+        "flag": "-c ИМЯ / --context ИМЯ",
+        "action": "Выбрать сохранённую точку управления для одного вызова.",
+        "when": "Адресно обращаться к личной VM.",
+        "example": "docker --context study info",
+        "result": "Ответит Engine context study, а не обязательно локальный сервер."
+      },
+      {
+        "flag": "-H АДРЕС / --host АДРЕС",
+        "action": "Явно выбрать endpoint поддерживаемого транспорта.",
+        "when": "Диагностика заранее подготовленной точки, с осмысленными правами и TLS.",
+        "example": "docker --host unix:///var/run/docker.sock version",
+        "result": "Проверяется именно указанный сокет; право доступа не возникает от флага."
+      },
+      {
+        "flag": "-v / --version",
+        "action": "Вывести версию клиента без обязательной проверки сервера.",
+        "when": "Зафиксировать установленный CLI.",
+        "example": "docker --version",
+        "result": "Это не полная проверка версии Engine; для обеих сторон используют docker version."
+      },
+      {
+        "flag": "-D / --debug",
+        "action": "Включить подробную клиентскую диагностику.",
+        "when": "Короткий опыт проблемы подключения без публикации чувствительных деталей.",
+        "example": "docker --debug --context study info",
+        "result": "Диагностика расширяется, конфигурация сервера от этого не меняется."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "docker buildx inspect",
+      "docker",
+      "docker",
+      "docker",
+      "docker"
+    ],
+    "prefixFlags": {
+      "docker": [
+        "-c ИМЯ / --context ИМЯ",
+        "-H АДРЕС / --host АДРЕС",
+        "-v / --version",
+        "-D / --debug"
+      ],
+      "docker buildx": []
+    }
+  },
+  {
+    "name": "docker buildx imagetools inspect",
+    "aliases": [],
+    "purpose": "Исследовать описание опубликованного образа и платформенные варианты в реестре.",
+    "syntax": "docker buildx imagetools inspect ОБРАЗ",
+    "chapter": "10-distribution-provenance",
+    "volume": "docker",
+    "source": "https://docs.docker.com/reference/cli/docker/buildx/imagetools/inspect/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.docker.com/reference/cli/docker/buildx/imagetools/inspect/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-c ИМЯ / --context ИМЯ",
+        "action": "Выбрать сохранённую точку управления для одного вызова.",
+        "when": "Адресно обращаться к личной VM.",
+        "example": "docker --context study info",
+        "result": "Ответит Engine context study, а не обязательно локальный сервер."
+      },
+      {
+        "flag": "-H АДРЕС / --host АДРЕС",
+        "action": "Явно выбрать endpoint поддерживаемого транспорта.",
+        "when": "Диагностика заранее подготовленной точки, с осмысленными правами и TLS.",
+        "example": "docker --host unix:///var/run/docker.sock version",
+        "result": "Проверяется именно указанный сокет; право доступа не возникает от флага."
+      },
+      {
+        "flag": "-v / --version",
+        "action": "Вывести версию клиента без обязательной проверки сервера.",
+        "when": "Зафиксировать установленный CLI.",
+        "example": "docker --version",
+        "result": "Это не полная проверка версии Engine; для обеих сторон используют docker version."
+      },
+      {
+        "flag": "-D / --debug",
+        "action": "Включить подробную клиентскую диагностику.",
+        "when": "Короткий опыт проблемы подключения без публикации чувствительных деталей.",
+        "example": "docker --debug --context study info",
+        "result": "Диагностика расширяется, конфигурация сервера от этого не меняется."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "docker",
+      "docker",
+      "docker",
+      "docker"
+    ],
+    "prefixFlags": {
+      "docker": [
+        "-c ИМЯ / --context ИМЯ",
+        "-H АДРЕС / --host АДРЕС",
+        "-v / --version",
+        "-D / --debug"
+      ],
+      "docker buildx": [],
+      "docker buildx imagetools": []
+    }
+  },
+  {
+    "name": "docker events",
+    "aliases": [],
+    "purpose": "Читать ограниченный поток событий сервера с фильтрами. Не является гарантированным долговременным аудитом.",
+    "syntax": "docker events [ОПЦИИ]",
+    "chapter": "12-observability",
+    "volume": "docker",
+    "source": "https://docs.docker.com/reference/cli/docker/system/events/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.docker.com/reference/cli/docker/system/events/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "--since ВРЕМЯ",
+        "action": "Выбрать начало запрашиваемого окна.",
+        "when": "Сопоставить start/die с инцидентом.",
+        "example": "docker events --since 30m",
+        "result": "Сохранение истории и часы ограничивают полноту вывода; команда может продолжать ожидание."
+      },
+      {
+        "flag": "--filter УСЛОВИЕ",
+        "action": "Ограничить события выбранными признаками.",
+        "when": "Наблюдать конкретный контейнер.",
+        "example": "docker events --filter container=study-echo",
+        "result": "Чужие события исключены; отсутствие строки не доказывает отсутствие всех причин."
+      },
+      {
+        "flag": "-c ИМЯ / --context ИМЯ",
+        "action": "Выбрать сохранённую точку управления для одного вызова.",
+        "when": "Адресно обращаться к личной VM.",
+        "example": "docker --context study info",
+        "result": "Ответит Engine context study, а не обязательно локальный сервер."
+      },
+      {
+        "flag": "-H АДРЕС / --host АДРЕС",
+        "action": "Явно выбрать endpoint поддерживаемого транспорта.",
+        "when": "Диагностика заранее подготовленной точки, с осмысленными правами и TLS.",
+        "example": "docker --host unix:///var/run/docker.sock version",
+        "result": "Проверяется именно указанный сокет; право доступа не возникает от флага."
+      },
+      {
+        "flag": "-v / --version",
+        "action": "Вывести версию клиента без обязательной проверки сервера.",
+        "when": "Зафиксировать установленный CLI.",
+        "example": "docker --version",
+        "result": "Это не полная проверка версии Engine; для обеих сторон используют docker version."
+      },
+      {
+        "flag": "-D / --debug",
+        "action": "Включить подробную клиентскую диагностику.",
+        "when": "Короткий опыт проблемы подключения без публикации чувствительных деталей.",
+        "example": "docker --debug --context study info",
+        "result": "Диагностика расширяется, конфигурация сервера от этого не меняется."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "docker events",
+      "docker events",
+      "docker",
+      "docker",
+      "docker",
+      "docker"
+    ],
+    "prefixFlags": {
+      "docker": [
+        "-c ИМЯ / --context ИМЯ",
+        "-H АДРЕС / --host АДРЕС",
+        "-v / --version",
+        "-D / --debug"
+      ]
+    }
+  },
+  {
+    "name": "docker login",
+    "aliases": [],
+    "purpose": "Получить клиентский материал доступа к выбранному реестру. Это не проверка безопасности содержимого образа.",
+    "syntax": "docker login [ОПЦИИ] REGISTRY",
+    "chapter": "10-distribution-provenance",
+    "volume": "docker",
+    "source": "https://docs.docker.com/reference/cli/docker/login/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.docker.com/reference/cli/docker/login/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "--password-stdin",
+        "action": "Прочитать пароль/токен из стандартного ввода вместо аргумента.",
+        "when": "Подготовленная автоматизация с защищённым источником.",
+        "example": "docker login --username study --password-stdin registry.example.invalid",
+        "result": "Источник ввода и credential store всё равно защищают; сам секрет в пример не включён."
+      },
+      {
+        "flag": "-c ИМЯ / --context ИМЯ",
+        "action": "Выбрать сохранённую точку управления для одного вызова.",
+        "when": "Адресно обращаться к личной VM.",
+        "example": "docker --context study info",
+        "result": "Ответит Engine context study, а не обязательно локальный сервер."
+      },
+      {
+        "flag": "-H АДРЕС / --host АДРЕС",
+        "action": "Явно выбрать endpoint поддерживаемого транспорта.",
+        "when": "Диагностика заранее подготовленной точки, с осмысленными правами и TLS.",
+        "example": "docker --host unix:///var/run/docker.sock version",
+        "result": "Проверяется именно указанный сокет; право доступа не возникает от флага."
+      },
+      {
+        "flag": "-v / --version",
+        "action": "Вывести версию клиента без обязательной проверки сервера.",
+        "when": "Зафиксировать установленный CLI.",
+        "example": "docker --version",
+        "result": "Это не полная проверка версии Engine; для обеих сторон используют docker version."
+      },
+      {
+        "flag": "-D / --debug",
+        "action": "Включить подробную клиентскую диагностику.",
+        "when": "Короткий опыт проблемы подключения без публикации чувствительных деталей.",
+        "example": "docker --debug --context study info",
+        "result": "Диагностика расширяется, конфигурация сервера от этого не меняется."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "docker login",
+      "docker",
+      "docker",
+      "docker",
+      "docker"
+    ],
+    "prefixFlags": {
+      "docker": [
+        "-c ИМЯ / --context ИМЯ",
+        "-H АДРЕС / --host АДРЕС",
+        "-v / --version",
+        "-D / --debug"
+      ]
+    }
+  },
+  {
+    "name": "docker compose config",
+    "aliases": [],
+    "purpose": "Разобрать и нормализовать итоговую модель с подстановками. Вывод может содержать секреты.",
+    "syntax": "docker compose config",
+    "chapter": "11-compose-lifecycle",
+    "volume": "docker",
+    "source": "https://docs.docker.com/reference/cli/docker/compose/config/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.docker.com/reference/cli/docker/compose/config/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-c ИМЯ / --context ИМЯ",
+        "action": "Выбрать сохранённую точку управления для одного вызова.",
+        "when": "Адресно обращаться к личной VM.",
+        "example": "docker --context study info",
+        "result": "Ответит Engine context study, а не обязательно локальный сервер."
+      },
+      {
+        "flag": "-H АДРЕС / --host АДРЕС",
+        "action": "Явно выбрать endpoint поддерживаемого транспорта.",
+        "when": "Диагностика заранее подготовленной точки, с осмысленными правами и TLS.",
+        "example": "docker --host unix:///var/run/docker.sock version",
+        "result": "Проверяется именно указанный сокет; право доступа не возникает от флага."
+      },
+      {
+        "flag": "-v / --version",
+        "action": "Вывести версию клиента без обязательной проверки сервера.",
+        "when": "Зафиксировать установленный CLI.",
+        "example": "docker --version",
+        "result": "Это не полная проверка версии Engine; для обеих сторон используют docker version."
+      },
+      {
+        "flag": "-D / --debug",
+        "action": "Включить подробную клиентскую диагностику.",
+        "when": "Короткий опыт проблемы подключения без публикации чувствительных деталей.",
+        "example": "docker --debug --context study info",
+        "result": "Диагностика расширяется, конфигурация сервера от этого не меняется."
+      },
+      {
+        "flag": "-f ФАЙЛ / --file ФАЙЛ",
+        "action": "Выбрать описание проекта Compose.",
+        "when": "Повторяемый путь из каталога тома.",
+        "example": "docker compose -f labs/echo/compose.yaml config",
+        "result": "Подстановки и пути зависят от выбранных файлов; config может вывести секреты."
+      },
+      {
+        "flag": "-p ИМЯ / --project-name ИМЯ",
+        "action": "Переопределить имя проекта.",
+        "when": "Осознанно создать отдельное развёртывание.",
+        "example": "docker compose -p study-restore config",
+        "result": "Другое имя может означать другие объекты и тома; основной проект случайно не переименовывают."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "docker",
+      "docker",
+      "docker",
+      "docker",
+      "docker compose",
+      "docker compose"
+    ],
+    "prefixFlags": {
+      "docker": [
+        "-c ИМЯ / --context ИМЯ",
+        "-H АДРЕС / --host АДРЕС",
+        "-v / --version",
+        "-D / --debug"
+      ],
+      "docker compose": [
+        "-f ФАЙЛ / --file ФАЙЛ",
+        "-p ИМЯ / --project-name ИМЯ"
+      ]
+    }
+  },
+  {
+    "name": "docker compose ps",
+    "aliases": [],
+    "purpose": "Показать состояние сервисов выбранного проекта. Running и healthy описывают разные признаки.",
+    "syntax": "docker compose ps",
+    "chapter": "11-compose-lifecycle",
+    "volume": "docker",
+    "source": "https://docs.docker.com/reference/cli/docker/compose/ps/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.docker.com/reference/cli/docker/compose/ps/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-c ИМЯ / --context ИМЯ",
+        "action": "Выбрать сохранённую точку управления для одного вызова.",
+        "when": "Адресно обращаться к личной VM.",
+        "example": "docker --context study info",
+        "result": "Ответит Engine context study, а не обязательно локальный сервер."
+      },
+      {
+        "flag": "-H АДРЕС / --host АДРЕС",
+        "action": "Явно выбрать endpoint поддерживаемого транспорта.",
+        "when": "Диагностика заранее подготовленной точки, с осмысленными правами и TLS.",
+        "example": "docker --host unix:///var/run/docker.sock version",
+        "result": "Проверяется именно указанный сокет; право доступа не возникает от флага."
+      },
+      {
+        "flag": "-v / --version",
+        "action": "Вывести версию клиента без обязательной проверки сервера.",
+        "when": "Зафиксировать установленный CLI.",
+        "example": "docker --version",
+        "result": "Это не полная проверка версии Engine; для обеих сторон используют docker version."
+      },
+      {
+        "flag": "-D / --debug",
+        "action": "Включить подробную клиентскую диагностику.",
+        "when": "Короткий опыт проблемы подключения без публикации чувствительных деталей.",
+        "example": "docker --debug --context study info",
+        "result": "Диагностика расширяется, конфигурация сервера от этого не меняется."
+      },
+      {
+        "flag": "-f ФАЙЛ / --file ФАЙЛ",
+        "action": "Выбрать описание проекта Compose.",
+        "when": "Повторяемый путь из каталога тома.",
+        "example": "docker compose -f labs/echo/compose.yaml config",
+        "result": "Подстановки и пути зависят от выбранных файлов; config может вывести секреты."
+      },
+      {
+        "flag": "-p ИМЯ / --project-name ИМЯ",
+        "action": "Переопределить имя проекта.",
+        "when": "Осознанно создать отдельное развёртывание.",
+        "example": "docker compose -p study-restore config",
+        "result": "Другое имя может означать другие объекты и тома; основной проект случайно не переименовывают."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "docker",
+      "docker",
+      "docker",
+      "docker",
+      "docker compose",
+      "docker compose"
+    ],
+    "prefixFlags": {
+      "docker": [
+        "-c ИМЯ / --context ИМЯ",
+        "-H АДРЕС / --host АДРЕС",
+        "-v / --version",
+        "-D / --debug"
+      ],
+      "docker compose": [
+        "-f ФАЙЛ / --file ФАЙЛ",
+        "-p ИМЯ / --project-name ИМЯ"
+      ]
+    }
+  },
+  {
+    "name": "docker compose logs",
+    "aliases": [],
+    "purpose": "Читать потоки журналов сервисов проекта.",
+    "syntax": "docker compose logs [ОПЦИИ] [СЕРВИС]",
+    "chapter": "11-compose-lifecycle",
+    "volume": "docker",
+    "source": "https://docs.docker.com/reference/cli/docker/compose/logs/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.docker.com/reference/cli/docker/compose/logs/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-f / --follow",
+        "action": "Продолжать читать новые строки сервиса.",
+        "when": "Наблюдать короткий опыт после выбора конфигурационного файла перед logs.",
+        "example": "docker compose -f compose.yaml logs -f echo",
+        "result": "Здесь локальный -f означает follow без аргумента; предшествующий logs глобальный -f выбирает YAML-файл."
+      },
+      {
+        "flag": "--tail N",
+        "action": "Ограничить число последних строк по предусмотренной семантике команды.",
+        "when": "Сузить объём диагностики сервиса echo.",
+        "example": "docker compose logs --tail 40 echo",
+        "result": "Вывод ограничен настройками драйвера и ротации."
+      },
+      {
+        "flag": "--timestamps",
+        "action": "Показать временные отметки.",
+        "when": "Сопоставить с запросами и событиями Engine.",
+        "example": "docker compose logs --timestamps echo",
+        "result": "Нужны согласованные часы и известное окно."
+      },
+      {
+        "flag": "-c ИМЯ / --context ИМЯ",
+        "action": "Выбрать сохранённую точку управления для одного вызова.",
+        "when": "Адресно обращаться к личной VM.",
+        "example": "docker --context study info",
+        "result": "Ответит Engine context study, а не обязательно локальный сервер."
+      },
+      {
+        "flag": "-H АДРЕС / --host АДРЕС",
+        "action": "Явно выбрать endpoint поддерживаемого транспорта.",
+        "when": "Диагностика заранее подготовленной точки, с осмысленными правами и TLS.",
+        "example": "docker --host unix:///var/run/docker.sock version",
+        "result": "Проверяется именно указанный сокет; право доступа не возникает от флага."
+      },
+      {
+        "flag": "-v / --version",
+        "action": "Вывести версию клиента без обязательной проверки сервера.",
+        "when": "Зафиксировать установленный CLI.",
+        "example": "docker --version",
+        "result": "Это не полная проверка версии Engine; для обеих сторон используют docker version."
+      },
+      {
+        "flag": "-D / --debug",
+        "action": "Включить подробную клиентскую диагностику.",
+        "when": "Короткий опыт проблемы подключения без публикации чувствительных деталей.",
+        "example": "docker --debug --context study info",
+        "result": "Диагностика расширяется, конфигурация сервера от этого не меняется."
+      },
+      {
+        "flag": "-f ФАЙЛ / --file ФАЙЛ",
+        "action": "Выбрать описание проекта Compose.",
+        "when": "Повторяемый путь из каталога тома.",
+        "example": "docker compose -f labs/echo/compose.yaml config",
+        "result": "Подстановки и пути зависят от выбранных файлов; config может вывести секреты."
+      },
+      {
+        "flag": "-p ИМЯ / --project-name ИМЯ",
+        "action": "Переопределить имя проекта.",
+        "when": "Осознанно создать отдельное развёртывание.",
+        "example": "docker compose -p study-restore config",
+        "result": "Другое имя может означать другие объекты и тома; основной проект случайно не переименовывают."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "docker compose logs",
+      "docker compose logs",
+      "docker compose logs",
+      "docker",
+      "docker",
+      "docker",
+      "docker",
+      "docker compose",
+      "docker compose"
+    ],
+    "prefixFlags": {
+      "docker": [
+        "-c ИМЯ / --context ИМЯ",
+        "-H АДРЕС / --host АДРЕС",
+        "-v / --version",
+        "-D / --debug"
+      ],
+      "docker compose": [
+        "-f ФАЙЛ / --file ФАЙЛ",
+        "-p ИМЯ / --project-name ИМЯ"
+      ]
+    }
+  },
+  {
+    "name": "docker compose stop",
+    "aliases": [],
+    "purpose": "Остановить сервисы, сохраняя объекты и подключаемые данные.",
+    "syntax": "docker compose stop [СЕРВИС]",
+    "chapter": "11-compose-lifecycle",
+    "volume": "docker",
+    "source": "https://docs.docker.com/reference/cli/docker/compose/stop/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.docker.com/reference/cli/docker/compose/stop/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-c ИМЯ / --context ИМЯ",
+        "action": "Выбрать сохранённую точку управления для одного вызова.",
+        "when": "Адресно обращаться к личной VM.",
+        "example": "docker --context study info",
+        "result": "Ответит Engine context study, а не обязательно локальный сервер."
+      },
+      {
+        "flag": "-H АДРЕС / --host АДРЕС",
+        "action": "Явно выбрать endpoint поддерживаемого транспорта.",
+        "when": "Диагностика заранее подготовленной точки, с осмысленными правами и TLS.",
+        "example": "docker --host unix:///var/run/docker.sock version",
+        "result": "Проверяется именно указанный сокет; право доступа не возникает от флага."
+      },
+      {
+        "flag": "-v / --version",
+        "action": "Вывести версию клиента без обязательной проверки сервера.",
+        "when": "Зафиксировать установленный CLI.",
+        "example": "docker --version",
+        "result": "Это не полная проверка версии Engine; для обеих сторон используют docker version."
+      },
+      {
+        "flag": "-D / --debug",
+        "action": "Включить подробную клиентскую диагностику.",
+        "when": "Короткий опыт проблемы подключения без публикации чувствительных деталей.",
+        "example": "docker --debug --context study info",
+        "result": "Диагностика расширяется, конфигурация сервера от этого не меняется."
+      },
+      {
+        "flag": "-f ФАЙЛ / --file ФАЙЛ",
+        "action": "Выбрать описание проекта Compose.",
+        "when": "Повторяемый путь из каталога тома.",
+        "example": "docker compose -f labs/echo/compose.yaml config",
+        "result": "Подстановки и пути зависят от выбранных файлов; config может вывести секреты."
+      },
+      {
+        "flag": "-p ИМЯ / --project-name ИМЯ",
+        "action": "Переопределить имя проекта.",
+        "when": "Осознанно создать отдельное развёртывание.",
+        "example": "docker compose -p study-restore config",
+        "result": "Другое имя может означать другие объекты и тома; основной проект случайно не переименовывают."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "docker",
+      "docker",
+      "docker",
+      "docker",
+      "docker compose",
+      "docker compose"
+    ],
+    "prefixFlags": {
+      "docker": [
+        "-c ИМЯ / --context ИМЯ",
+        "-H АДРЕС / --host АДРЕС",
+        "-v / --version",
+        "-D / --debug"
+      ],
+      "docker compose": [
+        "-f ФАЙЛ / --file ФАЙЛ",
+        "-p ИМЯ / --project-name ИМЯ"
+      ]
+    }
+  },
+  {
+    "name": "docker compose start",
+    "aliases": [],
+    "purpose": "Запустить существующие объекты проекта. Изменённый YAML требует отдельного применения через up.",
+    "syntax": "docker compose start [СЕРВИС]",
+    "chapter": "11-compose-lifecycle",
+    "volume": "docker",
+    "source": "https://docs.docker.com/reference/cli/docker/compose/start/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.docker.com/reference/cli/docker/compose/start/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-c ИМЯ / --context ИМЯ",
+        "action": "Выбрать сохранённую точку управления для одного вызова.",
+        "when": "Адресно обращаться к личной VM.",
+        "example": "docker --context study info",
+        "result": "Ответит Engine context study, а не обязательно локальный сервер."
+      },
+      {
+        "flag": "-H АДРЕС / --host АДРЕС",
+        "action": "Явно выбрать endpoint поддерживаемого транспорта.",
+        "when": "Диагностика заранее подготовленной точки, с осмысленными правами и TLS.",
+        "example": "docker --host unix:///var/run/docker.sock version",
+        "result": "Проверяется именно указанный сокет; право доступа не возникает от флага."
+      },
+      {
+        "flag": "-v / --version",
+        "action": "Вывести версию клиента без обязательной проверки сервера.",
+        "when": "Зафиксировать установленный CLI.",
+        "example": "docker --version",
+        "result": "Это не полная проверка версии Engine; для обеих сторон используют docker version."
+      },
+      {
+        "flag": "-D / --debug",
+        "action": "Включить подробную клиентскую диагностику.",
+        "when": "Короткий опыт проблемы подключения без публикации чувствительных деталей.",
+        "example": "docker --debug --context study info",
+        "result": "Диагностика расширяется, конфигурация сервера от этого не меняется."
+      },
+      {
+        "flag": "-f ФАЙЛ / --file ФАЙЛ",
+        "action": "Выбрать описание проекта Compose.",
+        "when": "Повторяемый путь из каталога тома.",
+        "example": "docker compose -f labs/echo/compose.yaml config",
+        "result": "Подстановки и пути зависят от выбранных файлов; config может вывести секреты."
+      },
+      {
+        "flag": "-p ИМЯ / --project-name ИМЯ",
+        "action": "Переопределить имя проекта.",
+        "when": "Осознанно создать отдельное развёртывание.",
+        "example": "docker compose -p study-restore config",
+        "result": "Другое имя может означать другие объекты и тома; основной проект случайно не переименовывают."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "docker",
+      "docker",
+      "docker",
+      "docker",
+      "docker compose",
+      "docker compose"
+    ],
+    "prefixFlags": {
+      "docker": [
+        "-c ИМЯ / --context ИМЯ",
+        "-H АДРЕС / --host АДРЕС",
+        "-v / --version",
+        "-D / --debug"
+      ],
+      "docker compose": [
+        "-f ФАЙЛ / --file ФАЙЛ",
+        "-p ИМЯ / --project-name ИМЯ"
+      ]
+    }
+  },
+  {
+    "name": "sonar-scanner",
+    "aliases": [
+      "sonar-scanner.bat"
+    ],
+    "volume": "sonarqube",
+    "chapter": "05-scanner-contract",
+    "source": "https://docs.sonarsource.com/sonarqube-community-build/analyzing-source-code/scanners/sonarscanner",
+    "sources": [
+      {
+        "title": "Официальный SonarScanner CLI",
+        "url": "https://docs.sonarsource.com/sonarqube-community-build/analyzing-source-code/scanners/sonarscanner"
+      }
+    ],
+    "purpose": "Исследовать выбранный проект и передать отчёт своему SonarQube. Сканер не запускает Go-тесты автоматически и не равен серверному обработчику.",
+    "syntax": "sonar-scanner [ПАРАМЕТРЫ_CLI] [-Dключ=значение ...]",
+    "flags": [
+      {
+        "flag": "-h / --help",
+        "action": "Вывести справку установленной CLI-программы и завершиться.",
+        "when": "Перед первым запуском сверить доступные параметры именно своей версии.",
+        "example": "sonar-scanner -h",
+        "result": "Не запускается анализ проекта; видны флаги launcher, а не все свойства Sonar."
+      },
+      {
+        "flag": "-v / --version",
+        "action": "Вывести версии/сведения запуска CLI и завершиться.",
+        "when": "Записать инструмент на машине scanner отдельно от версии сервера.",
+        "example": "sonar-scanner -v",
+        "result": "Подтверждён локальный инструмент; это не приёмка HTTP-сервера."
+      },
+      {
+        "flag": "-X / --debug",
+        "action": "Включить подробный диагностический вывод.",
+        "when": "Коротко исследовать индексирование файлов или импорт отчёта в своём стенде.",
+        "example": "sonar-scanner -X",
+        "result": "Лог подробнее и потенциально чувствителен; код/пути/параметры не публикуют автоматически."
+      },
+      {
+        "flag": "-D <ключ=значение> / --define <ключ=значение>",
+        "action": "Передать свойство анализа. Ключ, знак равенства и значение задают один параметр; конкретное свойство определяет эффект.",
+        "when": "Осмысленно переопределить настройку текущего анализа без постоянного изменения UI.",
+        "example": "sonar-scanner -Dsonar.projectKey=handbook-service",
+        "result": "Выбран ключ; аргумент имеет приоритет обычного файла проекта и не доказывает существования/прав проекта."
+      }
+    ],
+    "situations": [
+      {
+        "problem": "Дождаться решения",
+        "explanation": "Без wait успешная отправка ещё не подтверждает gate.",
+        "solution": "-Dsonar.qualitygate.wait=true добавляет ожидание CE/gate; -Dsonar.qualitygate.timeout=300 задаёт секунды ожидания. Таймаут не превращает неизвестный результат в успех."
+      },
+      {
+        "problem": "Выбрать рабочую базу",
+        "explanation": "Относительный путь отчёта зависит от корня проекта.",
+        "solution": "-Dsonar.projectBaseDir=/свой/проект меняет базу относительных путей. Перед этим сверяют go.mod, reports и фактическую ревизию."
+      },
+      {
+        "problem": "Уточнить область",
+        "explanation": "Исключение файлов меняет входы и знаменатель.",
+        "solution": "sonar.sources/tests задают начальные категории, exclusions сужают их. Для значений со звёздочками и запятыми используют подходящее quoting оболочки."
+      }
+    ],
+    "flagScopes": [
+      "sonar-scanner",
+      "sonar-scanner",
+      "sonar-scanner",
+      "sonar-scanner"
+    ]
   }
 ]

@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+images.env
+.env
+*.private.env
+backup/
+reports/
+.sonar/
+.scannerwork/

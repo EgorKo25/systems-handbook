@@ -65,7 +65,6 @@ class CheckSiteTests(unittest.TestCase):
 
     def test_fragment_sources_and_nested_export_do_not_mask_a_broken_reading_page(self):
         self.put('index.html', '<h1>Library</h1>')
-        self.put('newbook/volume_config.py', 'CONFIG = {}')
         self.put('newbook/sources/01.html', '<a href="../linux/index.html#later">fragment</a>')
         self.put('_site/index.html', '<a href="old-missing.html">previous artifact</a>')
         self.assertEqual(self.errors(), '')

@@ -43,8 +43,8 @@
     "slug": "git",
     "title": "Git: от байтов объектов до совместной работы и восстановления",
     "volume": "VI",
-    "words": 44286,
-    "chapters": 26,
+    "words": 48364,
+    "chapters": 27,
     "terms": 178
   },
   {
@@ -78,5 +78,21 @@
     "words": 35694,
     "chapters": 26,
     "terms": 38
+  },
+  {
+    "slug": "docker",
+    "title": "Docker: от образа до работающей и восстанавливаемой системы",
+    "volume": "XI",
+    "words": 20510,
+    "chapters": 18,
+    "terms": 142
+  },
+  {
+    "slug": "sonarqube",
+    "title": "SonarQube: от установки до доказуемой проверки изменений",
+    "volume": "XII",
+    "words": 19165,
+    "chapters": 15,
+    "terms": 183
   }
 ]

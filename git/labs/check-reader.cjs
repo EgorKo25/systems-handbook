@@ -4,9 +4,14 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const cp = require('node:child_process');
 const assert = require('node:assert/strict');
 const root = path.resolve(__dirname, '../..');
 const volumes = JSON.parse(fs.readFileSync(path.join(root, 'published-volumes.json'), 'utf8')).volumes.filter(row => row.build === 'managed').map(row => row.slug);
+const readerRootIndex=process.argv.indexOf('--reader-root');
+const readerRoot=readerRootIndex>=0?path.resolve(process.argv[readerRootIndex+1]):root;
+const onlyIndex=process.argv.indexOf('--only');
+const selectedVolumes=onlyIndex>=0?process.argv[onlyIndex+1].split(','):volumes;
 const endMarker = "})(typeof globalThis !== 'undefined' ? globalThis : this);";
 let assertions = 0;
 function ok(value, message) { assert(value, message); assertions++; }
@@ -63,9 +68,143 @@ function optionResult(search, commands, query, name, option, value, label) {
   }
   return result;
 }
+function queryForFlag(command, index, form, value) {
+  const invocation = form.name + (form.expectsValue ? ' ' + value : '');
+  const owner = command.flagScopes?.[index];
+  return owner && owner !== command.name && command.name.startsWith(owner + ' ')
+    ? owner + ' ' + invocation + ' ' + command.name.slice(owner.length + 1)
+    : command.name + ' ' + invocation;
+}
+function parserRegressions(search, commands, label) {
+  const lf='\\' + String.fromCharCode(10), crlf='\\' + String.fromCharCode(13,10);
+  const docker=commands.find(c=>c.name==='docker');
+  ok(docker,label+': Docker root card exists');
+  for (const query of [
+    'docker --context study '+lf+' compose up -d',
+    'docker --context '+lf+' study compose up -d',
+    'docker --context study compose '+crlf+' -f compose.yaml '+crlf+' up -d',
+    'docker -D -cstudy compose -fcompose.yaml up -d',
+    'docker -H unix:///var/run/docker.sock compose --file="a b.yaml" up --detach',
+    'docker --context "-study" compose up -d',
+  ]) {
+    const result=resultFor(search,commands,query,'docker compose up',label+': prefix and continuation');
+    equal(result.analysis.unmatched.length,0,label+': known prefix/local flags recognised');
+    ok(!result.analysis.words.some(word=>/[\r\n]/.test(word)),label+': no artificial continuation operand');
+  }
+  const scoped=resultFor(search,commands,'docker --context study compose -f compose.yaml logs -f echo','docker compose logs',label+': scopes');
+  const f=scoped.analysis.options.filter(o=>o.name==='-f');
+  equal(f.length,2,label+': both scoped -f occurrences retained');
+  equal(f[0].value,'compose.yaml',label+': parent -f has filename');
+  equal(f[1].hasValue,false,label+': local -f is boolean follow');
+  equal(JSON.stringify(scoped.analysis.words),JSON.stringify(['echo']),label+': service operand not eaten');
+  const selected=scoped.analysis.matchedIndices.map(i=>scoped.command.flags[i].flag);
+  ok(selected.some(f=>f.includes('--file')),label+': parent file help selected');
+  ok(selected.some(f=>f.includes('--follow')),label+': local follow help selected');
+  const late=resultFor(search,commands,'docker compose logs --file compose.yaml -f echo','docker compose logs',label+': parent is prefix-only');
+  ok(late.analysis.unmatched.some(o=>o.name==='--file'),label+': late Compose file option is rejected like real CLI');
+  const lateRoot=resultFor(search,commands,'docker run --context study IMAGE','docker run',label+': Docker root is prefix-only');
+  ok(lateRoot.analysis.unmatched.some(o=>o.name==='--context'),label+': client context after run is not falsely inherited');
+  for(const [query,name,words,option]of[
+    ['docker --context study run --rm IMAGE sh -ceu "echo ok"','docker run',['IMAGE','sh','-ceu','echo ok'],'--rm'],
+    ['docker run IMAGE --version','docker run',['IMAGE','--version'],null],
+    ['docker create --name C IMAGE --context application','docker create',['IMAGE','--context','application'],'--name'],
+    ['docker exec --user 10001:10001 C /echo --context application','docker exec',['C','/echo','--context','application'],'--user'],
+    ['docker run -- IMAGE --rm','docker run',['IMAGE','--rm'],null],
+  ]) {
+    const result=resultFor(search,commands,query,name,label+': target argv boundary');
+    equal(JSON.stringify(result.analysis.words),JSON.stringify(words),label+': target argv preserved');
+    equal(result.analysis.unmatched.length,0,label+': target argv is not unknown Docker flags');
+    if(option)ok(result.analysis.options.some(o=>o.name===option),label+': Docker option before operand retained');
+    if(!option)equal(result.analysis.options.length,0,label+': only target options remain in argv');
+  }
+  const unit=resultFor(search,commands,'python3 -B -m unittest -v','python3 -m unittest',label+': fixed selector');
+  ok(unit.analysis.options.some(o=>o.name==='-B'),label+': interpreter option before module retained');
+  ok(unit.analysis.options.some(o=>o.name==='-v'),label+': module local option retained');
+  const misplaced=resultFor(search,commands,'python3 -m unittest -B','python3 -m unittest',label+': interpreter flags stay prefix-only');
+  ok(misplaced.analysis.unmatched.some(o=>o.name==='-B'),label+': post-module interpreter flag not falsely inherited');
+  resultFor(search,commands,'python3 -m -B unittest','python3',label+': no option inserted into fixed selector operand');
+  const collisions=resultFor(search,commands,'docker -c study run -c 512 -v study-data:/data IMAGE','docker run',label+': root/local short collisions');
+  equal(collisions.analysis.options.filter(o=>o.name==='-c')[0].value,'study',label+': root c means context');
+  equal(collisions.analysis.options.filter(o=>o.name==='-c')[1].value,'512',label+': local c means CPU shares');
+  const meaning=collisions.analysis.matchedIndices.map(i=>collisions.command.flags[i].flag);
+  ok(meaning.some(f=>f.includes('--cpu-shares')),label+': CPU help selected');
+  ok(meaning.some(f=>f.includes('--volume')),label+': local v means volume');
+  ok(!meaning.some(f=>f.includes('--version')),label+': volume is not client version');
+  const literal='a'+lf+'b', literalCR='a'+crlf+'b';
+  equal(JSON.stringify(search.tokenizeQuery("docker --context '"+literal+"' compose up")),JSON.stringify(['docker','--context',literal,'compose','up']),label+': single quotes retain literal LF');
+  equal(JSON.stringify(search.tokenizeQuery("docker --context '"+literalCR+"' compose up")),JSON.stringify(['docker','--context',literalCR,'compose','up']),label+': single quotes retain literal CRLF');
+  equal(JSON.stringify(search.tokenizeQuery('docker --context "a'+lf+'b" compose up')),JSON.stringify(['docker','--context','ab','compose','up']),label+': double quotes join continuation');
+  equal(JSON.stringify(search.tokenizeQuery('docker com'+lf+'pose up')),JSON.stringify(['docker','compose','up']),label+': adjacent word fragments join');
+  const coded=search.queryFromCode(docker,' --context study '+lf+' compose -f "a|b.yaml" up -d | tee ignored');
+  const codeResult=resultFor(search,commands,coded,'docker compose up',label+': complete code invocation');
+  equal(codeResult.analysis.options.find(o=>o.name==='-f')?.value,'a|b.yaml',label+': quoted pipe retained');
+  ok(!coded.includes('ignored'),label+': actual outer pipeline excluded');
+  for(const continuation of [lf,crlf]) {
+    const raw=search.queryFromCode(docker,' --context "stu'+continuation+'dy" '+continuation+' compose -f "a|b.yaml" '+continuation+' up -d | ignored');
+    const result=resultFor(search,commands,raw,'docker compose up',label+': raw LF/CRLF scanner round trip');
+    equal(result.analysis.options.find(o=>o.name==='--context')?.value,'study',label+': quoted continuation preserved through scanner');
+    equal(result.analysis.options.find(o=>o.name==='-f')?.value,'a|b.yaml',label+': scanner keeps quoted pipe with continuation');
+    ok(!raw.includes('ignored'),label+': scanner reaches real separator after CRLF');
+  }
+  const longCode=search.queryFromCode(docker,' --context study compose -f "'+ 'a'.repeat(300)+'.yaml" up -d; ignored');
+  resultFor(search,commands,longCode,'docker compose up',label+': command longer than old 240-char limit');
+  equal(search.queryForCommand(codeResult.command,coded),coded,label+': explicit invocation is not reduced to flags');
+  resultFor(search,commands,'docker --unknown-prefix value compose up -d','docker',label+': unknown flag is not skipped');
+  resultFor(search,commands,'docker compose -- up -d','docker compose',label+': terminator blocks subcommand scan');
+  // A synthetic family proves ownership is data-driven, including aliases and
+  // repeated local qualifiers, rather than a special case for Compose's -f.
+  const flags=[{flag:'-f / --follow'},{flag:'-s alpha'},{flag:'-s beta'},
+               {flag:'-c NAME / --context NAME'},{flag:'-f FILE / --file FILE'}].map(f=>({...f,action:'test',when:'test'}));
+  const family={name:'tool group show',aliases:['t g s'],purpose:'test',syntax:'test',flags,
+    flagScopes:['tool group show','tool group show','tool group show','tool','tool group'],
+    prefixFlags:{tool:['-c NAME / --context NAME'],'tool group':['-c NAME / --context NAME','-f FILE / --file FILE']}};
+  const fixtures=[{...family,name:'tool',aliases:[],flags:[],flagScopes:[],prefixFlags:{}},family];
+  const alias=resultFor(search,fixtures,'t -c lab g -f before s -f -s beta operand','tool group show',label+': synthetic scoped alias');
+  equal(alias.analysis.options.filter(o=>o.name==='-f')[0].value,'before',label+': alias parent operand');
+  equal(alias.analysis.options.filter(o=>o.name==='-f')[1].hasValue,false,label+': alias local boolean');
+  ok(alias.analysis.matchedIndices.includes(2)&&!alias.analysis.matchedIndices.includes(1),label+': same-scope qualifiers remain distinct');
+  equal(JSON.stringify(alias.analysis.words),JSON.stringify(['operand']),label+': alias operands preserved');
+  const strict=resultFor(search,fixtures,'tool group show --context lab','tool group show',label+': default strict scope');
+  ok(strict.analysis.unmatched.some(o=>o.name==='--context'),label+': undeclared persistence not inferred');
+  const persistent={...family,persistentScopes:['tool','tool group']};
+  const inherited=resultFor(search,[persistent],'tool group --context lab show --file after -f operand','tool group show',label+': explicitly persistent family');
+  equal(inherited.analysis.options.find(o=>o.name==='--context')?.value,'lab',label+': declared root persistence before child');
+  equal(inherited.analysis.options.find(o=>o.name==='--file')?.value,'after',label+': unshadowed long persistent spelling after child');
+  equal(inherited.analysis.options.find(o=>o.name==='-f')?.hasValue,false,label+': local short spelling shadows persistent parent');
+
+}
+if(process.argv.includes('--source-only')) {
+  const generated=JSON.parse(cp.execFileSync('python3',['-c',
+    'import json;from pathlib import Path;from scripts.build_volume import reader_commands,command_catalog;print(json.dumps(dict(page=reader_commands(Path("cache/sources/reader-shell.html").read_text()),commands=command_catalog())))'
+  ],{cwd:root,encoding:'utf8',maxBuffer:16*1024*1024}));
+  const search=shippedSearch(generated.page,'production-transform');
+  parserRegressions(search,generated.commands,'source production parser');
+  // Exercise every actual source card and inherited form before a full site
+  // build. Prefix-owned flags must be queried at their declared position.
+  for(const command of generated.commands) {
+    resultFor(search,generated.commands,command.name,command.name,'source catalog');
+    for(const alias of command.aliases||[])resultFor(search,generated.commands,alias,command.name,'source catalog alias');
+    for(const [index,flag]of command.flags.entries())for(const form of search.flagForms(flag.flag)) {
+      const value=form.qualifier||'bookvalue';
+      const result=resultFor(search,generated.commands,queryForFlag(command,index,form,value),command.name,'source catalog flag');
+      ok(result.analysis.matchedIndices.includes(index),'source: reachable scoped flag '+command.name+' '+flag.flag);
+    }
+  }
+  for(const [query,name,option,value]of[
+    ['go build -o ./out/app -gcflags "example.org/lab=-N -l" -trimpath .','go build','-gcflags','example.org/lab=-N -l'],
+    ['go tool compile -N=false -% -+ -o file.a file.go','go tool compile','-N','false'],
+    ["go test -run '^(TestOne|TestTwo)$' -count=1 ./...",'go test','-run','^(TestOne|TestTwo)$'],
+    ['grep -nE error access.log','grep','-E',undefined],
+    ['git reset --soft HEAD~1','git reset','--soft',undefined],
+  ])optionResult(search,generated.commands,query,name,option,value,'source compatibility');
+
+  console.log(JSON.stringify({ok:true,assertions,sourceOnly:true,implementation:'actual reader_commands transform'}));
+  process.exit(0);
+}
+
 const observed = [];
-for (const slug of volumes) {
-  const pagePath = path.join(root, slug, 'index.html');
+for (const slug of selectedVolumes) {
+  const pagePath = path.join(readerRoot, slug, 'index.html');
   ok(fs.existsSync(pagePath), slug + ': build index.html before running the reader check');
   const page = fs.readFileSync(pagePath, 'utf8');
   ok(page.includes('data-volume="' + slug + '"'), slug + ': reader volume is independent');
@@ -73,8 +212,9 @@ for (const slug of volumes) {
   const search = shippedSearch(page, slug);
   const commands = jsonData(page, 'command-reference-data');
   ok(Array.isArray(commands) && commands.length > 30, slug + ': substantial shipped command catalog');
-  const disk = JSON.parse(fs.readFileSync(path.join(root, slug, 'commands.json'), 'utf8'));
+  const disk = JSON.parse(fs.readFileSync(path.join(readerRoot, slug, 'commands.json'), 'utf8'));
   equal(JSON.stringify(commands), JSON.stringify(disk), slug + ': embedded and text/JSON export use same catalog');
+  parserRegressions(search,commands,slug);
   const names = new Set();
   let native = 0, flagQueries = 0, nonOptionForms = 0;
   for (const command of commands) {
@@ -91,7 +231,7 @@ for (const slug of volumes) {
       if (!forms.length) { nonOptionForms++; continue; } // prose/context/subcommand forms are not option tokens
       for (const form of forms) {
         const value = form.qualifier || 'bookvalue';
-        const query = command.name + ' ' + form.name + (form.expectsValue ? ' ' + value : '');
+        const query = queryForFlag(command,index,form,value);
         const r = resultFor(search, commands, query, command.name, slug);
         ok(r.analysis.matchedIndices.includes(index), slug + ': reachable flag form ' + command.name + ' ' + flag.flag);
         flagQueries++;

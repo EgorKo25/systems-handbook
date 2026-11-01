@@ -1,8 +1,8 @@
 """Independent technology volumes. Stable IDs preserve earlier chapter links."""
 CONFIGS = {
- 'git': dict(volume='VI',title='Git: от байтов объектов до совместной работы и восстановления',short='Git',
+ 'git': dict(volume='VI',title='Git: от байтов объектов до совместной работы и восстановления',short='Git',revision='1 ноября 2026',
     description='Объекты, индекс, история, обмен, обслуживание и восстановление репозитория.',
-    sections=[('Начало',['00-route']),('Устройство репозитория',['24-config-environment','01-repository-model','02-objects','03-index','04-history','25-revision-lab']),('Изменение и исследование истории',['05-branches','06-diffs','07-merge','08-rewrite','09-recovery','26-bisect-search']),('Обмен, правила и доверие',['10-remotes','11-collaboration','27-hooks-policy','12-attributes','31-signatures-trust']),('Состав и эксплуатация',['28-submodules','29-large-partial-sparse','30-bundles-server','32-history-migration','13-storage-performance','33-git-diagnostics']),('Практикум',['22-lab']),('Справочник',['99-glossary'])],
+    sections=[('Начало',['00-route','00-first-steps']),('Устройство репозитория',['01-repository-model','02-objects','03-index','04-history','24-config-environment','25-revision-lab']),('Изменение и исследование истории',['05-branches','06-diffs','07-merge','08-rewrite','09-recovery','26-bisect-search']),('Обмен, правила и доверие',['10-remotes','11-collaboration','27-hooks-policy','12-attributes','31-signatures-trust']),('Состав и эксплуатация',['28-submodules','29-large-partial-sparse','30-bundles-server','32-history-migration','13-storage-performance','33-git-diagnostics']),('Практикум',['22-lab']),('Справочник',['99-glossary'])],
     term_modules=['git_deep_terms_a','git_deep_terms_b'],diagram_modules=['git_state_diagrams'],
     base_terms=list(range(73))+list(range(123,127))+[129,130,139],
     blurb='Объекты и точные байты → индекс и история → сложные операции → обмен → эксплуатация и восстановление.'),

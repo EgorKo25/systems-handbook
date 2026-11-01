@@ -10,6 +10,8 @@
     {"slug": "go", "title": "Go", "build": "managed"},
     {"slug": "jenkins", "title": "Jenkins", "build": "managed"},
     {"slug": "gitlab", "title": "GitLab", "build": "managed"},
-    {"slug": "practicum", "title": "Практикум", "build": "managed"}
+    {"slug": "practicum", "title": "Практикум", "build": "managed"},
+    {"slug": "docker", "title": "Docker", "build": "managed"},
+    {"slug": "sonarqube", "title": "SonarQube", "build": "managed"}
   ]
 }

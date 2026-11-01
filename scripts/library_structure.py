@@ -194,7 +194,7 @@ def reading_map(root, stats, configs):
 STYLE = '''<style id="library-structure-style">
 .library-overview{margin:28px 0 38px;padding:20px 22px;border:1px solid var(--home-line);border-radius:16px;background:var(--home-paper)}
 .library-overview p{margin:0 0 12px}.library-overview p:last-child{margin-bottom:0}
-.library-guide{margin-top:12px}.library-guide>summary{cursor:pointer;font:600 14px/1.5 system-ui;padding:8px 0;min-height:36px;color:var(--home-accent)}
+.library-guide{margin-top:12px}.library-guide>summary{cursor:pointer;font:600 14px/1.5 system-ui;padding:10px 0;min-height:44px;color:var(--home-accent)}
 .library-guide[open]>summary{margin-bottom:12px}.library-guide .small{color:var(--home-muted)}
 .library-group-nav{display:flex;flex-wrap:wrap;gap:9px;margin:18px 0 0;padding:0;list-style:none}
 .library-group-nav a{display:block;padding:8px 12px;border:1px solid var(--home-line);border-radius:12px;text-decoration:none;font:600 13px/1.4 system-ui;color:var(--home-text);min-height:38px}

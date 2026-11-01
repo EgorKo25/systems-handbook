@@ -39,6 +39,17 @@ jobs:
         run: |
           python3 go/labs/check.py
           python3 gitlab/labs/check.py
+      - name: Check the container Go example
+        working-directory: docker/labs/echo
+        run: |
+          go test -race ./...
+          go vet ./...
+          CGO_ENABLED=0 go build -trimpath -buildvcs=false -o "$RUNNER_TEMP/handbook-container-echo" ./cmd/echo
+      - name: Check container models and analysis report contracts
+        run: |
+          python3 -m unittest discover -s docker/labs -p 'test_*.py' -v
+          python3 docker/labs/check-static.py --reader docker/index.html
+          python3 -m unittest discover -s sonarqube/labs -p 'test_*.py' -v
       - name: Check the stateful Git laboratory
         run: python3 git/labs/check_lab.py
       - name: Check personal-world lifecycle and practice helpers

@@ -1,0 +1,53 @@
+# Project configuration supplies GO_IMAGE and SONAR_GO_IMAGE as immutable images.
+# SONAR_HOST_URL must be reachable from this runner; SONAR_TOKEN is a private
+# protected project-analysis token. No server is installed by this pipeline.
+stages: [check, analyze]
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS'
+      when: never
+    - if: '$CI_COMMIT_BRANCH'
+go-report:
+  stage: check
+  image: "$GO_IMAGE"
+  variables:
+    GOTOOLCHAIN: local
+    GOWORK: "off"
+    CGO_ENABLED: "0"
+    GOFLAGS: ""
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH'
+  script:
+    - mkdir -p reports
+    - go test -count=1 -json -covermode=atomic -coverprofile=reports/coverage.out ./... > reports/test.jsonl
+    - go vet ./...
+  artifacts:
+    when: always
+    expire_in: 7 days
+    paths: [reports/test.jsonl, reports/coverage.out]
+sonar-main:
+  stage: analyze
+  image:
+    name: "$SONAR_GO_IMAGE"
+    entrypoint: [""]
+  variables:
+    GIT_DEPTH: "0"
+    GOTOOLCHAIN: local
+    SONAR_USER_HOME: "$CI_PROJECT_DIR/.sonar"
+  needs:
+    - job: go-report
+      artifacts: true
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+  allow_failure: false
+  script:
+    - go version
+    - test -s reports/test.jsonl
+    - test -s reports/coverage.out
+    - sonar-scanner -Dsonar.working.directory=.scannerwork -Dsonar.qualitygate.wait=true -Dsonar.qualitygate.timeout=300 -Dsonar.scm.revision="$CI_COMMIT_SHA"
+  artifacts:
+    when: always
+    expire_in: 7 days
+    paths: [.scannerwork/report-task.txt]

@@ -122,6 +122,25 @@ class ExportTests(unittest.TestCase):
                 self.assertFalse(name in exported, name)
                 self.assertNotIn('  ' + name + '\n', (output / 'SHA256SUMS').read_text())
 
+    def test_container_recipes_keep_authored_ignore_files_without_runtime_dotfiles(self):
+        public = {
+            'docker/labs/echo/.dockerignore': '.git\n.env\nsecrets\n',
+            'sonarqube/labs/.gitignore': 'images.env\n.env\nreports/\n',
+        }
+        private = ['docker/labs/echo/.env', 'sonarqube/labs/.env']
+        for name, data in public.items():
+            self.write(name, data)
+        for name in private:
+            self.write(name, 'SYNTHETIC_TEST_VALUE=private\n')
+        subprocess.run(['git', '-C', str(self.source), 'add', '-f', '--',
+                        *public, *private], check=True)
+        output = self.root / 'container-site'
+        MODULE.export_site(self.source, output, 'a' * 40)
+        for name, data in public.items():
+            self.assertEqual((output / name).read_text(), data)
+        for name in private:
+            self.assertFalse((output / name).exists(), name)
+
     def test_authored_vm_recipes_and_practicum_helpers_keep_their_exact_bytes(self):
         public = {
             'labs-personal/index.html': '<h1>Personal lab instructions</h1>\n',

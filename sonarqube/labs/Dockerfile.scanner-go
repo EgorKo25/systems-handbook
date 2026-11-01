@@ -1,0 +1,9 @@
+# Both arguments must be inspected immutable image references for one platform.
+ARG GO_IMAGE
+ARG SCANNER_IMAGE
+FROM ${GO_IMAGE} AS go-toolchain
+FROM ${SCANNER_IMAGE}
+COPY --from=go-toolchain /usr/local/go /opt/go
+ENV PATH="/opt/go/bin:${PATH}" GOTOOLCHAIN=local
+USER 1000:1000
+RUN go version && sonar-scanner -v

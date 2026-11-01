@@ -1,0 +1,45 @@
+# Own disposable Linux VM only. Populate images.env with inspected image digests.
+# Runtime passwords are local, never part of this published example.
+name: handbook-sonar
+services:
+  db:
+    image: ${POSTGRES_IMAGE:?set PostgreSQL17 image digest in images.env}
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:?set private bootstrap administrator password}
+      SONAR_DB_PASSWORD: ${SONAR_DB_PASSWORD:?set private application database password}
+    volumes:
+      - database:/var/lib/postgresql/data
+      - ./init-sonar-db.sh:/docker-entrypoint-initdb.d/10-sonar.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U sonar -d sonar"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    networks: [backend]
+  sonar:
+    image: ${SONAR_IMAGE:?set Community26.10 image digest in images.env}
+    depends_on:
+      db: {condition: service_healthy}
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://db:5432/sonar
+      SONAR_JDBC_USERNAME: sonar
+      SONAR_JDBC_PASSWORD: ${SONAR_DB_PASSWORD:?set private database password}
+    ports:
+      - "127.0.0.1:${SONAR_BIND_PORT:-9000}:9000"
+    volumes:
+      - search-data:/opt/sonarqube/data
+      - extensions:/opt/sonarqube/extensions
+      - logs:/opt/sonarqube/logs
+    ulimits:
+      nofile: {soft: 131072, hard: 131072}
+      nproc: 8192
+    networks: [backend]
+networks:
+  backend: {}
+volumes:
+  database: {}
+  search-data: {}
+  extensions: {}
+  logs: {}

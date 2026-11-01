@@ -1,0 +1,44 @@
+// Assumes a prepared trusted agent with Go + CLI, configured Sonar installation
+// handbook-sonar, its credentials, and a reachable authenticated webhook.
+pipeline {
+  agent none
+  options { skipDefaultCheckout(true) }
+  environment {
+    GOFLAGS = ''
+    GOWORK = 'off'
+    GOTOOLCHAIN = 'local'
+    CGO_ENABLED = '0'
+  }
+  stages {
+    stage('Test and submit') {
+      agent { label 'go-sonar' }
+      steps {
+        checkout scm
+        sh '''
+          set -eu
+          mkdir -p reports
+          go test -count=1 -json -covermode=atomic -coverprofile=reports/coverage.out ./... > reports/test.jsonl
+          go vet ./...
+        '''
+        withSonarQubeEnv('handbook-sonar') {
+          sh 'sonar-scanner'
+        }
+      }
+      post {
+        always { archiveArtifacts artifacts: 'reports/*,.scannerwork/report-task.txt', allowEmptyArchive: true }
+      }
+    }
+    stage('Quality decision') {
+      steps {
+        timeout(time: 15, unit: 'MINUTES') {
+          script {
+            def gate = waitForQualityGate(webhookSecretId: 'sonar-webhook')
+            if (gate.status != 'OK') {
+              error("Sonar analysis has not passed: " + gate.status)
+            }
+          }
+        }
+      }
+    }
+  }
+}

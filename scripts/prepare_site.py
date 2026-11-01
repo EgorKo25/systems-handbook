@@ -55,7 +55,8 @@ def is_reading_file(name: str) -> bool:
     if name in CACHE_LAB_MODELS:
         return True  # Node laboratory checks require these same browser models.
     if name in {"git/labs/template/.gitignore", "go/labs/service/.gitignore",
-                "gitlab/labs/service/.gitignore", "gitlab/labs/service/.gitlab-ci.yml"}:
+                "gitlab/labs/service/.gitignore", "gitlab/labs/service/.gitlab-ci.yml",
+                "docker/labs/echo/.dockerignore", "sonarqube/labs/.gitignore"}:
         return True
     if any(p.startswith(".") or p in {"__pycache__", "node_modules"} for p in path.parts):
         return False

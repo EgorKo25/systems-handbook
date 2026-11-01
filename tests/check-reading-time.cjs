@@ -205,4 +205,4 @@ if(!sourceOnly)for(const volume of volumes){
  eq(load(scripts[0][1]).remaining(1800,.3),'Осталось примерно 7 мин',volume+': actual shipped algorithm executes');
  ok(!/<div class="meta">[^<]*\d+\s+мин чтения без опытов/.test(html),volume+': old fixed estimate removed');
 }
-console.log('PASS reading-time: '+checks+' assertions'+(sourceOnly?' (source only; run again after reader refresh)':' including all ten shipped readers'));
+console.log('PASS reading-time: '+checks+' assertions'+(sourceOnly?' (source only; run again after reader refresh)':' including all '+volumes.length+' shipped readers'));
