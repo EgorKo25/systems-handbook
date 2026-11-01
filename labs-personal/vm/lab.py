@@ -218,6 +218,31 @@ class Transport:
     parts.append({'name':p.name,'bytes':len(chunk),'sha256':sha(p)});i+=1
   m={'format':1,'generation':generation,'world_id':data['world_id'],'config':data['config'],'cold':cold,'bytes':image.stat().st_size,'sha256':sha(image),'parts':parts,'access':s['access']}
   self.check_manifest(m,{'tag':generation});atomic(mfile,m);self.phase(s,'pending',pending=str(folder));return folder
+ def owned_assets(self,s,release):
+  self.owns(s);current=self.backend.release('world-'+s['token'],s['token'])
+  require(type(current.get('id'))is int and current['id']>0 and type(release.get('id'))is int and current['id']==release['id']and current.get('tag_name')==release.get('tag_name')=='world-'+s['token']and current.get('body')=='personal-lab-v1:'+s['token'],'Owned generation release changed; current not advanced')
+  assets=self.backend.assets(current);require(len({a['name']for a in assets})==len(assets),'Duplicate asset names')
+  return assets
+ def readback_checked(self,s,release,asset,p):
+  require(type(asset.get('id'))is int and asset['id']>0,'Invalid read-back asset id')
+  def remote_matches():
+   found=next((a for a in self.owned_assets(s,release)if a.get('name')==p['name']),None)
+   require(found is not None and type(found.get('id'))is int and found['id']==asset['id']and found.get('state')=='uploaded'and type(found.get('size'))is int and found['size']==p['bytes'],'Read-back asset changed/incomplete; current not advanced')
+  remote_matches()
+  repo=getattr(self.backend,'repo',None);require(type(repo)is str and re.fullmatch(r'[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+',repo),'Read-back cache requires the explicit repository identity')
+  key={'format':1,'repo':repo,'release_id':release['id'],'generation':release['tag_name'],'owner':s['token'],'asset_id':asset['id'],'name':p['name'],'bytes':p['bytes'],'sha256':p['sha256']}
+  verify=self.root/'verification';require(not verify.is_symlink(),'Unsafe verification directory');verify.mkdir(mode=0o700,exist_ok=True)
+  cache=verify/'readback-v1';require(not cache.is_symlink(),'Unsafe read-back cache directory');cache.mkdir(mode=0o700,exist_ok=True)
+  path=cache/(hashlib.sha256(dump(key)).hexdigest()+'.verified')
+  require(not path.is_symlink(),'Unsafe read-back cache file')
+  if path.exists():
+   require(path.is_file()and path.stat().st_size==p['bytes']and sha(path)==p['sha256'],'Verified read-back cache changed; retained, current not advanced')
+   remote_matches();return
+  temp=cache/(path.name+'.partial-'+uuid.uuid4().hex);self.backend.download(asset,temp)
+  require(temp.is_file()and not temp.is_symlink()and temp.stat().st_size==p['bytes']and sha(temp)==p['sha256'],'Remote read-back failed; partial retained, current not advanced')
+  if os.name!='nt':os.chmod(temp,0o600)
+  with temp.open('r+b')as f:f.flush();os.fsync(f.fileno())
+  remote_matches();os.replace(temp,path);fsyncdir(cache)
  def upload_pending(self,s):
   folder=Path(s['pending']);mfile=folder/'manifest.json';m=self.check_manifest(load(mfile),{'tag':'world-'+s['token']})
   desired={'tag':m['generation'],'manifest_sha256':sha(mfile)}
@@ -230,7 +255,7 @@ class Transport:
    except Error:
     actual,_=self.backend.get();require(actual==changed,'Ambiguous uploading transition; retained')
   release=self.backend.release(m['generation'],s['token']);records=[*m['parts'],{'name':'manifest.json','bytes':mfile.stat().st_size,'sha256':sha(mfile)}]
-  known={p['name']for p in records}
+  known={p['name']for p in records};verified=[]
   for i,p in enumerate(records):
    self.owns(s);local=folder/p['name'];require(local.is_file()and not local.is_symlink()and local.stat().st_size==p['bytes']and sha(local)==p['sha256'],'Pending bytes changed; no upload')
    assets=self.backend.assets(release);require(len({a['name']for a in assets})==len(assets)and all(a['name']in known for a in assets),'Unexpected assets in owned generation')
@@ -239,9 +264,11 @@ class Transport:
    if found is None:self.backend.upload(release,local);assets=self.backend.assets(release);found=next((a for a in assets if a['name']==p['name']),None)
    require(found is not None and found.get('state')=='uploaded'and found.get('size')==p['bytes'],'Remote asset incomplete')
    self.phase(s,'uploading',progress={'part':i+1,'of':len(records),'verified':i})
-   # Read back actual bytes, not just a successful upload reply or server size.
-   verify=self.root/'verification';verify.mkdir(exist_ok=True);temp=verify/(uuid.uuid4().hex+'.check');self.backend.download(found,temp)
-   require(temp.stat().st_size==p['bytes']and sha(temp)==p['sha256'],'Remote read-back failed; current not advanced')
+   # A retained verification is reusable only after fresh remote/lease checks
+   # and hashing its actual local bytes again, never by a server digest alone.
+   self.readback_checked(s,release,found,p);verified.append((found['id'],p['name'],p['bytes'],'uploaded'))
+  assets=self.owned_assets(s,release)
+  require(len(assets)==len(verified)and all(type(a.get('id'))is int and type(a.get('size'))is int for a in assets)and {(a.get('id'),a.get('name'),a.get('size'),a.get('state'))for a in assets}==set(verified),'Verified generation asset set changed; current not advanced')
   self.backend.publish(release);d,rev=self.owns(s);new=dict(d,revision=d['revision']+1,current=desired,lease=None)
   try:self.backend.cas(rev,new)
   except Error:

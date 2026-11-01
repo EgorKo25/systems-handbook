@@ -6,6 +6,7 @@ VM=Path(__file__).resolve().parents[1]/'vm';sys.path.insert(0,str(VM))
 import lab as L
 
 class Fake:
+ repo='owner/private'
  def __init__(self):self.control={'format':1,'revision':0,'current':None,'lease':None};self.sha='0';self.releases={};self.lock=threading.Lock();self.assets_by_id={};self.next=1;self.fail_after_upload=False;self.corrupt=False;self.lose_cas=False;self.fail_before_cas=False;self.barrier=None;self.deletions=[]
  def get(self):
   with self.lock:r=copy.deepcopy(self.control),self.sha
