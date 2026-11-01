@@ -14,6 +14,7 @@
 </section>
 <section data-mission-debrief>
 <h3>Создать собственный опыт, а не открыть рабочую базу</h3>
+<p>В Ubuntu и PGDG серверные бинарники обычно лежат в каталоге выбранной основной версии, например <code>/usr/lib/postgresql/18/bin</code>, и <code>initdb</code> может отсутствовать в обычном PATH даже после установки пакета. Найдите каталог поставки по составу установленного пакета, сверьте <code>initdb --version</code>, <code>postgres --version</code>, <code>pg_ctl --version</code> и <code>psql --version</code>. Для выбранной пакетной ветки 18 можно в этом терминале задать <code>export PATH="/usr/lib/postgresql/18/bin:$PATH"</code>; для другой поставки используйте её записанный полный путь. Выбор бинарника должен предшествовать чтению PG_VERSION и первому initdb. Установка клиента <code>psql</code> отдельно не означает наличия сервера.</p>
 <p>Команды выполняются обычным пользователем <strong>в учебной Linux VM</strong> с заранее установленными совместимыми бинарниками PostgreSQL. Сам <code>/srv/study</code> подготовлен от root и не обязан разрешать запись student. Поэтому новый каталог экземпляра создаётся отдельным административным действием. Не запускайте initdb от root и не исправляйте доступ рекурсивной сменой владельца всего /srv.</p>
 <pre><code>if test -e /srv/study/pg-access; then
   printf '%s\n' 'Каталог уже существует: проверяем и продолжаем свой экземпляр, не меняем владельца автоматически.'
@@ -34,6 +35,7 @@ fi</code></pre>
 <pre><code>pg_ctl -D data -l server.log start
 psql -X -h /srv/study/pg-access/socket -p 55440 -U "$(id -un)" -d postgres</code></pre>
 <p><code>-l</code> направляет серверный журнал в файл, <code>-X</code> исключает влияние пользовательского psqlrc. <code>-U "$(id -un)"</code> явно выбирает созданного initdb администратора с именем текущего пользователя ОС; это исключает случайный PGUSER. В psql выполните <code>SHOW config_file;</code>, <code>SHOW hba_file;</code>, <code>SHOW listen_addresses;</code>, <code>SHOW port;</code> и <code>\conninfo</code>. Используйте обнаруженные пути. Пакетная установка ОС может хранить конфигурацию вне PGDATA; наш ручной опыт не доказывает расположение файлов другой поставки.</p>
+<p>Следующий блок — <strong>первая настройка</strong> нового экземпляра. Если роли или <code>access_lab</code> уже существуют, сначала сверяются их владельцы и права с паспортом; повторное выполнение всех CREATE не является продолжением занятия. Для нового экземпляра выйдите из диагностического psql через <code>\q</code>, сохраните блок в приватный файл <code>bootstrap-access.sql</code> текущего каталога и выполняйте его как единый сценарий с остановкой при ошибке.</p>
 <pre><code>CREATE ROLE app_owner NOLOGIN;
 CREATE ROLE app_rw LOGIN;
 CREATE ROLE app_ro LOGIN;
@@ -56,8 +58,13 @@ GRANT USAGE ON SCHEMA app TO app_rw, app_ro;
 GRANT SELECT ON app.items TO app_ro;
 GRANT SELECT, INSERT, UPDATE, DELETE ON app.items TO app_rw;
 GRANT USAGE ON SEQUENCE app.items_id_seq TO app_rw;</code></pre>
+<pre><code>psql -X -v ON_ERROR_STOP=1 \
+  -h /srv/study/pg-access/socket -p 55440 -U "$(id -un)" \
+  -d postgres -f bootstrap-access.sql</code></pre>
+<p><code>-f</code> читает SQL из указанного файла, а <code>-v ON_ERROR_STOP=1</code> прекращает сценарий после SQL-ошибки и возвращает неуспех. Два <code>\password</code> запрашивают секреты в личном терминале. Сценарий не объединён одной транзакцией: <code>CREATE DATABASE</code> её не допускает. Поэтому при отказе часть объектов уже может существовать; сохраните первую ошибку и исследуйте состояние, не удаляйте кластер и не запускайте весь файл вслепую снова. К настройке HBA переходят только после приёмки фактических ролей, базы, схемы и таблицы.</p>
 <p><code>\password</code> запрашивает новый секрет интерактивно; не вставляйте его в SQL-пример. Владелец app_owner не может напрямую войти, роли чтения и изменения не получают SUPERUSER, CREATEDB или членство во владельце. Таблица создаётся после SET ROLE именно от app_owner. Для будущих таблиц при необходимости отдельно настраивают <code>ALTER DEFAULT PRIVILEGES FOR ROLE app_owner IN SCHEMA app</code>; это не заменяет показанные GRANT существующим объектам.</p>
 <h3>Сузить и проверить маршрут входа</h3>
+<p>После завершения файлового bootstrap снова откройте административный psql явным сокетом, портом 55440, своим пользователем ОС и базой <code>postgres</code>, как в диагностической команде выше. Этот сеанс нужен для проверки HBA и перечитывания конфигурации; не закрывайте его до проверки новых соединений.</p>
 <p>Сохраните исходный HBA-файл этого частного кластера и разместите правила приложения до общей локальной строки. Для нашего опыта достаточно:</p>
 <pre><code>local access_lab app_rw                  scram-sha-256
 local access_lab app_ro                  scram-sha-256

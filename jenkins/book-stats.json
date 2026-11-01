@@ -2,14 +2,14 @@
   {
     "id": "00-route",
     "title": "Jenkins: от установки до восстановления конвейера",
-    "words": 433,
+    "words": 745,
     "part": "Начало",
     "number": "•"
   },
   {
     "id": "34-jenkins-install",
     "title": "Устанавливаем Jenkins осмысленно: JVM, WAR, адреса и первый запуск",
-    "words": 2441,
+    "words": 2643,
     "part": "Установка и первоначальная настройка",
     "number": "1"
   },
@@ -44,56 +44,56 @@
   {
     "id": "38-jenkins-pipeline-engine",
     "title": "Движок Pipeline: CPS, граф шагов и сохранённое продолжение",
-    "words": 1961,
+    "words": 2034,
     "part": "Устройство системы",
     "number": "6"
   },
   {
     "id": "19-jenkinsfile",
     "title": "Jenkinsfile: описание конвейера, которое можно объяснить",
-    "words": 1751,
+    "words": 1920,
     "part": "Исполнение и данные",
     "number": "7"
   },
   {
     "id": "39-jenkins-data-flow",
     "title": "Данные конвейера: параметры, окружение, секреты, файлы и отчёты",
-    "words": 1474,
+    "words": 1540,
     "part": "Исполнение и данные",
     "number": "8"
   },
   {
     "id": "40-jenkins-multibranch",
     "title": "Multibranch и SCM: от изменения Git до правильного запуска",
-    "words": 1468,
+    "words": 1785,
     "part": "Исполнение и данные",
     "number": "9"
   },
   {
     "id": "41-jenkins-trust",
     "title": "Доверие в Jenkins: пользователи, код, секреты и границы машины",
-    "words": 1472,
+    "words": 1621,
     "part": "Доверие и эксплуатация",
     "number": "10"
   },
   {
     "id": "42-jenkins-concurrency",
     "title": "Конкуренция и очередь: исполнители, блокировки и взаимное ожидание",
-    "words": 1953,
+    "words": 1986,
     "part": "Доверие и эксплуатация",
     "number": "11"
   },
   {
     "id": "43-jenkins-recovery",
     "title": "Восстановление Jenkins: перезапуск, потеря агента и резервная копия",
-    "words": 1484,
+    "words": 1736,
     "part": "Доверие и эксплуатация",
     "number": "12"
   },
   {
     "id": "44-jenkins-observability",
     "title": "Наблюдаемость Jenkins: от медленной стадии до потоков JVM",
-    "words": 1487,
+    "words": 1639,
     "part": "Доверие и эксплуатация",
     "number": "13"
   },

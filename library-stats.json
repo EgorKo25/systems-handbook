@@ -59,7 +59,7 @@
     "slug": "jenkins",
     "title": "Jenkins: от установки и плагинов до устройства и эксплуатации Pipeline",
     "volume": "VIII",
-    "words": 27960,
+    "words": 29685,
     "chapters": 16,
     "terms": 88
   },
@@ -67,7 +67,7 @@
     "slug": "gitlab",
     "title": "GitLab: платформа, исполнение CI и эксплуатация",
     "volume": "IX",
-    "words": 22371,
+    "words": 24153,
     "chapters": 18,
     "terms": 167
   },
@@ -75,7 +75,7 @@
     "slug": "practicum",
     "title": "Практикум: от своей сети до эксплуатации продукта",
     "volume": "X",
-    "words": 35694,
+    "words": 37629,
     "chapters": 26,
     "terms": 38
   },

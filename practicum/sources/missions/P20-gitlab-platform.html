@@ -26,10 +26,19 @@
 <p>В собственном GitLab-проекте корнем репозитория должен быть именно service. Не отправляйте туда всю энциклопедию ради одной лаборатории. Настройте закреплённый Go+Python образ и подходящий Runner; затем проверьте CI Lint. Следующий фрагмент показывает передачу данных, а правила событий, timeout и проверка manifest дополняются из собственного явного договора:</p>
 <pre><code>stages: [check, build, verify]
 
+default:
+  image: $LAB_GO_PYTHON_IMAGE
+  tags: [personal-go]
+
 unit:
   stage: check
   script:
     - go test -count=1 ./...
+
+vet:
+  stage: check
+  script:
+    - go vet ./...
 
 build:
   stage: build
@@ -46,6 +55,7 @@ verify:
       artifacts: true
   script:
     - python3 tools/verify-release.py</code></pre>
+<p><code>default</code> связывает каждое задание с заранее подготовленной средой и меткой <code>personal-go</code>; без этой связи специально ограниченный метками Runner может оставить job в pending. <code>LAB_GO_PYTHON_IMAGE</code> — несекретная проектная переменная с реальным закреплённым образом. Если вы продолжаете первый Shell-вариант из тома GitLab, удалите только строку <code>image</code> и сохраните тот же Runner с установленными Go и Python. <code>go vet</code> исследует определённые подозрительные конструкции статически, не заменяя исполнения тестов. Проверки unit и vet обе обязательны перед build.</p>
 <p>Готовая собственная проверка приложена как <a href="labs/verify_go_release.py">verify_go_release.py</a>. Скопируйте её в <code>tools/verify-release.py</code> личного Go-проекта и закоммитьте перед сборкой. Она сверяет format, binary, bytes, SHA, version, target, flags, source_revision/dirty, build_script_sha256 и фактический toolchain, затем запускает -version. HEAD читается из действительно самостоятельного корня проекта; <code>CI_COMMIT_SHA</code> проверяется как заявленное значение, а не принимается за доказанную историю. Любое расхождение даёт ненулевой код без пересборки. Значение версии по умолчанию — 1.0.0; новый выпуск задаёт одинаковую версию build и <code>--expected-version</code> verifier.</p>
 <p>На первом реальном запуске сохраните source события, commit SHA, IDs build/verify и скачанный manifest. Убедитесь, что новая среда verify действительно получила artifact build, а прежний workspace не делает видимость файла случайной. Затем сломайте тест: build не должен пройти обычным путём. Отдельно уберите artifact path либо повредите полученную копию: verify должен отказаться. После исправления этих отрицательных опытов можно присоединить проверенную доставку P14 с последовательным доступом к одному окружению.</p>
 <h3>Проверка событий и управления</h3>

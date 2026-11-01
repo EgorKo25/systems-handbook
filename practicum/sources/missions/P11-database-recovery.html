@@ -20,21 +20,22 @@ export PGPORT=55440
 export PGUSER="$(id -un)"
 export PGDATABASE=postgres
 umask 077
-mkdir /srv/study/backups/recovery-drill-01
-cd /srv/study/backups/recovery-drill-01
-psql -X -d access_lab -c '\conninfo'
-pg_dump --format=custom --file=access.dump access_lab
-pg_dumpall --roles-only --no-role-passwords --file=roles.sql
-sha256sum access.dump roles.sql &gt; SHA256SUMS
+lab_pg_restore_dir=$(mktemp -d "$HOME/pg-recovery.XXXXXX")
+cd -- "$lab_pg_restore_dir" &amp;&amp;
+psql -X -d access_lab -c '\conninfo' &amp;&amp;
+pg_dump --format=custom --file=access.dump access_lab &amp;&amp;
+pg_dumpall --roles-only --no-role-passwords --file=roles.sql &amp;&amp;
+sha256sum access.dump roles.sql &gt; SHA256SUMS &amp;&amp;
 pg_restore --list access.dump &gt; archive-list.txt</code></pre>
 <p><code>--format=custom</code>, сокращённо <code>-Fc</code>, выбирает архив для pg_restore, <code>--file</code> — выходной файл. <code>--roles-only</code> сохраняет роли отдельно от баз, <code>--no-role-passwords</code> исключает парольные проверочные значения: после полного аварийного восстановления секреты потребуется назначить предусмотренным способом. В настоящем резервировании секретные данные хранят отдельно с подходящим доступом. <code>--list</code> показывает оглавление архива; это не проверка всех восстановленных строк.</p>
-<pre><code>createdb --template=template0 recovery_check
+<p><code>mktemp -d</code> создаёт новый приватный каталог в домашней папке владельца; путь сохраните в паспорте. Это устраняет несуществующего родителя <code>/srv/study/backups</code> и не требует менять владельца всего /srv. Между зависимыми командами стоит <code>&amp;&amp;</code>: ошибка входа, дампа или записи суммы не превращается в переход к следующему шагу. После любой такой ошибки восстановление не начинают. Перед импортом сначала проверим полученные файлы; на отдельном носителе нужны также ожидаемые суммы, сохранённые доверенным способом.</p>
+<pre><code>sha256sum --check SHA256SUMS &amp;&amp;
+createdb --template=template0 recovery_check &amp;&amp;
 pg_restore --exit-on-error --single-transaction \
-  --dbname=recovery_check access.dump
-psql -X -d access_lab -c 'TABLE app.items ORDER BY id;'
-psql -X -d recovery_check -c 'TABLE app.items ORDER BY id;'
-sha256sum --check SHA256SUMS</code></pre>
-<p>createdb создаёт новую пустую базу; template0 уменьшает влияние пользовательских объектов шаблона. Если recovery_check уже существует, остановитесь и разберите прежний опыт. <code>--exit-on-error</code> прекращает восстановление при ошибке вместо накопления полупринятого результата. <code>--single-transaction</code> объединяет действия в транзакцию там, где это поддерживается данным сценарием; с параллельным <code>-j</code> его не совмещают. Здесь нет <code>--clean</code>, удаляющего существующие объекты.</p>
+  --dbname=recovery_check access.dump &amp;&amp;
+psql -X -d access_lab -c 'TABLE app.items ORDER BY id;' &amp;&amp;
+psql -X -d recovery_check -c 'TABLE app.items ORDER BY id;'</code></pre>
+<p>createdb создаёт новую пустую базу; template0 уменьшает влияние пользовательских объектов шаблона. Если recovery_check уже существует, команда откажет и связанный через <code>&amp;&amp;</code> restore не выполнится: сначала разберите прежний опыт. Нельзя просто продолжать следующую строку вручную после этого отказа. <code>--exit-on-error</code> прекращает восстановление при ошибке вместо накопления полупринятого результата. <code>--single-transaction</code> объединяет действия в транзакцию там, где это поддерживается данным сценарием; с параллельным <code>-j</code> его не совмещают. Здесь нет <code>--clean</code>, удаляющего существующие объекты.</p>
 <p>Сверьте все значения небольшой таблицы, ограничения и владельца: <code>\d+ app.items</code>, <code>\dp app.items</code>, <code>\dn+</code>. На восстановленной копии проверьте вставку следующего автоматически назначенного id и откатите тестовую строку транзакцией. Последовательность при этом может продвинуться и не обязана вернуть номер после ROLLBACK; отсутствие пропусков не является требованием исправной последовательности. Достаточно доказать допустимое уникальное продолжение.</p>
 <p>Глобальные роли уже существуют в том же кластере, поэтому roles.sql здесь не применяют повторно. При восстановлении на действительно пустом отдельном кластере этот файл сначала изучается и адаптируется к заранее созданному администратору, затем проверяются владельцы и членство. Дамп одной базы без режима создания не является полным рецептом её внешних настроек: отдельно восстановите нужного владельца базы, CONNECT и ограничения PUBLIC. Для нашего частного кластера явно выполните <code>ALTER DATABASE recovery_check OWNER TO app_owner;</code>, <code>REVOKE ALL ON DATABASE recovery_check FROM PUBLIC;</code>, <code>GRANT CONNECT ON DATABASE recovery_check TO app_rw, app_ro;</code>. Добавьте перед запретами HBA узкие строки для recovery_check по образцу предыдущего задания, сохранив те же роли, адрес 127.0.0.1/32 и scram-sha-256; прежняя строка только для access_lab новую базу не разрешает. Проверьте синтаксис, перечитайте файл и лишь затем повторите положительный вход app_ro и отрицательный INSERT в recovery_check. Один успешный вход администратора этого не проверяет.</p>
 <h3>Физическая история: проверенный пример и собственная приёмка</h3>

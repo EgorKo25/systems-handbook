@@ -75,11 +75,11 @@ def prepare():
             body += '<aside class="callout"><strong>Этап развития стенда.</strong> Условие и разбор подготовлены; нужные роли и ограничения доступа ещё предстоит развернуть и проверить. Их работоспособность этим текстом не подтверждается.</aside>'
         else:
             body += '<aside class="callout"><strong>Подготовлен рецепт.</strong> '+text(RECIPE_STATUS[status])+' Полный запуск этого сценария на QEMU и Windows пока не подтверждён.</aside>'
-        body += technology_start(identifier)
-        body += '<h2>Как подойти к работе</h2>'+sections['analysis']
         links = mission.get('chapters',[])
         if links:
-            body += '<p>Связанные теоретические главы: '+', '.join('<a href="'+text(link['href'])+'">'+text(link.get('title') or chapter_label(link['href']))+'</a>' for link in links)+'.</p>'
+            body += '<p><strong>Перед первой попыткой.</strong> Если механизм ещё не знаком, сначала прочитайте связанные главы: '+', '.join('<a href="'+text(link['href'])+'">'+text(link.get('title') or chapter_label(link['href']))+'</a>' for link in links)+'. Ниже упражнение использует эти основы; открытие подсказок не заменяет первоначального знакомства с инструментом.</p>'
+        body += technology_start(identifier)
+        body += '<h2>Как подойти к работе</h2>'+sections['analysis']
         assets = mission.get('assets',[])
         if assets:
             body += '<p>Файлы задания: '+', '.join('<a href="../labs-personal/'+text(name)+'">'+text(name)+'</a>' for name in assets)+'.</p>'
