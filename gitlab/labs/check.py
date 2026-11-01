@@ -33,13 +33,24 @@ class GitLabTeachingChecks(unittest.TestCase):
     def setUpClass(cls):
         cls.temp = tempfile.TemporaryDirectory(prefix='handbook-gitlab-check-')
         cls.root = Path(cls.temp.name)
-        cls.env = dict(os.environ, HANDBOOK_GO=GO, GOENV='off', GOTOOLCHAIN='local',
+        cls.env = dict({k:v for k,v in os.environ.items() if not k.startswith('GIT_')}, HANDBOOK_GO=GO, GOENV='off', GOTOOLCHAIN='local',
                        GOWORK='off', GOPROXY='off', GOTELEMETRY='off', GOMAXPROCS='2',
                        GOCACHE=str(cls.root/'cache'), GOPATH=str(cls.root/'gopath'),
-                       GOMODCACHE=str(cls.root/'modules'), CI_COMMIT_SHA='a'*40)
+                       GOMODCACHE=str(cls.root/'modules'))
         cls.project = cls.root/'service'
         shutil.copytree(HERE/'service', cls.project,
                         ignore=shutil.ignore_patterns('__pycache__', 'dist', 'reports', '.cache'))
+        cls.init_repo(cls.project)
+        cls.head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=cls.project, text=True).strip()
+        cls.env['CI_COMMIT_SHA'] = cls.head
+
+    @classmethod
+    def init_repo(cls, path):
+        base = ['git', '-c', 'core.hooksPath=/dev/null', '-c', 'core.fsmonitor=false',
+                '-c', 'user.name=EgorKo25', '-c', 'user.email=77259232+EgorKo25@users.noreply.github.com']
+        for args in [('init', '--initial-branch=main'), ('add', '.'), ('commit', '-m', 'Original local teaching fixture')]:
+            subprocess.run([*base, *args], cwd=path, env=cls.env, check=True,
+                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     @classmethod
     def tearDownClass(cls):
@@ -75,7 +86,11 @@ class GitLabTeachingChecks(unittest.TestCase):
         self.step('build')
         manifest = json.loads((self.project/'dist/manifest.json').read_text())
         binary = self.project/'dist'/manifest['file']
-        self.assertEqual(manifest['source_revision'], 'a'*40)
+        self.assertEqual(manifest['source_revision'], self.head)
+        self.assertEqual(manifest['ci_declared_revision'], self.head)
+        self.assertIs(manifest['ci_revision_matches_checkout'], True)
+        self.assertIs(manifest['source_dirty'], False)
+        self.assertEqual(manifest['build_script_sha256'], hashlib.sha256((self.project/'tools/ci.py').read_bytes()).hexdigest())
         self.assertEqual(manifest['bytes'], binary.stat().st_size)
         self.assertEqual(manifest['sha256'], hashlib.sha256(binary.read_bytes()).hexdigest())
         self.step('verify')
@@ -140,6 +155,84 @@ class GitLabTeachingChecks(unittest.TestCase):
         self.assertEqual(POLICY.release_job('push', 'v1.0.0'), 'automatic')
         self.assertEqual(POLICY.release_job('web'), 'manual-blocking')
         self.assertEqual(POLICY.release_job('merge_request_event'), 'absent')
+
+    def test_12_ci_declared_revision_cannot_replace_checkout(self):
+        env = dict(self.env, CI_COMMIT_SHA='b'*40)
+        result = subprocess.run(['python3','tools/ci.py','build'], cwd=self.project,
+                                env=env, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('independently observed', result.stdout)
+
+    def test_13_dirty_source_is_observed_and_rejected_in_ci(self):
+        path = self.project/'cmd/echo/main.go'
+        original = path.read_text()
+        try:
+            path.write_text(original+'\n// observed dirty input\n')
+            result = self.step('build', False)
+            self.assertNotEqual(result.returncode, 0)
+            local_env = {k:v for k,v in self.env.items() if k != 'CI_COMMIT_SHA'}
+            result = subprocess.run(['python3','tools/ci.py','build'], cwd=self.project,
+                                    env=local_env, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            self.assertEqual(result.returncode, 0, result.stdout)
+            manifest = json.loads((self.project/'dist/manifest.json').read_text())
+            self.assertEqual(manifest['source_revision'], self.head)
+            self.assertIs(manifest['source_dirty'], True)
+            self.assertIsNone(manifest['ci_declared_revision'])
+        finally:
+            path.write_text(original)
+
+    def test_14_nested_parent_repo_is_not_project_provenance(self):
+        parent = self.root/'parent'
+        parent.mkdir()
+        (parent/'marker.txt').write_text('outer repository\n')
+        self.init_repo(parent)
+        child = parent/'nested/service'
+        shutil.copytree(HERE/'service', child,
+                        ignore=shutil.ignore_patterns('__pycache__','dist','reports','.cache'))
+        local_env = {k:v for k,v in self.env.items() if k != 'CI_COMMIT_SHA'}
+        result = subprocess.run(['python3','tools/ci.py','build'], cwd=child,
+                                env=local_env, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        self.assertEqual(result.returncode, 0, result.stdout)
+        manifest = json.loads((child/'dist/manifest.json').read_text())
+        self.assertEqual(manifest['source_revision'], 'local-unversioned')
+        self.assertIs(manifest['source_dirty'], True)
+        self.assertIsNone(manifest['ci_revision_matches_checkout'])
+        claimed_env = dict(local_env, CI_COMMIT_SHA=self.head)
+        result = subprocess.run(['python3','tools/ci.py','build'], cwd=child,
+                                env=claimed_env, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('independently observed', result.stdout)
+
+    def test_15_invalid_xml_codepoints_do_not_destroy_report(self):
+        events = [dict(Action='run',Package='p\x1b',Test='T\x00'),
+                  dict(Action='output',Package='p\x1b',Test='T\x00',
+                       Output='color\x1b[31m & <text>\t\n\r\x07\ud800\ufffe\U0001f680'),
+                  dict(Action='fail',Package='p\x1b',Test='T\x00'),
+                  dict(Action='fail',Package='p\x1b')]
+        raw = '\n'.join(map(json.dumps,events))
+        report = CI.junit_from_go(raw,1)
+        parsed = ET.fromstring(report)
+        case = parsed.find('.//testcase')
+        self.assertEqual(case.get('classname'),'p\ufffd')
+        self.assertEqual(case.get('name'),'T\ufffd')
+        self.assertIn('color\ufffd[31m & <text>',case.find('failure').text)
+        self.assertIn('\U0001f680',case.find('failure').text)
+        self.assertNotIn('\x1b',report)
+        self.assertEqual(json.loads(raw.splitlines()[1])['Output'],events[1]['Output'])
+
+    def test_16_inherited_goflags_cannot_change_recorded_build(self):
+        env = dict(self.env,GOFLAGS='-this-inherited-flag-must-not-reach-go-build')
+        result = subprocess.run(['python3','tools/ci.py','build'],cwd=self.project,
+                                env=env,text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+        self.assertEqual(result.returncode,0,result.stdout)
+        manifest = json.loads((self.project/'dist/manifest.json').read_text())
+        self.assertEqual(manifest['flags'],CI.build_flags('0.1.0'))
+        self.assertEqual(manifest['source_revision'],self.head)
+        self.assertIs(manifest['source_dirty'],False)
+        self.assertIs(manifest['ci_revision_matches_checkout'],True)
+        verified = subprocess.run(['python3','tools/ci.py','verify'],cwd=self.project,
+                                  env=env,text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+        self.assertEqual(verified.returncode,0,verified.stdout)
 
 
 if __name__ == '__main__':
