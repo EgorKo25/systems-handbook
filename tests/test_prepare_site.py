@@ -75,6 +75,87 @@ class ExportTests(unittest.TestCase):
             digest, name = line.split("  ", 1)
             self.assertEqual(hashlib.sha256((output / name).read_bytes()).hexdigest(), digest)
 
+    def test_even_tracked_personal_world_state_and_runtime_bundles_stay_private(self):
+        # Synthetic fixtures only: no personal keys or actual VM files are read.
+        # Force tracking so the test exercises the export boundary, not merely
+        # the independent protection against untracked files.
+        private = [
+            'labs-personal/runtime/world.json',
+            'labs-personal/runtime/known_hosts',
+            # A Windows-created directory can retain this spelling in Git even
+            # though the launcher addresses the same directory as "runtime".
+            'labs-personal/Runtime/world.json',
+            'labs-personal/progress/history.json',
+            'labs-personal/state/current.json',
+            'labs-personal/private/assets.json',
+            'labs-personal/cache/session.json',
+            'labs-personal/snapshots/day-one/world.json',
+            'labs-personal/assets/ubuntu.iso',
+            'labs-personal/images/base.qcow2',
+            'labs-personal/images/local-checksums.txt',
+            'labs-personal/keys/id_ed25519',
+            'labs-personal/KEYS/id_ed25519',
+            'labs-personal/tools/linux/qemu-system-x86_64',
+            'labs-personal/tools/windows/firmware/README.txt',
+            'labs-personal/tools/python/python312.zip',
+            'labs-personal/saves/monday/world.json',
+            'labs-personal/saves/session-notes.html',
+            'labs-personal/vm/guest/runtime/serial.log',
+            'labs-personal/vm/progress/notes.md',
+            'labs-personal/vm/keys/bootstrap-identity',
+            'labs-personal/packet-tracer/saves/current.pkt',
+            'labs-personal/vm/system.QCOW2',
+            'labs-personal/vm/install.ISO',
+            'labs-personal/vm/private.PEM',
+            'labs-personal/vm/private.KEY',
+        ]
+        for name in private:
+            self.write(name, 'synthetic private fixture; never a real key or disk\n')
+        subprocess.run(['git', '-C', str(self.source), 'add', '-f', '--', *private], check=True)
+        tracked = set(subprocess.check_output(['git', '-C', str(self.source), 'ls-files'], text=True).splitlines())
+        self.assertTrue(set(private) <= tracked)
+        output = self.root / 'privacy-site'
+        MODULE.export_site(self.source, output, 'a' * 40)
+        exported = {path.relative_to(output).as_posix() for path in output.rglob('*') if path.is_file()}
+        for name in private:
+            with self.subTest(private_path=name):
+                self.assertFalse(name in exported, name)
+                self.assertNotIn('  ' + name + '\n', (output / 'SHA256SUMS').read_text())
+
+    def test_authored_vm_recipes_and_practicum_helpers_keep_their_exact_bytes(self):
+        public = {
+            'labs-personal/index.html': '<h1>Personal lab instructions</h1>\n',
+            'labs-personal/chapter-map.json': '{"schema": 1, "stages": []}\n',
+            'labs-personal/assets.example.json': '{"schema": 1, "status": "template-missing-assets"}\n',
+            'labs-personal/vm/world.example.json': '{"schema": 1, "network_default": "isolated"}\n',
+            'labs-personal/vm/world.docker.example.json': '{"schema": 1, "docker": "planned"}\n',
+            'labs-personal/vm/start.sh': '#!/bin/sh\npython3 world.py "$@"\n',
+            'labs-personal/vm/Start-Lab.ps1': 'python world.py @args\n',
+            'labs-personal/vm/guest/bootstrap.sh': '#!/bin/sh\n# Authored guest preparation\n',
+            'labs-personal/vm/guest/netlab.sh': '#!/bin/sh\n# Authored namespace exercise\n',
+            'labs-personal/packet-tracer/configs/R1-base.cfg': 'hostname STUDY-R1\n',
+            'practicum/index.html': '<h1>Practice</h1>\n',
+            'practicum/labs/observe.py': '# Authored HTTP measurement helper\n',
+            'practicum/labs/verify_go_release.py': '# Authored release verifier\n',
+        }
+        authoring = {
+            'practicum/build.py': '# Authoring-only builder\n',
+            'practicum/sources/00-route.html': '<h1>Maintained source fragment</h1>\n',
+            'practicum/labs/__pycache__/observe.cpython-312.pyc': 'synthetic compiled cache\n',
+        }
+        for name, data in {**public, **authoring}.items():
+            self.write(name, data)
+        subprocess.run(['git', '-C', str(self.source), 'add', '-f', '--', *public, *authoring], check=True)
+        self.write('practicum/labs/untracked-personal-notes.txt', 'must remain local\n')
+        output = self.root / 'practice-site'
+        MODULE.export_site(self.source, output, 'a' * 40)
+        for name, data in public.items():
+            with self.subTest(public_path=name):
+                self.assertTrue((output / name).is_file())
+                self.assertEqual((output / name).read_bytes(), data.encode('utf-8'))
+        for name in [*authoring, 'practicum/labs/untracked-personal-notes.txt']:
+            self.assertFalse((output / name).exists(), name)
+
     def test_refuses_output_over_repository_or_unrelated_directory(self):
         with self.assertRaises(ValueError):
             MODULE.export_site(self.source, self.source, "a" * 40, replace=True)

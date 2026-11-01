@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "name": "study-world",
+  "architecture": "x86_64",
+  "machine": "pc-i440fx-8.2",
+  "cpu": "qemu64",
+  "memory_mib": 1024,
+  "vcpus": 1,
+  "disk_gib": 20,
+  "ssh_port": 2222,
+  "mac": "52:54:00:44:00:10",
+  "guest_ssh_user": "student",
+  "network_default": "isolated",
+  "guest_image": "Ubuntu Server 24.04 LTS amd64, BIOS boot, serial console and openssh-server prepared manually",
+  "status": "recipe-not-boot-tested"
+}

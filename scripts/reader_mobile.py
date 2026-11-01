@@ -37,9 +37,11 @@ def palette_css(*, home=False):
     return '\n'.join(rules)
 
 CSS = '''
+.drawer h2[tabindex="-1"]:focus,.sidebar .bookname[tabindex="-1"]:focus{outline:0}
 .phone-tools,.phone-view,.phone-backdrop,.phone-sidebar-close{display:none}.phone-backdrop{border:0;border-radius:0;padding:0}
 body{background:var(--reader-page,var(--bg))}.chapter{font-family:var(--reader-font,var(--serif))}.chapter p,.chapter li,.command-card p,.term p{text-align:justify;text-align-last:start;text-justify:inter-word;hyphens:auto;-webkit-hyphens:auto;overflow-wrap:break-word}.chapter pre,.chapter code{hyphens:none;-webkit-hyphens:none;text-align:start}
 @media(max-width:750px){
+.phone-volume-open .progress-track,.phone-volume-open main,.phone-volume-open .topbar{display:none!important}.phone-volume-open .sidebar{width:100%;inset:0;padding:28px 24px calc(110px + env(safe-area-inset-bottom));transform:none;transition:none;z-index:85}.phone-volume-open .sidebar .bookname{font-size:30px;line-height:1.15}.phone-volume-open .phone-sidebar-close{display:none}.phone-volume-open .phone-tools{grid-template-columns:repeat(3,minmax(0,1fr))}.phone-volume-open .phone-tools [data-phone-action=chapters],.phone-volume-open .phone-tools [data-phone-action=dictionary]{display:none}.phone-volume-open .sidebar .brand{display:inline-block;margin-bottom:22px;font-size:12px}.phone-volume-open{overflow:hidden}
 .phone-settings-preview .phone-backdrop:not([hidden]){background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none}.phone-view .phone-view-head{margin-bottom:14px}.phone-typefaces{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:4px 0 16px}.phone-typefaces button{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;min-height:60px;min-width:0;border-radius:13px;padding:8px 3px}.phone-typefaces button strong{font-size:24px;line-height:1}.phone-typefaces button span{font:11px/1.3 var(--sans)}.phone-typefaces button[aria-pressed=true]{border-color:var(--accent);background:var(--soft);box-shadow:inset 0 0 0 1px var(--accent)}[data-phone-typeface=book] strong{font-family:Georgia,serif}[data-phone-typeface=sans] strong{font-family:system-ui,sans-serif}[data-phone-typeface=palatino] strong{font-family:Palatino,Georgia,serif}.phone-warmth{margin:0 0 16px}.phone-warmth>label{display:flex;justify-content:space-between;gap:12px;font:650 13px var(--sans)}.phone-warmth>label output{color:var(--muted);font-weight:400}.phone-warmth input[type=range]{appearance:none;-webkit-appearance:none;display:block;width:100%;height:38px;margin:4px 0 0;background:transparent;cursor:pointer}.phone-warmth input::-webkit-slider-runnable-track{height:8px;border-radius:9px;background:linear-gradient(90deg,#dce8ed,#dfac59)}.phone-warmth input::-moz-range-track{height:8px;border-radius:9px;background:linear-gradient(90deg,#dce8ed,#dfac59)}.phone-warmth input::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;width:25px;height:25px;border:3px solid var(--paper);border-radius:50%;background:var(--accent);box-shadow:0 1px 5px #0004;margin-top:-8px}.phone-warmth input::-moz-range-thumb{width:20px;height:20px;border:3px solid var(--paper);border-radius:50%;background:var(--accent);box-shadow:0 1px 5px #0004}.phone-warmth-ends{display:flex;justify-content:space-between;color:var(--muted);font:11px var(--sans)}
 .phone-view button,.phone-sidebar-close,.drawer button,.deep-sketch button{touch-action:manipulation}.phone-view .phone-view-head button{width:44px;height:44px;min-width:44px;min-height:44px;flex:0 0 44px;display:grid;place-items:center;padding:0;line-height:1;border-radius:50%;font-size:22px}.phone-view-head button svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
 .topbar{padding-top:calc(10px + env(safe-area-inset-top))!important}.sidebar{padding-top:calc(20px + env(safe-area-inset-top))!important}.drawer{padding-top:calc(22px + env(safe-area-inset-top))!important}html{scroll-padding-top:calc(76px + env(safe-area-inset-top))!important}
@@ -62,12 +64,20 @@ SCRIPT = r'''(()=>{'use strict';
 const bar=document.getElementById('phone-tools'),view=document.getElementById('phone-view'),backdrop=document.getElementById('phone-backdrop'),side=document.getElementById('side-nav'),dictionary=document.getElementById('dictionary');
 if(!bar||!view||!side||!dictionary)return;
 const mq=matchMedia('(max-width:750px)'),button=name=>bar.querySelector('[data-phone-action="'+name+'"]');
+let volumeLevel=location.hash==='#volume';
 for(const hint of document.querySelectorAll('aside.callout'))if(hint.querySelector('strong')?.textContent==='Справка по ходу чтения')hint.classList.add('phone-reference-hint');
 function closeView(){view.hidden=true;button('view').setAttribute('aria-expanded','false');}
 function sync(){
+ const inVolume=mq.matches&&volumeLevel;
+ document.body.classList.toggle('phone-volume-open',inVolume);
+ if(inVolume&&!side.classList.contains('open'))side.classList.add('open');
+ const panelOpen=!view.hidden||!dictionary.hidden;
+ button('prev').querySelector('span').textContent=panelOpen?(inVolume?'К тому':'К главе'):inVolume?'Библиотека':'К тому';
+ button('prev').setAttribute('aria-label',panelOpen?(inVolume?'К содержанию тома':'Вернуться к чтению'):inVolume?'Вернуться в библиотеку':'К содержанию тома');
+ button('next').querySelector('span').textContent=inVolume?'Читать':'Дальше';
  const opened=side.classList.contains('open'),dictOpen=!dictionary.hidden;
  button('chapters').setAttribute('aria-expanded',String(opened));button('dictionary').setAttribute('aria-expanded',String(dictOpen));
- backdrop.hidden=!mq.matches||!(opened||dictOpen||!view.hidden);
+ backdrop.hidden=!mq.matches||!(dictOpen||!view.hidden||(opened&&!inVolume));
  document.body.classList.toggle('phone-panel-open',mq.matches&&!backdrop.hidden);
  document.body.classList.toggle('phone-settings-preview',mq.matches&&!view.hidden);
  const size=parseInt(document.documentElement.style.getPropertyValue('--size'),10)||19;
@@ -78,12 +88,20 @@ function sync(){
  view.querySelector('[data-phone-warmth-value]').textContent=appearance.warmth+'%';
 }
 function closeAll(){closeView();side.classList.remove('open');document.getElementById('menu').setAttribute('aria-expanded','false');if(!dictionary.hidden)document.getElementById('dictionary-close').click();sync();}
+function continueReading(){const chapter=document.querySelector('article.chapter:not([hidden])');if(chapter)location.hash=chapter.id;}
+function parentLevel(){
+ if(!view.hidden||!dictionary.hidden){closeAll();return;}
+ if(volumeLevel||side.classList.contains('open')){location.href='../index.html';return;}
+ closeAll();location.hash='volume';
+}
 bar.addEventListener('click',event=>{
  const pressed=event.target.closest('[data-phone-action]');if(!pressed)return;
  const action=pressed.dataset.phoneAction;
- if(action==='prev'||action==='next'){
+ if(action==='prev'){parentLevel();return;}
+ if(action==='next'){
+  if(volumeLevel){continueReading();return;}
   closeAll();const chapter=document.querySelector('article.chapter:not([hidden])');
-  const links=chapter?.querySelectorAll('.footer-nav a');links?.[action==='prev'?0:1]?.click();return;
+  const links=chapter?.querySelectorAll('.footer-nav a');links?.[1]?.click();return;
  }
  if(action==='chapters'){closeView();if(!dictionary.hidden)document.getElementById('dictionary-close').click();document.getElementById('menu').click();sync();return;}
  if(action==='dictionary'){closeView();side.classList.remove('open');document.getElementById(dictionary.hidden?'dictionary-open':'dictionary-close').click();sync();return;}
@@ -93,11 +111,23 @@ view.addEventListener('click',event=>{const target=event.target.closest('button'
 view.addEventListener('input',event=>{if(event.target.matches('[data-phone-warmth]')){window.LibraryPreferences?.setAppearance?.({warmth:Number(event.target.value)});sync();}});
 view.addEventListener('dblclick',event=>{if(event.target.closest('button'))event.preventDefault();});
 view.addEventListener('keydown',event=>{if(event.key!=='Tab')return;const all=[...view.querySelectorAll('button,input,select')].filter(el=>!el.disabled&&el.getClientRects().length),first=all[0],last=all.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}});
-backdrop.addEventListener('click',closeAll);addEventListener('keydown',event=>{if(event.key==='Escape')closeAll();});
+backdrop.addEventListener('click',closeAll);addEventListener('keydown',event=>{if(event.key==='Escape'){if(volumeLevel)continueReading();else closeAll();}});
 const close=document.createElement('button');close.type='button';close.className='phone-sidebar-close';close.textContent='Закрыть главы ×';close.addEventListener('click',closeAll);side.prepend(close);
 new MutationObserver(sync).observe(side,{attributes:true,attributeFilter:['class']});new MutationObserver(sync).observe(dictionary,{attributes:true,attributeFilter:['hidden']});new MutationObserver(sync).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 window.LibraryPreferences?.subscribe(sync);
-addEventListener('hashchange',()=>{closeView();sync();});mq.addEventListener('change',()=>{if(!mq.matches)closeAll();sync();});sync();
+function routeLevel(){
+ closeView();volumeLevel=location.hash==='#volume';
+ if(!volumeLevel)side.classList.remove('open');
+ else {
+  const search=document.getElementById('search');search.value='';search.dispatchEvent(new Event('input',{bubbles:true}));
+  document.getElementById('search-results').hidden=true;
+  document.getElementById('chapter-links').hidden=false;
+  side.scrollTop=0;
+  if(mq.matches){const title=side.querySelector('.bookname');title.tabIndex=-1;title.focus({preventScroll:true});}
+ }
+ sync();
+}
+addEventListener('hashchange',routeLevel);mq.addEventListener('change',()=>{if(!mq.matches)closeAll();sync();});routeLevel();
 })();'''
 
 
@@ -106,7 +136,8 @@ def enhance(page, *, home=False):
     page = re.sub(r'<style id="library-phone-style">.*?</style>', '', page, flags=re.S)
     page = re.sub(r'<div id="library-phone-controls">.*?</div><!-- /library-phone-controls -->', '', page, flags=re.S)
     if home:
-        css = '''@media(max-width:750px){body{padding:26px 19px 40px}#home-theme-toggle{min-height:44px;padding:9px 16px!important;border-radius:24px!important}h1{font-size:clamp(37px,10vw,56px);line-height:1.04}.grid{grid-template-columns:minmax(0,1fr)!important;gap:15px}.volume{padding:24px!important;min-width:0;border-radius:20px!important}.volume h2{font-size:28px}.volume p{font-size:16px;line-height:1.6}.volume .open{display:inline-block;margin-top:12px}.notes{border-radius:20px!important;padding:24px!important}summary{min-height:44px;padding:10px 0}a,button{touch-action:manipulation}}'''
+        page = re.sub(r'<div class="home-toolbar">(<button\b.*?</button>)</div><div class="eyebrow">.*?</div>',lambda m:'<div class="home-masthead"><div class="eyebrow">Интерактивная<br>библиотека</div><div class="home-toolbar">'+m[1]+'</div></div>',page,count=1,flags=re.S)
+        css = '''.home-masthead{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-bottom:30px}.home-masthead .eyebrow{font-size:18px;line-height:1.35;letter-spacing:.06em}.home-masthead .home-toolbar{margin:0;flex-shrink:0}#home-theme-toggle{min-height:44px;padding:9px 13px!important;border-radius:12px!important;font:600 13px/1.3 system-ui!important;background:transparent;box-shadow:none}#home-theme-toggle::before{content:'◐';font-size:18px;vertical-align:-1px;margin-right:7px}@media(max-width:750px){body{padding:26px 19px 40px}.home-masthead{gap:14px;margin-bottom:30px}.home-masthead .eyebrow{font-size:16px}h1{font-size:clamp(37px,10vw,56px);line-height:1.04}.grid{grid-template-columns:minmax(0,1fr)!important;gap:15px}.volume{padding:24px!important;min-width:0;border-radius:20px!important}.volume h2{font-size:28px}.volume p{font-size:16px;line-height:1.6}.volume .open{display:inline-block;margin-top:12px}.notes{border-radius:20px!important;padding:24px!important}summary{min-height:44px;padding:10px 0}a,button{touch-action:manipulation}}'''
         return page.replace('</head>','<style id="library-phone-style">'+palette_css(home=True)+css+'</style></head>',1)
     # Opening a reference is a reading action on a phone, not a request to type.
     # Focus a non-editable heading before Safari can summon the keyboard.
@@ -124,8 +155,8 @@ def enhance(page, *, home=False):
     page = page.replace("$('#term-search').focus();", "if(matchMedia('(max-width:750px), (pointer:coarse)').matches){const heading=$('#dictionary .drawer-head h2');heading.tabIndex=-1;heading.focus({preventScroll:true});}else $('#term-search').focus({preventScroll:true});")
     page = page.replace("const visibleOrigin = originFocus?.isConnected && !originFocus.closest('.chapter[hidden]');", "const visibleOrigin = originFocus?.isConnected && !originFocus.closest('.chapter[hidden]') && originFocus.getClientRects().length;")
     page = page.replace('(visibleOrigin ? originFocus : dictionaryOpen)?.focus({ preventScroll: true });', '(visibleOrigin ? originFocus : document.querySelector(\'[data-phone-action="dictionary"]\')?.getClientRects().length ? document.querySelector(\'[data-phone-action="dictionary"]\') : dictionaryOpen)?.focus({preventScroll:true});')
-    controls = '<div id="library-phone-controls"><button id="phone-backdrop" class="phone-backdrop" aria-label="Закрыть панель" hidden></button><section id="phone-view" class="phone-view" role="dialog" aria-modal="true" aria-labelledby="phone-view-title" hidden><div class="phone-view-head"><h2 id="phone-view-title">Текст и тема</h2><button type="button" data-phone-close aria-label="Закрыть настройки чтения"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div><div class="phone-font-row"><button type="button" data-phone-font="down" aria-label="Уменьшить шрифт">A−</button><output>Размер текста</output><button type="button" data-phone-font="up" aria-label="Увеличить шрифт">A+</button></div><div class="phone-typefaces" role="group" aria-label="Шрифт текста"><button type="button" data-phone-typeface="book" aria-label="Шрифт Georgia" aria-pressed="true"><strong>Aa</strong><span>Книжный</span></button><button type="button" data-phone-typeface="sans" aria-label="Системный шрифт" aria-pressed="false"><strong>Aa</strong><span>Системный</span></button><button type="button" data-phone-typeface="palatino" aria-label="Шрифт Palatino" aria-pressed="false"><strong>Aa</strong><span>Palatino</span></button></div><div class="phone-warmth"><label for="phone-warmth">Теплота страницы <output data-phone-warmth-value>0%</output></label><input id="phone-warmth" data-phone-warmth type="range" min="0" max="100" step="5" value="0"><div class="phone-warmth-ends"><span>Нейтрально</span><span>Теплее</span></div></div><div class="reader-theme-section-title">Оформление</div>'+theme_grid()+'</section><nav id="phone-tools" class="phone-tools" aria-label="Управление чтением">'
-    for name,label in [('prev','Назад'),('chapters','Главы'),('dictionary','Справка'),('view','Вид'),('next','Дальше')]:
+    controls = '<div id="library-phone-controls"><span id="volume" hidden></span><button id="phone-backdrop" class="phone-backdrop" aria-label="Закрыть панель" hidden></button><section id="phone-view" class="phone-view" role="dialog" aria-modal="true" aria-labelledby="phone-view-title" hidden><div class="phone-view-head"><h2 id="phone-view-title">Текст и тема</h2><button type="button" data-phone-close aria-label="Закрыть настройки чтения"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div><div class="phone-font-row"><button type="button" data-phone-font="down" aria-label="Уменьшить шрифт">A−</button><output>Размер текста</output><button type="button" data-phone-font="up" aria-label="Увеличить шрифт">A+</button></div><div class="phone-typefaces" role="group" aria-label="Шрифт текста"><button type="button" data-phone-typeface="book" aria-label="Шрифт Georgia" aria-pressed="true"><strong>Aa</strong><span>Книжный</span></button><button type="button" data-phone-typeface="sans" aria-label="Системный шрифт" aria-pressed="false"><strong>Aa</strong><span>Системный</span></button><button type="button" data-phone-typeface="palatino" aria-label="Шрифт Palatino" aria-pressed="false"><strong>Aa</strong><span>Palatino</span></button></div><div class="phone-warmth"><label for="phone-warmth">Теплота страницы <output data-phone-warmth-value>0%</output></label><input id="phone-warmth" data-phone-warmth type="range" min="0" max="100" step="5" value="0"><div class="phone-warmth-ends"><span>Нейтрально</span><span>Теплее</span></div></div><div class="reader-theme-section-title">Оформление</div>'+theme_grid()+'</section><nav id="phone-tools" class="phone-tools" aria-label="Управление чтением">'
+    for name,label in [('prev','К тому'),('chapters','Главы'),('dictionary','Справка'),('view','Вид'),('next','Дальше')]:
         attrs = ' aria-expanded="false"' if name in {'chapters','dictionary','view'} else ''
         controls += '<button type="button" data-phone-action="'+name+'"'+attrs+'><svg viewBox="0 0 24 24" aria-hidden="true">'+ICONS[name]+'</svg><span>'+label+'</span></button>'
     controls += '</nav><script>'+SCRIPT+'</script></div><!-- /library-phone-controls -->'

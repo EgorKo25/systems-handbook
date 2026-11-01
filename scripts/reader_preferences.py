@@ -102,7 +102,8 @@ function paint(){
  if(size!==null)html.style.setProperty('--size',size+'px');
  for(const id of ['theme','home-theme-toggle']){
   const button=document.getElementById(id);if(!button)continue;
-  button.textContent='Тема: '+palette.name;
+  button.textContent=id==='home-theme-toggle'?'Тема':'Тема: '+palette.name;
+  button.title='Текущая тема: '+palette.name;
   button.removeAttribute('aria-pressed');
   button.setAttribute('aria-label','Выбрать тему оформления');
  }

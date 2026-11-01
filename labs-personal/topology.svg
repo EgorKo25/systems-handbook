@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="800" viewBox="0 0 1280 800" role="img" aria-labelledby="title desc">
+  <title id="title">Один сохраняемый мир: Linux-гость, учебная сеть и службы</title>
+  <desc id="desc">Домашний Ubuntu или разрешённый Windows запускает один диск QEMU. SSH доступен только через localhost. Внутри гостя три сетевых namespace и отдельные Docker-службы по необходимости. Packet Tracer сохраняет отдельный файл модели и не соединяется с рабочей сетью.</desc>
+  <defs>
+    <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#15222d"/><stop offset="1" stop-color="#111a22"/></linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#9bc8d8"/></marker>
+    <style>text{font-family:system-ui,sans-serif;fill:#e9edf1}.muted{fill:#acbbc6}.small{font-size:17px}.label{font-size:20px;font-weight:600}.wire{fill:none;stroke:#9bc8d8;stroke-width:3;marker-end:url(#arrow)}.node{fill:#253b4b;stroke:#577c92;stroke-width:2}.planned{stroke-dasharray:8 7}.chip{fill:#203f3c;stroke:#5c9b87;stroke-width:2}</style>
+  </defs>
+  <rect width="1280" height="800" rx="26" fill="url(#bg)"/>
+  <text x="44" y="57" font-size="30" font-weight="650">Один диск. Один прогресс. Разные роли по необходимости.</text>
+  <text x="44" y="91" class="muted small">Схема подготовки: реальные машины и политики доступа ещё требуют приёмочного запуска.</text>
+  <rect x="44" y="130" width="294" height="151" rx="16" class="node"/>
+  <text x="66" y="164" class="label">Ваш компьютер</text>
+  <text x="66" y="197" class="small">Ubuntu · KVM, если доступен</text>
+  <text x="66" y="225" class="small">Windows · разрешённый QEMU/TCG</text>
+  <text x="66" y="254" class="muted small">Без TAP и подключения к LAN</text>
+  <path d="M338 203H423" class="wire"/>
+  <text x="351" y="185" class="small">SSH</text>
+  <rect x="425" y="130" width="811" height="468" rx="20" fill="#192e3b" stroke="#73a4ba" stroke-width="2"/>
+  <text x="451" y="166" class="label">Linux VM · настоящий Linux, свои службы и файловая система</text>
+  <text x="451" y="197" class="muted small">127.0.0.1:2222 → SSH гостя · исходящая сеть выключена по умолчанию</text>
+  <rect x="452" y="226" width="220" height="122" rx="13" class="node"/>
+  <text x="472" y="257" class="label">study-client</text>
+  <text x="472" y="286" class="small">10.44.10.10/24</text>
+  <text x="472" y="315" class="muted small">curl · ping · tcpdump</text>
+  <rect x="723" y="226" width="220" height="122" rx="13" class="node"/>
+  <text x="743" y="257" class="label">study-router</text>
+  <text x="743" y="286" class="small">10.44.10.1 | 10.44.30.1</text>
+  <text x="743" y="315" class="muted small">маршрут · nft · NAT</text>
+  <rect x="994" y="226" width="216" height="122" rx="13" class="node"/>
+  <text x="1014" y="257" class="label">study-server</text>
+  <text x="1014" y="286" class="small">10.44.30.10/24</text>
+  <text x="1014" y="315" class="muted small">HTTP → свой Go</text>
+  <path d="M672 286H716M943 286H987" class="wire"/>
+  <text x="451" y="379" class="muted small">Три network namespace: разные сетевые стеки, общее ядро VM.</text>
+  <rect x="452" y="407" width="220" height="87" rx="13" class="chip"/>
+  <text x="472" y="439" class="label">Docker в госте</text>
+  <text x="472" y="469" class="small">PostgreSQL · Redis</text>
+  <rect x="697" y="407" width="233" height="87" rx="13" class="chip"/>
+  <text x="717" y="439" class="label">По этапам</text>
+  <text x="717" y="469" class="small">Go · Jenkins · метрики</text>
+  <rect x="955" y="407" width="255" height="87" rx="13" class="node planned"/>
+  <text x="975" y="439" class="label">Следующие профили</text>
+  <text x="975" y="469" class="small">bastion · реплики · K8s</text>
+  <text x="451" y="533" class="small">Всё изменяемое — на диске гостя; дополнительные VM — для отдельных ядер/загрузки.</text>
+  <text x="451" y="566" class="muted small">Связь netns ↔ Docker пока не настроена. Пунктиром показаны ещё не развёрнутые роли.</text>
+  <rect x="44" y="316" width="294" height="206" rx="16" class="node"/>
+  <text x="66" y="350" class="label">Packet Tracer · отдельно</text>
+  <text x="66" y="385" class="small">Cisco 2911 / 2960</text>
+  <text x="66" y="416" class="small">VLAN · STP · OSPF · NAT</text>
+  <text x="66" y="447" class="muted small">Модель, а не настоящий IOS</text>
+  <text x="66" y="478" class="muted small">Своя сохранённая схема .pkt</text>
+  <rect x="44" y="637" width="1192" height="119" rx="16" fill="#2d302d" stroke="#b7a985" stroke-width="2"/>
+  <text x="67" y="671" class="label">Выключили гостя → дождались выхода QEMU → экспортировали → проверили SHA256 → продолжили</text>
+  <text x="67" y="706" class="small">Контрольная точка — холодный диск, не открытый SSH-сеанс и не память процессов.</text>
+  <text x="67" y="735" class="muted small">Не запускаем две writable-копии параллельно; не отправляем живой qcow2 в облачную синхронизацию.</text>
+</svg>

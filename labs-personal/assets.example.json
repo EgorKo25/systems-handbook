@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "status": "template-missing-assets",
+  "instructions": "Copy to private/assets.json after preparing approved official assets. Replace path, sha256 and version with actual values; null is intentionally NOT ready.",
+  "assets": [
+    {"id": "ubuntu-installer", "path": "assets/ubuntu-server-amd64.iso", "sha256": null, "version": null, "required": true, "source": "https://releases.ubuntu.com/24.04/", "verification": "Verify Ubuntu signed SHA256SUMS before recording the digest here."},
+    {"id": "qemu-windows", "path": "tools/windows/qemu-system-x86_64.exe", "sha256": null, "version": null, "required": false, "source": "https://www.qemu.org/download/#windows", "verification": "Approved full Windows bundle; exe hash alone does not validate all DLL/firmware."},
+    {"id": "qemu-img-windows", "path": "tools/windows/qemu-img.exe", "sha256": null, "version": null, "required": false, "source": "https://www.qemu.org/download/#windows"},
+    {"id": "python-windows", "path": "tools/python/python.exe", "sha256": null, "version": null, "required": false, "source": "https://www.python.org/downloads/windows/", "verification": "Official embeddable distribution; preserve its standard library and DLLs."}
+  ]
+}

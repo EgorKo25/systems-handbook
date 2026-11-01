@@ -1,0 +1,72 @@
+<section data-mission-analysis>
+<h3>Один psql может идти по разным путям</h3>
+<p>В заявке недостаточно сказать «PostgreSQL запущен». Нужны точка подключения, роль, база, правило проверки личности и права на объект. Unix-сокет — локальная точка обмена между процессами через ядро ОС; обычно она видна как специальный файл в каталоге. Это не TCP-порт на сетевом интерфейсе. У libpq, клиентской библиотеки PostgreSQL, отсутствие host в обычной Unix-среде выбирает сокет по умолчанию. Сначала также проверьте переменные PGHOST, PGPORT, PGUSER, PGDATABASE и выбранную service-конфигурацию: они могут изменить значения.</p>
+<p>Без явного user обычно берётся имя пользователя ОС; без dbname — имя выбранной роли. Поэтому <code>psql</code> может искать базу student под ролью student, а <code>psql -h 127.0.0.1 -U app_rw -d access_lab</code> — совершенно другой вход. <code>-h /путь/к/каталогу</code> выбирает Unix-сокет; <code>-h 127.0.0.1</code> выбирает TCP. Имя localhost может разрешиться сначала в IPv6, поэтому для первого контролируемого опыта используем числовой адрес.</p>
+<p>Проверка личности, <em>authentication</em>, устанавливает, кем может войти клиент. Проверка полномочий, <em>authorization</em>, определяет допустимые действия уже вошедшей роли. Метод peer на Unix-сокете сопоставляет удостоверенное ядром имя пользователя ОС с ролью, непосредственно либо через явно настроенную карту. Он не проверяет пароль роли. SCRAM-SHA-256 — парольный механизм с обменом доказательствами; пароль не следует писать в строке подключения, книге или истории команд.</p>
+<h3>Сначала первый подходящий маршрут проверки, потом пароль</h3>
+<p>В <code>pg_hba.conf</code>, файле правил клиентской аутентификации, выбирается первая подходящая строка по типу подключения, базе, роли и адресу клиента. Если её метод не прошёл, сервер не продолжает поиск «более удобной» строки ниже. <code>local</code> относится к Unix-сокетам, <code>host</code> — к TCP. Разрешающая строка выше запрета делает нижний запрет бесполезным для совпавших подключений. <code>trust</code> не является способом «починить пароль»: он устраняет доказательство личности для попавших под правило клиентов.</p>
+<p>Даже правильная HBA-строка не создаёт сетевого слушателя. <code>listen_addresses</code> выбирает адреса привязки сервера, порт задаётся отдельно, затем возможны сетевые фильтры. Прослушивание 127.0.0.1 не делает службу доступной с другой VM. Изменение HBA обычно перечитывается, а изменение listen_addresses требует перезапуска. После <code>pg_reload_conf()</code> нужен новый вход и проверка журналов; успешная отправка сигнала не равна доказательству принятия всех новых строк. Подробности находятся в <a href="../postgres/index.html#05-protocol">клиентском протоколе</a> и <a href="../postgres/index.html#17-security">главе о личности и правах</a>.</p>
+</section>
+<section data-mission-hints>
+<details><summary>Подсказка 1: какое сообщение относится к какой границе</summary><p>«Нет такого файла сокета» возникает до SQL-прав. Connection refused означает отсутствие подходящего слушателя или отказ на сетевой границе. Ошибка peer не исправляется выдачей SELECT. Permission denied for table подтверждает более поздний этап: вход уже состоялся, но объектное действие запрещено.</p></details>
+<details><summary>Подсказка 2: как не потерять административный вход</summary><p>Оставьте отдельный проверенный локальный путь владельца учебного кластера и консоль. Сначала проверьте синтаксис нового файла, затем перечитайте его, затем новым сеансом проверьте разрешённый и запрещённый случаи. Не закрывайте единственную сессию до проверки замены.</p></details>
+<details><summary>Подсказка 3: почему одной таблицы прав мало</summary><p>Для обращения к таблице могут требоваться CONNECT на базу, USAGE на схему и права на таблицу. Автоматическое значение из отдельной последовательности может потребовать её USAGE. Права по умолчанию задаются для будущих объектов конкретного создающего владельца и не переписывают уже созданные.</p></details>
+</section>
+<section data-mission-debrief>
+<h3>Создать собственный опыт, а не открыть рабочую базу</h3>
+<p>Команды выполняются обычным пользователем <strong>в учебной Linux VM</strong> с заранее установленными совместимыми бинарниками PostgreSQL. Сам <code>/srv/study</code> подготовлен от root и не обязан разрешать запись student. Поэтому новый каталог экземпляра создаётся отдельным административным действием. Не запускайте initdb от root и не исправляйте доступ рекурсивной сменой владельца всего /srv.</p>
+<pre><code>if test -e /srv/study/pg-access; then
+  printf '%s\n' 'Каталог уже существует: проверяем и продолжаем свой экземпляр, не меняем владельца автоматически.'
+else
+  sudo install -d -m 0700 -o "$(id -un)" -g "$(id -gn)" /srv/study/pg-access
+fi
+stat -c '%U %G %a %n' /srv/study/pg-access</code></pre>
+<p><code>install -d</code> создаёт каталог, <code>-m</code> задаёт режим, <code>-o</code> и <code>-g</code> — владельца и группу обычного пользователя, от которого вызван sudo. Вычисления id выполняет его оболочка до sudo. Если путь уже существовал, блок ничего в нём не меняет. Продолжайте лишь после проверки владельца, назначения и версии существующего кластера. Чужой или непонятный каталог не присваивают себе ради прохождения задания.</p>
+<pre><code>umask 077
+mkdir -p /srv/study/pg-access/socket
+cd /srv/study/pg-access
+if test -f data/PG_VERSION; then
+  printf '%s\n' 'Существующий кластер: читаем его конфигурацию и продолжаем, initdb не выполняется.'
+else
+  initdb -D data --auth-local=peer --auth-host=scram-sha-256
+fi</code></pre>
+<p><code>-D</code> выбирает каталог данных. Первый initdb создаёт административную роль с именем текущего пользователя ОС, если <code>-U</code> не задан; это согласуется с peer при следующем локальном входе. Явные auth-параметры задают начальные методы. Наличие PG_VERSION не доказывает исправность сервера, оно лишь запрещает нам выдавать повторную инициализацию за продолжение. Неполный непонятный data также не удаляем: initdb откажется от непустого каталога, после чего надо исследовать причину. Для впервые созданного экземпляра в <code>data/postgresql.conf</code> задайте порт <code>55440</code>, <code>listen_addresses='127.0.0.1'</code> и <code>unix_socket_directories='/srv/study/pg-access/socket'</code>. У существующего прочитайте и сохраните фактические параметры из паспорта. Каталог сокета должен существовать. Затем:</p>
+<pre><code>pg_ctl -D data -l server.log start
+psql -X -h /srv/study/pg-access/socket -p 55440 -U "$(id -un)" -d postgres</code></pre>
+<p><code>-l</code> направляет серверный журнал в файл, <code>-X</code> исключает влияние пользовательского psqlrc. <code>-U "$(id -un)"</code> явно выбирает созданного initdb администратора с именем текущего пользователя ОС; это исключает случайный PGUSER. В psql выполните <code>SHOW config_file;</code>, <code>SHOW hba_file;</code>, <code>SHOW listen_addresses;</code>, <code>SHOW port;</code> и <code>\conninfo</code>. Используйте обнаруженные пути. Пакетная установка ОС может хранить конфигурацию вне PGDATA; наш ручной опыт не доказывает расположение файлов другой поставки.</p>
+<pre><code>CREATE ROLE app_owner NOLOGIN;
+CREATE ROLE app_rw LOGIN;
+CREATE ROLE app_ro LOGIN;
+SET password_encryption = 'scram-sha-256';
+\password app_rw
+\password app_ro
+CREATE DATABASE access_lab OWNER app_owner;
+\connect access_lab
+REVOKE ALL ON DATABASE access_lab FROM PUBLIC;
+GRANT CONNECT ON DATABASE access_lab TO app_rw, app_ro;
+REVOKE ALL ON SCHEMA public FROM PUBLIC;
+CREATE SCHEMA app AUTHORIZATION app_owner;
+SET ROLE app_owner;
+CREATE TABLE app.items (
+  id bigserial PRIMARY KEY,
+  body text NOT NULL
+);
+RESET ROLE;
+GRANT USAGE ON SCHEMA app TO app_rw, app_ro;
+GRANT SELECT ON app.items TO app_ro;
+GRANT SELECT, INSERT, UPDATE, DELETE ON app.items TO app_rw;
+GRANT USAGE ON SEQUENCE app.items_id_seq TO app_rw;</code></pre>
+<p><code>\password</code> запрашивает новый секрет интерактивно; не вставляйте его в SQL-пример. Владелец app_owner не может напрямую войти, роли чтения и изменения не получают SUPERUSER, CREATEDB или членство во владельце. Таблица создаётся после SET ROLE именно от app_owner. Для будущих таблиц при необходимости отдельно настраивают <code>ALTER DEFAULT PRIVILEGES FOR ROLE app_owner IN SCHEMA app</code>; это не заменяет показанные GRANT существующим объектам.</p>
+<h3>Сузить и проверить маршрут входа</h3>
+<p>Сохраните исходный HBA-файл этого частного кластера и разместите правила приложения до общей локальной строки. Для нашего опыта достаточно:</p>
+<pre><code>local access_lab app_rw                  scram-sha-256
+local access_lab app_ro                  scram-sha-256
+host  access_lab app_rw 127.0.0.1/32      scram-sha-256
+host  access_lab app_ro 127.0.0.1/32      scram-sha-256
+local all        all                    peer
+host  all        all    127.0.0.1/32     reject</code></pre>
+<p>Маска /32 выбирает ровно один IPv4-адрес, а не всю подсеть. Последняя строка отвергает остальные TCP-входы с этого адреса; она не ограничивает прослушивание сети сама по себе. В административном сеансе исследуйте <code>SELECT rule_number, type, database, user_name, address, auth_method, error FROM pg_hba_file_rules ORDER BY rule_number;</code>, затем <code>SELECT pg_reload_conf();</code>. Ненулевое поле error требует исправления. Не переносите этот файл в системный кластер.</p>
+<p>Новыми сеансами подключите app_rw и app_ro через 127.0.0.1:55440 к access_lab, используя <code>psql -X -h 127.0.0.1 -p 55440 -U app_rw -d access_lab</code>. Пароль вводится в запрос клиента. Выполните <code>SELECT current_user, session_user, inet_client_addr(), inet_server_addr(), inet_server_port();</code>. Повторите явным Unix-сокетом: сетевые адреса станут NULL, а HBA выберет local-правило.</p>
+<p>Под app_rw вставьте строку с <code>INSERT INTO app.items(body) VALUES ('probe') RETURNING id;</code>. app_ro должна прочитать её, но INSERT должен завершиться отказом в правах. app_rw не должна создавать базы или входить как владелец. Неправильный пароль должен приводить к отказу, а попытка другой роли по TCP — попадать под reject. Зафиксируйте каждую границу отдельно. Существующий Go-сервис не подключён к этой таблице: добавление драйвера, пула соединений, таймаутов и операций станет самостоятельным изменением программы. После опыта остановите только свой кластер: <code>pg_ctl -D data -m fast stop</code>.</p>
+<p>Это подготовленный ручной сценарий; его выполнение здесь не заявляется. Для уже записанных реальных наблюдений используйте <a href="../postgres/labs/README.txt">автономную лабораторию PostgreSQL</a>. Официальные правила: <a href="https://www.postgresql.org/docs/18/auth-pg-hba-conf.html">HBA</a> и <a href="https://www.postgresql.org/docs/18/libpq-connect.html">параметры подключения libpq</a>.</p>
+</section>

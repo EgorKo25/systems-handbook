@@ -41,6 +41,10 @@ jobs:
           python3 gitlab/labs/check.py
       - name: Check the stateful Git laboratory
         run: python3 git/labs/check_lab.py
+      - name: Check personal-world lifecycle and practice helpers
+        run: |
+          python3 -m unittest discover -s labs-personal/tests -v
+          python3 -m unittest discover -s practicum/labs -p 'test_*.py' -v
       - name: Check pages, anchors, JSON and JavaScript
         run: python3 scripts/check_site.py . --node-check
       - name: Check teaching models
@@ -50,6 +54,7 @@ jobs:
           node cache/labs/test-resources.cjs
           node cache/labs/test-resp.cjs
           node git/labs/check-reader.cjs
+          node tests/check-selection-reader.cjs
           node tests/check-reader-palette.cjs
       - name: Prepare public reading files
         run: python3 scripts/prepare_site.py _site --revision "${{ github.sha }}"

@@ -6,7 +6,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const assert = require('node:assert/strict');
 const root = path.resolve(__dirname, '../..');
-const volumes = ['git', 'go', 'jenkins', 'gitlab'];
+const volumes = ['git', 'go', 'jenkins', 'gitlab', 'practicum'];
 const endMarker = "})(typeof globalThis !== 'undefined' ? globalThis : this);";
 let assertions = 0;
 function ok(value, message) { assert(value, message); assertions++; }

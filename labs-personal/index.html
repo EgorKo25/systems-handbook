@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<script id="library-preferences-bootstrap-v1">(() => {
+'use strict';
+const key='library-theme-v1', presetKey='library-reader-preset-v1', appearanceKey='library-reader-appearance-v1', oldHome='library-home-theme-v1', oldBook=null;
+const valid=value=>value==='dark'||value==='light';
+const fonts={book:'Georgia, "DejaVu Serif", serif',sans:'system-ui, sans-serif',palatino:'Palatino, Georgia, serif'};
+const clamp=(value,low,high)=>Math.max(low,Math.min(high,value));
+// Each preset owns all reading surfaces. Warmth interpolates a coordinated
+// palette; White and Black are monochrome at their neutral endpoint.
+// Paper and Night retain the original reader's exact neutral/warm endpoints.
+const presets={
+ paper:{name:'Бумага',mode:'light',description:'Светлая бумага и спокойный зелёный акцент',supportsWarmth:true,
+  neutral:{bg:'#f4f1e9',paper:'#fffcf5',soft:'#e8f2ec',text:'#202d34',muted:'#5a696e',line:'#d9ded8',accent:'#0c6b63',code:'#182b35','code-text':'#e3eeef',shadow:'#17332b12'},
+  warm:{bg:'#f4ecde',paper:'#fff7e9',soft:'#eee4d0',text:'#302c25',muted:'#70634f',line:'#ddd1bd',accent:'#79603b',code:'#2b2822','code-text':'#f3ead9',shadow:'#24180e1c'}
+ },
+ night:{name:'Ночь',mode:'dark',description:'Тёмный сине-серый фон и мягкий светлый текст',supportsWarmth:true,
+  neutral:{bg:'#142027',paper:'#1c2a31',soft:'#243d3b',text:'#e4e8e1',muted:'#b4c1be',line:'#3b4c51',accent:'#85d2bd',code:'#101b21','code-text':'#e4eeee',shadow:'#17332b12'},
+  warm:{bg:'#24211d',paper:'#2d2923',soft:'#3a332a',text:'#eee7d9',muted:'#c2b8a8',line:'#51483c',accent:'#d8be8b',code:'#191714','code-text':'#ece5d8',shadow:'#130f092e'}
+ },
+ white:{name:'Белая',mode:'light',description:'Чистый белый фон и чёрный текст',supportsWarmth:true,
+  neutral:{bg:'#ffffff',paper:'#ffffff',soft:'#ffffff',text:'#000000',muted:'#333333',line:'#b3b3b3',accent:'#000000',code:'#ffffff','code-text':'#000000',shadow:'#0000000f'},
+  warm:{bg:'#f7efdd',paper:'#fff7e7',soft:'#eee3cd',text:'#2a251d',muted:'#6c5b42',line:'#cab99c',accent:'#6f4f2e',code:'#f1e6d0','code-text':'#292319',shadow:'#35251314'}
+ },
+ black:{name:'Чёрная',mode:'dark',description:'Чистый чёрный фон и белый текст',supportsWarmth:true,
+  neutral:{bg:'#000000',paper:'#000000',soft:'#000000',text:'#ffffff',muted:'#cccccc',line:'#666666',accent:'#ffffff',code:'#000000','code-text':'#ffffff',shadow:'#00000000'},
+  warm:{bg:'#100d08',paper:'#17120c',soft:'#211b12',text:'#fff0d5',muted:'#d1bfa1',line:'#665339',accent:'#f1d3a0',code:'#0c0905','code-text':'#fff0d5',shadow:'#00000000'}
+ },
+ sepia:{name:'Сепия',mode:'light',description:'Кремовая страница, тёплые коричневые оттенки',supportsWarmth:true,
+  neutral:{bg:'#f1e5cc',paper:'#fbf0d9',soft:'#e8dac0',text:'#362b1e',muted:'#69573f',line:'#cdbb9c',accent:'#75502b',code:'#33291f','code-text':'#f4e6cd',shadow:'#49341b1a'},
+  warm:{bg:'#eddfc0',paper:'#f7e9ca',soft:'#e5d4b0',text:'#342719',muted:'#655037',line:'#cab58d',accent:'#704522',code:'#302419','code-text':'#f3e3c4',shadow:'#49341b20'}
+ },
+ graphite:{name:'Графит',mode:'dark',description:'Нейтральный тёмно-серый фон без синевы',supportsWarmth:true,
+  neutral:{bg:'#202020',paper:'#292929',soft:'#343434',text:'#eeeeee',muted:'#bfbfbf',line:'#505050',accent:'#d6c59d',code:'#171717','code-text':'#eeeeee',shadow:'#00000030'},
+  warm:{bg:'#27231e',paper:'#302a23',soft:'#3c342a',text:'#f0e8da',muted:'#c9bcaa',line:'#564b3d',accent:'#dfc397',code:'#1b1713','code-text':'#efe5d5',shadow:'#100c0833'}
+ },
+ midnight:{name:'Полночь',mode:'dark',description:'Глубокий тёмно-синий фон и светлый голубой акцент',supportsWarmth:true,
+  neutral:{bg:'#111b2d',paper:'#18253b',soft:'#23344d',text:'#e5edf8',muted:'#b5c5dc',line:'#425775',accent:'#a2c9fa',code:'#0c1422','code-text':'#e4edfa',shadow:'#030a1633'},
+  warm:{bg:'#211f27',paper:'#2b2933',soft:'#39343e',text:'#eee7e6',muted:'#c5babc',line:'#564b59',accent:'#d1bbdf',code:'#18161d','code-text':'#eee5e9',shadow:'#100b1338'}
+ },
+ forest:{name:'Лес',mode:'dark',description:'Приглушённые зелёные поверхности и мягкий светлый текст',supportsWarmth:true,
+  neutral:{bg:'#15231d',paper:'#1d2d25',soft:'#2b3d31',text:'#e5eddf',muted:'#bacab5',line:'#485e4a',accent:'#b7d99f',code:'#101a15','code-text':'#e3efdd',shadow:'#08130b30'},
+  warm:{bg:'#23261d',paper:'#2d3023',soft:'#3b3e2c',text:'#eeeedd',muted:'#c7c9af',line:'#555b40',accent:'#d0d69f',code:'#181b13','code-text':'#ebeed8',shadow:'#0e13082e'}
+ }
+};
+const validPreset=value=>typeof value==='string'&&Object.hasOwn(presets,value);
+const defaultPreset=mode=>mode==='light'?'paper':'night';
+function mixColour(from,to,amount){
+ if(amount===0)return from;
+ if(amount===1)return to;
+ const channels=value=>value.slice(1).match(/.{2}/g).map(part=>parseInt(part,16));
+ const start=channels(from),end=channels(to),mixed=start.map((value,index)=>Math.round(value+(end[index]-value)*amount));
+ return mixed.length===4?'rgba('+mixed.slice(0,3).join(', ')+', '+(mixed[3]/255).toFixed(4)+')':'rgb('+mixed.join(', ')+')';
+}
+function read(){
+ let value;
+ try{value=localStorage.getItem(key);if(valid(value))return value;}catch{}
+ try{value=localStorage.getItem(oldHome);if(valid(value))return value;}catch{}
+ if(oldBook)try{value=JSON.parse(localStorage.getItem(oldBook)||'null')?.theme;if(valid(value))return value;}catch{}
+ return 'dark';
+}
+function readPreset(mode=read()){
+ let value;try{value=localStorage.getItem(presetKey);}catch{}
+ return validPreset(value)&&presets[value].mode===mode?value:defaultPreset(mode);
+}
+function normalizeAppearance(value,base={font:'book',warmth:0,size:null}){
+ const next={...base};if(!value||typeof value!=='object')return next;
+ if(Object.hasOwn(fonts,value.font))next.font=value.font;
+ if(typeof value.warmth==='number'&&Number.isFinite(value.warmth))next.warmth=clamp(value.warmth,0,100);
+ if(value.size===null)next.size=null;
+ else if(typeof value.size==='number'&&Number.isFinite(value.size))next.size=clamp(value.size,16,26);
+ return next;
+}
+function readAppearance(){try{return normalizeAppearance(JSON.parse(localStorage.getItem(appearanceKey)||'null'));}catch{return normalizeAppearance(null);}}
+let selectedTheme=readPreset(),theme=presets[selectedTheme].mode,appearance=readAppearance();
+let oldSize=null;
+if(oldBook)try{const value=JSON.parse(localStorage.getItem(oldBook)||'null')?.size;if(typeof value==='number'&&Number.isFinite(value)&&value>=16&&value<=26)oldSize=value;}catch{}
+const subscribers=new Set();
+function paint(){
+ const html=document.documentElement;
+ html.dataset.theme=theme;
+ html.dataset.readerTheme=selectedTheme;
+ html.style.setProperty('color-scheme',theme);
+ html.style.setProperty('--reader-font',fonts[appearance.font]);
+ const palette=presets[selectedTheme],amount=palette.supportsWarmth?appearance.warmth/100:0;
+ for(const [name,from] of Object.entries(palette.neutral)){
+  const colour=mixColour(from,palette.warm[name],amount);
+  html.style.setProperty('--reader-'+name,name==='shadow'?'0 12px 40px '+colour:colour);
+  // Compatibility with reading copies using the former background-only API.
+  if(name==='bg')html.style.setProperty('--reader-page',colour);
+ }
+ const size=appearance.size===null?oldSize:appearance.size;
+ if(size!==null)html.style.setProperty('--size',size+'px');
+ for(const id of ['theme','home-theme-toggle']){
+  const button=document.getElementById(id);if(!button)continue;
+  button.textContent=id==='home-theme-toggle'?'Тема':'Тема: '+palette.name;
+  button.title='Текущая тема: '+palette.name;
+  button.removeAttribute('aria-pressed');
+  button.setAttribute('aria-label','Выбрать тему оформления');
+ }
+}
+function notify(){paint();for(const update of subscribers)update(theme,{...appearance});}
+function applyPreset(value){if(!validPreset(value))return selectedTheme;selectedTheme=value;theme=presets[value].mode;notify();return selectedTheme;}
+function setPreset(value){
+ if(!validPreset(value))return selectedTheme;
+ try{localStorage.setItem(presetKey,value);localStorage.setItem(key,presets[value].mode);}catch{}
+ return applyPreset(value);
+}
+window.LibraryPreferences={
+ get theme(){return theme;},
+ get selectedTheme(){return selectedTheme;},
+ get themes(){return Object.entries(presets).map(([id,palette])=>({id,name:palette.name,mode:palette.mode,description:palette.description,supportsWarmth:palette.supportsWarmth,preview:{bg:palette.neutral.bg,paper:palette.neutral.paper,text:palette.neutral.text,accent:palette.neutral.accent}}));},
+ get appearance(){return {...appearance};},
+ setPreset,
+ setTheme(value){if(valid(value))setPreset(defaultPreset(value));return theme;},
+ setAppearance(partial){appearance=normalizeAppearance(partial,appearance);try{localStorage.setItem(appearanceKey,JSON.stringify(appearance));}catch{}notify();return {...appearance};},
+ subscribe(update){subscribers.add(update);return ()=>subscribers.delete(update);}
+};
+// Only shared scalars are migrated; notes and other book data are untouched.
+try{if(!valid(localStorage.getItem(key)))localStorage.setItem(key,theme);if(!validPreset(localStorage.getItem(presetKey)))localStorage.setItem(presetKey,selectedTheme);}catch{}
+paint();
+window.addEventListener('storage',event=>{
+ if(event.key===presetKey)applyPreset(validPreset(event.newValue)?event.newValue:readPreset());
+ else if(event.key===key)applyPreset(readPreset(valid(event.newValue)?event.newValue:read()));
+ else if(event.key===appearanceKey){try{appearance=normalizeAppearance(JSON.parse(event.newValue||'null'));}catch{appearance=normalizeAppearance(null);}notify();}
+ else if(event.key===null){selectedTheme=readPreset();theme=presets[selectedTheme].mode;appearance=readAppearance();notify();}
+});
+window.addEventListener('pageshow',()=>{
+ // A denied storage API must not undo a choice made in this page's memory.
+ try{localStorage.getItem(key);}catch{notify();return;}
+ selectedTheme=readPreset();theme=presets[selectedTheme].mode;appearance=readAppearance();notify();
+});
+function ready(){paint();}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ready,{once:true});else ready();
+})();</script>
+
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Личный учебный мир — подготовка стендов</title>
+<style>
+:root{color-scheme:dark;--bg:#142027;--paper:#1c2a31;--text:#e4e8e1;--muted:#b4c1be;--line:#3b4c51;--accent:#85d2bd}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:18px/1.65 system-ui,sans-serif}main{max-width:1120px;margin:auto;padding:36px 24px 70px}a{color:var(--accent);text-underline-offset:4px}a:focus-visible{outline:2px solid var(--accent);outline-offset:5px}h1{font-size:clamp(30px,5vw,48px);line-height:1.18;letter-spacing:-.025em;margin:30px 0 18px}h2{font-size:26px;line-height:1.3;margin-top:40px}p{max-width:82ch}.lead{font-size:21px}.muted{color:var(--muted)}.notice{padding:17px 20px;border:1px solid var(--line);border-left:4px solid #c2ad7d;border-radius:12px;background:var(--paper)}.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;margin:24px 0}.card{border:1px solid var(--line);border-radius:16px;background:var(--paper);padding:24px}.card h2{margin:0 0 10px;font-size:24px}.card p{margin:12px 0}.card a{display:inline-block;padding:7px 0}code{font-size:.88em;background:#101b21;padding:3px 7px;border-radius:5px;overflow-wrap:anywhere}figure{margin:30px 0}figure img{width:100%;height:auto;display:block;border-radius:16px}figcaption{font-size:15px;color:var(--muted);margin-top:12px}details{border-top:1px solid var(--line);padding:15px 0}summary{cursor:pointer;font-weight:650;min-height:44px;display:list-item}li{margin:9px 0}@media(max-width:650px){main{padding:24px 18px 50px}.cards{grid-template-columns:1fr;gap:20px}.card{padding:21px}.lead{font-size:19px}figure{overflow:auto}figure img{min-width:750px}a{text-decoration:none}h2{font-size:24px}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style>
+<style id="lab-portal-theme">:root{--bg:var(--reader-bg,#f4f1e9);--paper:var(--reader-paper,#fffcf5);--text:var(--reader-text,#202d34);--muted:var(--reader-muted,#5a696e);--line:var(--reader-line,#d9ded8);--accent:var(--reader-accent,#0c6b63);--soft:var(--reader-soft,#e8f2ec);--code:var(--reader-code,#182b35);--code-text:var(--reader-code-text,#e3eeef);--shadow:var(--reader-shadow,0 12px 40px #17332b12);}
+:root[data-theme=dark]{--bg:var(--reader-bg,#142027);--paper:var(--reader-paper,#1c2a31);--text:var(--reader-text,#e4e8e1);--muted:var(--reader-muted,#b4c1be);--line:var(--reader-line,#3b4c51);--accent:var(--reader-accent,#85d2bd);--soft:var(--reader-soft,#243d3b);--code:var(--reader-code,#101b21);--code-text:var(--reader-code-text,#e4eeee);--shadow:var(--reader-shadow,0 12px 40px #17332b12);}
+:root{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}code{background:var(--reader-code);color:var(--reader-code-text)}.portal-toolbar{display:flex;justify-content:space-between;align-items:center;gap:18px}.portal-toolbar button{min-height:44px;padding:9px 16px;border:1px solid var(--line);border-radius:24px;color:var(--text);background:var(--paper);font:600 14px system-ui;cursor:pointer;touch-action:manipulation}</style><style id="library-theme-picker-style">
+.reader-theme-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.reader-theme-choice{position:relative;display:flex;flex-direction:column;gap:7px;align-items:stretch;min-width:0;min-height:84px;margin:0;padding:7px;border:1px solid var(--reader-line);border-radius:13px;background:var(--reader-paper);color:var(--reader-text);cursor:pointer;box-shadow:none;text-align:left;font:600 12px/1.3 system-ui,sans-serif;touch-action:manipulation}
+.reader-theme-choice[aria-pressed=true]{border-color:var(--reader-accent);box-shadow:inset 0 0 0 1px var(--reader-accent)}
+.reader-theme-choice:focus-visible{outline:2px solid var(--reader-accent);outline-offset:3px}
+.reader-theme-swatch{display:flex;align-items:center;gap:12px;min-height:43px;border:1px solid var(--swatch-text);border-radius:7px;padding:6px 9px;background:var(--swatch-bg);color:var(--swatch-text)}
+.reader-theme-swatch>b{font:600 25px/1 Georgia,serif}
+.reader-theme-lines{display:grid;gap:4px;flex:1}
+.reader-theme-lines>i{display:block;height:2px;border-radius:2px;background:currentColor;opacity:.65}
+.reader-theme-lines>i:last-child{width:65%;background:var(--swatch-accent);opacity:1}
+.reader-theme-label{display:flex;align-items:center;justify-content:space-between;gap:4px;padding:0 2px}
+.reader-theme-label::after{content:'✓';color:var(--reader-accent);visibility:hidden}
+.reader-theme-choice[aria-pressed=true] .reader-theme-label::after{visibility:visible}
+.reader-theme-dialog{box-sizing:border-box;width:min(620px,calc(100% - 24px));max-width:none;max-height:calc(100dvh - 32px);overflow:auto;margin:auto;padding:24px;border:1px solid var(--reader-line);border-radius:22px;background:var(--reader-paper);color:var(--reader-text);box-shadow:var(--reader-shadow);font:15px/1.5 system-ui,sans-serif;color-scheme:inherit}
+.reader-theme-dialog::backdrop{background:rgb(0 0 0 / .2)}
+.reader-theme-dialog header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:0 0 20px}
+.reader-theme-dialog h2{margin:0;color:inherit;font:750 24px/1.2 system-ui,sans-serif;letter-spacing:-.025em}
+.reader-theme-close{display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;min-width:44px;min-height:44px;padding:0;border:1px solid var(--reader-line);border-radius:50%;background:transparent;color:inherit;cursor:pointer;touch-action:manipulation}
+.reader-theme-close svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
+.reader-theme-close:focus-visible{outline:2px solid var(--reader-accent);outline-offset:3px}
+.reader-theme-caption{margin:14px 0 0;color:var(--reader-muted);font:13px/1.5 system-ui,sans-serif}
+.reader-theme-section-title{margin:4px 0 10px;font:650 13px/1.4 var(--sans,system-ui)}
+:root:is([data-reader-theme=white],[data-reader-theme=black]) .deep-sketch{--ds-blue:var(--text);--ds-purple:var(--muted);--ds-gold:var(--text);--ds-green:var(--accent)}
+:root:is([data-reader-theme=white],[data-reader-theme=black]) mark{background:var(--soft);color:var(--text);outline:1px solid var(--line)}
+@media(max-width:750px){
+ .reader-theme-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .reader-theme-choice{min-height:74px;font-size:12px;padding:6px;gap:5px;border-radius:11px}
+ .reader-theme-swatch{min-height:36px;padding:5px 8px}
+ .reader-theme-swatch>b{font-size:23px}
+ .reader-theme-dialog{padding:20px;border-radius:20px}
+ .reader-theme-dialog h2{font-size:22px}
+ .phone-view:not([hidden]){max-height:calc(100dvh - 112px - env(safe-area-inset-bottom));overflow-y:auto;overscroll-behavior:contain}
+ .phone-view .reader-theme-grid{margin-bottom:2px}
+ .phone-view .phone-warmth{margin-bottom:12px}
+}
+@media print{.reader-theme-dialog{display:none}}
+</style></head>
+<body><main>
+<div class="portal-toolbar"><a href="../practicum/index.html">← В практикум</a><button type="button" id="home-theme-toggle" aria-label="Выбрать тему оформления">Тема оформления</button></div>
+<p class="muted">Личный практикум · подготовка 1 ноября 2026</p>
+<h1>Один мир для сети,<br>Linux и своих сервисов</h1>
+<p class="lead">Настраиваем знакомые машины, сохраняем работу и продолжаем в следующей главе. Сеть приводит к серверу, сервер — к Go и PostgreSQL, а ручной выпуск — к Git и Jenkins.</p>
+<p>Каждый новый инструмент ты сам находишь, скачиваешь, устанавливаешь и настраиваешь по заданию. Следующие задачи развивают этот же экземпляр; ошибочная настройка сохраняется до твоего исправления. Для офлайн-занятия заранее собираются установочные материалы, а не готовые ответы.</p>
+<p class="notice"><strong>Сейчас подготовлены управляющий код, конфиги и упражнения.</strong> Образ ОС и установщики не включены. Настоящая загрузка QEMU, работа Windows-комплекта и CLI Packet Tracer ещё не испытаны.</p>
+<figure><img src="topology.svg" width="1280" height="800" alt="Один Linux-гость содержит учебную сеть и службы. Отдельно работает модель Packet Tracer. Диск переносится после выключения."><figcaption>На телефоне схему можно прокрутить по горизонтали. Пунктирные роли ещё не развёрнуты; схема показывает устройство будущего мира.</figcaption></figure>
+<div class="cards">
+<section class="card"><h2>Настоящий Linux</h2><p>Одна VM, SSH через localhost, постоянный диск, холодные точки и возврат в новую ветку. Docker запускается внутри гостя, когда нужен по теме.</p><a href="vm/README.txt">Запуск, установка и перенос →</a><br><a href="vm/world.py" download>Управляющий скрипт Python</a></section>
+<section class="card"><h2>Устройства Cisco</h2><p>Два маршрутизатора, три коммутатора, VLAN, STP, два пути OSPF, DHCP, DNS, NAT и ACL. Конфиги оригинальные, сборка .pkt предстоит в самом приложении.</p><a href="packet-tracer/README.txt">Собрать схему и пройти упражнения →</a></section>
+<section class="card"><h2>Пакет в ядре Linux</h2><p>Клиент, маршрутизатор и сервер в трёх network namespace. Настоящие <code>ip</code>, <code>tcpdump</code>, <code>curl</code> и <code>nft</code> внутри VM.</p><a href="vm/guest/NETWORK-EXERCISES.txt">Маршрут → HTTP → NAT →</a><br><a href="vm/guest/netlab.sh" download>Скрипт создания сети</a></section>
+<section class="card"><h2>Вся программа</h2><p>От консоли восстановления и bastion до приложения, данных, измерений, выпуска, автоматизации и Kubernetes. У каждого этапа есть ограничения, доказательства результата и путь назад.</p><a href="../practicum/index.html">Открыть том практикума →</a><br><a href="chapter-map.json">Карта 23 заданий и готовность</a></section>
+</div>
+<h2>Продолжать дома и на работе</h2>
+<p>Берём один выключенный диск с ОС, пакетами, контейнерными образами и данными. Передаём на USB или через личное хранилище, проверяем суммы, запускаем на другом компьютере. Старую ветку параллельно не продолжаем.</p>
+<details><summary>Что сохраняется, а что надо настроить постоянно</summary><p>Файлы и базы на диске остаются. Открытые сеансы, память процессов и временные network namespace исчезают при выключении. Сохранить маршрут и правило firewall в понятной загрузочной конфигурации — часть упражнения.</p></details>
+<details><summary>Почему Docker внутри VM</summary><p>Контейнеры используют ядро Linux-гостя и экономят память. Docker на рабочем Windows для этого варианта не нужен. Отдельные VM добавляем для загрузчика, других ядер и настоящей границы машин.</p></details>
+<details><summary>Что необходимо разрешить на рабочем компьютере</summary><p>Запуск QEMU/интерпретатора с USB или установленный Packet Tracer должен быть разрешён. Переносимый комплект не даёт гарантии отсутствия системных журналов, антивирусных событий и подкачки. Контроллер не устанавливает службы, драйверы и гипервизор.</p></details>
+<details><summary>Если выберем VPS</summary><p>SSH — основной текстовый доступ; VNC нужен для графической консоли. Фактический отклик сначала проверяем на своём канале. Интернет становится условием работы; вложенная виртуализация и импорт qcow2 у провайдера не предполагаются автоматически. Сервер пока не куплен и не настроен.</p></details>
+<h2>Перед первым офлайн-занятием</h2>
+<ol><li>Подготовить разрешённые QEMU/Python и Ubuntu из официальных источников, установить гостя дома.</li><li>Настроить SSH/консоль и заранее загрузить зависимости нужных упражнений внутрь гостя.</li><li>Пройти два задания, выключить ОС, сохранить точку, сломать копию и проверить возврат.</li><li>Перенести закрытый комплект, проверить SHA256 и загрузить на втором компьютере без сети.</li></ol>
+<p><a href="assets.example.json">Шаблон офлайн-зависимостей</a> · <a href="check_assets.py" download>Проверка файлов</a> · <a href="sources.json">Официальные источники</a></p>
+<p class="muted">Книга не запускает программы при открытии страницы. Установщики, образы, личный прогресс и ключи в публичный репозиторий не входят.</p>
+</main><div id="library-theme-picker"><dialog id="reader-theme-dialog" class="reader-theme-dialog" aria-labelledby="reader-theme-title"><header><h2 id="reader-theme-title">Тема оформления</h2><button type="button" class="reader-theme-close" data-reader-theme-close aria-label="Закрыть выбор темы"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header><div class="reader-theme-grid" data-reader-theme-grid role="group" aria-label="Темы оформления"></div><p class="reader-theme-caption">Одна тема для библиотеки и всех томов.</p></dialog><script>(()=>{'use strict';
+const api=window.LibraryPreferences,dialog=document.getElementById('reader-theme-dialog');
+if(!api||!dialog)return;
+let origin=null;
+for(const grid of document.querySelectorAll('[data-reader-theme-grid]')){
+ for(const theme of api.themes){
+  const button=document.createElement('button');button.type='button';button.className='reader-theme-choice';button.dataset.readerPreset=theme.id;button.title=theme.description;
+  button.setAttribute('aria-label',theme.name);button.setAttribute('aria-pressed','false');
+  const sample=document.createElement('span');sample.className='reader-theme-swatch';sample.setAttribute('aria-hidden','true');
+  for(const [name,value] of Object.entries(theme.preview))sample.style.setProperty('--swatch-'+name,value);
+  const letters=document.createElement('b');letters.textContent='Aa';sample.append(letters);
+  const lines=document.createElement('span');lines.className='reader-theme-lines';for(let n=0;n<3;n++)lines.append(document.createElement('i'));sample.append(lines);
+  const label=document.createElement('span');label.className='reader-theme-label';label.textContent=theme.name;button.append(sample,label);grid.append(button);
+ }
+ grid.addEventListener('click',event=>{const button=event.target.closest('[data-reader-preset]');if(button)api.setPreset(button.dataset.readerPreset);});
+ grid.addEventListener('dblclick',event=>{if(event.target.closest('button'))event.preventDefault();});
+}
+function sync(){for(const button of document.querySelectorAll('[data-reader-preset]'))button.setAttribute('aria-pressed',String(button.dataset.readerPreset===api.selectedTheme));}
+function open(trigger){origin=trigger;if(!dialog.open)dialog.showModal();dialog.querySelector('[aria-pressed=true]')?.focus({preventScroll:true});}
+document.addEventListener('click',event=>{
+ const trigger=event.target.closest('#theme,#home-theme-toggle');if(!trigger)return;
+ event.preventDefault();event.stopImmediatePropagation();open(trigger);
+},true);
+dialog.querySelector('[data-reader-theme-close]').addEventListener('click',()=>dialog.close());
+dialog.addEventListener('click',event=>{if(event.target!==dialog)return;const box=dialog.getBoundingClientRect();if(event.clientX<box.left||event.clientX>box.right||event.clientY<box.top||event.clientY>box.bottom)dialog.close();});
+dialog.addEventListener('close',()=>{if(origin?.isConnected)origin.focus({preventScroll:true});});
+api.subscribe(sync);sync();
+})();</script></div><!-- /library-theme-picker --></body></html>

@@ -1,0 +1,98 @@
+НАСТОЯЩАЯ СЕТЬ LINUX ВНУТРИ ОДНОГО ГОСТЯ
+Подготовлены команды и скрипт. Реальный запуск пока не выполнен.
+
+Этот опыт не требует трёх отдельных VM: три network namespace дают
+отдельные интерфейсы, IP, маршруты и сетевые правила при общем ядре
+Linux-гостя. Это экономит память. Общее ядро — важная граница: отказ
+всего ядра одинаково затронет все роли. Отдельные загрузки/ядра появятся
+в следующем профиле с несколькими VM, а не будут обещаны namespace.
+
+Команды ниже выполняются В ГОСТЕ. Не на домашнем хосте и не в Windows.
+Подготовка:
+  sudo bash netlab.sh up --inside-lab-vm
+  sudo bash netlab.sh check --inside-lab-vm
+
+Путь:
+  study-client (10.44.10.10/24)
+      veth → study-router (10.44.10.1/24 | 10.44.30.1/24)
+      veth → study-server (10.44.30.10/24)
+Никакой bridge к NIC гостя, NAT наружу или сеть рабочего ПК не добавлены.
+IP forwarding в router намеренно выключен. Это первая диагностика.
+
+1. Bash и наблюдение: сохраните исходные выводы в /srv/study/exercises.
+   sudo ip -n study-client address
+   sudo ip -n study-client route
+   sudo ip -n study-client neigh
+   sudo ip netns exec study-client ping -n -c 3 10.44.10.1
+   sudo ip netns exec study-client ping -n -c 3 10.44.30.10
+   Запишите exit status обеих команд. Второй ping пока не обязан работать.
+   Отличайте имя namespace от интерфейса: `ip -n` выбирает сетевой стек,
+   а `dev study-c0` — устройство внутри выбранного стека.
+
+2. Посмотрите один запрос одновременно на двух сторонах router:
+   sudo ip netns exec study-router tcpdump -ni study-r0 -e -vv 'arp or icmp'
+   Во втором терминале:
+   sudo ip netns exec study-router tcpdump -ni study-r1 -e -vv 'arp or icmp'
+   В третьем повторите ping. Предскажите, куда дошёл пакет. Не выводите
+   отсутствие маршрута только из строки timeout: проверьте таблицу/forward.
+
+3. Включите именно маршрутизацию в router, не глобально в госте:
+   sudo ip netns exec study-router sysctl -w net.ipv4.ip_forward=1
+   Повторите ping. Сопоставьте MAC, IP, TTL до и после router. IP-адреса
+   endpoints сохраняются, Ethernet-заголовок меняется, TTL уменьшается.
+   В отличие от схемы Packet Tracer здесь только ОДИН маршрутизатор.
+   В Packet Tracer было два: число уменьшений TTL поэтому различается.
+
+4. В сервере запустите настоящий TCP/HTTP процесс:
+   sudo ip netns exec study-server python3 -m http.server 8080 --bind 10.44.30.10
+   Клиент:
+   sudo ip netns exec study-client curl -v http://10.44.30.10:8080/
+   В tcpdump замените фильтр на 'tcp port 8080'. Увидите SYN, SYN/ACK, ACK,
+   HTTP и закрытие соединения. Это не эмулированный вывод терминала книги.
+   Сервер запускается в текущем каталоге: заранее перейдите в пустой учебный
+   каталог, а не в папку с личными файлами. Остановите Ctrl+C после опыта.
+
+5. NAT: сначала покажите, что без него всё работало по маршрутам.
+   Сохраните следующий текст как router.nft внутри гостя:
+
+   table ip study_nat {
+     chain postrouting {
+       type nat hook postrouting priority srcnat; policy accept;
+       oifname "study-r1" ip saddr 10.44.10.0/24 masquerade
+     }
+   }
+
+   Проверка синтаксиса и применение ТОЛЬКО в study-router:
+   sudo ip netns exec study-router nft -c -f router.nft
+   sudo ip netns exec study-router nft -f router.nft
+   Запустите НОВОЕ соединение curl, сравните source на двух сторонах:
+   study-r0 увидит 10.44.10.10, study-r1 — 10.44.30.1.
+   Настройка цепочки NAT применяется к первому пакету потока, дальнейшие
+   пакеты используют connection tracking. Существующее соединение не надо
+   принимать за новый тест конфигурации. Порт source может сохраниться;
+   NAT не обязан всегда менять его, если конфликта нет.
+   Не используйте nft flush ruleset: в основном госте может быть Docker.
+   Откат только этого опыта:
+   sudo ip netns exec study-router nft delete table ip study_nat
+
+6. Свяжите с Git и постоянной конфигурацией:
+   Сохраните router.nft, команды создания и включения forward в личном
+   репозитории /srv/study/exercises/network. Текущий netns живёт в памяти
+   ядра: после poweroff исчезнет. Диск VM сохранится, а одноразовая команда
+   ip/sysctl сама не превращается в постоянную настройку.
+   После следующего старта повторите netlab up, включите forwarding и
+   загрузите свой сохранённый router.nft. Дальше оформим их как гостевой
+   systemd unit с явным порядком загрузки и независимой проверкой.
+   Повторный netlab up существующее упражнение НЕ сбрасывает.
+
+7. Когда закончите все процессы:
+   sudo bash netlab.sh down --inside-lab-vm --confirm-netlab
+   Скрипт откажет, если внутри остались PID. Он не убивает процессы,
+   не очищает чужие namespaces и не трогает сеть основного гостя.
+
+Связь с дальнейшими главами
+HTTP server заменим своим Go-сервисом. Маршрутизация/захват останутся
+теми же. Затем добавим PostgreSQL и кэш уже как отдельный Compose-профиль
+в госте; подключение namespace к Docker-сегменту будет отдельной явной
+задачей, сейчас они НЕ соединены незаметно. Метрики/латентность в TCG
+нельзя экстраполировать на производительность реального production.

@@ -1,0 +1,1155 @@
+{
+  "schema": 1,
+  "updated": "2026-11-01",
+  "scope": "personal persistent offline-capable lab; prepared recipes, not a boot-tested appliance",
+  "safety": {
+    "discovery_scope": "only isolated networks created for this lab",
+    "instructor_rescue_console": true,
+    "network_access_rules_not_all_enforced_yet": true,
+    "secrets_or_progress_in_git": false
+  },
+  "stages": [
+    {
+      "id": "P00-rescue-bootstrap",
+      "title": "Первый вход без рабочей сети",
+      "mission": {
+        "ticket": "STUDY-00: Первый вход без рабочей сети",
+        "context": "Сервер только выдали, IP и SSH ещё не подтверждены.",
+        "access_constraints": "Разрешена только консоль гипервизора; роль инструктора может открыть её для восстановления.",
+        "symptoms": "Нельзя войти по SSH; неизвестны адрес и состояние службы.",
+        "success_evidence": "Зафиксированы ОС, диски, адреса; создан личный доступ; есть снимок clean-base.",
+        "rollback": "Откатить выключенную копию, исходный образ не менять."
+      },
+      "depends_on": [],
+      "checkpoints": {
+        "before": "before-p00-rescue-bootstrap",
+        "after": "done-p00-rescue-bootstrap",
+        "scope": "cold whole-world; no memory/session promise"
+      },
+      "resources": {
+        "guest_memory_mib_estimate": 1024,
+        "estimate_not_measured": true,
+        "note": "Only required roles; do not start all stages concurrently"
+      },
+      "chapters": [
+        {
+          "href": "../linux/index.html#11-boot"
+        },
+        {
+          "href": "../linux/index.html#12-services"
+        },
+        {
+          "href": "../linux/index.html#08-rights"
+        }
+      ],
+      "implementation_status": "vm-lifecycle-prepared-guest-not-boot-tested",
+      "assets": [
+        "vm/README.txt",
+        "vm/guest/bootstrap.sh"
+      ],
+      "hints": {
+        "mode": "separate-on-demand",
+        "status": "original hints authored; runtime acceptance pending"
+      },
+      "solution": {
+        "mode": "separate-after-attempt",
+        "status": "original explanatory debrief authored; runtime acceptance pending"
+      }
+    },
+    {
+      "id": "P01-management-ssh",
+      "title": "Управление по SSH и доверие к узлу",
+      "mission": {
+        "ticket": "STUDY-01: Управление по SSH и доверие к узлу",
+        "context": "После консоли нужен повторяемый безопасный вход с личного компьютера.",
+        "access_constraints": "Только localhost management через QEMU 2222; известный ключ сверяется из консоли.",
+        "symptoms": "TCP доступен, но вход не проходит либо меняется fingerprint.",
+        "success_evidence": "Вход своим пользователем, объяснение ключа узла и ключа пользователя; root-пароль не передаётся в командной строке.",
+        "rollback": "Не отключать консоль до второго независимого входа; вернуть прошлый sshd config."
+      },
+      "depends_on": [
+        "P00-rescue-bootstrap"
+      ],
+      "checkpoints": {
+        "before": "before-p01-management-ssh",
+        "after": "done-p01-management-ssh",
+        "scope": "cold whole-world; no memory/session promise"
+      },
+      "resources": {
+        "guest_memory_mib_estimate": 1024,
+        "estimate_not_measured": true,
+        "note": "Only required roles; do not start all stages concurrently"
+      },
+      "chapters": [
+        {
+          "href": "../networks/index.html#05-transport"
+        },
+        {
+          "href": "../linux/index.html#08-rights"
+        },
+        {
+          "href": "../bash/index.html#02-startup-environment"
+        }
+      ],
+      "implementation_status": "manual-recipe-prepared-ssh-not-tested",
+      "assets": [
+        "vm/README.txt"
+      ],
+      "hints": {
+        "mode": "separate-on-demand",
+        "status": "original hints authored; runtime acceptance pending"
+      },
+      "solution": {
+        "mode": "separate-after-attempt",
+        "status": "original explanatory debrief authored; runtime acceptance pending"
+      }
+    },
+    {
+      "id": "P02-bastion-access",
+      "title": "Внутренний узел через bastion",
+      "mission": {
+        "ticket": "STUDY-02: Внутренний узел через bastion",
+        "context": "Приложение находится в закрытой подсети, у ноутбука нет маршрута к нему.",
+        "access_constraints": "Вход разрешён через bastion и ProxyJump; целевой узел не публикуется на интерфейс хоста. Консоль — отдельная аварийная роль инструктора.",
+        "symptoms": "Прямой SSH ожидаемо недоступен; через bastion пока ошибка доступа.",
+        "success_evidence": "Рабочий прыжок, отдельные ключи/host keys, запрет прямого входа подтверждён отрицательным тестом; agent forwarding не включён без причины.",
+        "rollback": "Перед изменением правил оставить консоль и действующий сеанс; вернуть точку before-access-policy."
+      },
+      "depends_on": [
+        "P01-management-ssh"
+      ],
+      "checkpoints": {
+        "before": "before-p02-bastion-access",
+        "after": "done-p02-bastion-access",
+        "scope": "cold whole-world; no memory/session promise"
+      },
+      "resources": {
+        "guest_memory_mib_estimate": 2048,
+        "estimate_not_measured": true,
+        "note": "Only required roles; do not start all stages concurrently"
+      },
+      "chapters": [
+        {
+          "href": "../networks/index.html#04-ip-routing"
+        },
+        {
+          "href": "../linux/index.html#08-rights"
+        },
+        {
+          "href": "../bash/index.html#04-quoting-and-expansions"
+        }
+      ],
+      "implementation_status": "planned-access-policy-not-enforced",
+      "assets": [],
+      "hints": {
+        "mode": "separate-on-demand",
+        "status": "original hints authored; runtime acceptance pending"
+      },
+      "solution": {
+        "mode": "separate-after-attempt",
+        "status": "original explanatory debrief authored; runtime acceptance pending"
+      }
+    },
+    {
+      "id": "P03-packet-path",
+      "title": "Пакет теряется между двумя сетями",
+      "mission": {
+        "ticket": "STUDY-03: Пакет теряется между двумя сетями",
+        "context": "На клиенте работает шлюз, сервис за маршрутизатором не отвечает.",
+        "access_constraints": "Исследовать только study-* namespaces/сети PT; внешнюю сеть компьютера не сканировать.",
+        "symptoms": "До первого интерфейса ICMP доходит, дальше пакет не появляется.",
+        "success_evidence": "До/после доказаны адреса MAC/IP/TTL, маршрут и состояние forwarding; доступ восстановлен без NAT.",
+        "rollback": "Сохранить выводы, откатить только свои настройки router; netlab up не сбрасывает существующий мир."
+      },
+      "depends_on": [
+        "P01-management-ssh"
+      ],
+      "checkpoints": {
+        "before": "before-p03-packet-path",
+        "after": "done-p03-packet-path",
+        "scope": "cold whole-world; no memory/session promise"
+      },
+      "resources": {
+        "guest_memory_mib_estimate": 1024,
+        "estimate_not_measured": true,
+        "note": "Only required roles; do not start all stages concurrently"
+      },
+      "chapters": [
+        {
+          "href": "../networks/index.html#02-host-send"
+        },
+        {
+          "href": "../networks/index.html#04-ip-routing"
+        },
+        {
+          "href": "../linux/index.html#13-devices-network"
+        },
+        {
+          "href": "../bash/index.html#07-pipelines-streams"
+        }
+      ],
+      "implementation_status": "linux-netns-recipe-prepared-not-executed",
+      "assets": [
+        "vm/guest/netlab.sh",
+        "vm/guest/NETWORK-EXERCISES.txt",
+        "packet-tracer/README.txt"
+      ],
+      "hints": {
+        "mode": "separate-on-demand",
+        "status": "original hints authored; runtime acceptance pending"
+      },
+      "solution": {
+        "mode": "separate-after-attempt",
+        "status": "original explanatory debrief authored; runtime acceptance pending"
+      }
+    },
+    {
+      "id": "P04-vlan-routing",
+      "title": "Изоляция VLAN и резервный путь",
+      "mission": {
+        "ticket": "STUDY-04: Изоляция VLAN и резервный путь",
+        "context": "После добавления uplink один сегмент потерял доступ, резервирование не проверялось.",
+        "access_constraints": "Изменения только в сохранённой PT-копии; не отключать STP ради шторма.",
+        "symptoms": "Часть портов access/trunk перепутана; стоимость маршрута не соответствует ожидаемому пути.",
+        "success_evidence": "Показаны allowed VLAN, root/alternate STP, OSPF-путь до/после отказа; LPM отделён от метрики.",
+        "rollback": "Вернуть конкретные порты/стоимости, сохранить отдельную точку, не overwrite baseline."
+      },
+      "depends_on": [
+        "P03-packet-path"
+      ],
+      "checkpoints": {
+        "before": "before-p04-vlan-routing",
+        "after": "done-p04-vlan-routing",
+        "scope": "cold whole-world; no memory/session promise"
+      },
+      "resources": {
+        "guest_memory_mib_estimate": null,
+        "estimate_not_measured": true,
+        "note": "Cisco lists 4 GB free RAM for Packet Tracer; actual topology consumption not measured"
+      },
+      "chapters": [
+        {
+          "href": "../networks/index.html#17-switching"
+        },
+        {
+          "href": "../networks/index.html#18-routing-control"
+        }
+      ],
+      "implementation_status": "packet-tracer-configs-prepared-not-cli-tested",
+      "assets": [
+        "packet-tracer/README.txt",
+        "packet-tracer/configs/R1-base.cfg",
+        "packet-tracer/configs/R2-base.cfg"
+      ],
+      "hints": {
+        "mode": "separate-on-demand",
+        "status": "original hints authored; runtime acceptance pending"
+      },
+      "solution": {
+        "mode": "separate-after-attempt",
+        "status": "original explanatory debrief authored; runtime acceptance pending"
+      }
+    },
+    {
+      "id": "P05-dhcp-dns-tls",
+      "title": "Адрес есть, имя или сертификат не работают",
+      "mission": {
+        "ticket": "STUDY-05: Адрес есть, имя или сертификат не работают",
+        "context": "IP-доступ к сервису исправен, пользователи заходят по имени.",
+        "access_constraints": "Разрешены DNS/DHCP/TLS только внутри учебной зоны .test; внешний скан не нужен.",
+        "symptoms": "Ошибки имени смешаны с отказом TCP; сертификат проверяется не тем trust store.",
+        "success_evidence": "Отдельно доказаны адрес/route, DNS-ответ, TCP, SNI/имя/цепочка сертификата и срок. HTTP по IP не выдаётся за проверку TLS.",
+        "rollback": "Вернуть DHCP/DNS конфиг из Git, тестовые ключи не коммитить."
+      },
+      "depends_on": [
+        "P03-packet-path",
+        "P04-vlan-routing"
+      ],
+      "checkpoints": {
+        "before": "before-p05-dhcp-dns-tls",
+        "after": "done-p05-dhcp-dns-tls",
+        "scope": "cold whole-world; no memory/session promise"
+      },
+      "resources": {
+        "guest_memory_mib_estimate": 2048,
+        "estimate_not_measured": true,
+        "note": "Only required roles; do not start all stages concurrently"
+      },
+      "chapters": [
+        {
+          "href": "../networks/index.html#13-dhcp"
+        },
+        {
+          "href": "../networks/index.html#14-dns"
+        },
+        {
+          "href": "../networks/index.html#15-tls"
+        }
+      ],
+      "implementation_status": "dhcp-dns-pt-recipe-prepared-tls-planned",
+      "assets": [
+        "packet-tracer/configs/R1-dhcp-add.cfg"
+      ],
+      "hints": {
+        "mode": "separate-on-demand",
+        "status": "original hints authored; runtime acceptance pending"
+      },
+      "solution": {
+        "mode": "separate-after-attempt",
+        "status": "original explanatory debrief authored; runtime acceptance pending"
+      }
+    },
+    {
+      "id": "P06-service-socket",
+      "title": "Процесс жив, клиенты не подключаются",
+      "mission": {
+        "ticket": "STUDY-06: Процесс жив, клиенты не подключаются",
+        "context": "Внутренний HTTP-сервис установлен, но проверка команды и сети противоречат друг другу.",
+        "access_constraints": "Сначала сервисный порт и логи; shell-доступ к внутреннему узлу выдаётся только после фиксации наблюдений.",
+        "symptoms": "Слушает loopback вместо нужного адреса, неверный порт либо сокет недоступен.",
+        "success_evidence": "ss/журналы/curl и захват показывают причину; исправление минимально; закрытый порт остаётся закрытым.",
+        "rollback": "Копия unit/config, проверка до перезапуска, рабочий rescue-сеанс сохраняется."
+      },
+      "depends_on": [
+        "P03-packet-path"
+      ],
+      "checkpoints": {
+        "before": "before-p06-service-socket",
+        "after": "done-p06-service-socket",
+        "scope": "cold whole-world; no memory/session promise"
+      },
+      "resources": {
+        "guest_memory_mib_estimate": 1024,
+        "estimate_not_measured": true,
+        "note": "Only required roles; do not start all stages concurrently"
+      },
+      "chapters": [
+        {
+          "href": "../linux/index.html#03-process"
+        },
+        {
+          "href": "../linux/index.html#06-vfs"
+        },
+        {
+          "href": "../linux/index.html#12-services"
+        },
+        {
+          "href": "../networks/index.html#06-host-receive"
+        }
+      ],
+      "implementation_status": "http-linux-recipe-prepared-not-executed",
+      "assets": [
+        "vm/guest/NETWORK-EXERCISES.txt"
+      ],
+      "hints": {
+        "mode": "separate-on-demand",
+        "status": "original hints authored; runtime acceptance pending"
+      },
+      "solution": {
+        "mode": "separate-after-attempt",
+        "status": "original explanatory debrief authored; runtime acceptance pending"
+      }
+    },
+    {
+      "id": "P07-storage-recovery",
+      "title": "Свободный диск есть, запись не работает",
+      "mission": {
+        "ticket": "STUDY-07: Свободный диск есть, запись не работает",
+        "context": "Сервис перестал писать данные; возможны inode, права, место, open deleted file и ФС.",
+        "access_constraints": "Только отдельный виртуальный учебный диск/файловый образ в госте; не блоковые устройства хоста.",
+        "symptoms": "Ошибка записи при противоречивых df/du, процесс держит удалённый файл либо закончились inode.",
+        "success_evidence": "Установлена конкретная причина; расширение раздела/LVM/ФС проверено раздельно; данные и права сохранены.",
+        "rollback": "Холодная точка before-storage, отдельная копия данных и проверка чтения; аварийную консоль не отключать."
+      },
+      "depends_on": [
+        "P06-service-socket"
+      ],
+      "checkpoints": {
+        "before": "before-p07-storage-recovery",
+        "after": "done-p07-storage-recovery",
+        "scope": "cold whole-world; no memory/session promise"
+      },
+      "resources": {
+        "guest_memory_mib_estimate": 2048,
+        "estimate_not_measured": true,
+        "note": "Only required roles; do not start all stages concurrently"
+      },
+      "chapters": [
+        {
+          "href": "../linux/index.html#06-vfs"
+        },
+        {
+          "href": "../linux/index.html#07-storage"
+        },
+        {
+          "href": "../bash/index.html#15-reliable-files-concurrency"
+        }
+      ],
+      "implementation_status": "planned-extra-data-disk-not-created",
+      "assets": [],
+      "hints": {
+        "mode": "separate-on-demand",
+        "status": "original hints authored; runtime acceptance pending"
+      },
+      "solution": {
+        "mode": "separate-after-attempt",
+        "status": "original explanatory debrief authored; runtime acceptance pending"
+      }
+    },
+    {
+      "id": "P08-git-config",
+      "title": "Вернуть управляемую конфигурацию",
+      "mission": {
+        "ticket": "STUDY-08: Вернуть управляемую конфигурацию",
+        "context": "После ручных исправлений неизвестно, чем узел отличается от рабочего состояния.",
+        "access_constraints": "Личный репозиторий в госте; ключи/диски/дампы не Git.",
+        "symptoms": "Есть локальные изменения и ошибочный commit, требуется восстановить конфиг без потери новых данных.",
+        "success_evidence": "Чистый diff понятен, ошибка найдена, нужная версия применена; проверка результата независима от текста команды.",
+        "rollback": "Сохранить рабочее дерево/патч, использовать отдельную ветку и точку before-config-repair."
+      },
+      "depends_on": [
+        "P06-service-socket"
+      ],
+      "checkpoints": {
+        "before": "before-p08-git-config",
+        "after": "done-p08-git-config",
+        "scope": "cold whole-world; no memory/session promise"
+      },
+      "resources": {
+        "guest_memory_mib_estimate": 1024,
+        "estimate_not_measured": true,
+        "note": "Only required roles; do not start all stages concurrently"
+      },
+      "chapters": [
+        {
+          "href": "../git/index.html#03-index"
+        },
+        {
+          "href": "../git/index.html#06-diffs"
+        },
+        {
+          "href": "../git/index.html#09-recovery"
+        },
+        {
+          "href": "../bash/index.html#16-debugging-and-tests"
+        }
+      ],
+      "implementation_status": "curriculum-existing-git-labs-stand-adaptation-planned",
+      "assets": [],
+      "hints": {
+        "mode": "separate-on-demand",
+        "status": "original hints authored; runtime acceptance pending"
+      },
+      "solution": {
+        "mode": "separate-after-attempt",
+        "status": "original explanatory debrief authored; runtime acceptance pending"
+      }
+    },
+    {
+      "id": "P09-go-service",
+      "title": "Свой Go-сервис вместо временного HTTP",
+      "mission": {
+        "ticket": "STUDY-09: Свой Go-сервис вместо временного HTTP",
+        "context": "Выпустить маленький сервис так, чтобы понятно было происхождение бинарника.",
+        "access_constraints": "Сборка внутри гостя; сеть для модулей не предполагается после отъезда.",
+        "symptoms": "Сборка медленная, артефакты различаются либо сервис падает под нагрузкой.",
+        "success_evidence": "Зафиксированы toolchain/modules/flags/build info; проходят тесты и HTTP-проверка; профиль отделяет сборку от обработки запроса.",
+        "rollback": "Предыдущий бинарник и unit сохранены, новый выпуск отдельным каталогом."
+      },
+      "depends_on": [
+        "P08-git-config",
+        "P06-service-socket"
+      ],
+      "checkpoints": {
+        "before": "before-p09-go-service",
+        "after": "done-p09-go-service",
+        "scope": "cold whole-world; no memory/session promise"
+      },
+      "resources": {
+        "guest_memory_mib_estimate": 3072,
+        "estimate_not_measured": true,
+        "note": "Only required roles; do not start all stages concurrently"
+      },
+      "chapters": [
+        {
+          "href": "../go/index.html#14-build-process"
+        },
+        {
+          "href": "../go/index.html#16-reproducibility"
+        },
+        {
+          "href": "../go/index.html#21-measurement"
+        },
+        {
+          "href": "../go/index.html#23-release"
+        }
+      ],
+      "implementation_status": "existing-go-service-reuse-planned",
+      "assets": [
+        "../go/labs/service/README.txt",
+        "../go/labs/service/tools/build.py"
+      ],
+      "hints": {
+        "mode": "separate-on-demand",
+        "status": "original hints authored; runtime acceptance pending"
+      },
+      "solution": {
+        "mode": "separate-after-attempt",
+        "status": "original explanatory debrief authored; runtime acceptance pending"
+      }
+    },
+    {
+      "id": "P10-postgres-access",
+      "title": "Приложение не подключается к PostgreSQL",
+      "mission": {
+        "ticket": "STUDY-10: Приложение не подключается к PostgreSQL",
+        "context": "Новая БД запускается, локальный psql и приложение ведут себя по-разному.",
+        "access_constraints": "Разрешены роль приложения и точный socket/TCP путь, не trust для всей сети.",
+        "symptoms": "Непонятно, почему psql идёт через Unix socket, какое правило pg_hba сработало и откуда берётся пароль.",
+        "success_evidence": "Доказаны endpoint, listen address, порядок matching rules и аутентификация; минимальные права; новый запрос не притворяется существующим Go endpoint.",
+        "rollback": "Копии конфигов и дамп, последовательные проверки без широкого открытия доступа."
+      },
+      "depends_on": [
+        "P09-go-service"
+      ],
+      "checkpoints": {
+        "before": "before-p10-postgres-access",
+        "after": "done-p10-postgres-access",
+        "scope": "cold whole-world; no memory/session promise"
+      },
+      "resources": {
+        "guest_memory_mib_estimate": 3072,
+        "estimate_not_measured": true,
+        "note": "Only required roles; do not start all stages concurrently"
+      },
+      "chapters": [
+        {
+          "href": "../postgres/index.html#01-cluster"
+        },
+        {
+          "href": "../postgres/index.html#05-protocol"
+        },
+        {
+          "href": "../postgres/index.html#17-security"
+        },
+        {
+          "href": "../linux/index.html#06-vfs"
+        }
+      ],
+      "implementation_status": "planned-database-not-wired-to-go-service",
+      "assets": [],
+      "hints": {
+        "mode": "separate-on-demand",
+        "status": "original hints authored; runtime acceptance pending"
+      },
+      "solution": {
+        "mode": "separate-after-attempt",
+        "status": "original explanatory debrief authored; runtime acceptance pending"
+      }
+    },
+    {
+      "id": "P11-database-recovery",
+      "title": "Восстановить данные и объяснить потерянное время",
+      "mission": {
+        "ticket": "STUDY-11: Восстановить данные и объяснить потерянное время",
+        "context": "После ошибочного изменения нужна проверенная резервная копия и понятная точка восстановления.",
+        "access_constraints": "Отдельная восстановленная БД; не перезаписывать единственный живой PGDATA.",
+        "symptoms": "Дамп есть, но не проверен; WAL/PITR или роли/расширения могут отсутствовать.",
+        "success_evidence": "Восстановление на чистом экземпляре, сверка данных/ролей; RPO/RTO посчитаны по фактическому тесту.",
+        "rollback": "Исходная БД остаётся неизменной; вернуться к before-restore, копии и WAL хранить согласованно."
+      },
+      "depends_on": [
+        "P10-postgres-access"
+      ],
+      "checkpoints": {
+        "before": "before-p11-database-recovery",
+        "after": "done-p11-database-recovery",
+        "scope": "cold whole-world; no memory/session promise"
+      },
+      "resources": {
+        "guest_memory_mib_estimate": 3072,
+        "estimate_not_measured": true,
+        "note": "Only required roles; do not start all stages concurrently"
+      },
+      "chapters": [
+        {
+          "href": "../postgres/index.html#11-wal"
+        },
+        {
+          "href": "../postgres/index.html#18-recovery"
+        },
+        {
+          "href": "../postgres/index.html#19-operations"
+        }
+      ],
+      "implementation_status": "existing-pg-labs-adaptation-planned",
+      "assets": [],
+      "hints": {
+        "mode": "separate-on-demand",
+        "status": "original hints authored; runtime acceptance pending"
+      },
+      "solution": {
+        "mode": "separate-after-attempt",
+        "status": "original explanatory debrief authored; runtime acceptance pending"
+      }
+    },
+    {
+      "id": "P12-cache-effectiveness",
+      "title": "Ускорение без скрытой порчи данных",
+      "mission": {
+        "ticket": "STUDY-12: Ускорение без скрытой порчи данных",
+        "context": "Запрос дорогой; предлагается Redis/Memcached, но цена и свежесть не оценены.",
+        "access_constraints": "Один известный workload, лимит памяти и отдельные credentials; исходный замер сохраняется.",
+        "symptoms": "Среднее время улучшилось, p99/ошибки либо stale data ухудшились.",
+        "success_evidence": "Сравнены throughput/latency/hit rate/DB load на одной нагрузке; invalidation и отказ кэша проверены; прогрев отделён.",
+        "rollback": "Feature flag/предыдущий выпуск, кэш не единственный источник данных."
+      },
+      "depends_on": [
+        "P10-postgres-access"
+      ],
+      "checkpoints": {
+        "before": "before-p12-cache-effectiveness",
+        "after": "done-p12-cache-effectiveness",
+        "scope": "cold whole-world; no memory/session promise"
+      },
+      "resources": {
+        "guest_memory_mib_estimate": 3072,
+        "estimate_not_measured": true,
+        "note": "Only required roles; do not start all stages concurrently"
+      },
+      "chapters": [
+        {
+          "href": "../cache/index.html#02-economics"
+        },
+        {
+          "href": "../cache/index.html#03-consistency"
+        },
+        {
+          "href": "../cache/index.html#36-effectiveness"
+        },
+        {
+          "href": "../postgres/index.html#23-monitoring-capacity"
+        }
+      ],
+      "implementation_status": "existing-cache-labs-adaptation-planned",
+      "assets": [],
+      "hints": {
+        "mode": "separate-on-demand",
+        "status": "original hints authored; runtime acceptance pending"
+      },
+      "solution": {
+        "mode": "separate-after-attempt",
+        "status": "original explanatory debrief authored; runtime acceptance pending"
+      }
+    },
+    {
+      "id": "P13-observability",
+      "title": "Сервис медленнее, но CPU не 100%",
+      "mission": {
+        "ticket": "STUDY-13: Сервис медленнее, но CPU не 100%",
+        "context": "Дежурный получает жалобу без понятной причины и без графиков «ради графиков».",
+        "access_constraints": "Только учебный трафик; метрики не публикуются в LAN/интернет.",
+        "symptoms": "Очередь, I/O, pool, lock, GC или DNS похожи снаружи на один timeout.",
+        "success_evidence": "Гипотеза подтверждена несколькими независимыми сигналами; SLI/SLO, окно, p95/p99 и бюджет ресурсов объяснены.",
+        "rollback": "Снять диагностические изменения, вернуть лимиты/нагрузку, не удалять baseline."
+      },
+      "depends_on": [
+        "P09-go-service",
+        "P10-postgres-access",
+        "P12-cache-effectiveness"
+      ],
+      "checkpoints": {
+        "before": "before-p13-observability",
+        "after": "done-p13-observability",
+        "scope": "cold whole-world; no memory/session promise"
+      },
+      "resources": {
+        "guest_memory_mib_estimate": 3072,
+        "estimate_not_measured": true,
+        "note": "Only required roles; do not start all stages concurrently"
+      },
+      "chapters": [
+        {
+          "href": "../linux/index.html#15-observation"
+        },
+        {
+          "href": "../networks/index.html#19-performance"
+        },
+        {
+          "href": "../go/index.html#21-measurement"
+        },
+        {
+          "href": "../postgres/index.html#23-monitoring-capacity"
+        }
+      ],
+      "implementation_status": "planned-monitoring-profile-not-deployed",
+      "assets": [],
+      "hints": {
+        "mode": "separate-on-demand",
+        "status": "original hints authored; runtime acceptance pending"
+      },
+      "solution": {
+        "mode": "separate-after-attempt",
+        "status": "original explanatory debrief authored; runtime acceptance pending"
+      }
+    },
+    {
+      "id": "P14-manual-release",
+      "title": "Плохой выпуск и управляемый возврат",
+      "mission": {
+        "ticket": "STUDY-14: Плохой выпуск и управляемый возврат",
+        "context": "Нужно вручную доставить версию, проверить её и переключить трафик.",
+        "access_constraints": "Только учебный reverse proxy; секреты отдельно; миграция данных совместима с rollback.",
+        "symptoms": "Health check зелёный, но функциональная проверка не проходит.",
+        "success_evidence": "Идентифицирован артефакт, smoke/functional/нагрузочный тесты разделены; переключение/rollback подтверждены с клиента.",
+        "rollback": "Предыдущий deployment остаётся до проверки; откат схемы БД не предполагается автоматически."
+      },
+      "depends_on": [
+        "P09-go-service",
+        "P11-database-recovery",
+        "P13-observability",
+        "P05-dhcp-dns-tls"
+      ],
+      "checkpoints": {
+        "before": "before-p14-manual-release",
+        "after": "done-p14-manual-release",
+        "scope": "cold whole-world; no memory/session promise"
+      },
+      "resources": {
+        "guest_memory_mib_estimate": 3072,
+        "estimate_not_measured": true,
+        "note": "Only required roles; do not start all stages concurrently"
+      },
+      "chapters": [
+        {
+          "href": "../go/index.html#23-release"
+        },
+        {
+          "href": "../git/index.html#11-collaboration"
+        },
+        {
+          "href": "../linux/index.html#12-services"
+        }
+      ],
+      "implementation_status": "planned-blue-green-profile-not-created",
+      "assets": [],
+      "hints": {
+        "mode": "separate-on-demand",
+        "status": "original hints authored; runtime acceptance pending"
+      },
+      "solution": {
+        "mode": "separate-after-attempt",
+        "status": "original explanatory debrief authored; runtime acceptance pending"
+      }
+    },
+    {
+      "id": "P15-jenkins-delivery",
+      "title": "Автоматизация уже понятного выпуска",
+      "mission": {
+        "ticket": "STUDY-15: Автоматизация уже понятного выпуска",
+        "context": "Ручной выпуск работает; теперь он должен воспроизводиться pipeline.",
+        "access_constraints": "Controller не имеет лишнего доступа; agent и credentials с минимальными правами; секреты скрыты из журналов.",
+        "symptoms": "Pipeline зелёный, но deployed commit другой либо агент не воспроизводим.",
+        "success_evidence": "Плохая версия не доходит до стенда, артефакт связан с commit, развёртывание и rollback проверены; backup Jenkins восстановим.",
+        "rollback": "Сохранить Jenkins home согласованно, versions/plugins lock и предыдущий pipeline."
+      },
+      "depends_on": [
+        "P14-manual-release",
+        "P08-git-config"
+      ],
+      "checkpoints": {
+        "before": "before-p15-jenkins-delivery",
+        "after": "done-p15-jenkins-delivery",
+        "scope": "cold whole-world; no memory/session promise"
+      },
+      "resources": {
+        "guest_memory_mib_estimate": 4096,
+        "estimate_not_measured": true,
+        "note": "Only required roles; do not start all stages concurrently"
+      },
+      "chapters": [
+        {
+          "href": "../jenkins/index.html#34-jenkins-install"
+        },
+        {
+          "href": "../jenkins/index.html#37-jenkins-agents-remoting"
+        },
+        {
+          "href": "../jenkins/index.html#19-jenkinsfile"
+        },
+        {
+          "href": "../jenkins/index.html#43-jenkins-recovery"
+        }
+      ],
+      "implementation_status": "planned-jenkins-profile-not-installed",
+      "assets": [],
+      "hints": {
+        "mode": "separate-on-demand",
+        "status": "original hints authored; runtime acceptance pending"
+      },
+      "solution": {
+        "mode": "separate-after-attempt",
+        "status": "original explanatory debrief authored; runtime acceptance pending"
+      }
+    },
+    {
+      "id": "P16-ansible",
+      "title": "Воспроизвести ручную настройку",
+      "mission": {
+        "ticket": "STUDY-16: Воспроизвести ручную настройку",
+        "context": "Есть рабочий сервер и чистая копия; нужно перенести знания в автоматизацию.",
+        "access_constraints": "Inventory только личного мира, become ограничен; секреты отдельно.",
+        "symptoms": "Повторный запуск меняет то, что не должен, либо handlers перезапускают лишнее.",
+        "success_evidence": "Чистый узел проходит те же проверки, второй запуск предсказуем, drift обнаружен; идемпотентность доказана результатом.",
+        "rollback": "Git-версия playbook и выключенная точка, не общий destroy."
+      },
+      "depends_on": [
+        "P14-manual-release"
+      ],
+      "checkpoints": {
+        "before": "before-p16-ansible",
+        "after": "done-p16-ansible",
+        "scope": "cold whole-world; no memory/session promise"
+      },
+      "resources": {
+        "guest_memory_mib_estimate": 3072,
+        "estimate_not_measured": true,
+        "note": "Only required roles; do not start all stages concurrently"
+      },
+      "chapters": [
+        {
+          "href": "../linux/index.html#12-services"
+        },
+        {
+          "href": "../bash/index.html#14-scripts-and-portability"
+        },
+        {
+          "href": "../git/index.html#06-diffs"
+        }
+      ],
+      "implementation_status": "future-volume-and-profile",
+      "assets": [],
+      "hints": {
+        "mode": "separate-on-demand",
+        "status": "original hints authored; runtime acceptance pending"
+      },
+      "solution": {
+        "mode": "separate-after-attempt",
+        "status": "original explanatory debrief authored; runtime acceptance pending"
+      }
+    },
+    {
+      "id": "P17-terraform",
+      "title": "Создать инфраструктуру, сохранив данные",
+      "mission": {
+        "ticket": "STUDY-17: Создать инфраструктуру, сохранив данные",
+        "context": "Создание узла нужно описать отдельно от настройки служб.",
+        "access_constraints": "Только выбранный разрешённый local/cloud provider; plan перед apply; никаких покупок сейчас.",
+        "symptoms": "State потерян/расходится с реальностью; замена узла может унести данные.",
+        "success_evidence": "Пустой повторный plan, drift и цена изменения понятны, destroy ограничен тестовыми ресурсами; state защищён.",
+        "rollback": "Резерв state и данных, отдельный workspace/аккаунт, тест на временном ресурсе."
+      },
+      "depends_on": [
+        "P16-ansible"
+      ],
+      "checkpoints": {
+        "before": "before-p17-terraform",
+        "after": "done-p17-terraform",
+        "scope": "cold whole-world; no memory/session promise"
+      },
+      "resources": {
+        "guest_memory_mib_estimate": 4096,
+        "estimate_not_measured": true,
+        "note": "Only required roles; do not start all stages concurrently"
+      },
+      "chapters": [
+        {
+          "href": "../git/index.html#03-index"
+        },
+        {
+          "href": "../linux/index.html#14-isolation"
+        }
+      ],
+      "implementation_status": "future-volume-provider-not-selected",
+      "assets": [],
+      "hints": {
+        "mode": "separate-on-demand",
+        "status": "original hints authored; runtime acceptance pending"
+      },
+      "solution": {
+        "mode": "separate-after-attempt",
+        "status": "original explanatory debrief authored; runtime acceptance pending"
+      }
+    },
+    {
+      "id": "P18-replica-failure",
+      "title": "Репликация, разделение сети и возврат узла",
+      "mission": {
+        "ticket": "STUDY-18: Репликация, разделение сети и возврат узла",
+        "context": "Одна БД недостаточна по доступности; кластер должен решать измеренную задачу.",
+        "access_constraints": "Несколько учебных ролей включаются на время; primary не должен раздваиваться.",
+        "symptoms": "Lag, разрыв сети, неверный failover либо старый primary возвращается.",
+        "success_evidence": "Подтверждены RPO/RTO, fencing/роль клиента, поведение при partition и восстановление; чтение с реплики не равно backup.",
+        "rollback": "Согласованная точка ВСЕХ ролей, не откат одной старой реплики в живую группу."
+      },
+      "depends_on": [
+        "P11-database-recovery",
+        "P13-observability"
+      ],
+      "checkpoints": {
+        "before": "before-p18-replica-failure",
+        "after": "done-p18-replica-failure",
+        "scope": "cold whole-world; no memory/session promise"
+      },
+      "resources": {
+        "guest_memory_mib_estimate": 4096,
+        "estimate_not_measured": true,
+        "note": "Only required roles; do not start all stages concurrently"
+      },
+      "chapters": [
+        {
+          "href": "../postgres/index.html#21-replication"
+        },
+        {
+          "href": "../postgres/index.html#24-ha-patroni"
+        },
+        {
+          "href": "../cache/index.html#22-redis-sentinel"
+        },
+        {
+          "href": "../cache/index.html#23-redis-cluster"
+        }
+      ],
+      "implementation_status": "planned-multi-role-profile-not-created",
+      "assets": [],
+      "hints": {
+        "mode": "separate-on-demand",
+        "status": "original hints authored; runtime acceptance pending"
+      },
+      "solution": {
+        "mode": "separate-after-attempt",
+        "status": "original explanatory debrief authored; runtime acceptance pending"
+      }
+    },
+    {
+      "id": "P19-kubernetes",
+      "title": "Перенести знакомый сервис в Kubernetes",
+      "mission": {
+        "ticket": "STUDY-19: Перенести знакомый сервис в Kubernetes",
+        "context": "Сервис, данные и выпуск уже понятны вне оркестратора.",
+        "access_constraints": "Сначала временный local kind в Linux VM; эксплуатационные VM и HA отдельными этапами.",
+        "symptoms": "Pod Running не гарантирует readiness, доступность сервиса или сохранность данных.",
+        "success_evidence": "DNS/service/ingress/probes/resources/storage/rollout наблюдаемы; отказ узла и ограничение single control plane объяснены.",
+        "rollback": "Backup данных и manifests, безопасный rollback deployment; deletion cluster не считается backup."
+      },
+      "depends_on": [
+        "P15-jenkins-delivery",
+        "P16-ansible",
+        "P13-observability"
+      ],
+      "checkpoints": {
+        "before": "before-p19-kubernetes",
+        "after": "done-p19-kubernetes",
+        "scope": "cold whole-world; no memory/session promise"
+      },
+      "resources": {
+        "guest_memory_mib_estimate": 6144,
+        "estimate_not_measured": true,
+        "note": "Only required roles; do not start all stages concurrently"
+      },
+      "chapters": [
+        {
+          "href": "../linux/index.html#14-isolation"
+        },
+        {
+          "href": "../networks/index.html#14-dns"
+        },
+        {
+          "href": "../go/index.html#23-release"
+        }
+      ],
+      "implementation_status": "future-volume-profile-not-created",
+      "assets": [],
+      "hints": {
+        "mode": "separate-on-demand",
+        "status": "original hints authored; runtime acceptance pending"
+      },
+      "solution": {
+        "mode": "separate-after-attempt",
+        "status": "original explanatory debrief authored; runtime acceptance pending"
+      }
+    },
+    {
+      "id": "P20-gitlab-platform",
+      "title": "GitLab и Runner как отдельные эксплуатационные роли",
+      "mission": {
+        "ticket": "STUDY-20: восстановить путь commit → pipeline → Runner → артефакт → выпуск",
+        "context": "Платформа GitLab хранит проекты и состояние, а Runner выполняет задания; замена Jenkins не сводится к переименованию файла.",
+        "access_constraints": "Управление только личной платформой; Runner не получает host Docker socket и лишние секреты по умолчанию; внешний SaaS не считается установленным собственным GitLab.",
+        "symptoms": "Задание pending, Runner online но не подходит по tags/protection, либо pipeline выполняет неожиданный код.",
+        "success_evidence": "Объяснены модель платформы и Runner, matching job, executor, рабочий каталог, переменные, доверие ref, cache/artifact, backup и обновление; плохой выпуск не доставлен.",
+        "rollback": "Согласованная копия GitLab data/config/secrets, версии Runner и pipeline; контролируемый возврат без удаления единственных repositories."
+      },
+      "depends_on": [
+        "P08-git-config",
+        "P14-manual-release"
+      ],
+      "chapters": [
+        {
+          "href": "../git/index.html#10-remotes"
+        },
+        {
+          "href": "../jenkins/index.html#19-jenkinsfile"
+        }
+      ],
+      "resources": {
+        "guest_memory_mib_estimate": 8192,
+        "estimate_not_measured": true,
+        "note": "Собственный GitLab может не вписаться в текущую свободную RAM. Platform и Runner включать отдельно; SaaS+Runner — другой сценарий, не замена собственной установки."
+      },
+      "implementation_status": "gitlab-volume-in-preparation-platform-profile-not-installed",
+      "assets": [],
+      "hints": {
+        "mode": "separate-on-demand",
+        "status": "original hints authored; runtime acceptance pending"
+      },
+      "solution": {
+        "mode": "separate-after-attempt",
+        "status": "original explanatory debrief authored; runtime acceptance pending"
+      },
+      "checkpoints": {
+        "before": "before-p20-gitlab-platform",
+        "after": "done-p20-gitlab-platform",
+        "scope": "cold whole-world; no memory/session promise"
+      }
+    },
+    {
+      "id": "P21-capacity-budget",
+      "title": "Выбрать ресурсный бюджет по измерениям",
+      "mission": {
+        "ticket": "STUDY-21: обосновать масштабирование до покупки узла или сборки кластера",
+        "context": "Есть один сервис, БД и кэш; требуется решить, что ограничивает работу и сколько запаса нужно.",
+        "access_constraints": "Только воспроизводимая учебная нагрузка с ограничением длительности/параллелизма; не нагружать рабочий хост или чужой сервис.",
+        "symptoms": "Цифры RPS и средней задержки есть, но неизвестны ошибки, p99, очередь, saturation и предел генератора.",
+        "success_evidence": "Зафиксированы workload/данные/версии, холодный и прогретый режимы, CPU/RAM/I/O/network, p95/p99/throughput/errors; ресурсный trade-off выражен измеренным выигрышем и ценой; отдельная потребность в HA не подменена производительностью.",
+        "rollback": "Снять нагрузку и временные лимиты, восстановить baseline, не удалять данные ради красивого benchmark."
+      },
+      "depends_on": [
+        "P13-observability",
+        "P12-cache-effectiveness"
+      ],
+      "chapters": [
+        {
+          "href": "../networks/index.html#19-performance"
+        },
+        {
+          "href": "../linux/index.html#15-observation"
+        },
+        {
+          "href": "../postgres/index.html#23-monitoring-capacity"
+        },
+        {
+          "href": "../cache/index.html#36-effectiveness"
+        },
+        {
+          "href": "../go/index.html#21-measurement"
+        }
+      ],
+      "resources": {
+        "guest_memory_mib_estimate": 3072,
+        "estimate_not_measured": true,
+        "note": "Генератор нагрузки и сервис на одном TCG-госте конкурируют; такие цифры описывают эту лабораторию, не production capacity."
+      },
+      "implementation_status": "measurement-contract-prepared-integrated-load-profile-planned",
+      "assets": [],
+      "hints": {
+        "mode": "separate-on-demand",
+        "status": "original hints authored; runtime acceptance pending"
+      },
+      "solution": {
+        "mode": "separate-after-attempt",
+        "status": "original explanatory debrief authored; runtime acceptance pending"
+      },
+      "checkpoints": {
+        "before": "before-p21-capacity-budget",
+        "after": "done-p21-capacity-budget",
+        "scope": "cold whole-world; no memory/session promise"
+      }
+    },
+    {
+      "id": "P22-network-tool-migration",
+      "title": "Повторить одну сетевую задачу в разных инструментах",
+      "mission": {
+        "ticket": "STUDY-22: от Packet Tracer к настоящему стеку и сетевым ОС",
+        "context": "Один путь пакета и конфиг должны быть понятны независимо от GUI и синтаксиса производителя.",
+        "access_constraints": "Только изолированный стенд; GNS3/EVE/CML образы из разрешённых источников с правами на выбранную платформу; containerlab внутри учебного Linux, не в рабочей сети.",
+        "symptoms": "Знакомая команда отсутствует, модель скрывает детали TCP/NIC, либо новая management-сеть даёт неожиданный доступ.",
+        "success_evidence": "Один сценарий ARP/VLAN/route/NAT/ACL повторён в PT и Linux, затем по доступности GNS3/EVE/CML и containerlab; сопоставлены конфиги/наблюдения и явно названы неподтверждаемые моделью свойства.",
+        "rollback": "Сохранить исходный PT-файл и гостевую точку, выключить лишние узлы, не удалять лицензированные исходные образы."
+      },
+      "depends_on": [
+        "P04-vlan-routing",
+        "P03-packet-path"
+      ],
+      "chapters": [
+        {
+          "href": "../networks/index.html#07-byte-autopsy"
+        },
+        {
+          "href": "../networks/index.html#09-diagnostics"
+        },
+        {
+          "href": "../linux/index.html#14-isolation"
+        }
+      ],
+      "resources": {
+        "guest_memory_mib_estimate": null,
+        "estimate_not_measured": true,
+        "note": "Бюджет зависит от конкретных образов и вложенной виртуализации. Для PT Cisco указывает 4 GB свободной RAM; для остальных стеков потребление не измерено."
+      },
+      "implementation_status": "pt-linux-recipes-prepared-other-tools-not-installed",
+      "assets": [
+        "packet-tracer/README.txt",
+        "vm/guest/NETWORK-EXERCISES.txt"
+      ],
+      "hints": {
+        "mode": "separate-on-demand",
+        "status": "original hints authored; runtime acceptance pending"
+      },
+      "solution": {
+        "mode": "separate-after-attempt",
+        "status": "original explanatory debrief authored; runtime acceptance pending"
+      },
+      "checkpoints": {
+        "before": "before-p22-network-tool-migration",
+        "after": "done-p22-network-tool-migration",
+        "scope": "cold whole-world; no memory/session promise"
+      }
+    }
+  ],
+  "recommended_order": [
+    "P00-rescue-bootstrap",
+    "P01-management-ssh",
+    "P02-bastion-access",
+    "P03-packet-path",
+    "P04-vlan-routing",
+    "P22-network-tool-migration",
+    "P05-dhcp-dns-tls",
+    "P06-service-socket",
+    "P07-storage-recovery",
+    "P08-git-config",
+    "P09-go-service",
+    "P10-postgres-access",
+    "P11-database-recovery",
+    "P12-cache-effectiveness",
+    "P13-observability",
+    "P21-capacity-budget",
+    "P14-manual-release",
+    "P15-jenkins-delivery",
+    "P20-gitlab-platform",
+    "P16-ansible",
+    "P17-terraform",
+    "P18-replica-failure",
+    "P19-kubernetes"
+  ]
+}

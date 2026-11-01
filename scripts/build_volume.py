@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from cache.build import dump, put_json, plain, write_text, sketch
 from scripts.volume_config import CONFIGS, TARGETS
+from scripts.reader_navigation import normalize_reader_navigation
 
 
 def module(path):
@@ -223,7 +224,7 @@ def build(slug):
         page = page.replace('</main>','<div hidden data-legacy-links>'+''.join(links)+'</div></main>',1)
         redirect = '<script>(()=>{const moved='+dump(targets)+';function follow(){let key;try{key=decodeURIComponent(location.hash.slice(1));}catch(e){return;}if(moved[key])location.replace(moved[key]);}addEventListener("hashchange",follow);follow();})();</script>'
         page = re.sub(r'(<body[^>]*>)', lambda m:m[1]+redirect, page, count=1)
-    write_text(here/'index.html',page)
+    write_text(here/'index.html',normalize_reader_navigation(page))
     write_text(here/'Текст-тома.txt',cfg['title']+'\n\n'+'\n\n'.join(plain(a.split('<footer')[0]) for a in articles))
     write_text(here/'book-stats.json',json.dumps(stats,ensure_ascii=False,indent=2)+'\n')
     write_text(here/'commands.json',json.dumps(commands,ensure_ascii=False,indent=2)+'\n')
@@ -247,7 +248,7 @@ def home():
     cards = {slug: re.search(r'<a class="volume" href="'+slug+r'/index.html">.*?</a>',page,re.S)[0] for slug in ['networks','linux','bash','postgres','cache',*CONFIGS]}
     page = re.sub(r'(<div class="grid">).*?(</div><section class="notes">)',lambda m:m[1]+''.join(cards.values())+m[2],page,count=1,flags=re.S)
     page = re.sub(r'<section class="notes" data-inner-books>.*?</section>','',page,flags=re.S)
-    page = re.sub(r'<p class="lead">.*?</p>', '<p class="lead">Девять связанных томов: сети, Linux, Bash, PostgreSQL, кэширование, Git, Go, Jenkins и GitLab. От устройства механизма до расчёта ресурсов, наблюдения и восстановления.</p>', page, count=1, flags=re.S)
+    page = re.sub(r'<p class="lead">.*?</p>', '<p class="lead">Десять связанных томов: сети, Linux, Bash, PostgreSQL, кэширование, Git, Go, Jenkins, GitLab и сквозной практикум. От устройства механизма до собственного стенда, измерения и восстановления.</p>', page, count=1, flags=re.S)
     for slug in ('networks','linux','bash','postgres','cache'):
         row = stats[slug]
         counts = f'<div class="counts">{row["chapters"]} глав · {row["words"]:,} слов · словарь: {row["terms"]}</div>'

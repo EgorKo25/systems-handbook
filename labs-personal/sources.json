@@ -1,0 +1,107 @@
+{
+  "schema": 1,
+  "checked": "2026-11-01",
+  "scope": "official documentation; proposed personal architecture is an engineering design, not a vendor-supported product promise",
+  "sources": [
+    {
+      "id": "packet-tracer-downloads",
+      "url": "https://www.netacad.com/resources/lab-downloads",
+      "supports": "Официальный каталог Packet Tracer: текущая версия и поддерживаемые ОС; страница требует JavaScript/вход. В поисковом представлении указан 9.0.1 и Ubuntu 22.04/24.04, Windows 11. Перед загрузкой подтвердить в собственной учётной записи."
+    },
+    {
+      "id": "packet-tracer-install",
+      "url": "https://www.netacad.com/skillsforall/files/Cisco_Packet_Tracer_Download_and_Installation_Instructions.pdf",
+      "supports": "Официальная установка Windows и Ubuntu, принятие лицензии; это установка, не обещание portable-режима."
+    },
+    {
+      "id": "packet-tracer-help",
+      "url": "https://tutorials.ptnetacad.net/help/default/systemRequirements.htm",
+      "supports": "Системные требования help: 4 GB свободной RAM и 1.4 GB диска. Список ОС может отставать от текущего Resource Hub."
+    },
+    {
+      "id": "qemu-downloads",
+      "url": "https://www.qemu.org/download/",
+      "supports": "Официальный сайт QEMU и указанные им Windows-поставщики; состав переносимого комплекта нужно испытывать."
+    },
+    {
+      "id": "qemu-invocation",
+      "url": "https://www.qemu.org/docs/master/system/invocation.html",
+      "supports": "Фиксированный machine type, TCG/KVM, параметры диска/консоли, user-mode restrict и hostfwd на 127.0.0.1."
+    },
+    {
+      "id": "qemu-network",
+      "url": "https://www.qemu.org/docs/master/system/devices/net.html",
+      "supports": "User-mode сеть и отличие её от TAP/прямой Ethernet-сети; ограничения ICMP."
+    },
+    {
+      "id": "qemu-images",
+      "url": "https://www.qemu.org/docs/master/system/images.html",
+      "supports": "Дисковые и VM snapshots; -snapshot создаёт временные записи, поэтому не выбран для постоянного мира."
+    },
+    {
+      "id": "qemu-img",
+      "url": "https://www.qemu.org/docs/master/tools/qemu-img.html",
+      "supports": "Offline convert/info, backing chains, предостережение не изменять образ работающей VM. Не используем -U."
+    },
+    {
+      "id": "ubuntu-iso",
+      "url": "https://releases.ubuntu.com/24.04/",
+      "supports": "Официальные Ubuntu 24.04 LTS образы; установщик в комплект не скачан."
+    },
+    {
+      "id": "ubuntu-verify",
+      "url": "https://ubuntu.com/tutorials/how-to-verify-ubuntu",
+      "supports": "Подпись SHA256SUMS и проверка целостности скачанного образа."
+    },
+    {
+      "id": "python-windows",
+      "url": "https://docs.python.org/3/using/windows.html#the-embeddable-package",
+      "supports": "Минимальная embeddable-поставка Python; сама Windows не гарантирует установленный Python."
+    },
+    {
+      "id": "docker-ubuntu",
+      "url": "https://docs.docker.com/engine/install/ubuntu/",
+      "supports": "Установка Docker Engine внутри поддерживаемой Ubuntu VM, а не на рабочем Windows."
+    },
+    {
+      "id": "docker-volumes",
+      "url": "https://docs.docker.com/engine/storage/volumes/",
+      "supports": "Volumes — изменяемые данные с отдельным жизненным циклом; образ их не заменяет."
+    },
+    {
+      "id": "docker-save",
+      "url": "https://docs.docker.com/reference/cli/docker/image/save/",
+      "supports": "save/load переносит контейнерные образы, не автоматически весь прогресс."
+    },
+    {
+      "id": "gns3-overview",
+      "url": "https://docs.gns3.com/docs/",
+      "supports": "Различие симуляции Packet Tracer и запуска образов/устройств GNS3."
+    },
+    {
+      "id": "gns3-images",
+      "url": "https://docs.gns3.com/docs/using-gns3/beginners/install-from-marketplace",
+      "supports": "Образы сетевых ОС предоставляет пользователь; права именно на использование в выбранной платформе проверяются отдельно, наличие файла их не доказывает."
+    },
+    {
+      "id": "eve-requirements",
+      "url": "https://www.eve-ng.net/index.php/supported-hardware-and-software-systems/",
+      "supports": "Поддерживаемые платформы и аппаратная/вложенная виртуализация; дешёвый VPS не назначается подходящим автоматически."
+    },
+    {
+      "id": "containerlab-kinds",
+      "url": "https://containerlab.dev/manual/kinds/",
+      "supports": "Типы контейнерных сетевых ОС, настройка запуска зависит от kind."
+    },
+    {
+      "id": "containerlab-linux",
+      "url": "https://containerlab.dev/manual/kinds/linux/",
+      "supports": "Обычный Linux-контейнер как клиент/генератор трафика и часть сетевого сценария."
+    },
+    {
+      "id": "containerlab-network",
+      "url": "https://containerlab.dev/manual/network/",
+      "supports": "Management-сеть, отдельные links и побочные изменения на хосте; containerlab запускается в учебном Linux-госте."
+    }
+  ]
+}

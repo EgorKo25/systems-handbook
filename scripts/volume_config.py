@@ -21,4 +21,6 @@ CONFIGS = {
 }
 from gitlab.volume_config import CONFIG as GITLAB_CONFIG
 CONFIGS['gitlab'] = {**GITLAB_CONFIG, 'command_modules': ['reference'], 'revision': '1 ноября 2026'}
+from practicum.volume_config import CONFIG as PRACTICUM_CONFIG
+CONFIGS['practicum'] = {**PRACTICUM_CONFIG, 'revision': '1 ноября 2026'}
 TARGETS = {identifier:slug for slug,cfg in CONFIGS.items() for _,ids in cfg['sections'] for identifier in ids if identifier not in {'00-route','99-glossary'}}

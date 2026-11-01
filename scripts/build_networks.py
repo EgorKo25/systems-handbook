@@ -6,6 +6,11 @@ from html.parser import HTMLParser
 import json
 import re
 
+if __package__:
+    from .reader_navigation import normalize_reader_navigation
+else:
+    from reader_navigation import normalize_reader_navigation
+
 ROOT = Path(__file__).resolve().parents[1]
 HERE = ROOT / 'networks'
 SRC = HERE / 'sources'
@@ -103,7 +108,7 @@ def main():
     total = sum(r['words'] for r in stats)
     page = re.sub(r'<div class="subtitle">.*?</div>', '<div class="subtitle">От сигнала до приложения<br>'+f'{total:,}'+' слов · '+str(len(stats))+' глав<br>Редакция 1 ноября 2026</div>',page,count=1,flags=re.S)
     page = page.replace('</body>', '<script src="labs/theory-models.js"></script></body>',1)
-    write(HERE / 'index.html',page)
+    write(HERE / 'index.html',normalize_reader_navigation(page))
     write(HERE / 'Учебник-сети.txt','СЕТИ: ОТ СИГНАЛА ДО ПРИЛОЖЕНИЯ\n\n'+'\n\n'.join(plain(a.split('<footer class="chapter-footer">')[0]) for a in articles)+'\n')
     result = dict(date='2026-11-01',words=total,chapters=stats,terms=len(glossary),external_assets=0,edition='physical-link-wireless-depth')
     write(HERE / 'book-stats.json',json.dumps(result,ensure_ascii=False,indent=2)+'\n')

@@ -16,7 +16,7 @@ ROOT_FILES = {
     "КАК-ЧИТАТЬ.txt", "ПЛАН-ПРАКТИЧЕСКОГО-СТЕНДА.txt",
     "ПРОВЕРКИ-БИБЛИОТЕКИ.txt", "ПЛАН-РАЗВИТИЯ.txt",
 }
-BOOKS = {"networks", "linux", "bash", "postgres", "cache", "git", "go", "jenkins", "gitlab"}
+BOOKS = {"networks", "linux", "bash", "postgres", "cache", "git", "go", "jenkins", "gitlab", "practicum"}
 CACHE_LAB_MODELS = {"cache/sources/eviction.js", "cache/sources/resource-labs.js", "cache/sources/resp-lab.js"}
 REVISION = re.compile(r"[0-9a-f]{40,64}")
 
@@ -62,9 +62,9 @@ def is_reading_file(name: str) -> bool:
     if path.parts[0] == "checks":
         return path.suffix in {".json", ".png", ".jpg", ".svg", ".txt"}
     if path.parts[0] == "labs-personal":
-        private = {"runtime", "state", "assets", "private", "snapshots", "progress", "cache"}
-        binary = {".qcow2", ".iso", ".ova", ".vmdk", ".vdi", ".zip", ".tar", ".gz", ".exe", ".dll", ".key", ".pem"}
-        return not any(part in private for part in path.parts[1:]) and path.suffix.lower() not in binary
+        private = {"runtime", "state", "assets", "private", "snapshots", "progress", "cache", "tools", "saves", "keys", "images", "exports"}
+        binary = {".qcow2", ".img", ".iso", ".ova", ".vmdk", ".vdi", ".pkt", ".pka", ".zip", ".tar", ".gz", ".exe", ".dll", ".key", ".pem"}
+        return not any(part.casefold() in private for part in path.parts[1:]) and path.suffix.lower() not in binary
     if path.parts[0] not in BOOKS:
         return False
     if len(path.parts) > 1 and path.parts[1] == "sources":
@@ -85,7 +85,7 @@ def export_site(source: Path, output: Path, revision: str, *, replace: bool = Fa
         raise ValueError("output cannot replace the repository or one of its parents")
     if output.is_relative_to(source):
         first = output.relative_to(source).parts[0]
-        if first in BOOKS | {"guide", "checks", ".git", ".github", "scripts", "tests"}:
+        if first in BOOKS | {"labs-personal", "guide", "checks", ".git", ".github", "scripts", "tests"}:
             raise ValueError("output overlaps source or authoring material")
     if output.exists() and (not output.is_dir() or any(output.iterdir())):
         if not replace or not output.is_dir():
