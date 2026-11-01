@@ -27,7 +27,7 @@
     "slug": "postgres",
     "title": "PostgreSQL: от SQL до эксплуатации и высокой доступности",
     "volume": "IV",
-    "words": 72535,
+    "words": 75128,
     "chapters": 25,
     "terms": 441
   },
@@ -35,7 +35,7 @@
     "slug": "cache",
     "title": "Кэш и базы данных в памяти: от ускорения чтения до Redis и Memcached",
     "volume": "V",
-    "words": 75040,
+    "words": 77219,
     "chapters": 40,
     "terms": 226
   },

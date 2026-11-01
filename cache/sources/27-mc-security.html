@@ -19,7 +19,8 @@ for role in server client; do
     "extendedKeyUsage=$usage" 'basicConstraints=CA:FALSE' &gt; "$role.ext"
   openssl x509 -req -in "$role.csr" -CA ca.crt -CAkey ca.key \
     -CAcreateserial -out "$role.crt" -days 2 -extfile "$role.ext"
-done</code></pre>
+done
+printf 'Каталог сертификатов: %s\n' "$MC_TLS_LAB"</code></pre>
 <p>Umask 077 ограничивает права новых файлов текущего процесса оболочки. Mktemp -d создаёт отдельный каталог; переменная MC_TLS_LAB хранит его путь. Флаг -nodes означает отсутствие парольной оболочки на учебном закрытом ключе, поэтому права файлов имеют значение. For создаёт два набора; serverAuth и clientAuth задают разные назначения. CA.key нужен для подписи сертификатов и не передаётся Memcached как ключ сервера.</p>
 <h2>TLS с обязательным клиентским сертификатом</h2>
 <pre><code>memcached -l 127.0.0.1 -p 11223 -U 0 -m 64 -t 2 -Z \
