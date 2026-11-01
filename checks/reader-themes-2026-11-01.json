@@ -1,0 +1,23 @@
+{
+  "date": "2026-11-01",
+  "presets": ["paper", "night", "white", "black", "sepia", "graphite", "midnight", "forest"],
+  "automated": [
+    "actual head bootstrap on home and all eight readers",
+    "all 21 warmth positions: 0 through 100 in steps of 5",
+    "text, muted text and link contrast at least 4.5:1 against background, panels and soft surfaces; code contrast at least 4.5:1",
+    "original Paper and Night neutral and maximum-warmth palettes unchanged",
+    "White and Black neutral surfaces and text are exact monochrome; both support warming",
+    "shared preset, font, warmth and size persist across readers and storage events",
+    "legacy preference migration, corrupt or unavailable storage, note preservation"
+  ],
+  "browser_method": "in-app Chromium, viewport emulation; not physical iPhone Safari",
+  "browser_verified": [
+    "390x844 at font26: all eight choices visible inside Text and Theme without horizontal overflow",
+    "each preset selected through UI at neutral and maximum warmth; actual background, panel and text colors change together",
+    "320x740: settings fit viewport and scroll vertically; no page-wide horizontal overflow",
+    "1280x900: home and reader buttons open theme dialog, selected preset highlighted, close returns focus",
+    "Sepia selected on home inherited by Linux reader with the same warm palette",
+    "no CSS blur or filter on dialog, backdrop or body"
+  ],
+  "limitations": ["physical iPhone Safari and hardware safe areas were not tested"]
+}

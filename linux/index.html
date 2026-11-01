@@ -1,22 +1,49 @@
 <!doctype html><html lang="ru"><head><meta charset="utf-8">
 <script id="library-preferences-bootstrap-v1">(() => {
 'use strict';
-const key='library-theme-v1', appearanceKey='library-reader-appearance-v1', oldHome='library-home-theme-v1', oldBook="linux-book-v1";
+const key='library-theme-v1', presetKey='library-reader-preset-v1', appearanceKey='library-reader-appearance-v1', oldHome='library-home-theme-v1', oldBook="linux-book-v1";
 const valid=value=>value==='dark'||value==='light';
 const fonts={book:'Georgia, "DejaVu Serif", serif',sans:'system-ui, sans-serif',palatino:'Palatino, Georgia, serif'};
 const clamp=(value,low,high)=>Math.max(low,Math.min(high,value));
-// Warm the whole reading palette, not a translucent layer over cool panels.
-// Neutral endpoints match the original reader CSS exactly, including its shadow.
-const palettes={
- light:{
+// Each preset owns all reading surfaces. Warmth interpolates a coordinated
+// palette; White and Black are monochrome at their neutral endpoint.
+// Paper and Night retain the original reader's exact neutral/warm endpoints.
+const presets={
+ paper:{name:'Бумага',mode:'light',description:'Светлая бумага и спокойный зелёный акцент',supportsWarmth:true,
   neutral:{bg:'#f4f1e9',paper:'#fffcf5',soft:'#e8f2ec',text:'#202d34',muted:'#5a696e',line:'#d9ded8',accent:'#0c6b63',code:'#182b35','code-text':'#e3eeef',shadow:'#17332b12'},
   warm:{bg:'#f4ecde',paper:'#fff7e9',soft:'#eee4d0',text:'#302c25',muted:'#70634f',line:'#ddd1bd',accent:'#79603b',code:'#2b2822','code-text':'#f3ead9',shadow:'#24180e1c'}
  },
- dark:{
+ night:{name:'Ночь',mode:'dark',description:'Тёмный сине-серый фон и мягкий светлый текст',supportsWarmth:true,
   neutral:{bg:'#142027',paper:'#1c2a31',soft:'#243d3b',text:'#e4e8e1',muted:'#b4c1be',line:'#3b4c51',accent:'#85d2bd',code:'#101b21','code-text':'#e4eeee',shadow:'#17332b12'},
   warm:{bg:'#24211d',paper:'#2d2923',soft:'#3a332a',text:'#eee7d9',muted:'#c2b8a8',line:'#51483c',accent:'#d8be8b',code:'#191714','code-text':'#ece5d8',shadow:'#130f092e'}
+ },
+ white:{name:'Белая',mode:'light',description:'Чистый белый фон и чёрный текст',supportsWarmth:true,
+  neutral:{bg:'#ffffff',paper:'#ffffff',soft:'#ffffff',text:'#000000',muted:'#333333',line:'#b3b3b3',accent:'#000000',code:'#ffffff','code-text':'#000000',shadow:'#0000000f'},
+  warm:{bg:'#f7efdd',paper:'#fff7e7',soft:'#eee3cd',text:'#2a251d',muted:'#6c5b42',line:'#cab99c',accent:'#6f4f2e',code:'#f1e6d0','code-text':'#292319',shadow:'#35251314'}
+ },
+ black:{name:'Чёрная',mode:'dark',description:'Чистый чёрный фон и белый текст',supportsWarmth:true,
+  neutral:{bg:'#000000',paper:'#000000',soft:'#000000',text:'#ffffff',muted:'#cccccc',line:'#666666',accent:'#ffffff',code:'#000000','code-text':'#ffffff',shadow:'#00000000'},
+  warm:{bg:'#100d08',paper:'#17120c',soft:'#211b12',text:'#fff0d5',muted:'#d1bfa1',line:'#665339',accent:'#f1d3a0',code:'#0c0905','code-text':'#fff0d5',shadow:'#00000000'}
+ },
+ sepia:{name:'Сепия',mode:'light',description:'Кремовая страница, тёплые коричневые оттенки',supportsWarmth:true,
+  neutral:{bg:'#f1e5cc',paper:'#fbf0d9',soft:'#e8dac0',text:'#362b1e',muted:'#69573f',line:'#cdbb9c',accent:'#75502b',code:'#33291f','code-text':'#f4e6cd',shadow:'#49341b1a'},
+  warm:{bg:'#eddfc0',paper:'#f7e9ca',soft:'#e5d4b0',text:'#342719',muted:'#655037',line:'#cab58d',accent:'#704522',code:'#302419','code-text':'#f3e3c4',shadow:'#49341b20'}
+ },
+ graphite:{name:'Графит',mode:'dark',description:'Нейтральный тёмно-серый фон без синевы',supportsWarmth:true,
+  neutral:{bg:'#202020',paper:'#292929',soft:'#343434',text:'#eeeeee',muted:'#bfbfbf',line:'#505050',accent:'#d6c59d',code:'#171717','code-text':'#eeeeee',shadow:'#00000030'},
+  warm:{bg:'#27231e',paper:'#302a23',soft:'#3c342a',text:'#f0e8da',muted:'#c9bcaa',line:'#564b3d',accent:'#dfc397',code:'#1b1713','code-text':'#efe5d5',shadow:'#100c0833'}
+ },
+ midnight:{name:'Полночь',mode:'dark',description:'Глубокий тёмно-синий фон и светлый голубой акцент',supportsWarmth:true,
+  neutral:{bg:'#111b2d',paper:'#18253b',soft:'#23344d',text:'#e5edf8',muted:'#b5c5dc',line:'#425775',accent:'#a2c9fa',code:'#0c1422','code-text':'#e4edfa',shadow:'#030a1633'},
+  warm:{bg:'#211f27',paper:'#2b2933',soft:'#39343e',text:'#eee7e6',muted:'#c5babc',line:'#564b59',accent:'#d1bbdf',code:'#18161d','code-text':'#eee5e9',shadow:'#100b1338'}
+ },
+ forest:{name:'Лес',mode:'dark',description:'Приглушённые зелёные поверхности и мягкий светлый текст',supportsWarmth:true,
+  neutral:{bg:'#15231d',paper:'#1d2d25',soft:'#2b3d31',text:'#e5eddf',muted:'#bacab5',line:'#485e4a',accent:'#b7d99f',code:'#101a15','code-text':'#e3efdd',shadow:'#08130b30'},
+  warm:{bg:'#23261d',paper:'#2d3023',soft:'#3b3e2c',text:'#eeeedd',muted:'#c7c9af',line:'#555b40',accent:'#d0d69f',code:'#181b13','code-text':'#ebeed8',shadow:'#0e13082e'}
  }
 };
+const validPreset=value=>typeof value==='string'&&Object.hasOwn(presets,value);
+const defaultPreset=mode=>mode==='light'?'paper':'night';
 function mixColour(from,to,amount){
  if(amount===0)return from;
  if(amount===1)return to;
@@ -31,6 +58,10 @@ function read(){
  if(oldBook)try{value=JSON.parse(localStorage.getItem(oldBook)||'null')?.theme;if(valid(value))return value;}catch{}
  return 'dark';
 }
+function readPreset(mode=read()){
+ let value;try{value=localStorage.getItem(presetKey);}catch{}
+ return validPreset(value)&&presets[value].mode===mode?value:defaultPreset(mode);
+}
 function normalizeAppearance(value,base={font:'book',warmth:0,size:null}){
  const next={...base};if(!value||typeof value!=='object')return next;
  if(Object.hasOwn(fonts,value.font))next.font=value.font;
@@ -40,15 +71,17 @@ function normalizeAppearance(value,base={font:'book',warmth:0,size:null}){
  return next;
 }
 function readAppearance(){try{return normalizeAppearance(JSON.parse(localStorage.getItem(appearanceKey)||'null'));}catch{return normalizeAppearance(null);}}
-let theme=read(),appearance=readAppearance();
+let selectedTheme=readPreset(),theme=presets[selectedTheme].mode,appearance=readAppearance();
 let oldSize=null;
 if(oldBook)try{const value=JSON.parse(localStorage.getItem(oldBook)||'null')?.size;if(typeof value==='number'&&Number.isFinite(value)&&value>=16&&value<=26)oldSize=value;}catch{}
 const subscribers=new Set();
 function paint(){
  const html=document.documentElement;
  html.dataset.theme=theme;
+ html.dataset.readerTheme=selectedTheme;
+ html.style.setProperty('color-scheme',theme);
  html.style.setProperty('--reader-font',fonts[appearance.font]);
- const palette=palettes[theme],amount=appearance.warmth/100;
+ const palette=presets[selectedTheme],amount=palette.supportsWarmth?appearance.warmth/100:0;
  for(const [name,from] of Object.entries(palette.neutral)){
   const colour=mixColour(from,palette.warm[name],amount);
   html.style.setProperty('--reader-'+name,name==='shadow'?'0 12px 40px '+colour:colour);
@@ -59,34 +92,43 @@ function paint(){
  if(size!==null)html.style.setProperty('--size',size+'px');
  for(const id of ['theme','home-theme-toggle']){
   const button=document.getElementById(id);if(!button)continue;
-  const dark=theme==='dark';button.textContent=dark?'Светлая тема':'Тёмная тема';
-  button.setAttribute('aria-pressed',String(dark));
-  button.setAttribute('aria-label',dark?'Включить светлую тему':'Включить тёмную тему');
+  button.textContent='Тема: '+palette.name;
+  button.removeAttribute('aria-pressed');
+  button.setAttribute('aria-label','Выбрать тему оформления');
  }
 }
 function notify(){paint();for(const update of subscribers)update(theme,{...appearance});}
-function apply(value){if(!valid(value))return theme;theme=value;notify();return theme;}
+function applyPreset(value){if(!validPreset(value))return selectedTheme;selectedTheme=value;theme=presets[value].mode;notify();return selectedTheme;}
+function setPreset(value){
+ if(!validPreset(value))return selectedTheme;
+ try{localStorage.setItem(presetKey,value);localStorage.setItem(key,presets[value].mode);}catch{}
+ return applyPreset(value);
+}
 window.LibraryPreferences={
  get theme(){return theme;},
+ get selectedTheme(){return selectedTheme;},
+ get themes(){return Object.entries(presets).map(([id,palette])=>({id,name:palette.name,mode:palette.mode,description:palette.description,supportsWarmth:palette.supportsWarmth,preview:{bg:palette.neutral.bg,paper:palette.neutral.paper,text:palette.neutral.text,accent:palette.neutral.accent}}));},
  get appearance(){return {...appearance};},
- setTheme(value){if(!valid(value))return theme;try{localStorage.setItem(key,value);}catch{}return apply(value);},
+ setPreset,
+ setTheme(value){if(valid(value))setPreset(defaultPreset(value));return theme;},
  setAppearance(partial){appearance=normalizeAppearance(partial,appearance);try{localStorage.setItem(appearanceKey,JSON.stringify(appearance));}catch{}notify();return {...appearance};},
  subscribe(update){subscribers.add(update);return ()=>subscribers.delete(update);}
 };
 // Only shared scalars are migrated; notes and other book data are untouched.
-try{if(!valid(localStorage.getItem(key)))localStorage.setItem(key,theme);}catch{}
+try{if(!valid(localStorage.getItem(key)))localStorage.setItem(key,theme);if(!validPreset(localStorage.getItem(presetKey)))localStorage.setItem(presetKey,selectedTheme);}catch{}
 paint();
 window.addEventListener('storage',event=>{
- if(event.key===key)apply(valid(event.newValue)?event.newValue:read());
+ if(event.key===presetKey)applyPreset(validPreset(event.newValue)?event.newValue:readPreset());
+ else if(event.key===key)applyPreset(readPreset(valid(event.newValue)?event.newValue:read()));
  else if(event.key===appearanceKey){try{appearance=normalizeAppearance(JSON.parse(event.newValue||'null'));}catch{appearance=normalizeAppearance(null);}notify();}
- else if(event.key===null){theme=read();appearance=readAppearance();notify();}
+ else if(event.key===null){selectedTheme=readPreset();theme=presets[selectedTheme].mode;appearance=readAppearance();notify();}
 });
-window.addEventListener('pageshow',()=>{theme=read();appearance=readAppearance();notify();});
-function ready(){
- paint();
- const button=document.getElementById('home-theme-toggle');
- if(button)button.addEventListener('click',()=>window.LibraryPreferences.setTheme(theme==='dark'?'light':'dark'));
-}
+window.addEventListener('pageshow',()=>{
+ // A denied storage API must not undo a choice made in this page's memory.
+ try{localStorage.getItem(key);}catch{notify();return;}
+ selectedTheme=readPreset();theme=presets[selectedTheme].mode;appearance=readAppearance();notify();
+});
+function ready(){paint();}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ready,{once:true});else ready();
 })();</script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="description" content="Подробный автономный учебник об устройстве компьютера, ядра Linux и пользовательского окружения. Механизмы разобраны через объекты, изменения состояния и наблюдаемые последствия."><title>Linux: от команды процессора до работающей службы</title><style>:root{--bg:#f4f1e9;--paper:#fffcf5;--text:#202d34;--muted:#5a696e;--line:#d9ded8;--accent:#0c6b63;--soft:#e8f2ec;--code:#182b35;--code-text:#e3eeef;--size:19px;--shadow:0 12px 40px #17332b12;--sans:system-ui,-apple-system,'Segoe UI',sans-serif;--serif:Georgia,'Liberation Serif',serif;color-scheme:light}
@@ -164,6 +206,42 @@ html{scroll-padding-top:76px}body{padding-bottom:0}main{padding:24px 20px calc(1
 .chapter .command-ref:hover:not(:focus-visible){outline:none}
 .chapter a:focus-visible,.drawer a:focus-visible,.chapter .command-ref:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:3px}
 }
+</style><style id="library-theme-picker-style">
+.reader-theme-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.reader-theme-choice{position:relative;display:flex;flex-direction:column;gap:7px;align-items:stretch;min-width:0;min-height:84px;margin:0;padding:7px;border:1px solid var(--reader-line);border-radius:13px;background:var(--reader-paper);color:var(--reader-text);cursor:pointer;box-shadow:none;text-align:left;font:600 12px/1.3 system-ui,sans-serif;touch-action:manipulation}
+.reader-theme-choice[aria-pressed=true]{border-color:var(--reader-accent);box-shadow:inset 0 0 0 1px var(--reader-accent)}
+.reader-theme-choice:focus-visible{outline:2px solid var(--reader-accent);outline-offset:3px}
+.reader-theme-swatch{display:flex;align-items:center;gap:12px;min-height:43px;border:1px solid var(--swatch-text);border-radius:7px;padding:6px 9px;background:var(--swatch-bg);color:var(--swatch-text)}
+.reader-theme-swatch>b{font:600 25px/1 Georgia,serif}
+.reader-theme-lines{display:grid;gap:4px;flex:1}
+.reader-theme-lines>i{display:block;height:2px;border-radius:2px;background:currentColor;opacity:.65}
+.reader-theme-lines>i:last-child{width:65%;background:var(--swatch-accent);opacity:1}
+.reader-theme-label{display:flex;align-items:center;justify-content:space-between;gap:4px;padding:0 2px}
+.reader-theme-label::after{content:'✓';color:var(--reader-accent);visibility:hidden}
+.reader-theme-choice[aria-pressed=true] .reader-theme-label::after{visibility:visible}
+.reader-theme-dialog{box-sizing:border-box;width:min(620px,calc(100% - 24px));max-width:none;max-height:calc(100dvh - 32px);overflow:auto;margin:auto;padding:24px;border:1px solid var(--reader-line);border-radius:22px;background:var(--reader-paper);color:var(--reader-text);box-shadow:var(--reader-shadow);font:15px/1.5 system-ui,sans-serif;color-scheme:inherit}
+.reader-theme-dialog::backdrop{background:rgb(0 0 0 / .2)}
+.reader-theme-dialog header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:0 0 20px}
+.reader-theme-dialog h2{margin:0;color:inherit;font:750 24px/1.2 system-ui,sans-serif;letter-spacing:-.025em}
+.reader-theme-close{display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;min-width:44px;min-height:44px;padding:0;border:1px solid var(--reader-line);border-radius:50%;background:transparent;color:inherit;cursor:pointer;touch-action:manipulation}
+.reader-theme-close svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
+.reader-theme-close:focus-visible{outline:2px solid var(--reader-accent);outline-offset:3px}
+.reader-theme-caption{margin:14px 0 0;color:var(--reader-muted);font:13px/1.5 system-ui,sans-serif}
+.reader-theme-section-title{margin:4px 0 10px;font:650 13px/1.4 var(--sans,system-ui)}
+:root:is([data-reader-theme=white],[data-reader-theme=black]) .deep-sketch{--ds-blue:var(--text);--ds-purple:var(--muted);--ds-gold:var(--text);--ds-green:var(--accent)}
+:root:is([data-reader-theme=white],[data-reader-theme=black]) mark{background:var(--soft);color:var(--text);outline:1px solid var(--line)}
+@media(max-width:750px){
+ .reader-theme-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .reader-theme-choice{min-height:74px;font-size:12px;padding:6px;gap:5px;border-radius:11px}
+ .reader-theme-swatch{min-height:36px;padding:5px 8px}
+ .reader-theme-swatch>b{font-size:23px}
+ .reader-theme-dialog{padding:20px;border-radius:20px}
+ .reader-theme-dialog h2{font-size:22px}
+ .phone-view:not([hidden]){max-height:calc(100dvh - 112px - env(safe-area-inset-bottom));overflow-y:auto;overscroll-behavior:contain}
+ .phone-view .reader-theme-grid{margin-bottom:2px}
+ .phone-view .phone-warmth{margin-bottom:12px}
+}
+@media print{.reader-theme-dialog{display:none}}
 </style></head><body data-volume="linux" data-storage-key="linux-book-v1"><a class="skip" href="#main">Перейти к тексту</a><div class="progress-track" aria-hidden="true"><div id="progress" class="progress-line"></div></div><aside class="sidebar" id="side-nav" aria-label="Оглавление"><a href="../index.html" class="brand">Техническая библиотека</a><div class="bookname">Устройство Linux</div><div class="subtitle">Том II · Linux<br>49 842 слова · 19 глав<br>Редакция 28 октября 2026</div><label class="search-label" for="search">Найти в книге · Ctrl K</label><input id="search" type="search" placeholder="Термин, команда или механизм" autocomplete="off"><div id="search-results" class="search-results" hidden aria-live="polite"></div><div id="chapter-links"><nav class="chapter-nav"><a id="nav-01-machine" href="#01-machine"><span class="chapter-num">01</span><span>Из чего исполняется программа</span></a><a id="nav-02-kernel-boundary" href="#02-kernel-boundary"><span class="chapter-num">02</span><span>Как программа обращается к ядру</span></a><a id="nav-03-process" href="#03-process"><span class="chapter-num">03</span><span>Как появляется и живёт процесс</span></a><a id="nav-04-scheduling" href="#04-scheduling"><span class="chapter-num">04</span><span>Потоки, планировщик и совместная работа</span></a><a id="nav-05-memory" href="#05-memory"><span class="chapter-num">05</span><span>Виртуальная память по шагам</span></a><a id="nav-06-vfs" href="#06-vfs"><span class="chapter-num">06</span><span>От имени файла к его байтам</span></a><a id="nav-07-storage" href="#07-storage"><span class="chapter-num">07</span><span>Как запись достигает накопителя</span></a><a id="nav-08-rights" href="#08-rights"><span class="chapter-num">08</span><span>Откуда берётся право выполнить действие</span></a><a id="nav-09-signals-terminal" href="#09-signals-terminal"><span class="chapter-num">09</span><span>Сигналы, сеансы и терминал</span></a><a id="nav-10-ipc" href="#10-ipc"><span class="chapter-num">10</span><span>Как процессы договариваются</span></a><a id="nav-11-boot" href="#11-boot"><span class="chapter-num">11</span><span>От включения до первой службы</span></a><a id="nav-12-services" href="#12-services"><span class="chapter-num">12</span><span>Как служба работает под наблюдением</span></a><a id="nav-13-devices-network" href="#13-devices-network"><span class="chapter-num">13</span><span>Устройства и сеть внутри Linux</span></a><a id="nav-14-isolation" href="#14-isolation"><span class="chapter-num">14</span><span>Как собирается контейнер</span></a><a id="nav-15-observation" href="#15-observation"><span class="chapter-num">15</span><span>Как читать состояние системы</span></a><a id="nav-16-investigation" href="#16-investigation"><span class="chapter-num">16</span><span>Проследить запрос и расследовать сбой</span></a><a id="nav-17-experiments" href="#17-experiments"><span class="chapter-num">17</span><span>Шестнадцать автономных опытов</span></a><a id="nav-18-reference" href="#18-reference"><span class="chapter-num">18</span><span>Справочник и проверка понимания</span></a><a id="nav-99-glossary" href="#99-glossary"><span class="chapter-num">19</span><span>Словарь терминов</span></a></nav></div><div class="status"><div id="read-status"></div><div id="page-progress"></div><p id="storage-info">Весь текст, поиск, словарь и модели работают без интернета.</p><p><a href="Текст-тома.txt">Текстовая версия</a><br><a href="labs/README.txt">Практикумы и результаты</a><br><a href="ПРОВЕРКИ.txt">Что проверено</a><br><a href="Справочник-команд.txt">Справка команд текстом</a><br><a href="../index.html#sketches">Карта зарисовок</a></p><button id="export-notes">Выгрузить заметки</button></div></aside><header class="topbar"><button id="menu" class="mobile-menu" aria-expanded="false" aria-controls="side-nav">☰ Главы</button><span id="top-title" class="topbar-title"></span><div class="tools"><a class="library-back" href="../index.html">Библиотека</a><button id="dictionary-open">Словарь</button><button id="font-down" aria-label="Уменьшить шрифт">А−</button><button id="font-up" aria-label="Увеличить шрифт">А+</button><button id="theme">Тёмная тема</button><button id="print">Печать тома</button></div></header><main id="main"><div class="reader"><noscript><p class="callout">Для навигации включите JavaScript или откройте текстовую версию.</p><style>.chapter[hidden]{display:block!important}.chapter-footer{display:none}</style></noscript><article class="chapter" id="01-machine"><header class="hero"><div class="eyebrow">Том II · Linux · Глава 01</div><h1>Из чего исполняется программа</h1><div class="meta">Биты, команды, регистры, память и процессорные кеши · 1 814 слов · 12 мин чтения без опытов</div></header><details class="local-toc"><summary>Содержание главы</summary><ol><li><a href="#linux-01-bits">От электрического состояния к числу</a></li><li><a href="#linux-01-address">Адрес, значение и размер</a></li><li><a href="#linux-01-instructions">Что процессор исполняет каждое мгновение</a></li><li><a href="#linux-01-cache">Несколько уровней памяти</a></li><li><a href="#linux-01-core">Аппаратный исполнитель и ядро Linux</a></li><li><a href="#linux-01-lab">Первое наблюдение: число и адрес</a></li><li><a href="#linux-01-decode">Углубление: шесть настоящих байтов команды</a></li><li><a href="#linux-01-latency">Углубление: задержка и количество работы</a></li></ol></details><p class="lead">Вы вводите команду, открываете документ или запускаете сервер. На экране появляются слова, но процессор всё это время оперирует числами: выбирает закодированные команды, читает значения, вычисляет адреса и записывает результаты. Чтобы понять Linux, сначала проследим эту работу. Тогда процесс, системный вызов, страница памяти и ожидание диска получат предметный смысл.</p>
 <h2 id="linux-01-bits">От электрического состояния к числу</h2>
 <p>Бит — разряд с двумя возможными значениями, 0 и 1. В памяти они представлены различимыми физическими состояниями, а в цифровой схеме — допустимыми диапазонами напряжения. Восемь бит образуют байт. Байт представляет число от 0 до 255: веса разрядов справа налево равны 1, 2, 4, 8, 16, 32, 64, 128. Число 13 получается как 8 + 4 + 1 и записывается 00001101.</p>
@@ -2226,7 +2304,7 @@ window.addEventListener('hashchange',()=>select(location.hash));
 function updateProgress(){const max=document.documentElement.scrollHeight-innerHeight;let percent=max>0?Math.min(100,Math.max(0,scrollY/max*100)):100;$('#progress').style.width=percent+'%';$('#page-progress').textContent=Math.round(percent)+'% главы';}
 let scrollTimer;addEventListener('scroll',()=>{updateProgress();clearTimeout(scrollTimer);scrollTimer=setTimeout(()=>{state.scroll[state.current]=scrollY;save();},350);},{passive:true});
 $('#theme').addEventListener('click',()=>{state.theme=window.LibraryPreferences.setTheme(window.LibraryPreferences.theme==='dark'?'light':'dark');applyPreferences();save();});
-function applyPreferences(){state.theme=window.LibraryPreferences.theme;const appearance=window.LibraryPreferences.appearance;if(appearance.size!==null)state.size=appearance.size;document.documentElement.dataset.theme=state.theme;document.documentElement.style.setProperty('--size',state.size+'px');$('#theme').textContent=state.theme==='dark'?'Светлая тема':'Тёмная тема';}
+function applyPreferences(){state.theme=window.LibraryPreferences.theme;const appearance=window.LibraryPreferences.appearance;if(appearance.size!==null)state.size=appearance.size;document.documentElement.dataset.theme=state.theme;document.documentElement.style.setProperty('--size',state.size+'px');$('#theme').textContent='Тема: '+window.LibraryPreferences.themes.find(item=>item.id===window.LibraryPreferences.selectedTheme).name;}
 window.LibraryPreferences.subscribe(()=>applyPreferences());
 $('#font-down').onclick=()=>{state.size=window.LibraryPreferences.setAppearance({size:Math.max(16,(Number(state.size)||19)-1)}).size;applyPreferences();save();};$('#font-up').onclick=()=>{state.size=window.LibraryPreferences.setAppearance({size:Math.min(26,(Number(state.size)||19)+1)}).size;applyPreferences();save();};
 $('#menu').onclick=()=>{let open=$('#side-nav').classList.toggle('open');$('#menu').setAttribute('aria-expanded',String(open));};
@@ -2958,7 +3036,7 @@ function mount(container,command){for(const details of container.querySelectorAl
  }}
 root.FlagComparison={mount,runPair,fileChanges};
 })(typeof globalThis==='object'?globalThis:this);
-</script><div id="library-phone-controls"><button id="phone-backdrop" class="phone-backdrop" aria-label="Закрыть панель" hidden></button><section id="phone-view" class="phone-view" role="dialog" aria-modal="true" aria-labelledby="phone-view-title" hidden><div class="phone-view-head"><h2 id="phone-view-title">Текст и тема</h2><button type="button" data-phone-close aria-label="Закрыть настройки чтения"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div><div class="phone-font-row"><button type="button" data-phone-font="down" aria-label="Уменьшить шрифт">A−</button><output>Размер текста</output><button type="button" data-phone-font="up" aria-label="Увеличить шрифт">A+</button></div><div class="phone-typefaces" role="group" aria-label="Шрифт текста"><button type="button" data-phone-typeface="book" aria-label="Шрифт Georgia" aria-pressed="true"><strong>Aa</strong><span>Книжный</span></button><button type="button" data-phone-typeface="sans" aria-label="Системный шрифт" aria-pressed="false"><strong>Aa</strong><span>Системный</span></button><button type="button" data-phone-typeface="palatino" aria-label="Шрифт Palatino" aria-pressed="false"><strong>Aa</strong><span>Palatino</span></button></div><div class="phone-warmth"><label for="phone-warmth">Теплота страницы <output data-phone-warmth-value>0%</output></label><input id="phone-warmth" data-phone-warmth type="range" min="0" max="100" step="5" value="0"><div class="phone-warmth-ends"><span>Нейтрально</span><span>Теплее</span></div></div><button type="button" class="phone-theme-toggle" data-phone-theme>Тема</button></section><nav id="phone-tools" class="phone-tools" aria-label="Управление чтением"><button type="button" data-phone-action="prev"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg><span>Назад</span></button><button type="button" data-phone-action="chapters" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg><span>Главы</span></button><button type="button" data-phone-action="dictionary" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7a3 3 0 0 1 3 3v14a4 4 0 0 0-4-2H4zM14 7a3 3 0 0 1 3-3h3v15h-3a4 4 0 0 0-3 2"/></svg><span>Справка</span></button><button type="button" data-phone-action="view" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 18 5-12 5 12M5 14h6M16 18l3-8 3 8M17 15h4"/></svg><span>Вид</span></button><button type="button" data-phone-action="next"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 6 6 6-6 6"/></svg><span>Дальше</span></button></nav><script>(()=>{'use strict';
+</script><div id="library-phone-controls"><button id="phone-backdrop" class="phone-backdrop" aria-label="Закрыть панель" hidden></button><section id="phone-view" class="phone-view" role="dialog" aria-modal="true" aria-labelledby="phone-view-title" hidden><div class="phone-view-head"><h2 id="phone-view-title">Текст и тема</h2><button type="button" data-phone-close aria-label="Закрыть настройки чтения"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div><div class="phone-font-row"><button type="button" data-phone-font="down" aria-label="Уменьшить шрифт">A−</button><output>Размер текста</output><button type="button" data-phone-font="up" aria-label="Увеличить шрифт">A+</button></div><div class="phone-typefaces" role="group" aria-label="Шрифт текста"><button type="button" data-phone-typeface="book" aria-label="Шрифт Georgia" aria-pressed="true"><strong>Aa</strong><span>Книжный</span></button><button type="button" data-phone-typeface="sans" aria-label="Системный шрифт" aria-pressed="false"><strong>Aa</strong><span>Системный</span></button><button type="button" data-phone-typeface="palatino" aria-label="Шрифт Palatino" aria-pressed="false"><strong>Aa</strong><span>Palatino</span></button></div><div class="phone-warmth"><label for="phone-warmth">Теплота страницы <output data-phone-warmth-value>0%</output></label><input id="phone-warmth" data-phone-warmth type="range" min="0" max="100" step="5" value="0"><div class="phone-warmth-ends"><span>Нейтрально</span><span>Теплее</span></div></div><div class="reader-theme-section-title">Оформление</div><div class="reader-theme-grid" data-reader-theme-grid role="group" aria-label="Темы оформления"></div></section><nav id="phone-tools" class="phone-tools" aria-label="Управление чтением"><button type="button" data-phone-action="prev"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg><span>Назад</span></button><button type="button" data-phone-action="chapters" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg><span>Главы</span></button><button type="button" data-phone-action="dictionary" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7a3 3 0 0 1 3 3v14a4 4 0 0 0-4-2H4zM14 7a3 3 0 0 1 3-3h3v15h-3a4 4 0 0 0-3 2"/></svg><span>Справка</span></button><button type="button" data-phone-action="view" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 18 5-12 5 12M5 14h6M16 18l3-8 3 8M17 15h4"/></svg><span>Вид</span></button><button type="button" data-phone-action="next"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 6 6 6-6 6"/></svg><span>Дальше</span></button></nav><script>(()=>{'use strict';
 const bar=document.getElementById('phone-tools'),view=document.getElementById('phone-view'),backdrop=document.getElementById('phone-backdrop'),side=document.getElementById('side-nav'),dictionary=document.getElementById('dictionary');
 if(!bar||!view||!side||!dictionary)return;
 const mq=matchMedia('(max-width:750px)'),button=name=>bar.querySelector('[data-phone-action="'+name+'"]');
@@ -2972,7 +3050,6 @@ function sync(){
  document.body.classList.toggle('phone-settings-preview',mq.matches&&!view.hidden);
  const size=parseInt(document.documentElement.style.getPropertyValue('--size'),10)||19;
  view.querySelector('output').textContent='Размер текста · '+size;
- view.querySelector('[data-phone-theme]').textContent=document.documentElement.dataset.theme==='dark'?'☀  Светлая тема':'☾  Тёмная тема';
  const appearance=window.LibraryPreferences?.appearance||{font:'book',warmth:0};
  for(const control of view.querySelectorAll('[data-phone-typeface]'))control.setAttribute('aria-pressed',String(control.dataset.phoneTypeface===appearance.font));
  view.querySelector('[data-phone-warmth]').value=appearance.warmth;
@@ -2993,10 +3070,37 @@ bar.addEventListener('click',event=>{
 view.addEventListener('click',event=>{const target=event.target.closest('button');if(!target)return;if(target.hasAttribute('data-phone-close')){closeView();sync();button('view').focus();}if(target.dataset.phoneFont){document.getElementById(target.dataset.phoneFont==='up'?'font-up':'font-down').click();sync();}if(target.hasAttribute('data-phone-theme')){document.getElementById('theme').click();sync();}if(target.dataset.phoneTypeface){window.LibraryPreferences?.setAppearance?.({font:target.dataset.phoneTypeface});sync();}});
 view.addEventListener('input',event=>{if(event.target.matches('[data-phone-warmth]')){window.LibraryPreferences?.setAppearance?.({warmth:Number(event.target.value)});sync();}});
 view.addEventListener('dblclick',event=>{if(event.target.closest('button'))event.preventDefault();});
-view.addEventListener('keydown',event=>{if(event.key!=='Tab')return;const all=[...view.querySelectorAll('button')],first=all[0],last=all.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}});
+view.addEventListener('keydown',event=>{if(event.key!=='Tab')return;const all=[...view.querySelectorAll('button,input,select')].filter(el=>!el.disabled&&el.getClientRects().length),first=all[0],last=all.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}});
 backdrop.addEventListener('click',closeAll);addEventListener('keydown',event=>{if(event.key==='Escape')closeAll();});
 const close=document.createElement('button');close.type='button';close.className='phone-sidebar-close';close.textContent='Закрыть главы ×';close.addEventListener('click',closeAll);side.prepend(close);
 new MutationObserver(sync).observe(side,{attributes:true,attributeFilter:['class']});new MutationObserver(sync).observe(dictionary,{attributes:true,attributeFilter:['hidden']});new MutationObserver(sync).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 window.LibraryPreferences?.subscribe(sync);
 addEventListener('hashchange',()=>{closeView();sync();});mq.addEventListener('change',()=>{if(!mq.matches)closeAll();sync();});sync();
-})();</script></div><!-- /library-phone-controls --></body></html>
+})();</script></div><!-- /library-phone-controls --><div id="library-theme-picker"><dialog id="reader-theme-dialog" class="reader-theme-dialog" aria-labelledby="reader-theme-title"><header><h2 id="reader-theme-title">Тема оформления</h2><button type="button" class="reader-theme-close" data-reader-theme-close aria-label="Закрыть выбор темы"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header><div class="reader-theme-grid" data-reader-theme-grid role="group" aria-label="Темы оформления"></div><p class="reader-theme-caption">Одна тема для библиотеки и всех томов.</p></dialog><script>(()=>{'use strict';
+const api=window.LibraryPreferences,dialog=document.getElementById('reader-theme-dialog');
+if(!api||!dialog)return;
+let origin=null;
+for(const grid of document.querySelectorAll('[data-reader-theme-grid]')){
+ for(const theme of api.themes){
+  const button=document.createElement('button');button.type='button';button.className='reader-theme-choice';button.dataset.readerPreset=theme.id;button.title=theme.description;
+  button.setAttribute('aria-label',theme.name);button.setAttribute('aria-pressed','false');
+  const sample=document.createElement('span');sample.className='reader-theme-swatch';sample.setAttribute('aria-hidden','true');
+  for(const [name,value] of Object.entries(theme.preview))sample.style.setProperty('--swatch-'+name,value);
+  const letters=document.createElement('b');letters.textContent='Aa';sample.append(letters);
+  const lines=document.createElement('span');lines.className='reader-theme-lines';for(let n=0;n<3;n++)lines.append(document.createElement('i'));sample.append(lines);
+  const label=document.createElement('span');label.className='reader-theme-label';label.textContent=theme.name;button.append(sample,label);grid.append(button);
+ }
+ grid.addEventListener('click',event=>{const button=event.target.closest('[data-reader-preset]');if(button)api.setPreset(button.dataset.readerPreset);});
+ grid.addEventListener('dblclick',event=>{if(event.target.closest('button'))event.preventDefault();});
+}
+function sync(){for(const button of document.querySelectorAll('[data-reader-preset]'))button.setAttribute('aria-pressed',String(button.dataset.readerPreset===api.selectedTheme));}
+function open(trigger){origin=trigger;if(!dialog.open)dialog.showModal();dialog.querySelector('[aria-pressed=true]')?.focus({preventScroll:true});}
+document.addEventListener('click',event=>{
+ const trigger=event.target.closest('#theme,#home-theme-toggle');if(!trigger)return;
+ event.preventDefault();event.stopImmediatePropagation();open(trigger);
+},true);
+dialog.querySelector('[data-reader-theme-close]').addEventListener('click',()=>dialog.close());
+dialog.addEventListener('click',event=>{if(event.target!==dialog)return;const box=dialog.getBoundingClientRect();if(event.clientX<box.left||event.clientX>box.right||event.clientY<box.top||event.clientY>box.bottom)dialog.close();});
+dialog.addEventListener('close',()=>{if(origin?.isConnected)origin.focus({preventScroll:true});});
+api.subscribe(sync);sync();
+})();</script></div><!-- /library-theme-picker --></body></html>

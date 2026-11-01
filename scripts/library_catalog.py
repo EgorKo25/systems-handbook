@@ -5,8 +5,10 @@ import re
 
 if __package__:
     from .reader_preferences import enhance as theme_preferences
+    from .reader_theme_picker import enhance as theme_picker
 else:
     from reader_preferences import enhance as theme_preferences
+    from reader_theme_picker import enhance as theme_picker
 
 ROOT = Path(__file__).resolve().parents[1]
 VOLUMES = {'networks': 'Сети', 'linux': 'Linux', 'bash': 'Bash',
@@ -47,7 +49,7 @@ def refresh():
             from .reader_mobile import enhance as mobile_preferences
         else:
             from reader_mobile import enhance as mobile_preferences
-        write(path, mobile_preferences(page))
+        write(path, theme_picker(mobile_preferences(page)))
     home_path = ROOT / 'index.html'
     if home_path.exists():
         home = theme_preferences(home_path.read_text(encoding='utf-8'), home=True)
@@ -55,7 +57,7 @@ def refresh():
             from .reader_mobile import enhance as mobile_preferences
         else:
             from reader_mobile import enhance as mobile_preferences
-        write(home_path, mobile_preferences(home, home=True))
+        write(home_path, theme_picker(mobile_preferences(home, home=True)))
     stats_path = ROOT / 'library-stats.json'
     stats = json.loads(stats_path.read_text(encoding='utf-8'))
     stats.sort(key=lambda row: list(VOLUMES).index(row['slug']))
