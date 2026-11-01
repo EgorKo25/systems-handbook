@@ -56,6 +56,34 @@ jobs:
         run: |
           python3 -m unittest discover -s labs-personal/tests -v
           python3 -m unittest discover -s practicum/labs -p 'test_*.py' -v
+      - name: Check architecture models and source contracts
+        run: |
+          node computer-architecture/tests/m32-contract.cjs
+          node computer-architecture/tests/logic-model.js
+          node computer-architecture/tests/logic-scenes.js
+          node computer-architecture/tests/memory-model.js
+          node computer-architecture/tests/memory-view.js
+          node computer-architecture/tests/devices_model.js
+          node computer-architecture/tests/devices_boundaries.js
+          node computer-architecture/tests/devices_nvme_layout.js
+          node computer-architecture/tests/devices_formats.js
+          python3 computer-architecture/tests/logic-source.py
+          python3 computer-architecture/tests/devices_sources.py
+      - name: Check OS models, DOM adapters and temporary-file exercises
+        run: |
+          node operating-systems/tests/execution-models.cjs
+          node operating-systems/tests/execution-browser.cjs
+          node operating-systems/tests/memory_io_models.cjs
+          node operating-systems/tests/memory_io_browser.cjs
+          node operating-systems/tests/coordination_models.cjs
+          node operating-systems/tests/coordination_priority.cjs
+          node operating-systems/tests/coordination_adapter.cjs
+          python3 operating-systems/tests/execution_source.py
+          python3 operating-systems/tests/memory_io_sources.py
+          python3 operating-systems/tests/coordination_sources.py
+          python3 operating-systems/tests/execution_native.py
+          python3 operating-systems/tests/memory_io_native.py
+          node tests/check-memory-lab-links.cjs
       - name: Check pages, anchors, JSON and JavaScript
         run: python3 scripts/check_site.py . --node-check
       - name: Check teaching models

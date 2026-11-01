@@ -34,6 +34,10 @@ NETWORK_CALL = re.compile(r"\b(?:fetch|XMLHttpRequest|WebSocket|EventSource|impo
 CSS_URL = re.compile(r"url\(\s*(['\"]?)(.*?)\1\s*\)", re.I | re.S)
 CSS_IMPORT = re.compile(r"@import\s+(?:url\(\s*)?(['\"])(.*?)\1", re.I)
 JS_IMPORT = re.compile(r"\bimport\s*(?:\(\s*|[^;\n]*?\bfrom\s*)?['\"]([^'\"]+)['\"]")
+# Explicit single-select application routes, not element IDs. Values are raw
+# unreserved fragment tokens: the adapter compares location.hash.slice(1)
+# without URL decoding. A normal select never declares routes implicitly.
+FRAGMENT_ROUTE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._~-]*\Z")
 
 
 def reject_non_json_number(value):
@@ -56,6 +60,7 @@ class Script:
 class Page(HTMLParser):
     path: Path
     ids: list[str] = field(default_factory=list)
+    fragment_routes: list[str] = field(default_factory=list)
     urls: list[tuple[str, int, bool]] = field(default_factory=list)
     scripts: list[Script] = field(default_factory=list)
     styles: list[str] = field(default_factory=list)
@@ -65,9 +70,33 @@ class Page(HTMLParser):
         HTMLParser.__init__(self, convert_charrefs=True)
         self._script = None
         self._style = None
+        self._selects = []
 
     def handle_starttag(self, tag, attrs):
         a = dict(attrs)
+        if "data-fragment-routes" in a and tag != "select":
+            self.parse_errors.append("data-fragment-routes requires a select with explicit option values")
+        if tag == "select":
+            route = None
+            if "data-fragment-routes" in a:
+                # The marker is a contract with the page adapter, not a broad
+                # exception for arbitrary hashes or a source-code JS parser.
+                unique_attrs = all(sum(name == key for name, _ in attrs) == 1 for key in ("id", "data-fragment-routes"))
+                if self._selects or a["data-fragment-routes"] != "option-values" or not a.get("id") or "multiple" in a or not unique_attrs:
+                    self.parse_errors.append("invalid fragment route selector: use a non-nested single select with id and data-fragment-routes=\"option-values\"")
+                else:
+                    route = {"id": a["id"], "count": 0}
+            elif any(x is not None for x in self._selects):
+                self.parse_errors.append("nested select inside a fragment route selector")
+            self._selects.append(route)
+        if tag == "option" and self._selects and self._selects[-1] is not None:
+            route = self._selects[-1]
+            route["count"] += 1
+            value = a.get("value")
+            if sum(name == "value" for name, _ in attrs) != 1 or not isinstance(value, str) or not FRAGMENT_ROUTE.fullmatch(value):
+                self.parse_errors.append(f"fragment route selector {route['id']!r}: option requires one explicit nonempty unreserved value")
+            else:
+                self.fragment_routes.append(value)
         if "id" in a and a["id"]:
             self.ids.append(a["id"])
         if tag == "a" and a.get("name"):
@@ -106,6 +135,10 @@ class Page(HTMLParser):
         self.handle_endtag(tag)
 
     def handle_endtag(self, tag):
+        if tag == "select" and self._selects:
+            route = self._selects.pop()
+            if route is not None and route["count"] == 0:
+                self.parse_errors.append(f"fragment route selector {route['id']!r} has no options")
         if tag == "script":
             self._script = None
         if tag == "style" and self._style is not None:
@@ -117,6 +150,11 @@ class Page(HTMLParser):
             self._script.text += text
         if self._style is not None:
             self._style.append(text)
+
+    def close(self):
+        super().close()
+        if any(route is not None for route in self._selects):
+            self.parse_errors.append("unclosed fragment route selector")
 
 
 class SiteChecker:
@@ -188,7 +226,9 @@ class SiteChecker:
         if fragment and target.suffix.lower() in {".html", ".htm"}:
             # Text fragments are a browser feature, rather than an element ID.
             fragment = fragment.split(":~:text=", 1)[0]
-            if fragment and (target not in self.pages or fragment not in self.pages[target].ids):
+            # DOM anchors use decoded IDs. Declared application routes use the
+            # exact raw fragment, matching this contract's hash-based adapter.
+            if fragment and (target not in self.pages or (fragment not in self.pages[target].ids and parsed.fragment not in self.pages[target].fragment_routes)):
                 self.error(source, f"{location}: missing anchor {fragment!r} in {self.label(target)} ({value!r})")
         if active and target.suffix.lower() in {".css", ".js", ".mjs"}:
             self.resource(target)
@@ -349,6 +389,11 @@ class SiteChecker:
             for ident, count in Counter(page.ids).items():
                 if count > 1:
                     self.error(path, f"duplicate HTML ID/anchor {ident!r} ({count} occurrences)")
+            for route, count in Counter(page.fragment_routes).items():
+                if count > 1:
+                    self.error(path, f"duplicate declared fragment route {route!r} ({count} occurrences)")
+                if route in page.ids:
+                    self.error(path, f"declared fragment route {route!r} collides with an HTML ID/anchor")
             for error in page.parse_errors:
                 self.error(path, error)
             for value, line, active in page.urls:

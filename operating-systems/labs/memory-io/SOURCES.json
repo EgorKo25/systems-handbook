@@ -1,0 +1,199 @@
+{
+  "checked": "2026-11-01",
+  "models": "Original M32-2L-v1, S64, finite buddy/CLOCK, OSJ1 and restricted crash states; not copies of kernel implementations",
+  "sources": [
+    {
+      "title": "Linux6.12 page tables",
+      "url": "https://docs.kernel.org/6.12/mm/page_tables.html",
+      "checked": "2026-11-01",
+      "scope": "MMU/TLB/fault and software hierarchy. M32 is our separate original format."
+    },
+    {
+      "title": "Linux6.12 VM concepts",
+      "url": "https://docs.kernel.org/6.12/admin-guide/mm/concepts.html",
+      "checked": "2026-11-01",
+      "scope": "Memory/page cache/reclaim overview; not a complete implementation audit."
+    },
+    {
+      "title": "Linux6.12 cache/TLB interfaces",
+      "url": "https://docs.kernel.org/6.12/core-api/cachetlb.html",
+      "checked": "2026-11-01",
+      "scope": "Postconditions of invalidation and architecture-dependent cache sequencing."
+    },
+    {
+      "title": "Linux6.12 allocation API",
+      "url": "https://docs.kernel.org/6.12/core-api/memory-allocation.html",
+      "checked": "2026-11-01",
+      "scope": "Contexts and allocation choices; S64/buddy arena are finite original models."
+    },
+    {
+      "title": "Linux6.12 overcommit",
+      "url": "https://docs.kernel.org/6.12/mm/overcommit-accounting.html",
+      "checked": "2026-11-01",
+      "scope": "Modes0/1/2 and named commit accounting categories."
+    },
+    {
+      "title": "Linux6.12 OOM source",
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v6.12/mm/oom_kill.c",
+      "checked": "2026-11-01",
+      "scope": "oom_badness and constrained_alloc lines181–335, selected example only; not entire kernel audit."
+    },
+    {
+      "title": "Linux6.12 multi-generation LRU",
+      "url": "https://docs.kernel.org/6.12/admin-guide/mm/multigen_lru.html",
+      "checked": "2026-11-01",
+      "scope": "Named real reclaim approach; browser CLOCK is not Linux MGLRU."
+    },
+    {
+      "title": "Linux6.12 VFS",
+      "url": "https://docs.kernel.org/6.12/filesystems/vfs.html",
+      "checked": "2026-11-01",
+      "scope": "Dentry/inode/open file objects; F4K is a separate conceptual layout."
+    },
+    {
+      "title": "Linux man-pages open",
+      "url": "https://man7.org/linux/man-pages/man2/open.2.html",
+      "checked": "2026-11-01",
+      "scope": "Open descriptions, fd, creation/status flags and close-on-exec."
+    },
+    {
+      "title": "Linux man-pages dup",
+      "url": "https://man7.org/linux/man-pages/man2/dup.2.html",
+      "checked": "2026-11-01",
+      "scope": "Shared open description and fd reuse; native optional exercise verified separately."
+    },
+    {
+      "title": "Linux man-pages read",
+      "url": "https://man7.org/linux/man-pages/man2/read.2.html",
+      "checked": "2026-11-01",
+      "scope": "Return counts, partial reads and EOF."
+    },
+    {
+      "title": "Linux man-pages pread/pwrite",
+      "url": "https://man7.org/linux/man-pages/man2/pwrite.2.html",
+      "checked": "2026-11-01",
+      "scope": "Explicit offset and Linux O_APPEND caveat."
+    },
+    {
+      "title": "Linux man-pages fsync",
+      "url": "https://man7.org/linux/man-pages/man2/fsync.2.html",
+      "checked": "2026-11-01",
+      "scope": "File and directory sync; no power-loss test claimed."
+    },
+    {
+      "title": "Linux man-pages mmap",
+      "url": "https://man7.org/linux/man-pages/man2/mmap.2.html",
+      "checked": "2026-11-01",
+      "scope": "File mapping and tail/EOF limitations."
+    },
+    {
+      "title": "Linux6.12 DMA API",
+      "url": "https://docs.kernel.org/6.12/core-api/dma-api-howto.html",
+      "checked": "2026-11-01",
+      "scope": "Virtual/physical/bus address distinction and buffer ownership; no driver run."
+    },
+    {
+      "title": "Linux6.12 blk-mq",
+      "url": "https://docs.kernel.org/6.12/block/blk-mq.html",
+      "checked": "2026-11-01",
+      "scope": "Queues, requests and tags; R17 is our representation, not a device command format."
+    },
+    {
+      "title": "Linux6.12 writeback cache control",
+      "url": "https://www.kernel.org/doc/html/v6.12/block/writeback_cache_control.html",
+      "checked": "2026-11-01",
+      "scope": "PREFLUSH/FUA semantics and lower-layer obligations."
+    },
+    {
+      "title": "Linux6.12 jbd2 journal",
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v6.12/Documentation/filesystems/ext4/journal.rst",
+      "checked": "2026-11-01",
+      "scope": "Header/commit and metadata-journal boundaries, lines0–144; not entire719-line format audited. OSJ1 is separate."
+    },
+    {
+      "title": "Linux6.12 MD",
+      "url": "https://docs.kernel.org/6.12/admin-guide/md.html",
+      "checked": "2026-11-01",
+      "scope": "Array and recovery concepts; no RAID configured."
+    },
+    {
+      "title": "Linux6.12 thin provisioning",
+      "url": "https://docs.kernel.org/6.12/admin-guide/device-mapper/thin-provisioning.html",
+      "checked": "2026-11-01",
+      "scope": "Data/metadata budgets and exhaustion behaviour, introduction/update sections."
+    },
+    {
+      "title": "Linux6.12 snapshots",
+      "url": "https://docs.kernel.org/6.12/admin-guide/device-mapper/snapshot.html",
+      "checked": "2026-11-01",
+      "scope": "Origin/COW changes and capacity failure; no device-mapper commands run."
+    },
+    {
+      "title": "Linux man-pages smaps",
+      "url": "https://man7.org/linux/man-pages/man5/proc_pid_smaps.5.html",
+      "checked": "2026-11-01",
+      "scope": "RSS/PSS and mapping accounting; numerical P/Q datasets are original."
+    },
+    {
+      "title": "Linux6.12 PSI",
+      "url": "https://docs.kernel.org/6.12/accounting/psi.html",
+      "checked": "2026-11-01",
+      "scope": "Resource pressure versus capacity; no host trigger configured."
+    },
+    {
+      "title": "Linux6.12 zswap",
+      "url": "https://docs.kernel.org/6.12/admin-guide/mm/zswap.html",
+      "checked": "2026-11-01",
+      "scope": "Compressed swap cache overview and eviction; no runtime settings changed."
+    },
+    {
+      "title": "Linux6.12 zram",
+      "url": "https://docs.kernel.org/6.12/admin-guide/blockdev/zram.html",
+      "checked": "2026-11-01",
+      "scope": "Compressed RAM block-device overview; no module or swap configured."
+    },
+    {
+      "title": "UEFI2.10 GPT, unavailable",
+      "url": "https://uefi.org/specs/UEFI/2.10/05_GUID_Partition_Table_Format.html",
+      "checked": "2026-11-01",
+      "scope": "HTTP403 when attempting original specification; not claimed fully read."
+    },
+    {
+      "title": "Windows reserve/commit",
+      "url": "https://learn.microsoft.com/en-us/windows/win32/memory/reserving-and-committing-memory",
+      "checked": "2026-11-01",
+      "scope": "Named contrasting implementation; no Windows execution."
+    },
+    {
+      "title": "POSIX2024 functions, unavailable",
+      "url": "https://pubs.opengroup.org/onlinepubs/9799919799/functions/read.html",
+      "checked": "2026-11-01",
+      "scope": "HTTP403 on attempted access; not claimed normatively read."
+    }
+  ],
+  "unavailable_interfaces": [
+    "CUA: apps=[], browsers=[]; no visual browser QA",
+    "POSIX2024 read/fsync: HTTP403",
+    "UEFI2.10 GPT: HTTP403"
+  ],
+  "verification": "native own-file POSIX operations; separate pure models and actual inline-script binding harness; no host memory/storage configuration changes",
+  "v2_supplementary_checks": [
+    {
+      "title": "W3C WCAG 2.2 contrast minimum",
+      "url": "https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html",
+      "checked": "2026-11-01",
+      "scope": "Normal-text contrast >=4.5:1, computed from declared colours; no rendering claim."
+    },
+    {
+      "title": "Linux man-pages write(2)",
+      "url": "https://man7.org/linux/man-pages/man2/write.2.html",
+      "checked": "2026-11-01",
+      "scope": "Zero count regular-file no-effect result if no detected error; verified separately with own temporary os.pwrite fixture."
+    },
+    {
+      "title": "Book preference palette source",
+      "scope": "Exact eight palette constants copied from current shared reader_preferences.py; read-only scalar bridge, no shared module edits. Automatic query forwarding is integration dependency.",
+      "source_sha256": "34d1c5ae908f6064230b4f4afafc2ec3dd86457070e9f9357e6ea1f4bb582494"
+    }
+  ]
+}

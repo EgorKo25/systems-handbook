@@ -1,0 +1,175 @@
+DEVICES · источники и воспроизводимость · 1 ноября 2026
+
+Текст, таблицы, JavaScript и пошаговые схемы написаны для этой книги.
+PDF стандартов, чужие иллюстрации, firmware и binaries не распространяются.
+Ни один опыт здесь не обращается к настоящему PCIe/NIC/NVMe/UEFI/IOMMU.
+
+1. Общий пример и дополнительные модели
+
+М32: byte-addressable RAM 64 KiB, little-endian; LBA 7 / 512 B, первые
+четыре байта 2A 00 00 00, хвост 508 нулей. DMA READ → PA 2000..21FF.
+Пять RV32I-инструкций дают 42→43 и SW только в PA 2200..2203. Подготовка
+всех 512 B выходного буфера выполняется отдельным шагом. EBREAK является
+breakpoint exception; остановка просмотра принадлежит оболочке урока.
+Адреса 1000/2000/2200 и подобные без префикса здесь шестнадцатеричные.
+
+М32-I/O1: конечная модель controller/descriptor/ownership/IRQ/DMA/cache.
+Когерентная RAM, один 512 B запрос LBA7, публикация visibility+OWN+doorbell
+абстрактна. IOMMU flat mappings device 1: IOVA4000→PA2000 write RAM,
+IOVA4200→PA2200 read RAM,512 B каждое. Это не бинарные таблицы RISC-V IOMMU.
+Потеря питания относится только к устройству; RAM сохраняется для сравнения.
+
+M32-BOUND1: символические стадии firmware/MapKey/ExitBootServices и отдельная
+сцена М32-VM1. Host memory1 MiB; guest GVA00402200→GPA2200→HPA5200,
+таблицы GPA8004→HPA18004 и GPA9008→HPA19008. G-stage абстрактен,
+полный Sv32x4/host page walker не реализован. Первый failed EBS сохраняет
+restricted state: полное восстановление Boot Services не предполагается.
+
+NVMe-LAYOUT32: только кодирование выбранной 64 B READ/WRITE SQE,16 B CQE
+и PRP plan при 4 KiB MPS и 32bit DMA addresses. Нет controller execution,
+SGL, chained PRP lists, metadata и большинства optional features.
+DEVICES-FORMATS1: selected PCIe2.1 aligned3DW MRd/CplD и LAN743x RX words.
+Это encoders, не packet generators и не эмуляторы контроллеров.
+FTL-2×4 в тексте/схеме — оригинальная geometry; map commit явно условный.
+
+2. CPU, trap, MMU, virtualization
+
+RISC-V Ratified Specifications Library v20260120, Machine/Supervisor1.13,
+Hypervisor extension1.0; выбраны определения CSR/trap/privilege и переводов:
+https://docs.riscv.org/reference/isa/v20260120/priv/machine.html
+https://docs.riscv.org/reference/isa/v20260120/priv/supervisor.html
+https://docs.riscv.org/reference/isa/v20260120/priv/hypervisor.html
+RV32I instructions/FENCE:
+https://docs.riscv.org/reference/isa/v20260120/unpriv/rv32.html
+Соседняя MEMORY-часть использует ту же ветку и RVWMO2.0. Читались выбранные
+разделы; полное исполнение privileged ISA и debug в моделях отсутствует.
+AIA1.0 дана как отдельный пример interrupt architecture:
+https://docs.riscv.org/reference/aia/v1.0/MSLevel.html
+Сцена IRQ с PC1800 не является PLIC/AIA implementation.
+
+RISC-V IOMMU Architecture v1.0.1, ratified2025-08-28, selected chapters2–4:
+https://docs.riscv.org/reference/iommu/v20250828/_attachments/riscv-iommu.pdf
+PDF107pages доступен, текст извлечён в приватной research copy. Проверялись
+device contexts, IOVA translation, faults, caches/invalidation/queues.
+Слово «полный текст» в ссылке означает доступный документ, а не утверждение
+о полном постраничном чтении каждой таблицы стандарта.
+
+3. PCI Express
+
+PCI Express Base Specification Revision2.1. Выбранные разделы главы 2,
+3DW/4DW request format, byte enables, completion ByteCount/LowerAddress,
+ordering; link CRC/ACK/credits в доступном тексте:
+https://www.intel.com/content/dam/support/us/en/programmable/support-resources/fpga-wiki/asset03/pci-express-base-r2.1.pdf
+Web-extractor прочитал PDF; прямой повторный download получил 404.
+Полный PCIe7.0 base spec для членов PCI-SIG не прочитан. Открытый статус
+поколения/128 GT/s не используется как источник подробного TLP layout7.0:
+https://pcisig.com/specifications/pcie-70-specification-version-03-now-available-members
+Выбранная Gen3 арифметика 8 GT/s и 128b/130b проверялась по official FAQ:
+https://pcisig.com/faq?field_category_value%5B%5D=pci_express_3.0&keys=power
+Ни Gen6/7 FLIT overhead, ни native link trace не моделируются.
+
+4. Реальный выбранный сетевой контроллер
+
+Microchip LAN7430/LAN7431 Data Sheet DS00002631D, selected6.8–6.9:
+https://ww1.microchip.com/downloads/en/DeviceDoc/LAN7430-LAN7431-Data-Sheet-DS00002631D.pdf
+Microchip AN2948, LAN743x Functional Description and Configuration Registers,
+DS00002948 B ©2019–2023 Microchip Technology Inc. and subsidiaries:
+https://ww1.microchip.com/downloads/aemDocuments/documents/UNG/ApplicationNotes/ApplicationNotes/AN2948-LAN743x-Functional-Description-and-Configuration-Registers-DS00002948.pdf
+Прочитаны 11.1/11.2, tables378–381 и RX_CFG_Bx ring length, описание
+writeback ordering/head; доступен локальный 576page PDF/text. Не заявлено
+полное чтение всех 576pages. Примеры OWN15/FS31/LS30/length/address/status
+относятся к этой редакции. N=4, DSPACE16 B, usableN−1; не универсальный NIC.
+CRC не представлен как подпись. Native Ethernet или настоящая плата не нужны.
+
+5. NVMe
+
+NVM Express Base Specification2.1, ratified2024-08-05:
+https://nvmexpress.org/wp-content/uploads/NVM-Express-Base-Specification-Revision-2.1-2024.08.05-Ratified.pdf
+NVM Command Set Specification1.1, ratified2024-08-05:
+https://nvmexpress.org/wp-content/uploads/NVM-Express-NVM-Command-Set-Specification-Revision-1.1-2024.08.05-Ratified.pdf
+©2008–2024 NVM Express, Inc. Использованы отдельные механизмы/поля своими
+словами; стандарт/рисунки не копируются. Оба PDF сохранены приватно,
+707/156pages; pdftotext завершился успешно. Раннее web extraction Base
+превышало лимит 11.8MB; это не препятствует последнему локальному извлечению.
+Фактически читались Base properties/CAP/CC/CSTS/AQA/ASQ/ACQ,§3.5.1init,
+selected memory queues/PRP и Command Set Read3.3.4/Write3.3.6/Flush/FUA.
+Полного чтения всех 707/156pages или conformance проверки не заявлено.
+Выбраны memory-based PCIe, NVM namespace1, LBA 512 B без metadata, MPS4 KiB;
+архив уже содержит более новые редакции, слово latest к ним не применяется.
+
+Дополнительная официальная сверка common representations Microsoft nvme.h:
+https://learn.microsoft.com/en-us/windows/win32/api/nvme/ns-nvme-nvme_command
+https://learn.microsoft.com/en-us/windows/win32/api/nvme/ns-nvme-nvme_completion_entry
+https://learn.microsoft.com/en-us/windows/win32/api/nvme/ns-nvme-nvme_command_status
+https://learn.microsoft.com/en-us/windows/win32/api/nvme/ns-nvme-nvme_prp_entry
+https://learn.microsoft.com/en-us/windows/win32/api/nvme/ns-nvme-nvme_controller_registers
+https://learn.microsoft.com/en-us/windows/win32/api/nvme/ns-nvme-nvme_controller_capabilities
+https://learn.microsoft.com/en-us/windows/win32/api/nvme/ns-nvme-nvme_controller_configuration
+https://learn.microsoft.com/en-us/windows/win32/api/nvme/ns-nvme-nvme_admin_queue_attributes
+Эти страницы описывают API/structs и часть старых полей. Полнота Base2.1
+по ним не выводится; init проверен также по выбранному разделу Base2.1.
+
+6. NAND и FTL
+
+Microchip NAND Flash Organization:
+https://onlinedocs.microchip.com/oxy/GUID-87101AE8-6003-4D1F-B624-895C158CCD3E-en-US-1/GUID-F3BE160C-4AEC-4F0A-92A7-39025FDDEE0B.html
+Samsung, A Brief History of Data Placement Technologies:
+https://semiconductor.samsung.com/news-events/tech-blog/a-brief-history-of-data-placement-technologies/
+Прочитаны page/erase distinctions и размещение/GC. Геометрия FTL-2×4,
+map versions и WAFdata3/2 — оригинальный числовой пример, не раскрытая
+firmware SSD. Реальная crash atomicity зависит от заявленного устройства.
+
+7. UEFI, power/errors
+
+UEFI Specification2.11, selected Boot Services7.2/7.4.6, Boot Manager,
+Secure Boot/key roles:
+https://uefi.org/specs/UEFI/2.11/07_Services_Boot_Services.html
+https://uefi.org/specs/UEFI/2.11/03_Boot_Manager.html
+https://uefi.org/specs/UEFI/2.11/32_Secure_Boot_and_Driver_Signing.html
+https://uefi.org/sites/default/files/resources/UEFI_Spec_Final_2.11.pdf
+В этой среде прямой HTML/PDF download получал 403; выбранные официальные
+индексированные разделы доступны. Полный PDF не объявлен прочитанным.
+Особо проверено: после ПЕРВОЙ попытки ExitBootServices firmware уже может
+частично остановить Boot Services; retry ограничивается разрешёнными
+Memory Allocation Services/GetMemoryMap/ExitBootServices без Print/deviceAPI.
+DescriptorSize и повтор BUFFER_TOO_SMALL объяснены, реальная boot не выполнялась.
+
+Intel official SDM/Optimization manual index используется для областей
+power/thermal/MCA, без утверждения о чтении целого SDM данной редакции:
+https://www.intel.com/content/www/us/en/developer/articles/technical/intel-sdm.html
+Формулы 7200 rpm,Little’slaw,PCIe efficiency,energy/P и модель ECC представлены
+с единицами/условиями. Они не являются замерами хоста. α в CMOS-формуле —
+среднее число 0→1 переходов на такт, то же соглашение, что в главе ca02.
+
+Повтор pure/браузерных опытов и сохранение состояния: labs/devices/README.txt.
+
+8. Порядок контрольного чтения MMIO
+
+Linux Kernel documentation, Bus-Independent Device Accesses,
+Memory Mapped I/O → Accessing the device:
+https://docs.kernel.org/driver-api/device-io.html#accessing-the-device
+Выбранный раздел прочитан 1 ноября 2026: posted write может требовать
+последующего чтения того же устройства для подтверждения доставки.
+Это первичный пример write→read, а не обещание переносимости любого
+регистра или замена руководства конкретного контроллера. API Linux здесь
+не требуется выполнять. Подготовка видимости descriptor до публикации
+и контрольная доставка MMIO после записи в ca22 объяснены отдельно.
+
+В RISC-V IOMMU 1.0.1 §2.3 дополнительно сверены параметры запроса
+преобразования и отдельный путь данных. Предварительная проверка всех
+512 B до изменения RAM — условие М32-I/O1; из IOMMU не выводится откат
+байтов, которые успели перенести более ранние транзакции устройства.
+
+Для пояснений преамбулы и SFD в ca26 дополнительно прочитаны выбранные
+разделы Microchip AN1120, DS01120A (2008), Ethernet Theory of Operation:
+Ethernet Frame Format, рис. 3–4 и таблица 2 параметров времени.
+https://ww1.microchip.com/downloads/en/appnotes/01120a.pdf
+7 B преамбулы и 1 B SFD отделены от межкадрового интервала. В выбранном
+полнодуплексном расчёте 1 Gb/s интервал 96 битовых времён занимает время
+12 байт, но не добавляет 12 переданных байт к кадру. Полная вычитка
+26-страничного application note и реальная передача кадров не заявляются.
+Интервал 96 битовых времён также прямо сверён в AMD/Xilinx PG135 v3.0,
+2021-11-02, выбранный раздел Interframe Gap and Deferring:
+https://docs.amd.com/r/en-US/pg135-axi-ethernetlite/Interframe-Gap-and-Deferring
+Это указатель на длительность интервала, не описание LAN743x и не заявление
+о чтении всего руководства или использовании IP-ядра.

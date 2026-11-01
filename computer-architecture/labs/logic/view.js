@@ -1,0 +1,26 @@
+/* Browser-only view; pure instruction semantics live in model.js. */
+(function(){'use strict';
+const M=window.M32Logic,key='handbook-ca-logic-m32-v1';
+const $=id=>document.getElementById(id);let state=M.create(),saved=false,storageError=false;
+try{const text=localStorage.getItem(key);if(text!==null){state=M.restore(JSON.parse(text));saved=true;}}catch(error){storageError=true;$('storage').textContent='Сохранение недоступно или старый JSON повреждён. Его не стирали. Step/Run и скачивание состояния заблокированы до явного начала заново или импорта своей исправной копии. Показаны исходные 42 только для чтения; это не восстановленный прогресс.';}
+function persist(){if(storageError)return;try{localStorage.setItem(key,JSON.stringify(M.snapshot(state)));$('storage').textContent='Состояние сохранено в этом браузере. Для переноса и резервной копии скачайте JSON.';saved=true;}catch(error){$('storage').textContent='Хранилище браузера недоступно. Текущее состояние в памяти вкладки; скачайте JSON перед закрытием.';}}
+function cells(parent,values){const tr=document.createElement('tr');for(const value of values){const td=document.createElement('td');td.textContent=value;tr.appendChild(td);}parent.appendChild(tr);}
+function eventText(e){if(!e)return 'Начало: PC=00001000, x5=x6=0, RAM[2000]=2A, RAM[2200]=00.';let text='PC '+M.hex(e.pcBefore)+' → '+M.hex(e.pcAfter)+'\n';if(e.word!==null&&e.word!==undefined)text+='Байты '+(e.bytes||[]).map(b=>M.hex(b,2)).join(' ')+'; слово '+M.hex(e.word)+'\n';if(e.decoded)text+='Разбор '+JSON.stringify(e.decoded)+'\n';if(e.read)text+='Чтение '+M.hex(e.read.address)+': '+e.read.bytes.map(b=>M.hex(b,2)).join(' ')+' → '+e.read.value+'\n';for(const r of e.registers||[])text+='x'+r.register+': '+M.hex(r.before)+' → '+M.hex(r.after)+'\n';for(const m of e.memory||[])text+='RAM '+M.hex(m.address)+': '+m.before.map(b=>M.hex(b,2)).join(' ')+' → '+m.after.map(b=>M.hex(b,2)).join(' ')+'\n';if(e.discardedX0)text+='Запись в x0 отброшена; x0=0.\n';if(e.cause)text+='Событие: '+e.cause+'; показ остановлен.\n';return text;}
+function render(){
+ $('summary').textContent='PC='+M.hex(state.pc)+', нормальных принятых инструкций='+state.retired+', попыток выборки='+state.attempts+', состояние='+state.status+(state.trap?' ('+state.trap.cause+')':'');
+ $('last').textContent=eventText(state.trace[state.trace.length-1]);$('memory').replaceChildren();
+ for(const address of [0x1000,0x1004,0x1008,0x100c,0x1010,0x2000,0x2004,0x21fc,0x2200]){const word=M.read32(state.memory,address);let meaning='данные';if(address>=0x1000&&address<=0x1010){try{meaning=M.decode(word).op;}catch(e){meaning='неподдержанный код';}}cells($('memory'),[M.hex(address,4),Array.from(state.memory.slice(address,address+4)).map(b=>M.hex(b,2)).join(' '),M.hex(word)+' / '+meaning]);}
+ $('key-registers').replaceChildren();for(const i of [0,5,6])cells($('key-registers'),['x'+i,M.hex(state.regs[i]),String(state.regs[i])]);
+ $('registers').replaceChildren();for(let i=0;i<32;i++)cells($('registers'),['x'+i,M.hex(state.regs[i]),String(state.regs[i])]);
+ $('trace').replaceChildren();if(state.traceDropped){const p=document.createElement('p');p.textContent='Показаны последние '+M.TRACE_LIMIT+' переходов. Более ранних записей удалено: '+state.traceDropped+'. Полные счётчики, RAM и регистры сохранены.';$('trace').appendChild(p);}if(!state.trace.length){const p=document.createElement('p');p.textContent='Шагов ещё нет. Нажмите «Следующая инструкция» выше.';$('trace').appendChild(p);}state.trace.forEach((e,i)=>{const h=document.createElement('h3');h.textContent='Переход '+(state.traceDropped+i+1);const pre=document.createElement('pre');pre.textContent=eventText(e);$('trace').append(h,pre);});
+ $('step').disabled=$('run').disabled=storageError||state.status!=='ready';$('download').disabled=storageError;
+}
+$('step').onclick=()=>{if(storageError)return;M.step(state);persist();render();};$('run').onclick=()=>{if(storageError)return;M.run(state,16);persist();render();};
+$('reset').onclick=()=>{if(window.confirm('Явно заменить текущий прогресс исходным М32 с числом 42?')){state=M.create();storageError=false;persist();render();}};
+$('download').onclick=()=>{if(storageError)return;const blob=new Blob([JSON.stringify(M.snapshot(state),null,2)],{type:'application/json'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='m32-own-state.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
+$('upload').onchange=async()=>{const file=$('upload').files[0];if(!file)return;try{if(file.size>1000000)throw new Error('файл больше 1 MB');const candidate=M.restore(JSON.parse(await file.text()));if(window.confirm('Заменить состояние проверенной собственной копией JSON?')){state=candidate;storageError=false;persist();render();}}catch(error){$('storage').textContent='Импорт отвергнут: '+error.message+'. Текущее состояние сохранено.';}$('upload').value='';};
+$('print').onclick=()=>window.print();
+for(const r of M.addBits(7,1,4).rows)cells($('adder'),[r.bit,r.a,r.b,r.carryIn,r.sum,r.carryOut]);
+if(!storageError)$('storage').textContent=saved?'Продолжено ранее сохранённое состояние; сброс не выполнялся.':'Новая сессия: исходный М32. Первый переход сохранит прогресс; JSON можно скачать сейчас.';
+window.M32Appearance.mount($('model-theme'),$('warmth'));render();
+}());

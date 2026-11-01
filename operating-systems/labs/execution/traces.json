@@ -1,0 +1,3666 @@
+{
+  "format": 1,
+  "meaning": "Original deterministic teaching states; not an observed kernel trace",
+  "boundary": {
+    "cached": [
+      {
+        "title": "До вызова функции",
+        "explanation": "T1/P1/AS1. PC выбирает CALL helper, пользовательский SP0x007FF000. В память файла ещё не обращались.",
+        "cpu": "CPU0",
+        "process": "P1",
+        "thread": "T1",
+        "addressSpace": "AS1",
+        "mode": "пользователь",
+        "pc": "0x00401000",
+        "sp": "0x007FF000",
+        "registers": {
+          "operation": null,
+          "object": null,
+          "buffer": null,
+          "length": null,
+          "result": null
+        },
+        "userStack": {},
+        "savedUser": null,
+        "savedKernel": null,
+        "irqFrame": null,
+        "threads": {
+          "T1": "исполняется",
+          "T2": "готов"
+        },
+        "ready": [
+          "T2"
+        ],
+        "waiting": [],
+        "buffer": [],
+        "bufferAllowed": true,
+        "offset": 0,
+        "switches": 0,
+        "pte": "present",
+        "instructionResult": null
+      },
+      {
+        "title": "Обычный вызов функции",
+        "explanation": "Учебный ABI кладёт четырёхбайтовый адрес возврата в пользовательский стек. Режим и поток прежние.",
+        "cpu": "CPU0",
+        "process": "P1",
+        "thread": "T1",
+        "addressSpace": "AS1",
+        "mode": "пользователь",
+        "pc": "0x00402000",
+        "sp": "0x007FEFFC",
+        "registers": {
+          "operation": null,
+          "object": null,
+          "buffer": null,
+          "length": null,
+          "result": null
+        },
+        "userStack": {
+          "0x007FEFFC": "0x00401004"
+        },
+        "savedUser": null,
+        "savedKernel": null,
+        "irqFrame": null,
+        "threads": {
+          "T1": "исполняется",
+          "T2": "готов"
+        },
+        "ready": [
+          "T2"
+        ],
+        "waiting": [],
+        "buffer": [],
+        "bufferAllowed": true,
+        "offset": 0,
+        "switches": 0,
+        "pte": "present",
+        "instructionResult": null
+      },
+      {
+        "title": "Подготовлен системный запрос",
+        "explanation": "В учебном ABI READ имеет номер 7. Это не Linux ABI. Выбрано открытие 3, четыре байта, тот же общий пользовательский адрес.",
+        "cpu": "CPU0",
+        "process": "P1",
+        "thread": "T1",
+        "addressSpace": "AS1",
+        "mode": "пользователь",
+        "pc": "0x0040200C",
+        "sp": "0x007FEFFC",
+        "registers": {
+          "operation": 7,
+          "object": 3,
+          "buffer": "0x00403124",
+          "length": 4,
+          "result": null
+        },
+        "userStack": {
+          "0x007FEFFC": "0x00401004"
+        },
+        "savedUser": null,
+        "savedKernel": null,
+        "irqFrame": null,
+        "threads": {
+          "T1": "исполняется",
+          "T2": "готов"
+        },
+        "ready": [
+          "T2"
+        ],
+        "waiting": [],
+        "buffer": [],
+        "bufferAllowed": true,
+        "offset": 0,
+        "switches": 0,
+        "pte": "present",
+        "instructionResult": null
+      },
+      {
+        "title": "Вход в ядро, T1 остаётся исполнителем",
+        "explanation": "Кадр на защищённом стеке T1 хранит пользовательские PC/SP/аргументы. Отдельно выбран KSP модели; аппаратный автоматический набор этим рисунком не утверждается.",
+        "cpu": "CPU0",
+        "process": "P1",
+        "thread": "T1",
+        "addressSpace": "AS1",
+        "mode": "ядро",
+        "pc": "0x80001000",
+        "sp": "0x8000EFF0",
+        "registers": {
+          "operation": 7,
+          "object": 3,
+          "buffer": "0x00403124",
+          "length": 4,
+          "result": null
+        },
+        "userStack": {
+          "0x007FEFFC": "0x00401004"
+        },
+        "savedUser": {
+          "pc": "0x00402010",
+          "sp": "0x007FEFFC",
+          "registers": {
+            "operation": 7,
+            "object": 3,
+            "buffer": "0x00403124",
+            "length": 4,
+            "result": null
+          },
+          "mode": "пользователь",
+          "owner": "T1/P1/AS1",
+          "storage": "кадр входа в защищённом стеке T1"
+        },
+        "savedKernel": null,
+        "irqFrame": null,
+        "threads": {
+          "T1": "исполняется",
+          "T2": "готов"
+        },
+        "ready": [
+          "T2"
+        ],
+        "waiting": [],
+        "buffer": [],
+        "bufferAllowed": true,
+        "offset": 0,
+        "switches": 0,
+        "pte": "present",
+        "instructionResult": null
+      },
+      {
+        "title": "Переданы четыре байта",
+        "explanation": "Доступные данные копируются в разрешённый буфер; текущая позиция выбранного открытия 0→4.",
+        "cpu": "CPU0",
+        "process": "P1",
+        "thread": "T1",
+        "addressSpace": "AS1",
+        "mode": "ядро",
+        "pc": "0x80001180",
+        "sp": "0x8000EFC0",
+        "registers": {
+          "operation": 7,
+          "object": 3,
+          "buffer": "0x00403124",
+          "length": 4,
+          "result": 4
+        },
+        "userStack": {
+          "0x007FEFFC": "0x00401004"
+        },
+        "savedUser": {
+          "pc": "0x00402010",
+          "sp": "0x007FEFFC",
+          "registers": {
+            "operation": 7,
+            "object": 3,
+            "buffer": "0x00403124",
+            "length": 4,
+            "result": 4
+          },
+          "mode": "пользователь",
+          "owner": "T1/P1/AS1",
+          "storage": "кадр входа в защищённом стеке T1"
+        },
+        "savedKernel": null,
+        "irqFrame": null,
+        "threads": {
+          "T1": "исполняется",
+          "T2": "готов"
+        },
+        "ready": [
+          "T2"
+        ],
+        "waiting": [],
+        "buffer": [
+          42,
+          0,
+          0,
+          0
+        ],
+        "bufferAllowed": true,
+        "offset": 4,
+        "switches": 0,
+        "pte": "present",
+        "instructionResult": null
+      },
+      {
+        "title": "Возврат из ядра",
+        "explanation": "Восстановлены PC0x00402010/SP0x007FEFFC пользователя. Результат операции передан по ABI модели; это та же T1.",
+        "cpu": "CPU0",
+        "process": "P1",
+        "thread": "T1",
+        "addressSpace": "AS1",
+        "mode": "пользователь",
+        "pc": "0x00402010",
+        "sp": "0x007FEFFC",
+        "registers": {
+          "operation": 7,
+          "object": 3,
+          "buffer": "0x00403124",
+          "length": 4,
+          "result": 4
+        },
+        "userStack": {
+          "0x007FEFFC": "0x00401004"
+        },
+        "savedUser": {
+          "pc": "0x00402010",
+          "sp": "0x007FEFFC",
+          "registers": {
+            "operation": 7,
+            "object": 3,
+            "buffer": "0x00403124",
+            "length": 4,
+            "result": 4
+          },
+          "mode": "пользователь",
+          "owner": "T1/P1/AS1",
+          "storage": "кадр входа в защищённом стеке T1"
+        },
+        "savedKernel": null,
+        "irqFrame": null,
+        "threads": {
+          "T1": "исполняется",
+          "T2": "готов"
+        },
+        "ready": [
+          "T2"
+        ],
+        "waiting": [],
+        "buffer": [
+          42,
+          0,
+          0,
+          0
+        ],
+        "bufferAllowed": true,
+        "offset": 4,
+        "switches": 0,
+        "pte": "present",
+        "instructionResult": null
+      },
+      {
+        "title": "Функция вернулась вызывающему коду",
+        "explanation": "RETURN извлекает подготовленный CALL адрес 0x00401004 и продвигает SP. Байтам стека не приписывается автоматическое стирание.",
+        "cpu": "CPU0",
+        "process": "P1",
+        "thread": "T1",
+        "addressSpace": "AS1",
+        "mode": "пользователь",
+        "pc": "0x00401004",
+        "sp": "0x007FF000",
+        "registers": {
+          "operation": 7,
+          "object": 3,
+          "buffer": "0x00403124",
+          "length": 4,
+          "result": 4
+        },
+        "userStack": {
+          "0x007FEFFC": "0x00401004"
+        },
+        "savedUser": {
+          "pc": "0x00402010",
+          "sp": "0x007FEFFC",
+          "registers": {
+            "operation": 7,
+            "object": 3,
+            "buffer": "0x00403124",
+            "length": 4,
+            "result": 4
+          },
+          "mode": "пользователь",
+          "owner": "T1/P1/AS1",
+          "storage": "кадр входа в защищённом стеке T1"
+        },
+        "savedKernel": null,
+        "irqFrame": null,
+        "threads": {
+          "T1": "исполняется",
+          "T2": "готов"
+        },
+        "ready": [
+          "T2"
+        ],
+        "waiting": [],
+        "buffer": [
+          42,
+          0,
+          0,
+          0
+        ],
+        "bufferAllowed": true,
+        "offset": 4,
+        "switches": 0,
+        "pte": "present",
+        "instructionResult": null
+      }
+    ],
+    "blocked": [
+      {
+        "title": "До вызова функции",
+        "explanation": "T1/P1/AS1. PC выбирает CALL helper, пользовательский SP0x007FF000. В память файла ещё не обращались.",
+        "cpu": "CPU0",
+        "process": "P1",
+        "thread": "T1",
+        "addressSpace": "AS1",
+        "mode": "пользователь",
+        "pc": "0x00401000",
+        "sp": "0x007FF000",
+        "registers": {
+          "operation": null,
+          "object": null,
+          "buffer": null,
+          "length": null,
+          "result": null
+        },
+        "userStack": {},
+        "savedUser": null,
+        "savedKernel": null,
+        "irqFrame": null,
+        "threads": {
+          "T1": "исполняется",
+          "T2": "готов"
+        },
+        "ready": [
+          "T2"
+        ],
+        "waiting": [],
+        "buffer": [],
+        "bufferAllowed": true,
+        "offset": 0,
+        "switches": 0,
+        "pte": "present",
+        "instructionResult": null
+      },
+      {
+        "title": "Обычный вызов функции",
+        "explanation": "Учебный ABI кладёт четырёхбайтовый адрес возврата в пользовательский стек. Режим и поток прежние.",
+        "cpu": "CPU0",
+        "process": "P1",
+        "thread": "T1",
+        "addressSpace": "AS1",
+        "mode": "пользователь",
+        "pc": "0x00402000",
+        "sp": "0x007FEFFC",
+        "registers": {
+          "operation": null,
+          "object": null,
+          "buffer": null,
+          "length": null,
+          "result": null
+        },
+        "userStack": {
+          "0x007FEFFC": "0x00401004"
+        },
+        "savedUser": null,
+        "savedKernel": null,
+        "irqFrame": null,
+        "threads": {
+          "T1": "исполняется",
+          "T2": "готов"
+        },
+        "ready": [
+          "T2"
+        ],
+        "waiting": [],
+        "buffer": [],
+        "bufferAllowed": true,
+        "offset": 0,
+        "switches": 0,
+        "pte": "present",
+        "instructionResult": null
+      },
+      {
+        "title": "Подготовлен системный запрос",
+        "explanation": "В учебном ABI READ имеет номер 7. Это не Linux ABI. Выбрано открытие 3, четыре байта, тот же общий пользовательский адрес.",
+        "cpu": "CPU0",
+        "process": "P1",
+        "thread": "T1",
+        "addressSpace": "AS1",
+        "mode": "пользователь",
+        "pc": "0x0040200C",
+        "sp": "0x007FEFFC",
+        "registers": {
+          "operation": 7,
+          "object": 3,
+          "buffer": "0x00403124",
+          "length": 4,
+          "result": null
+        },
+        "userStack": {
+          "0x007FEFFC": "0x00401004"
+        },
+        "savedUser": null,
+        "savedKernel": null,
+        "irqFrame": null,
+        "threads": {
+          "T1": "исполняется",
+          "T2": "готов"
+        },
+        "ready": [
+          "T2"
+        ],
+        "waiting": [],
+        "buffer": [],
+        "bufferAllowed": true,
+        "offset": 0,
+        "switches": 0,
+        "pte": "present",
+        "instructionResult": null
+      },
+      {
+        "title": "Вход в ядро, T1 остаётся исполнителем",
+        "explanation": "Кадр на защищённом стеке T1 хранит пользовательские PC/SP/аргументы. Отдельно выбран KSP модели; аппаратный автоматический набор этим рисунком не утверждается.",
+        "cpu": "CPU0",
+        "process": "P1",
+        "thread": "T1",
+        "addressSpace": "AS1",
+        "mode": "ядро",
+        "pc": "0x80001000",
+        "sp": "0x8000EFF0",
+        "registers": {
+          "operation": 7,
+          "object": 3,
+          "buffer": "0x00403124",
+          "length": 4,
+          "result": null
+        },
+        "userStack": {
+          "0x007FEFFC": "0x00401004"
+        },
+        "savedUser": {
+          "pc": "0x00402010",
+          "sp": "0x007FEFFC",
+          "registers": {
+            "operation": 7,
+            "object": 3,
+            "buffer": "0x00403124",
+            "length": 4,
+            "result": null
+          },
+          "mode": "пользователь",
+          "owner": "T1/P1/AS1",
+          "storage": "кадр входа в защищённом стеке T1"
+        },
+        "savedKernel": null,
+        "irqFrame": null,
+        "threads": {
+          "T1": "исполняется",
+          "T2": "готов"
+        },
+        "ready": [
+          "T2"
+        ],
+        "waiting": [],
+        "buffer": [],
+        "bufferAllowed": true,
+        "offset": 0,
+        "switches": 0,
+        "pte": "present",
+        "instructionResult": null
+      },
+      {
+        "title": "T1 ждёт работу J17",
+        "explanation": "Создано ожидание по незавершённой операции. Сохранено продолжение ядра T1, не пользовательский адрес после вызова.",
+        "cpu": "CPU0",
+        "process": "P1",
+        "thread": "T1",
+        "addressSpace": "AS1",
+        "mode": "ядро",
+        "pc": "0x80003000",
+        "sp": "0x8000EFA0",
+        "registers": {
+          "operation": 7,
+          "object": 3,
+          "buffer": "0x00403124",
+          "length": 4,
+          "result": null
+        },
+        "userStack": {
+          "0x007FEFFC": "0x00401004"
+        },
+        "savedUser": {
+          "pc": "0x00402010",
+          "sp": "0x007FEFFC",
+          "registers": {
+            "operation": 7,
+            "object": 3,
+            "buffer": "0x00403124",
+            "length": 4,
+            "result": null
+          },
+          "mode": "пользователь",
+          "owner": "T1/P1/AS1",
+          "storage": "кадр входа в защищённом стеке T1"
+        },
+        "savedKernel": {
+          "pc": "0x80001140",
+          "sp": "0x8000EFC0",
+          "addressSpace": "AS1",
+          "registers": {
+            "operation": 7,
+            "object": 3,
+            "buffer": "0x00403124",
+            "length": 4,
+            "result": null
+          },
+          "owner": "T1/P1",
+          "storage": "состояние ожидания T1 и её защищённый стек"
+        },
+        "irqFrame": null,
+        "threads": {
+          "T1": "ждёт J17",
+          "T2": "готов"
+        },
+        "ready": [
+          "T2"
+        ],
+        "waiting": [
+          "T1:J17"
+        ],
+        "buffer": [],
+        "bufferAllowed": true,
+        "offset": 0,
+        "switches": 0,
+        "pte": "present",
+        "instructionResult": null
+      },
+      {
+        "title": "CPU передан T2",
+        "explanation": "Первое действительное переключение: сохранённая T1 не исполняется, T2/P2/AS2 получает своё продолжение.",
+        "cpu": "CPU0",
+        "process": "P2",
+        "thread": "T2",
+        "addressSpace": "AS2",
+        "mode": "пользователь",
+        "pc": "0x00501000",
+        "sp": "0x009FF000",
+        "registers": {
+          "R1": 99,
+          "R2": 0
+        },
+        "userStack": {
+          "0x007FEFFC": "0x00401004"
+        },
+        "savedUser": {
+          "pc": "0x00402010",
+          "sp": "0x007FEFFC",
+          "registers": {
+            "operation": 7,
+            "object": 3,
+            "buffer": "0x00403124",
+            "length": 4,
+            "result": null
+          },
+          "mode": "пользователь",
+          "owner": "T1/P1/AS1",
+          "storage": "кадр входа в защищённом стеке T1"
+        },
+        "savedKernel": {
+          "pc": "0x80001140",
+          "sp": "0x8000EFC0",
+          "addressSpace": "AS1",
+          "registers": {
+            "operation": 7,
+            "object": 3,
+            "buffer": "0x00403124",
+            "length": 4,
+            "result": null
+          },
+          "owner": "T1/P1",
+          "storage": "состояние ожидания T1 и её защищённый стек"
+        },
+        "irqFrame": null,
+        "threads": {
+          "T1": "ждёт J17",
+          "T2": "исполняется"
+        },
+        "ready": [],
+        "waiting": [
+          "T1:J17"
+        ],
+        "buffer": [],
+        "bufferAllowed": true,
+        "offset": 0,
+        "switches": 1,
+        "pte": "present",
+        "instructionResult": null
+      },
+      {
+        "title": "IRQ прерывает T2, но завершает J17 для T1",
+        "explanation": "В модели T2 успела выполнить одну команду. Кадр прерывания T2 хранится отдельно от пользовательского кадра T1. После обработки T1 лишь готова; это ещё не её исполнение.",
+        "cpu": "CPU0",
+        "process": "P2",
+        "thread": "T2",
+        "addressSpace": "AS2",
+        "mode": "ядро/IRQ",
+        "pc": "0x80004000",
+        "sp": "0x8001EFF0",
+        "registers": {
+          "irq": 5,
+          "completed": "J17"
+        },
+        "userStack": {
+          "0x007FEFFC": "0x00401004"
+        },
+        "savedUser": {
+          "pc": "0x00402010",
+          "sp": "0x007FEFFC",
+          "registers": {
+            "operation": 7,
+            "object": 3,
+            "buffer": "0x00403124",
+            "length": 4,
+            "result": null
+          },
+          "mode": "пользователь",
+          "owner": "T1/P1/AS1",
+          "storage": "кадр входа в защищённом стеке T1"
+        },
+        "savedKernel": {
+          "pc": "0x80001140",
+          "sp": "0x8000EFC0",
+          "addressSpace": "AS1",
+          "registers": {
+            "operation": 7,
+            "object": 3,
+            "buffer": "0x00403124",
+            "length": 4,
+            "result": null
+          },
+          "owner": "T1/P1",
+          "storage": "состояние ожидания T1 и её защищённый стек"
+        },
+        "irqFrame": {
+          "thread": "T2",
+          "owner": "T2/P2/AS2",
+          "mode": "пользователь",
+          "pc": "0x00501004",
+          "sp": "0x009FF000",
+          "addressSpace": "AS2",
+          "registers": {
+            "R1": 99,
+            "R2": 0
+          },
+          "storage": "кадр IRQ на защищённом стеке T2"
+        },
+        "threads": {
+          "T1": "готов",
+          "T2": "исполняется"
+        },
+        "ready": [
+          "T1"
+        ],
+        "waiting": [],
+        "buffer": [],
+        "bufferAllowed": true,
+        "offset": 0,
+        "switches": 1,
+        "pte": "present",
+        "instructionResult": null
+      },
+      {
+        "title": "Обработчик вернулся в T2",
+        "explanation": "В этой разрешённой последовательности сразу не переключаемся. T1 уже готова и ждёт решения планировщика.",
+        "cpu": "CPU0",
+        "process": "P2",
+        "thread": "T2",
+        "addressSpace": "AS2",
+        "mode": "пользователь",
+        "pc": "0x00501004",
+        "sp": "0x009FF000",
+        "registers": {
+          "R1": 99,
+          "R2": 0
+        },
+        "userStack": {
+          "0x007FEFFC": "0x00401004"
+        },
+        "savedUser": {
+          "pc": "0x00402010",
+          "sp": "0x007FEFFC",
+          "registers": {
+            "operation": 7,
+            "object": 3,
+            "buffer": "0x00403124",
+            "length": 4,
+            "result": null
+          },
+          "mode": "пользователь",
+          "owner": "T1/P1/AS1",
+          "storage": "кадр входа в защищённом стеке T1"
+        },
+        "savedKernel": {
+          "pc": "0x80001140",
+          "sp": "0x8000EFC0",
+          "addressSpace": "AS1",
+          "registers": {
+            "operation": 7,
+            "object": 3,
+            "buffer": "0x00403124",
+            "length": 4,
+            "result": null
+          },
+          "owner": "T1/P1",
+          "storage": "состояние ожидания T1 и её защищённый стек"
+        },
+        "irqFrame": {
+          "thread": "T2",
+          "owner": "T2/P2/AS2",
+          "mode": "пользователь",
+          "pc": "0x00501004",
+          "sp": "0x009FF000",
+          "addressSpace": "AS2",
+          "registers": {
+            "R1": 99,
+            "R2": 0
+          },
+          "storage": "кадр IRQ на защищённом стеке T2"
+        },
+        "threads": {
+          "T1": "готов",
+          "T2": "исполняется"
+        },
+        "ready": [
+          "T1"
+        ],
+        "waiting": [],
+        "buffer": [],
+        "bufferAllowed": true,
+        "offset": 0,
+        "switches": 1,
+        "pte": "present",
+        "instructionResult": null
+      },
+      {
+        "title": "T1 продолжает незавершённый путь ядра",
+        "explanation": "Второе переключение восстанавливает сохранённые KPC/KSP T1 и AS1. Возврат пользователю пока не разрешён.",
+        "cpu": "CPU0",
+        "process": "P1",
+        "thread": "T1",
+        "addressSpace": "AS1",
+        "mode": "ядро",
+        "pc": "0x80001140",
+        "sp": "0x8000EFC0",
+        "registers": {
+          "operation": 7,
+          "object": 3,
+          "buffer": "0x00403124",
+          "length": 4,
+          "result": null
+        },
+        "userStack": {
+          "0x007FEFFC": "0x00401004"
+        },
+        "savedUser": {
+          "pc": "0x00402010",
+          "sp": "0x007FEFFC",
+          "registers": {
+            "operation": 7,
+            "object": 3,
+            "buffer": "0x00403124",
+            "length": 4,
+            "result": null
+          },
+          "mode": "пользователь",
+          "owner": "T1/P1/AS1",
+          "storage": "кадр входа в защищённом стеке T1"
+        },
+        "savedKernel": {
+          "pc": "0x80001140",
+          "sp": "0x8000EFC0",
+          "addressSpace": "AS1",
+          "registers": {
+            "operation": 7,
+            "object": 3,
+            "buffer": "0x00403124",
+            "length": 4,
+            "result": null
+          },
+          "owner": "T1/P1",
+          "storage": "состояние ожидания T1 и её защищённый стек"
+        },
+        "irqFrame": {
+          "thread": "T2",
+          "owner": "T2/P2/AS2",
+          "mode": "пользователь",
+          "pc": "0x00501004",
+          "sp": "0x009FF000",
+          "addressSpace": "AS2",
+          "registers": {
+            "R1": 99,
+            "R2": 0
+          },
+          "storage": "кадр IRQ на защищённом стеке T2"
+        },
+        "threads": {
+          "T1": "исполняется",
+          "T2": "готов"
+        },
+        "ready": [
+          "T2"
+        ],
+        "waiting": [],
+        "buffer": [],
+        "bufferAllowed": true,
+        "offset": 0,
+        "switches": 2,
+        "pte": "present",
+        "instructionResult": null
+      },
+      {
+        "title": "Переданы четыре байта",
+        "explanation": "Доступные данные копируются в разрешённый буфер; текущая позиция выбранного открытия 0→4.",
+        "cpu": "CPU0",
+        "process": "P1",
+        "thread": "T1",
+        "addressSpace": "AS1",
+        "mode": "ядро",
+        "pc": "0x80001180",
+        "sp": "0x8000EFC0",
+        "registers": {
+          "operation": 7,
+          "object": 3,
+          "buffer": "0x00403124",
+          "length": 4,
+          "result": 4
+        },
+        "userStack": {
+          "0x007FEFFC": "0x00401004"
+        },
+        "savedUser": {
+          "pc": "0x00402010",
+          "sp": "0x007FEFFC",
+          "registers": {
+            "operation": 7,
+            "object": 3,
+            "buffer": "0x00403124",
+            "length": 4,
+            "result": 4
+          },
+          "mode": "пользователь",
+          "owner": "T1/P1/AS1",
+          "storage": "кадр входа в защищённом стеке T1"
+        },
+        "savedKernel": {
+          "pc": "0x80001140",
+          "sp": "0x8000EFC0",
+          "addressSpace": "AS1",
+          "registers": {
+            "operation": 7,
+            "object": 3,
+            "buffer": "0x00403124",
+            "length": 4,
+            "result": null
+          },
+          "owner": "T1/P1",
+          "storage": "состояние ожидания T1 и её защищённый стек"
+        },
+        "irqFrame": {
+          "thread": "T2",
+          "owner": "T2/P2/AS2",
+          "mode": "пользователь",
+          "pc": "0x00501004",
+          "sp": "0x009FF000",
+          "addressSpace": "AS2",
+          "registers": {
+            "R1": 99,
+            "R2": 0
+          },
+          "storage": "кадр IRQ на защищённом стеке T2"
+        },
+        "threads": {
+          "T1": "исполняется",
+          "T2": "готов"
+        },
+        "ready": [
+          "T2"
+        ],
+        "waiting": [],
+        "buffer": [
+          42,
+          0,
+          0,
+          0
+        ],
+        "bufferAllowed": true,
+        "offset": 4,
+        "switches": 2,
+        "pte": "present",
+        "instructionResult": null
+      },
+      {
+        "title": "Возврат из ядра",
+        "explanation": "Восстановлены PC0x00402010/SP0x007FEFFC пользователя. Результат операции передан по ABI модели; это та же T1.",
+        "cpu": "CPU0",
+        "process": "P1",
+        "thread": "T1",
+        "addressSpace": "AS1",
+        "mode": "пользователь",
+        "pc": "0x00402010",
+        "sp": "0x007FEFFC",
+        "registers": {
+          "operation": 7,
+          "object": 3,
+          "buffer": "0x00403124",
+          "length": 4,
+          "result": 4
+        },
+        "userStack": {
+          "0x007FEFFC": "0x00401004"
+        },
+        "savedUser": {
+          "pc": "0x00402010",
+          "sp": "0x007FEFFC",
+          "registers": {
+            "operation": 7,
+            "object": 3,
+            "buffer": "0x00403124",
+            "length": 4,
+            "result": 4
+          },
+          "mode": "пользователь",
+          "owner": "T1/P1/AS1",
+          "storage": "кадр входа в защищённом стеке T1"
+        },
+        "savedKernel": {
+          "pc": "0x80001140",
+          "sp": "0x8000EFC0",
+          "addressSpace": "AS1",
+          "registers": {
+            "operation": 7,
+            "object": 3,
+            "buffer": "0x00403124",
+            "length": 4,
+            "result": null
+          },
+          "owner": "T1/P1",
+          "storage": "состояние ожидания T1 и её защищённый стек"
+        },
+        "irqFrame": {
+          "thread": "T2",
+          "owner": "T2/P2/AS2",
+          "mode": "пользователь",
+          "pc": "0x00501004",
+          "sp": "0x009FF000",
+          "addressSpace": "AS2",
+          "registers": {
+            "R1": 99,
+            "R2": 0
+          },
+          "storage": "кадр IRQ на защищённом стеке T2"
+        },
+        "threads": {
+          "T1": "исполняется",
+          "T2": "готов"
+        },
+        "ready": [
+          "T2"
+        ],
+        "waiting": [],
+        "buffer": [
+          42,
+          0,
+          0,
+          0
+        ],
+        "bufferAllowed": true,
+        "offset": 4,
+        "switches": 2,
+        "pte": "present",
+        "instructionResult": null
+      },
+      {
+        "title": "Функция вернулась вызывающему коду",
+        "explanation": "RETURN извлекает подготовленный CALL адрес 0x00401004 и продвигает SP. Байтам стека не приписывается автоматическое стирание.",
+        "cpu": "CPU0",
+        "process": "P1",
+        "thread": "T1",
+        "addressSpace": "AS1",
+        "mode": "пользователь",
+        "pc": "0x00401004",
+        "sp": "0x007FF000",
+        "registers": {
+          "operation": 7,
+          "object": 3,
+          "buffer": "0x00403124",
+          "length": 4,
+          "result": 4
+        },
+        "userStack": {
+          "0x007FEFFC": "0x00401004"
+        },
+        "savedUser": {
+          "pc": "0x00402010",
+          "sp": "0x007FEFFC",
+          "registers": {
+            "operation": 7,
+            "object": 3,
+            "buffer": "0x00403124",
+            "length": 4,
+            "result": 4
+          },
+          "mode": "пользователь",
+          "owner": "T1/P1/AS1",
+          "storage": "кадр входа в защищённом стеке T1"
+        },
+        "savedKernel": {
+          "pc": "0x80001140",
+          "sp": "0x8000EFC0",
+          "addressSpace": "AS1",
+          "registers": {
+            "operation": 7,
+            "object": 3,
+            "buffer": "0x00403124",
+            "length": 4,
+            "result": null
+          },
+          "owner": "T1/P1",
+          "storage": "состояние ожидания T1 и её защищённый стек"
+        },
+        "irqFrame": {
+          "thread": "T2",
+          "owner": "T2/P2/AS2",
+          "mode": "пользователь",
+          "pc": "0x00501004",
+          "sp": "0x009FF000",
+          "addressSpace": "AS2",
+          "registers": {
+            "R1": 99,
+            "R2": 0
+          },
+          "storage": "кадр IRQ на защищённом стеке T2"
+        },
+        "threads": {
+          "T1": "исполняется",
+          "T2": "готов"
+        },
+        "ready": [
+          "T2"
+        ],
+        "waiting": [],
+        "buffer": [
+          42,
+          0,
+          0,
+          0
+        ],
+        "bufferAllowed": true,
+        "offset": 4,
+        "switches": 2,
+        "pte": "present",
+        "instructionResult": null
+      }
+    ],
+    "fault": [
+      {
+        "title": "Загрузка по адресу, пока отсутствует отображение",
+        "explanation": "T1 собирается выполнить LOAD32 из разрешённой области. Данные уже доступны в известном физическом кадре; дисковый ввод не требуется.",
+        "cpu": "CPU0",
+        "process": "P1",
+        "thread": "T1",
+        "addressSpace": "AS1",
+        "mode": "пользователь",
+        "pc": "0x00401008",
+        "sp": "0x007FF000",
+        "registers": {
+          "address": "0x00403124",
+          "result": null
+        },
+        "userStack": {},
+        "savedUser": null,
+        "savedKernel": null,
+        "irqFrame": null,
+        "threads": {
+          "T1": "исполняется",
+          "T2": "готов"
+        },
+        "ready": [
+          "T2"
+        ],
+        "waiting": [],
+        "buffer": [],
+        "bufferAllowed": true,
+        "offset": 0,
+        "switches": 0,
+        "pte": "not-present",
+        "instructionResult": null
+      },
+      {
+        "title": "Сохранена именно повторяемая команда",
+        "explanation": "В модели исключение сохраняет PC самой LOAD32, а не следующей команды. Тот же поток входит в обработчик.",
+        "cpu": "CPU0",
+        "process": "P1",
+        "thread": "T1",
+        "addressSpace": "AS1",
+        "mode": "ядро",
+        "pc": "0x80005000",
+        "sp": "0x8000EFF0",
+        "registers": {
+          "address": "0x00403124",
+          "result": null
+        },
+        "userStack": {},
+        "savedUser": {
+          "pc": "0x00401008",
+          "sp": "0x007FF000",
+          "registers": {
+            "address": "0x00403124",
+            "result": null
+          },
+          "mode": "пользователь",
+          "owner": "T1/P1/AS1",
+          "storage": "кадр исключения в защищённом стеке T1"
+        },
+        "savedKernel": null,
+        "irqFrame": null,
+        "threads": {
+          "T1": "исполняется",
+          "T2": "готов"
+        },
+        "ready": [
+          "T2"
+        ],
+        "waiting": [],
+        "buffer": [],
+        "bufferAllowed": true,
+        "offset": 0,
+        "switches": 0,
+        "pte": "not-present",
+        "instructionResult": null
+      },
+      {
+        "title": "ОС проверила область и подготовила запись",
+        "explanation": "ОС допускает чтение и связывает страницу с PFN0x12A. Это выбранная ветвь исправления fault, не обещание любого fault.",
+        "cpu": "CPU0",
+        "process": "P1",
+        "thread": "T1",
+        "addressSpace": "AS1",
+        "mode": "ядро",
+        "pc": "0x80005000",
+        "sp": "0x8000EFF0",
+        "registers": {
+          "address": "0x00403124",
+          "result": null
+        },
+        "userStack": {},
+        "savedUser": {
+          "pc": "0x00401008",
+          "sp": "0x007FF000",
+          "registers": {
+            "address": "0x00403124",
+            "result": null
+          },
+          "mode": "пользователь",
+          "owner": "T1/P1/AS1",
+          "storage": "кадр исключения в защищённом стеке T1"
+        },
+        "savedKernel": null,
+        "irqFrame": null,
+        "threads": {
+          "T1": "исполняется",
+          "T2": "готов"
+        },
+        "ready": [
+          "T2"
+        ],
+        "waiting": [],
+        "buffer": [
+          42,
+          0,
+          0,
+          0
+        ],
+        "bufferAllowed": true,
+        "offset": 0,
+        "switches": 0,
+        "pte": "present: PFN0x12A, чтение разрешено",
+        "instructionResult": null
+      },
+      {
+        "title": "Возвращён тот же PC",
+        "explanation": "Возврат разрешает повторить LOAD32 после исправления; передачи другому потоку не было.",
+        "cpu": "CPU0",
+        "process": "P1",
+        "thread": "T1",
+        "addressSpace": "AS1",
+        "mode": "пользователь",
+        "pc": "0x00401008",
+        "sp": "0x007FF000",
+        "registers": {
+          "address": "0x00403124",
+          "result": null
+        },
+        "userStack": {},
+        "savedUser": {
+          "pc": "0x00401008",
+          "sp": "0x007FF000",
+          "registers": {
+            "address": "0x00403124",
+            "result": null
+          },
+          "mode": "пользователь",
+          "owner": "T1/P1/AS1",
+          "storage": "кадр исключения в защищённом стеке T1"
+        },
+        "savedKernel": null,
+        "irqFrame": null,
+        "threads": {
+          "T1": "исполняется",
+          "T2": "готов"
+        },
+        "ready": [
+          "T2"
+        ],
+        "waiting": [],
+        "buffer": [
+          42,
+          0,
+          0,
+          0
+        ],
+        "bufferAllowed": true,
+        "offset": 0,
+        "switches": 0,
+        "pte": "present: PFN0x12A, чтение разрешено",
+        "instructionResult": null
+      },
+      {
+        "title": "Команда завершена после повторения",
+        "explanation": "Четыре байта 2a000000 дают 42. Файловое чтение не выполнялось и его позиция не изменилась.",
+        "cpu": "CPU0",
+        "process": "P1",
+        "thread": "T1",
+        "addressSpace": "AS1",
+        "mode": "пользователь",
+        "pc": "0x0040100C",
+        "sp": "0x007FF000",
+        "registers": {
+          "address": "0x00403124",
+          "result": 42
+        },
+        "userStack": {},
+        "savedUser": {
+          "pc": "0x00401008",
+          "sp": "0x007FF000",
+          "registers": {
+            "address": "0x00403124",
+            "result": null
+          },
+          "mode": "пользователь",
+          "owner": "T1/P1/AS1",
+          "storage": "кадр исключения в защищённом стеке T1"
+        },
+        "savedKernel": null,
+        "irqFrame": null,
+        "threads": {
+          "T1": "исполняется",
+          "T2": "готов"
+        },
+        "ready": [
+          "T2"
+        ],
+        "waiting": [],
+        "buffer": [
+          42,
+          0,
+          0,
+          0
+        ],
+        "bufferAllowed": true,
+        "offset": 0,
+        "switches": 0,
+        "pte": "present: PFN0x12A, чтение разрешено",
+        "instructionResult": 42
+      }
+    ],
+    "bad-buffer": [
+      {
+        "title": "До вызова функции",
+        "explanation": "T1/P1/AS1. PC выбирает CALL helper, пользовательский SP0x007FF000. В память файла ещё не обращались.",
+        "cpu": "CPU0",
+        "process": "P1",
+        "thread": "T1",
+        "addressSpace": "AS1",
+        "mode": "пользователь",
+        "pc": "0x00401000",
+        "sp": "0x007FF000",
+        "registers": {
+          "operation": null,
+          "object": null,
+          "buffer": null,
+          "length": null,
+          "result": null
+        },
+        "userStack": {},
+        "savedUser": null,
+        "savedKernel": null,
+        "irqFrame": null,
+        "threads": {
+          "T1": "исполняется",
+          "T2": "готов"
+        },
+        "ready": [
+          "T2"
+        ],
+        "waiting": [],
+        "buffer": [],
+        "bufferAllowed": false,
+        "offset": 0,
+        "switches": 0,
+        "pte": "present",
+        "instructionResult": null
+      },
+      {
+        "title": "Обычный вызов функции",
+        "explanation": "Учебный ABI кладёт четырёхбайтовый адрес возврата в пользовательский стек. Режим и поток прежние.",
+        "cpu": "CPU0",
+        "process": "P1",
+        "thread": "T1",
+        "addressSpace": "AS1",
+        "mode": "пользователь",
+        "pc": "0x00402000",
+        "sp": "0x007FEFFC",
+        "registers": {
+          "operation": null,
+          "object": null,
+          "buffer": null,
+          "length": null,
+          "result": null
+        },
+        "userStack": {
+          "0x007FEFFC": "0x00401004"
+        },
+        "savedUser": null,
+        "savedKernel": null,
+        "irqFrame": null,
+        "threads": {
+          "T1": "исполняется",
+          "T2": "готов"
+        },
+        "ready": [
+          "T2"
+        ],
+        "waiting": [],
+        "buffer": [],
+        "bufferAllowed": false,
+        "offset": 0,
+        "switches": 0,
+        "pte": "present",
+        "instructionResult": null
+      },
+      {
+        "title": "Подготовлен системный запрос",
+        "explanation": "В учебном ABI READ имеет номер 7. Это не Linux ABI. Выбрано открытие 3, четыре байта, тот же общий пользовательский адрес.",
+        "cpu": "CPU0",
+        "process": "P1",
+        "thread": "T1",
+        "addressSpace": "AS1",
+        "mode": "пользователь",
+        "pc": "0x0040200C",
+        "sp": "0x007FEFFC",
+        "registers": {
+          "operation": 7,
+          "object": 3,
+          "buffer": "0x00403124",
+          "length": 4,
+          "result": null
+        },
+        "userStack": {
+          "0x007FEFFC": "0x00401004"
+        },
+        "savedUser": null,
+        "savedKernel": null,
+        "irqFrame": null,
+        "threads": {
+          "T1": "исполняется",
+          "T2": "готов"
+        },
+        "ready": [
+          "T2"
+        ],
+        "waiting": [],
+        "buffer": [],
+        "bufferAllowed": false,
+        "offset": 0,
+        "switches": 0,
+        "pte": "present",
+        "instructionResult": null
+      },
+      {
+        "title": "Вход в ядро, T1 остаётся исполнителем",
+        "explanation": "Кадр на защищённом стеке T1 хранит пользовательские PC/SP/аргументы. Отдельно выбран KSP модели; аппаратный автоматический набор этим рисунком не утверждается.",
+        "cpu": "CPU0",
+        "process": "P1",
+        "thread": "T1",
+        "addressSpace": "AS1",
+        "mode": "ядро",
+        "pc": "0x80001000",
+        "sp": "0x8000EFF0",
+        "registers": {
+          "operation": 7,
+          "object": 3,
+          "buffer": "0x00403124",
+          "length": 4,
+          "result": null
+        },
+        "userStack": {
+          "0x007FEFFC": "0x00401004"
+        },
+        "savedUser": {
+          "pc": "0x00402010",
+          "sp": "0x007FEFFC",
+          "registers": {
+            "operation": 7,
+            "object": 3,
+            "buffer": "0x00403124",
+            "length": 4,
+            "result": null
+          },
+          "mode": "пользователь",
+          "owner": "T1/P1/AS1",
+          "storage": "кадр входа в защищённом стеке T1"
+        },
+        "savedKernel": null,
+        "irqFrame": null,
+        "threads": {
+          "T1": "исполняется",
+          "T2": "готов"
+        },
+        "ready": [
+          "T2"
+        ],
+        "waiting": [],
+        "buffer": [],
+        "bufferAllowed": false,
+        "offset": 0,
+        "switches": 0,
+        "pte": "present",
+        "instructionResult": null
+      },
+      {
+        "title": "Проверка отвергла буфер",
+        "explanation": "В этой ветви весь диапазон заведомо недопустим и передача ещё не началась. Открытие и позиция остаются прежними.",
+        "cpu": "CPU0",
+        "process": "P1",
+        "thread": "T1",
+        "addressSpace": "AS1",
+        "mode": "ядро",
+        "pc": "0x80001100",
+        "sp": "0x8000EFF0",
+        "registers": {
+          "operation": 7,
+          "object": 3,
+          "buffer": "0x00403124",
+          "length": 4,
+          "result": {
+            "error": "BAD_BUFFER",
+            "transferred": 0
+          }
+        },
+        "userStack": {
+          "0x007FEFFC": "0x00401004"
+        },
+        "savedUser": {
+          "pc": "0x00402010",
+          "sp": "0x007FEFFC",
+          "registers": {
+            "operation": 7,
+            "object": 3,
+            "buffer": "0x00403124",
+            "length": 4,
+            "result": {
+              "error": "BAD_BUFFER",
+              "transferred": 0
+            }
+          },
+          "mode": "пользователь",
+          "owner": "T1/P1/AS1",
+          "storage": "кадр входа в защищённом стеке T1"
+        },
+        "savedKernel": null,
+        "irqFrame": null,
+        "threads": {
+          "T1": "исполняется",
+          "T2": "готов"
+        },
+        "ready": [
+          "T2"
+        ],
+        "waiting": [],
+        "buffer": [],
+        "bufferAllowed": false,
+        "offset": 0,
+        "switches": 0,
+        "pte": "present",
+        "instructionResult": null
+      },
+      {
+        "title": "Возврат из ядра",
+        "explanation": "Восстановлены PC0x00402010/SP0x007FEFFC пользователя. Результат операции передан по ABI модели; это та же T1.",
+        "cpu": "CPU0",
+        "process": "P1",
+        "thread": "T1",
+        "addressSpace": "AS1",
+        "mode": "пользователь",
+        "pc": "0x00402010",
+        "sp": "0x007FEFFC",
+        "registers": {
+          "operation": 7,
+          "object": 3,
+          "buffer": "0x00403124",
+          "length": 4,
+          "result": {
+            "error": "BAD_BUFFER",
+            "transferred": 0
+          }
+        },
+        "userStack": {
+          "0x007FEFFC": "0x00401004"
+        },
+        "savedUser": {
+          "pc": "0x00402010",
+          "sp": "0x007FEFFC",
+          "registers": {
+            "operation": 7,
+            "object": 3,
+            "buffer": "0x00403124",
+            "length": 4,
+            "result": {
+              "error": "BAD_BUFFER",
+              "transferred": 0
+            }
+          },
+          "mode": "пользователь",
+          "owner": "T1/P1/AS1",
+          "storage": "кадр входа в защищённом стеке T1"
+        },
+        "savedKernel": null,
+        "irqFrame": null,
+        "threads": {
+          "T1": "исполняется",
+          "T2": "готов"
+        },
+        "ready": [
+          "T2"
+        ],
+        "waiting": [],
+        "buffer": [],
+        "bufferAllowed": false,
+        "offset": 0,
+        "switches": 0,
+        "pte": "present",
+        "instructionResult": null
+      },
+      {
+        "title": "Функция вернулась вызывающему коду",
+        "explanation": "RETURN извлекает подготовленный CALL адрес 0x00401004 и продвигает SP. Байтам стека не приписывается автоматическое стирание.",
+        "cpu": "CPU0",
+        "process": "P1",
+        "thread": "T1",
+        "addressSpace": "AS1",
+        "mode": "пользователь",
+        "pc": "0x00401004",
+        "sp": "0x007FF000",
+        "registers": {
+          "operation": 7,
+          "object": 3,
+          "buffer": "0x00403124",
+          "length": 4,
+          "result": {
+            "error": "BAD_BUFFER",
+            "transferred": 0
+          }
+        },
+        "userStack": {
+          "0x007FEFFC": "0x00401004"
+        },
+        "savedUser": {
+          "pc": "0x00402010",
+          "sp": "0x007FEFFC",
+          "registers": {
+            "operation": 7,
+            "object": 3,
+            "buffer": "0x00403124",
+            "length": 4,
+            "result": {
+              "error": "BAD_BUFFER",
+              "transferred": 0
+            }
+          },
+          "mode": "пользователь",
+          "owner": "T1/P1/AS1",
+          "storage": "кадр входа в защищённом стеке T1"
+        },
+        "savedKernel": null,
+        "irqFrame": null,
+        "threads": {
+          "T1": "исполняется",
+          "T2": "готов"
+        },
+        "ready": [
+          "T2"
+        ],
+        "waiting": [],
+        "buffer": [],
+        "bufferAllowed": false,
+        "offset": 0,
+        "switches": 0,
+        "pte": "present",
+        "instructionResult": null
+      }
+    ]
+  },
+  "lifecycle": {
+    "none": [
+      {
+        "title": "P0 просит создать P1",
+        "explanation": "До создания P1 существует только запрос, принадлежащий инициатору.",
+        "parent": "P0",
+        "child": null,
+        "image": null,
+        "stage": "начало",
+        "privateObjects": [],
+        "publicObjects": [],
+        "result": null,
+        "execution": false
+      },
+      {
+        "title": "Операция создания удерживает частные объекты",
+        "explanation": "В этой модели память и запись ребёнка ещё не опубликованы. Их владелец — операция создания.",
+        "parent": "P0",
+        "child": null,
+        "image": null,
+        "stage": "подготовка",
+        "privateObjects": [
+          "запись P1",
+          "адресная среда AS1",
+          "стек T1"
+        ],
+        "publicObjects": [],
+        "result": null,
+        "execution": false
+      },
+      {
+        "title": "P1 опубликован с T1",
+        "explanation": "Передано владение обычному жизненному циклу; P0 удерживает предусмотренную ссылку ожидания.",
+        "parent": "P0",
+        "child": "P1",
+        "image": "launcher",
+        "stage": "готов",
+        "privateObjects": [],
+        "publicObjects": [
+          "P1",
+          "AS1",
+          "T1",
+          "ссылка P0→P1"
+        ],
+        "result": null,
+        "execution": false
+      },
+      {
+        "title": "В P1 заменён образ",
+        "explanation": "Идентичность P1 прежняя; новый код counter-reader получает явно переданные входы.",
+        "parent": "P0",
+        "child": "P1",
+        "image": "counter-reader",
+        "stage": "исполняется",
+        "privateObjects": [],
+        "publicObjects": [
+          "P1",
+          "AS1",
+          "T1",
+          "ссылка P0→P1"
+        ],
+        "result": null,
+        "execution": true
+      },
+      {
+        "title": "P1 прекратил исполнение",
+        "explanation": "В этой Unix-подобной модели остаётся запись результата до ожидания. Пользовательский код больше не исполняется.",
+        "parent": "P0",
+        "child": "P1",
+        "image": "counter-reader",
+        "stage": "завершён, результат ждёт",
+        "privateObjects": [],
+        "publicObjects": [
+          "результат P1",
+          "ссылка P0→P1"
+        ],
+        "result": 7,
+        "execution": false
+      },
+      {
+        "title": "P0 получил результат",
+        "explanation": "Получение завершения освобождает предусмотренную запись; закрыта собственная ссылка инициатора.",
+        "parent": "P0",
+        "child": "P1",
+        "image": "counter-reader",
+        "stage": "результат получен",
+        "privateObjects": [],
+        "publicObjects": [],
+        "result": 7,
+        "execution": false
+      }
+    ],
+    "load": [
+      {
+        "title": "P0 просит создать P1",
+        "explanation": "До создания P1 существует только запрос, принадлежащий инициатору.",
+        "parent": "P0",
+        "child": null,
+        "image": null,
+        "stage": "начало",
+        "privateObjects": [],
+        "publicObjects": [],
+        "result": null,
+        "execution": false
+      },
+      {
+        "title": "Операция создания удерживает частные объекты",
+        "explanation": "В этой модели память и запись ребёнка ещё не опубликованы. Их владелец — операция создания.",
+        "parent": "P0",
+        "child": null,
+        "image": null,
+        "stage": "подготовка",
+        "privateObjects": [
+          "запись P1",
+          "адресная среда AS1",
+          "стек T1"
+        ],
+        "publicObjects": [],
+        "result": null,
+        "execution": false
+      },
+      {
+        "title": "Образ не принят",
+        "explanation": "Выбранная модель возвращает ошибку до публикации ребёнка; операция создания освобождает всё своё частное состояние.",
+        "parent": "P0",
+        "child": null,
+        "image": null,
+        "stage": "отказ создания",
+        "privateObjects": [],
+        "publicObjects": [],
+        "result": "LOAD_FAILED",
+        "execution": false
+      }
+    ]
+  },
+  "service": {
+    "normal": [
+      {
+        "title": "Создан экземпляр",
+        "explanation": "Создание подтверждено; прикладная готовность ещё не принята.",
+        "process": "существует",
+        "ready": false,
+        "accepting": false,
+        "inflight": 0,
+        "durable": false,
+        "result": null
+      },
+      {
+        "title": "Служба готова",
+        "explanation": "Данные и среда приняты, вход новых запросов доступен.",
+        "process": "работает",
+        "ready": true,
+        "accepting": true,
+        "inflight": 0,
+        "durable": false,
+        "result": null
+      },
+      {
+        "title": "Приняты два запроса",
+        "explanation": "Обязательства уже существуют.",
+        "process": "работает",
+        "ready": true,
+        "accepting": true,
+        "inflight": 2,
+        "durable": false,
+        "result": null
+      },
+      {
+        "title": "Приём прекращён",
+        "explanation": "Готовность снята раньше завершения старой работы.",
+        "process": "работает",
+        "ready": false,
+        "accepting": false,
+        "inflight": 2,
+        "durable": false,
+        "result": null
+      },
+      {
+        "title": "Активная работа закончена",
+        "explanation": "Новые запросы не поступают, старые получили предусмотренный исход.",
+        "process": "работает",
+        "ready": false,
+        "accepting": false,
+        "inflight": 0,
+        "durable": false,
+        "result": null
+      },
+      {
+        "title": "Состояние синхронизировано",
+        "explanation": "Только при явных допущениях исправного поддерживаемого пути sync/flush подтверждена сохранность.",
+        "process": "работает",
+        "ready": false,
+        "accepting": false,
+        "inflight": 0,
+        "durable": true,
+        "result": null
+      },
+      {
+        "title": "Процесс завершён и результат получен",
+        "explanation": "Отправленная просьба и принятое завершение — разные ступени.",
+        "process": "завершён",
+        "ready": false,
+        "accepting": false,
+        "inflight": 0,
+        "durable": true,
+        "result": 0
+      }
+    ],
+    "prepare-fails": [
+      {
+        "title": "Создан экземпляр",
+        "explanation": "Создание подтверждено; прикладная готовность ещё не принята.",
+        "process": "существует",
+        "ready": false,
+        "accepting": false,
+        "inflight": 0,
+        "durable": false,
+        "result": null
+      },
+      {
+        "title": "Формат данных не принят",
+        "explanation": "В этой ветви файл неверен. Готовность не публикуется; повтор не обнуляет файл.",
+        "process": "завершён",
+        "ready": false,
+        "accepting": false,
+        "inflight": 0,
+        "durable": false,
+        "result": "BAD_FORMAT"
+      }
+    ],
+    "forced-stop": [
+      {
+        "title": "Создан экземпляр",
+        "explanation": "Создание подтверждено; прикладная готовность ещё не принята.",
+        "process": "существует",
+        "ready": false,
+        "accepting": false,
+        "inflight": 0,
+        "durable": false,
+        "result": null
+      },
+      {
+        "title": "Служба готова",
+        "explanation": "Данные и среда приняты, вход новых запросов доступен.",
+        "process": "работает",
+        "ready": true,
+        "accepting": true,
+        "inflight": 0,
+        "durable": false,
+        "result": null
+      },
+      {
+        "title": "Приняты два запроса",
+        "explanation": "Обязательства уже существуют.",
+        "process": "работает",
+        "ready": true,
+        "accepting": true,
+        "inflight": 2,
+        "durable": false,
+        "result": null
+      },
+      {
+        "title": "Приём прекращён",
+        "explanation": "Готовность снята раньше завершения старой работы.",
+        "process": "работает",
+        "ready": false,
+        "accepting": false,
+        "inflight": 2,
+        "durable": false,
+        "result": null
+      },
+      {
+        "title": "Предел ожидания исчерпан",
+        "explanation": "Модель принудительно завершает процесс. Неутверждённые результаты остаются неизвестными; сохранность не обещана.",
+        "process": "принудительно завершён",
+        "ready": false,
+        "accepting": false,
+        "inflight": 2,
+        "durable": false,
+        "result": "FORCED/UNKNOWN"
+      }
+    ]
+  },
+  "scheduling": {
+    "fcfs": {
+      "policy": "fcfs",
+      "quantum": 2,
+      "timeline": [
+        {
+          "time": 0,
+          "end": 1,
+          "running": "A",
+          "ready": [],
+          "waiting": [],
+          "remaining": {
+            "A": 8,
+            "B": 2,
+            "C": 1
+          },
+          "events": [
+            "A поступила",
+            "выбрана A"
+          ],
+          "pendingExpired": null,
+          "after": {
+            "A": {
+              "status": "исполняется",
+              "cpu": 1,
+              "readyWait": 0,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            },
+            "B": {
+              "status": "ещё не поступила",
+              "cpu": 0,
+              "readyWait": 0,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            },
+            "C": {
+              "status": "ещё не поступила",
+              "cpu": 0,
+              "readyWait": 0,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            }
+          }
+        },
+        {
+          "time": 1,
+          "end": 2,
+          "running": "A",
+          "ready": [
+            "B"
+          ],
+          "waiting": [],
+          "remaining": {
+            "A": 7,
+            "B": 2,
+            "C": 1
+          },
+          "events": [
+            "B поступила"
+          ],
+          "pendingExpired": null,
+          "after": {
+            "A": {
+              "status": "исполняется",
+              "cpu": 2,
+              "readyWait": 0,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            },
+            "B": {
+              "status": "готов",
+              "cpu": 0,
+              "readyWait": 1,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            },
+            "C": {
+              "status": "ещё не поступила",
+              "cpu": 0,
+              "readyWait": 0,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            }
+          }
+        },
+        {
+          "time": 2,
+          "end": 3,
+          "running": "A",
+          "ready": [
+            "B",
+            "C"
+          ],
+          "waiting": [],
+          "remaining": {
+            "A": 6,
+            "B": 2,
+            "C": 1
+          },
+          "events": [
+            "C поступила"
+          ],
+          "pendingExpired": null,
+          "after": {
+            "A": {
+              "status": "исполняется",
+              "cpu": 3,
+              "readyWait": 0,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            },
+            "B": {
+              "status": "готов",
+              "cpu": 0,
+              "readyWait": 2,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            },
+            "C": {
+              "status": "готов",
+              "cpu": 0,
+              "readyWait": 1,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            }
+          }
+        },
+        {
+          "time": 3,
+          "end": 4,
+          "running": "A",
+          "ready": [
+            "B",
+            "C"
+          ],
+          "waiting": [],
+          "remaining": {
+            "A": 5,
+            "B": 2,
+            "C": 1
+          },
+          "events": [],
+          "pendingExpired": null,
+          "after": {
+            "A": {
+              "status": "исполняется",
+              "cpu": 4,
+              "readyWait": 0,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            },
+            "B": {
+              "status": "готов",
+              "cpu": 0,
+              "readyWait": 3,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            },
+            "C": {
+              "status": "готов",
+              "cpu": 0,
+              "readyWait": 2,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            }
+          }
+        },
+        {
+          "time": 4,
+          "end": 5,
+          "running": "A",
+          "ready": [
+            "B",
+            "C"
+          ],
+          "waiting": [],
+          "remaining": {
+            "A": 4,
+            "B": 2,
+            "C": 1
+          },
+          "events": [],
+          "pendingExpired": null,
+          "after": {
+            "A": {
+              "status": "исполняется",
+              "cpu": 5,
+              "readyWait": 0,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            },
+            "B": {
+              "status": "готов",
+              "cpu": 0,
+              "readyWait": 4,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            },
+            "C": {
+              "status": "готов",
+              "cpu": 0,
+              "readyWait": 3,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            }
+          }
+        },
+        {
+          "time": 5,
+          "end": 6,
+          "running": "A",
+          "ready": [
+            "B",
+            "C"
+          ],
+          "waiting": [],
+          "remaining": {
+            "A": 3,
+            "B": 2,
+            "C": 1
+          },
+          "events": [],
+          "pendingExpired": null,
+          "after": {
+            "A": {
+              "status": "исполняется",
+              "cpu": 6,
+              "readyWait": 0,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            },
+            "B": {
+              "status": "готов",
+              "cpu": 0,
+              "readyWait": 5,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            },
+            "C": {
+              "status": "готов",
+              "cpu": 0,
+              "readyWait": 4,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            }
+          }
+        },
+        {
+          "time": 6,
+          "end": 7,
+          "running": "A",
+          "ready": [
+            "B",
+            "C"
+          ],
+          "waiting": [],
+          "remaining": {
+            "A": 2,
+            "B": 2,
+            "C": 1
+          },
+          "events": [],
+          "pendingExpired": null,
+          "after": {
+            "A": {
+              "status": "исполняется",
+              "cpu": 7,
+              "readyWait": 0,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            },
+            "B": {
+              "status": "готов",
+              "cpu": 0,
+              "readyWait": 6,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            },
+            "C": {
+              "status": "готов",
+              "cpu": 0,
+              "readyWait": 5,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            }
+          }
+        },
+        {
+          "time": 7,
+          "end": 8,
+          "running": "A",
+          "ready": [
+            "B",
+            "C"
+          ],
+          "waiting": [],
+          "remaining": {
+            "A": 1,
+            "B": 2,
+            "C": 1
+          },
+          "events": [],
+          "pendingExpired": null,
+          "after": {
+            "A": {
+              "status": "завершена",
+              "cpu": 8,
+              "readyWait": 0,
+              "blocked": 0,
+              "finish": 8,
+              "wake": null
+            },
+            "B": {
+              "status": "готов",
+              "cpu": 0,
+              "readyWait": 7,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            },
+            "C": {
+              "status": "готов",
+              "cpu": 0,
+              "readyWait": 6,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            }
+          }
+        },
+        {
+          "time": 8,
+          "end": 9,
+          "running": "B",
+          "ready": [
+            "C"
+          ],
+          "waiting": [],
+          "remaining": {
+            "A": 0,
+            "B": 2,
+            "C": 1
+          },
+          "events": [
+            "выбрана B"
+          ],
+          "pendingExpired": null,
+          "after": {
+            "A": {
+              "status": "завершена",
+              "cpu": 8,
+              "readyWait": 0,
+              "blocked": 0,
+              "finish": 8,
+              "wake": null
+            },
+            "B": {
+              "status": "исполняется",
+              "cpu": 1,
+              "readyWait": 7,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            },
+            "C": {
+              "status": "готов",
+              "cpu": 0,
+              "readyWait": 7,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            }
+          }
+        },
+        {
+          "time": 9,
+          "end": 10,
+          "running": "B",
+          "ready": [
+            "C"
+          ],
+          "waiting": [],
+          "remaining": {
+            "A": 0,
+            "B": 1,
+            "C": 1
+          },
+          "events": [],
+          "pendingExpired": null,
+          "after": {
+            "A": {
+              "status": "завершена",
+              "cpu": 8,
+              "readyWait": 0,
+              "blocked": 0,
+              "finish": 8,
+              "wake": null
+            },
+            "B": {
+              "status": "завершена",
+              "cpu": 2,
+              "readyWait": 7,
+              "blocked": 0,
+              "finish": 10,
+              "wake": null
+            },
+            "C": {
+              "status": "готов",
+              "cpu": 0,
+              "readyWait": 8,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            }
+          }
+        },
+        {
+          "time": 10,
+          "end": 11,
+          "running": "C",
+          "ready": [],
+          "waiting": [],
+          "remaining": {
+            "A": 0,
+            "B": 0,
+            "C": 1
+          },
+          "events": [
+            "выбрана C"
+          ],
+          "pendingExpired": null,
+          "after": {
+            "A": {
+              "status": "завершена",
+              "cpu": 8,
+              "readyWait": 0,
+              "blocked": 0,
+              "finish": 8,
+              "wake": null
+            },
+            "B": {
+              "status": "завершена",
+              "cpu": 2,
+              "readyWait": 7,
+              "blocked": 0,
+              "finish": 10,
+              "wake": null
+            },
+            "C": {
+              "status": "завершена",
+              "cpu": 1,
+              "readyWait": 8,
+              "blocked": 0,
+              "finish": 11,
+              "wake": null
+            }
+          }
+        }
+      ],
+      "jobs": [
+        {
+          "id": "A",
+          "arrival": 0,
+          "first": 0,
+          "finish": 8,
+          "response": 0,
+          "turnaround": 8,
+          "cpu": 8,
+          "readyWait": 0,
+          "blocked": 0
+        },
+        {
+          "id": "B",
+          "arrival": 1,
+          "first": 8,
+          "finish": 10,
+          "response": 7,
+          "turnaround": 9,
+          "cpu": 2,
+          "readyWait": 7,
+          "blocked": 0
+        },
+        {
+          "id": "C",
+          "arrival": 2,
+          "first": 10,
+          "finish": 11,
+          "response": 8,
+          "turnaround": 9,
+          "cpu": 1,
+          "readyWait": 8,
+          "blocked": 0
+        }
+      ],
+      "wall": 11,
+      "cpu": 11,
+      "switches": 2,
+      "assumptions": "1CPU, дискретные 1 мс; затраты управления 0; поступления → пробуждения → возврат после кванта; длительности CPU-порций и ожиданий заданы модели; число передач CPU относится к полезным работам, простой отдельно не считается."
+    },
+    "rr": {
+      "policy": "rr",
+      "quantum": 2,
+      "timeline": [
+        {
+          "time": 0,
+          "end": 1,
+          "running": "A",
+          "ready": [],
+          "waiting": [],
+          "remaining": {
+            "A": 8,
+            "B": 2,
+            "C": 1
+          },
+          "events": [
+            "A поступила",
+            "выбрана A"
+          ],
+          "pendingExpired": null,
+          "after": {
+            "A": {
+              "status": "исполняется",
+              "cpu": 1,
+              "readyWait": 0,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            },
+            "B": {
+              "status": "ещё не поступила",
+              "cpu": 0,
+              "readyWait": 0,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            },
+            "C": {
+              "status": "ещё не поступила",
+              "cpu": 0,
+              "readyWait": 0,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            }
+          }
+        },
+        {
+          "time": 1,
+          "end": 2,
+          "running": "A",
+          "ready": [
+            "B"
+          ],
+          "waiting": [],
+          "remaining": {
+            "A": 7,
+            "B": 2,
+            "C": 1
+          },
+          "events": [
+            "B поступила"
+          ],
+          "pendingExpired": "A",
+          "after": {
+            "A": {
+              "status": "готов",
+              "cpu": 2,
+              "readyWait": 0,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            },
+            "B": {
+              "status": "готов",
+              "cpu": 0,
+              "readyWait": 1,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            },
+            "C": {
+              "status": "ещё не поступила",
+              "cpu": 0,
+              "readyWait": 0,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            }
+          }
+        },
+        {
+          "time": 2,
+          "end": 3,
+          "running": "B",
+          "ready": [
+            "C",
+            "A"
+          ],
+          "waiting": [],
+          "remaining": {
+            "A": 6,
+            "B": 2,
+            "C": 1
+          },
+          "events": [
+            "C поступила",
+            "A в конец после кванта",
+            "выбрана B"
+          ],
+          "pendingExpired": null,
+          "after": {
+            "A": {
+              "status": "готов",
+              "cpu": 2,
+              "readyWait": 1,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            },
+            "B": {
+              "status": "исполняется",
+              "cpu": 1,
+              "readyWait": 1,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            },
+            "C": {
+              "status": "готов",
+              "cpu": 0,
+              "readyWait": 1,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            }
+          }
+        },
+        {
+          "time": 3,
+          "end": 4,
+          "running": "B",
+          "ready": [
+            "C",
+            "A"
+          ],
+          "waiting": [],
+          "remaining": {
+            "A": 6,
+            "B": 1,
+            "C": 1
+          },
+          "events": [],
+          "pendingExpired": null,
+          "after": {
+            "A": {
+              "status": "готов",
+              "cpu": 2,
+              "readyWait": 2,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            },
+            "B": {
+              "status": "завершена",
+              "cpu": 2,
+              "readyWait": 1,
+              "blocked": 0,
+              "finish": 4,
+              "wake": null
+            },
+            "C": {
+              "status": "готов",
+              "cpu": 0,
+              "readyWait": 2,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            }
+          }
+        },
+        {
+          "time": 4,
+          "end": 5,
+          "running": "C",
+          "ready": [
+            "A"
+          ],
+          "waiting": [],
+          "remaining": {
+            "A": 6,
+            "B": 0,
+            "C": 1
+          },
+          "events": [
+            "выбрана C"
+          ],
+          "pendingExpired": null,
+          "after": {
+            "A": {
+              "status": "готов",
+              "cpu": 2,
+              "readyWait": 3,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            },
+            "B": {
+              "status": "завершена",
+              "cpu": 2,
+              "readyWait": 1,
+              "blocked": 0,
+              "finish": 4,
+              "wake": null
+            },
+            "C": {
+              "status": "завершена",
+              "cpu": 1,
+              "readyWait": 2,
+              "blocked": 0,
+              "finish": 5,
+              "wake": null
+            }
+          }
+        },
+        {
+          "time": 5,
+          "end": 6,
+          "running": "A",
+          "ready": [],
+          "waiting": [],
+          "remaining": {
+            "A": 6,
+            "B": 0,
+            "C": 0
+          },
+          "events": [
+            "выбрана A"
+          ],
+          "pendingExpired": null,
+          "after": {
+            "A": {
+              "status": "исполняется",
+              "cpu": 3,
+              "readyWait": 3,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            },
+            "B": {
+              "status": "завершена",
+              "cpu": 2,
+              "readyWait": 1,
+              "blocked": 0,
+              "finish": 4,
+              "wake": null
+            },
+            "C": {
+              "status": "завершена",
+              "cpu": 1,
+              "readyWait": 2,
+              "blocked": 0,
+              "finish": 5,
+              "wake": null
+            }
+          }
+        },
+        {
+          "time": 6,
+          "end": 7,
+          "running": "A",
+          "ready": [],
+          "waiting": [],
+          "remaining": {
+            "A": 5,
+            "B": 0,
+            "C": 0
+          },
+          "events": [],
+          "pendingExpired": "A",
+          "after": {
+            "A": {
+              "status": "готов",
+              "cpu": 4,
+              "readyWait": 3,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            },
+            "B": {
+              "status": "завершена",
+              "cpu": 2,
+              "readyWait": 1,
+              "blocked": 0,
+              "finish": 4,
+              "wake": null
+            },
+            "C": {
+              "status": "завершена",
+              "cpu": 1,
+              "readyWait": 2,
+              "blocked": 0,
+              "finish": 5,
+              "wake": null
+            }
+          }
+        },
+        {
+          "time": 7,
+          "end": 8,
+          "running": "A",
+          "ready": [],
+          "waiting": [],
+          "remaining": {
+            "A": 4,
+            "B": 0,
+            "C": 0
+          },
+          "events": [
+            "A в конец после кванта",
+            "выбрана A"
+          ],
+          "pendingExpired": null,
+          "after": {
+            "A": {
+              "status": "исполняется",
+              "cpu": 5,
+              "readyWait": 3,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            },
+            "B": {
+              "status": "завершена",
+              "cpu": 2,
+              "readyWait": 1,
+              "blocked": 0,
+              "finish": 4,
+              "wake": null
+            },
+            "C": {
+              "status": "завершена",
+              "cpu": 1,
+              "readyWait": 2,
+              "blocked": 0,
+              "finish": 5,
+              "wake": null
+            }
+          }
+        },
+        {
+          "time": 8,
+          "end": 9,
+          "running": "A",
+          "ready": [],
+          "waiting": [],
+          "remaining": {
+            "A": 3,
+            "B": 0,
+            "C": 0
+          },
+          "events": [],
+          "pendingExpired": "A",
+          "after": {
+            "A": {
+              "status": "готов",
+              "cpu": 6,
+              "readyWait": 3,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            },
+            "B": {
+              "status": "завершена",
+              "cpu": 2,
+              "readyWait": 1,
+              "blocked": 0,
+              "finish": 4,
+              "wake": null
+            },
+            "C": {
+              "status": "завершена",
+              "cpu": 1,
+              "readyWait": 2,
+              "blocked": 0,
+              "finish": 5,
+              "wake": null
+            }
+          }
+        },
+        {
+          "time": 9,
+          "end": 10,
+          "running": "A",
+          "ready": [],
+          "waiting": [],
+          "remaining": {
+            "A": 2,
+            "B": 0,
+            "C": 0
+          },
+          "events": [
+            "A в конец после кванта",
+            "выбрана A"
+          ],
+          "pendingExpired": null,
+          "after": {
+            "A": {
+              "status": "исполняется",
+              "cpu": 7,
+              "readyWait": 3,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            },
+            "B": {
+              "status": "завершена",
+              "cpu": 2,
+              "readyWait": 1,
+              "blocked": 0,
+              "finish": 4,
+              "wake": null
+            },
+            "C": {
+              "status": "завершена",
+              "cpu": 1,
+              "readyWait": 2,
+              "blocked": 0,
+              "finish": 5,
+              "wake": null
+            }
+          }
+        },
+        {
+          "time": 10,
+          "end": 11,
+          "running": "A",
+          "ready": [],
+          "waiting": [],
+          "remaining": {
+            "A": 1,
+            "B": 0,
+            "C": 0
+          },
+          "events": [],
+          "pendingExpired": null,
+          "after": {
+            "A": {
+              "status": "завершена",
+              "cpu": 8,
+              "readyWait": 3,
+              "blocked": 0,
+              "finish": 11,
+              "wake": null
+            },
+            "B": {
+              "status": "завершена",
+              "cpu": 2,
+              "readyWait": 1,
+              "blocked": 0,
+              "finish": 4,
+              "wake": null
+            },
+            "C": {
+              "status": "завершена",
+              "cpu": 1,
+              "readyWait": 2,
+              "blocked": 0,
+              "finish": 5,
+              "wake": null
+            }
+          }
+        }
+      ],
+      "jobs": [
+        {
+          "id": "A",
+          "arrival": 0,
+          "first": 0,
+          "finish": 11,
+          "response": 0,
+          "turnaround": 11,
+          "cpu": 8,
+          "readyWait": 3,
+          "blocked": 0
+        },
+        {
+          "id": "B",
+          "arrival": 1,
+          "first": 2,
+          "finish": 4,
+          "response": 1,
+          "turnaround": 3,
+          "cpu": 2,
+          "readyWait": 1,
+          "blocked": 0
+        },
+        {
+          "id": "C",
+          "arrival": 2,
+          "first": 4,
+          "finish": 5,
+          "response": 2,
+          "turnaround": 3,
+          "cpu": 1,
+          "readyWait": 2,
+          "blocked": 0
+        }
+      ],
+      "wall": 11,
+      "cpu": 11,
+      "switches": 3,
+      "assumptions": "1CPU, дискретные 1 мс; затраты управления 0; поступления → пробуждения → возврат после кванта; длительности CPU-порций и ожиданий заданы модели; число передач CPU относится к полезным работам, простой отдельно не считается."
+    },
+    "io": {
+      "policy": "rr",
+      "quantum": 2,
+      "timeline": [
+        {
+          "time": 0,
+          "end": 1,
+          "running": "A",
+          "ready": [
+            "B"
+          ],
+          "waiting": [],
+          "remaining": {
+            "A": 2,
+            "B": 5,
+            "C": 1
+          },
+          "events": [
+            "A поступила",
+            "B поступила",
+            "выбрана A"
+          ],
+          "pendingExpired": null,
+          "after": {
+            "A": {
+              "status": "исполняется",
+              "cpu": 1,
+              "readyWait": 0,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            },
+            "B": {
+              "status": "готов",
+              "cpu": 0,
+              "readyWait": 1,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            },
+            "C": {
+              "status": "ещё не поступила",
+              "cpu": 0,
+              "readyWait": 0,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            }
+          }
+        },
+        {
+          "time": 1,
+          "end": 2,
+          "running": "A",
+          "ready": [
+            "B"
+          ],
+          "waiting": [],
+          "remaining": {
+            "A": 1,
+            "B": 5,
+            "C": 1
+          },
+          "events": [],
+          "pendingExpired": null,
+          "after": {
+            "A": {
+              "status": "ждёт",
+              "cpu": 2,
+              "readyWait": 0,
+              "blocked": 0,
+              "finish": null,
+              "wake": 5
+            },
+            "B": {
+              "status": "готов",
+              "cpu": 0,
+              "readyWait": 2,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            },
+            "C": {
+              "status": "ещё не поступила",
+              "cpu": 0,
+              "readyWait": 0,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            }
+          }
+        },
+        {
+          "time": 2,
+          "end": 3,
+          "running": "B",
+          "ready": [],
+          "waiting": [
+            {
+              "id": "A",
+              "wake": 5
+            }
+          ],
+          "remaining": {
+            "A": 1,
+            "B": 5,
+            "C": 1
+          },
+          "events": [
+            "выбрана B"
+          ],
+          "pendingExpired": null,
+          "after": {
+            "A": {
+              "status": "ждёт",
+              "cpu": 2,
+              "readyWait": 0,
+              "blocked": 1,
+              "finish": null,
+              "wake": 5
+            },
+            "B": {
+              "status": "исполняется",
+              "cpu": 1,
+              "readyWait": 2,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            },
+            "C": {
+              "status": "ещё не поступила",
+              "cpu": 0,
+              "readyWait": 0,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            }
+          }
+        },
+        {
+          "time": 3,
+          "end": 4,
+          "running": "B",
+          "ready": [],
+          "waiting": [
+            {
+              "id": "A",
+              "wake": 5
+            }
+          ],
+          "remaining": {
+            "A": 1,
+            "B": 4,
+            "C": 1
+          },
+          "events": [],
+          "pendingExpired": "B",
+          "after": {
+            "A": {
+              "status": "ждёт",
+              "cpu": 2,
+              "readyWait": 0,
+              "blocked": 2,
+              "finish": null,
+              "wake": 5
+            },
+            "B": {
+              "status": "готов",
+              "cpu": 2,
+              "readyWait": 2,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            },
+            "C": {
+              "status": "ещё не поступила",
+              "cpu": 0,
+              "readyWait": 0,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            }
+          }
+        },
+        {
+          "time": 4,
+          "end": 5,
+          "running": "C",
+          "ready": [
+            "B"
+          ],
+          "waiting": [
+            {
+              "id": "A",
+              "wake": 5
+            }
+          ],
+          "remaining": {
+            "A": 1,
+            "B": 3,
+            "C": 1
+          },
+          "events": [
+            "C поступила",
+            "B в конец после кванта",
+            "выбрана C"
+          ],
+          "pendingExpired": null,
+          "after": {
+            "A": {
+              "status": "ждёт",
+              "cpu": 2,
+              "readyWait": 0,
+              "blocked": 3,
+              "finish": null,
+              "wake": 5
+            },
+            "B": {
+              "status": "готов",
+              "cpu": 2,
+              "readyWait": 3,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            },
+            "C": {
+              "status": "завершена",
+              "cpu": 1,
+              "readyWait": 0,
+              "blocked": 0,
+              "finish": 5,
+              "wake": null
+            }
+          }
+        },
+        {
+          "time": 5,
+          "end": 6,
+          "running": "B",
+          "ready": [
+            "A"
+          ],
+          "waiting": [],
+          "remaining": {
+            "A": 1,
+            "B": 3,
+            "C": 0
+          },
+          "events": [
+            "A пробуждена",
+            "выбрана B"
+          ],
+          "pendingExpired": null,
+          "after": {
+            "A": {
+              "status": "готов",
+              "cpu": 2,
+              "readyWait": 1,
+              "blocked": 3,
+              "finish": null,
+              "wake": null
+            },
+            "B": {
+              "status": "исполняется",
+              "cpu": 3,
+              "readyWait": 3,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            },
+            "C": {
+              "status": "завершена",
+              "cpu": 1,
+              "readyWait": 0,
+              "blocked": 0,
+              "finish": 5,
+              "wake": null
+            }
+          }
+        },
+        {
+          "time": 6,
+          "end": 7,
+          "running": "B",
+          "ready": [
+            "A"
+          ],
+          "waiting": [],
+          "remaining": {
+            "A": 1,
+            "B": 2,
+            "C": 0
+          },
+          "events": [],
+          "pendingExpired": "B",
+          "after": {
+            "A": {
+              "status": "готов",
+              "cpu": 2,
+              "readyWait": 2,
+              "blocked": 3,
+              "finish": null,
+              "wake": null
+            },
+            "B": {
+              "status": "готов",
+              "cpu": 4,
+              "readyWait": 3,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            },
+            "C": {
+              "status": "завершена",
+              "cpu": 1,
+              "readyWait": 0,
+              "blocked": 0,
+              "finish": 5,
+              "wake": null
+            }
+          }
+        },
+        {
+          "time": 7,
+          "end": 8,
+          "running": "A",
+          "ready": [
+            "B"
+          ],
+          "waiting": [],
+          "remaining": {
+            "A": 1,
+            "B": 1,
+            "C": 0
+          },
+          "events": [
+            "B в конец после кванта",
+            "выбрана A"
+          ],
+          "pendingExpired": null,
+          "after": {
+            "A": {
+              "status": "завершена",
+              "cpu": 3,
+              "readyWait": 2,
+              "blocked": 3,
+              "finish": 8,
+              "wake": null
+            },
+            "B": {
+              "status": "готов",
+              "cpu": 4,
+              "readyWait": 4,
+              "blocked": 0,
+              "finish": null,
+              "wake": null
+            },
+            "C": {
+              "status": "завершена",
+              "cpu": 1,
+              "readyWait": 0,
+              "blocked": 0,
+              "finish": 5,
+              "wake": null
+            }
+          }
+        },
+        {
+          "time": 8,
+          "end": 9,
+          "running": "B",
+          "ready": [],
+          "waiting": [],
+          "remaining": {
+            "A": 0,
+            "B": 1,
+            "C": 0
+          },
+          "events": [
+            "выбрана B"
+          ],
+          "pendingExpired": null,
+          "after": {
+            "A": {
+              "status": "завершена",
+              "cpu": 3,
+              "readyWait": 2,
+              "blocked": 3,
+              "finish": 8,
+              "wake": null
+            },
+            "B": {
+              "status": "завершена",
+              "cpu": 5,
+              "readyWait": 4,
+              "blocked": 0,
+              "finish": 9,
+              "wake": null
+            },
+            "C": {
+              "status": "завершена",
+              "cpu": 1,
+              "readyWait": 0,
+              "blocked": 0,
+              "finish": 5,
+              "wake": null
+            }
+          }
+        }
+      ],
+      "jobs": [
+        {
+          "id": "A",
+          "arrival": 0,
+          "first": 0,
+          "finish": 8,
+          "response": 0,
+          "turnaround": 8,
+          "cpu": 3,
+          "readyWait": 2,
+          "blocked": 3
+        },
+        {
+          "id": "B",
+          "arrival": 0,
+          "first": 2,
+          "finish": 9,
+          "response": 2,
+          "turnaround": 9,
+          "cpu": 5,
+          "readyWait": 4,
+          "blocked": 0
+        },
+        {
+          "id": "C",
+          "arrival": 4,
+          "first": 4,
+          "finish": 5,
+          "response": 0,
+          "turnaround": 1,
+          "cpu": 1,
+          "readyWait": 0,
+          "blocked": 0
+        }
+      ],
+      "wall": 9,
+      "cpu": 9,
+      "switches": 5,
+      "assumptions": "1CPU, дискретные 1 мс; затраты управления 0; поступления → пробуждения → возврат после кванта; длительности CPU-порций и ожиданий заданы модели; число передач CPU относится к полезным работам, простой отдельно не считается."
+    }
+  },
+  "smp": {
+    "both": {
+      "affinity": "both",
+      "allowed": [
+        0,
+        1
+      ],
+      "timeline": [
+        {
+          "time": 0,
+          "end": 1,
+          "cpus": [
+            "A",
+            "B"
+          ],
+          "remaining": {
+            "A": 5,
+            "B": 5
+          }
+        },
+        {
+          "time": 1,
+          "end": 2,
+          "cpus": [
+            "A",
+            "B"
+          ],
+          "remaining": {
+            "A": 4,
+            "B": 4
+          }
+        },
+        {
+          "time": 2,
+          "end": 3,
+          "cpus": [
+            "A",
+            "B"
+          ],
+          "remaining": {
+            "A": 3,
+            "B": 3
+          }
+        },
+        {
+          "time": 3,
+          "end": 4,
+          "cpus": [
+            "A",
+            "B"
+          ],
+          "remaining": {
+            "A": 2,
+            "B": 2
+          }
+        },
+        {
+          "time": 4,
+          "end": 5,
+          "cpus": [
+            "A",
+            "B"
+          ],
+          "remaining": {
+            "A": 1,
+            "B": 1
+          }
+        },
+        {
+          "time": 5,
+          "end": 6,
+          "cpus": [
+            "A",
+            "B"
+          ],
+          "remaining": {
+            "A": 0,
+            "B": 0
+          }
+        }
+      ],
+      "wall": 6,
+      "cpu": 12,
+      "utilization": 1,
+      "assumptions": "2 равных CPU, A=B=6 мс, затраты 0, разрешённый набор одинаков у A/B."
+    },
+    "cpu0": {
+      "affinity": "cpu0",
+      "allowed": [
+        0
+      ],
+      "timeline": [
+        {
+          "time": 0,
+          "end": 1,
+          "cpus": [
+            "A",
+            null
+          ],
+          "remaining": {
+            "A": 5,
+            "B": 6
+          }
+        },
+        {
+          "time": 1,
+          "end": 2,
+          "cpus": [
+            "A",
+            null
+          ],
+          "remaining": {
+            "A": 4,
+            "B": 6
+          }
+        },
+        {
+          "time": 2,
+          "end": 3,
+          "cpus": [
+            "A",
+            null
+          ],
+          "remaining": {
+            "A": 3,
+            "B": 6
+          }
+        },
+        {
+          "time": 3,
+          "end": 4,
+          "cpus": [
+            "A",
+            null
+          ],
+          "remaining": {
+            "A": 2,
+            "B": 6
+          }
+        },
+        {
+          "time": 4,
+          "end": 5,
+          "cpus": [
+            "A",
+            null
+          ],
+          "remaining": {
+            "A": 1,
+            "B": 6
+          }
+        },
+        {
+          "time": 5,
+          "end": 6,
+          "cpus": [
+            "A",
+            null
+          ],
+          "remaining": {
+            "A": 0,
+            "B": 6
+          }
+        },
+        {
+          "time": 6,
+          "end": 7,
+          "cpus": [
+            "B",
+            null
+          ],
+          "remaining": {
+            "A": 0,
+            "B": 5
+          }
+        },
+        {
+          "time": 7,
+          "end": 8,
+          "cpus": [
+            "B",
+            null
+          ],
+          "remaining": {
+            "A": 0,
+            "B": 4
+          }
+        },
+        {
+          "time": 8,
+          "end": 9,
+          "cpus": [
+            "B",
+            null
+          ],
+          "remaining": {
+            "A": 0,
+            "B": 3
+          }
+        },
+        {
+          "time": 9,
+          "end": 10,
+          "cpus": [
+            "B",
+            null
+          ],
+          "remaining": {
+            "A": 0,
+            "B": 2
+          }
+        },
+        {
+          "time": 10,
+          "end": 11,
+          "cpus": [
+            "B",
+            null
+          ],
+          "remaining": {
+            "A": 0,
+            "B": 1
+          }
+        },
+        {
+          "time": 11,
+          "end": 12,
+          "cpus": [
+            "B",
+            null
+          ],
+          "remaining": {
+            "A": 0,
+            "B": 0
+          }
+        }
+      ],
+      "wall": 12,
+      "cpu": 12,
+      "utilization": 0.5,
+      "assumptions": "2 равных CPU, A=B=6 мс, затраты 0, разрешённый набор одинаков у A/B."
+    }
+  }
+}

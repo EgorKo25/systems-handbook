@@ -1,0 +1,97 @@
+LOGIC/CPU · источники и проверенные примеры · 1 ноября 2026
+
+Это перечень первоисточников для глав 01–05,07–12 и собственных конечных
+моделей в labs/logic. Копии чужих книг/PDF в публичный том не включены.
+Таблицы/трассы М32 и рисунки написаны для этого тома. Чтение документа,
+арифметическая сборка слова, запуск JS и измерение аппаратуры различаются.
+
+1. RISC-V Ratified Specifications Library, снимок v20260120.
+   RV32I v2.1: регистры/x0/PC, U/I/S/B/J поля, LUI/LW/ADDI/SW,
+   BNE/JAL/JALR, ECALL/EBREAK, адресная арифметика и условия misaligned.
+   https://docs.riscv.org/reference/isa/v20260120/unpriv/rv32.html
+   Пять основных слов независимо собраны из полей в tests/logic-model.js.
+   Дополнительные слова loop/call собраны другими конструкторами в
+   tests/logic-scenes.js и затем исполнены ограниченным scenarios.js.
+   Настоящий RISC-V процессор или native assembler здесь не запускался.
+
+2. RISC-V F v2.2 и Zicntr/Zihpm v2.0 в том же снимке.
+   https://docs.riscv.org/reference/isa/v20260120/unpriv/f-st-ext.html
+   https://docs.riscv.org/reference/isa/v20260120/unpriv/counters.html
+   F использован как архитектурная ссылка на отдельное расширение.
+   Основная М32 выполняет только целые операции, а float32 в model.js
+   проверяет представление средствами DataView. cycle/time/instret не
+   реализованы аппаратными счётчиками модели; EBREAK не увеличивает instret.
+
+3. RISC-V ELF psABI, Integer Calling Convention и Stack Alignment.
+   https://riscv-non-isa.github.io/riscv-elf-psabi-doc/
+   Проверены роли ra/sp/a0…a7/s0 и 16-байтное выравнивание обычного профиля.
+   Сцена вызовов — отдельный код с собственными адресами, не исходный М32.
+   Указанный профиль не распространяется автоматически на RV32E/иные ABI.
+
+4. Texas Instruments SN74HC00, SCLS181H, revised August 2021.
+   https://www.ti.com/lit/ds/symlink/sn74hc00.pdf
+   Прочитаны условия §6.3/§6.5/§7. При VCC=4.5 V: VIHmin=3.15 V,
+   VILmax=1.35 V; пример −40…85 °C, |IO|=4 mA: VOHmin=3.84 V/VOLmax=0.33 V.
+   Отсюда вычислены запасы 0.69 V/1.02 V. Это чтение таблиц, не измерение
+   микросхемы и не перенос этих напряжений на кристалл CPU.
+
+5. Toshiba Basics of CMOS Logic ICs, Application Note, 2021-01-31.
+   https://toshiba.semicon-storage.com/info/TC4030BF_application_note_en_20210131_AKX00113.pdf?did=68970&prodName=TC4030BF
+   Использованы §2.2–2.4: inverter, NAND fig.2.17, decoder/multiplexer,
+   latch/flip-flop. Рисунок NAND в книге — собственные подписанные пути,
+   а cmos() проверяет устойчивые идеальные состояния NOT/NAND/NOR.
+   Рисунок/таблица не рассчитывают нелинейный ток перехода.
+
+6. TI SCAA035B, CMOS Power Consumption and Cpd Calculation.
+   https://www.ti.com/lit/an/scaa035b/scaa035b.pdf
+   Toshiba: Effects of load capacitance.
+   https://toshiba.semicon-storage.com/ap-en/semiconductor/knowledge/e-learning/cmos-logic-usage-considerations/usage-4.html
+   Расчёт RC с R=10000 Ω, C=10/20 fF, VDD=1 V — отдельное линейное приближение.
+   Энергия CV² относится к полному циклу 0→1→0 одного узла. α в мощности
+   определяется числом переходов 0→1 за такт; внутренние узлы/утечки
+   и короткий сквозной ток не включены. Электрический опыт не проводился.
+
+7. TI SDYA006, Metastable Response in 5-V Logic Circuits.
+   https://www.ti.com/lit/an/sdya006/sdya006.pdf
+   Toshiba: Countermeasures for Metastability.
+   https://toshiba.semicon-storage.com/us/semiconductor/knowledge/e-learning/cmos-logic-usage-considerations/usage-11.html
+   Использованы setup/hold и принцип дополнительного времени разрешения.
+   Временные числа главы 05 заданы для расчёта, не взяты как характеристики
+   произвольного регистра CPU. Вероятность/MTBF не измеряются и не выдаются
+   схемой. Пересылка многобитного слова требует собственного протокола.
+
+8. Unicode 17.0.0 Core Specification, chapter 3 §3.9, tables 3-6/3-7.
+   https://www.unicode.org/versions/Unicode17.0.0/core-spec/chapter-3/
+   Использованы допустимые UTF-8 последовательности и недопустимые случаи.
+   AЯ = 41 D0 AF, 🙂 = F0 9F 99 82; для Я разобраны полезные биты.
+   Байтовый порядок многобайтного целого не переставляет UTF-8 байты.
+
+9. ECMA-262, ECMAScript 2026, NumericToRawBytes/float32.
+   https://tc39.es/ecma262/2026/multipage/structured-data.html#sec-numerictorawbytes
+   Проверено правило roundTiesToEven и допустимость выбранного NaN-кода.
+   Тесты сравнивают 1.5, 0.1, −0, Infinity, минимальный subnormal и границу 2^24.
+   IEEE 754 целиком не объявлен прочитанным или включённым в книгу.
+
+10. Документация разработчиков RISC-V BOOM, страницы, прочитанные 01.11.2026.
+    https://docs.boom-core.org/en/latest/sections/rename-stage.html
+    https://docs.boom-core.org/en/latest/sections/reorder-buffer.html
+    https://docs.boom-core.org/en/latest/sections/branch-prediction/backing-predictor.html
+    https://docs.boom-core.org/en/latest/sections/branch-prediction/nl-predictor.html
+    Источник разделения RAT/ready/free-list/ROB, commit/store drain и
+    направления/цели прогноза. Наша A/B/C/D, P2/P10/P11/P12, список событий
+    и простой двухбитный counter — оригинальный учебный профиль.
+    BOOM в браузере не исполняется; полный speculative/coherence engine
+    не заявлен. otherCoreObserved=null означает отсутствие такого наблюдателя.
+
+Собственные проверки (команды из корня клона, с заранее доступными интерпретаторами):
+  node computer-architecture/tests/logic-model.js
+  node computer-architecture/tests/logic-scenes.js
+  python3 computer-architecture/tests/logic-source.py
+Дополнительная проверка интерфейса:
+  tests/logic-ui.cjs требует Node.js 20+, уже установленный Playwright и Chromium;
+  CHROMIUM_BIN выбирает локальный браузер, LOGIC_REPORT/LOGIC_SCREENSHOT
+  направляют результат в собственный приватный каталог. Скрипт ничего
+  не загружает из сети и использует новый временный browser context.
+
+Приватные отчёты переданы координатору отдельно. Глобальный render/reader,
+Safari и экспорт всего тома не объявляются проверками автора LOGIC.

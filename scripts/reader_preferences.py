@@ -85,6 +85,31 @@ let selectedTheme=readPreset(),theme=presets[selectedTheme].mode,appearance=read
 let oldSize=null;
 if(oldBook)try{const value=JSON.parse(localStorage.getItem(oldBook)||'null')?.size;if(typeof value==='number'&&Number.isFinite(value)&&value>=16&&value<=26)oldSize=value;}catch{}
 const subscribers=new Set();
+// Only maintained volume readers forward appearance to this one verified lab.
+// The laboratory reads these scalars and never writes reader preferences.
+function memoryLabHref(href,base,preset,warmth){
+ if(typeof href!=='string'||!validPreset(preset)||!Number.isFinite(warmth)||warmth<0||warmth>100)return null;
+ let target,expected,reader;
+ try{reader=new URL(base);if(!['file:','http:','https:'].includes(reader.protocol))return null;
+  expected=new URL('../operating-systems/labs/memory-io/index.html',reader);
+  target=new URL(href,reader);
+ }catch{return null;}
+ if(target.protocol!==expected.protocol||target.host!==expected.host||target.pathname!==expected.pathname||target.username||target.password)return null;
+ // Keep every unrelated query pair verbatim, including order/duplicates/encoding.
+ const pairs=target.search?target.search.slice(1).split('&'):[];
+ const kept=pairs.filter(pair=>{let name=pair.split('=',1)[0];try{name=decodeURIComponent(name.replace(/\+/g,' '));}catch{}return name!=='readerTheme'&&name!=='warmth';});
+ kept.push('readerTheme='+encodeURIComponent(preset),'warmth='+encodeURIComponent(String(warmth)));
+ target.search='?'+kept.join('&');return target.href;
+}
+function decorateMemoryLabLinks(root=document){
+ if(!oldBook||typeof URL!=='function'||!window.location?.href)return;
+ const selector='a[href*="memory-io"]';
+ const decorate=anchor=>{const href=anchor.getAttribute('href'),next=memoryLabHref(href,window.location.href,selectedTheme,appearance.warmth);
+  if(next!==null&&next!==href)anchor.setAttribute('href',next);
+ };
+ if(root.matches?.(selector))decorate(root);
+ if(root.querySelectorAll)for(const anchor of root.querySelectorAll(selector))decorate(anchor);
+}
 function paint(){
  const html=document.documentElement;
  html.dataset.theme=theme;
@@ -107,6 +132,7 @@ function paint(){
   button.removeAttribute('aria-pressed');
   button.setAttribute('aria-label','Выбрать тему оформления');
  }
+ decorateMemoryLabLinks();
 }
 function notify(){paint();for(const update of subscribers)update(theme,{...appearance});}
 function applyPreset(value){if(!validPreset(value))return selectedTheme;selectedTheme=value;theme=presets[value].mode;notify();return selectedTheme;}
@@ -139,7 +165,13 @@ window.addEventListener('pageshow',()=>{
  try{localStorage.getItem(key);}catch{notify();return;}
  selectedTheme=readPreset();theme=presets[selectedTheme].mode;appearance=readAppearance();notify();
 });
-function ready(){paint();}
+function ready(){
+ paint();
+ if(oldBook&&typeof MutationObserver==='function')new MutationObserver(records=>{
+  for(const record of records)if(record.type==='attributes')decorateMemoryLabLinks(record.target);
+   else for(const node of record.addedNodes)decorateMemoryLabLinks(node);
+ }).observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['href']});
+}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ready,{once:true});else ready();
 })();'''
 

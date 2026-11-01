@@ -94,5 +94,21 @@
     "words": 19165,
     "chapters": 15,
     "terms": 183
+  },
+  {
+    "slug": "computer-architecture",
+    "title": "Архитектура компьютера: от сигнала до исполняемой машины",
+    "volume": "XXIX",
+    "words": 58000,
+    "chapters": 36,
+    "terms": 210
+  },
+  {
+    "slug": "operating-systems",
+    "title": "Операционные системы: от аппаратных механизмов до управляемой программы",
+    "volume": "XXX",
+    "words": 86052,
+    "chapters": 38,
+    "terms": 268
   }
 ]

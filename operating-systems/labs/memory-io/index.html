@@ -1,0 +1,125 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Память и I/O — изменяемые модели</title><script>
+// Read-only bridge: these three shared settings are never migrated or written.
+// Eight coordinated palettes mirror the book preferences; model storage is separate.
+(() => {
+'use strict';
+const presets={
+ paper:{name:'Бумага',mode:'light',description:'Светлая бумага и спокойный зелёный акцент',supportsWarmth:true,
+  neutral:{bg:'#f4f1e9',paper:'#fffcf5',soft:'#e8f2ec',text:'#202d34',muted:'#5a696e',line:'#d9ded8',accent:'#0c6b63',code:'#182b35','code-text':'#e3eeef',shadow:'#17332b12'},
+  warm:{bg:'#f4ecde',paper:'#fff7e9',soft:'#eee4d0',text:'#302c25',muted:'#70634f',line:'#ddd1bd',accent:'#79603b',code:'#2b2822','code-text':'#f3ead9',shadow:'#24180e1c'}
+ },
+ night:{name:'Ночь',mode:'dark',description:'Тёмный сине-серый фон и мягкий светлый текст',supportsWarmth:true,
+  neutral:{bg:'#142027',paper:'#1c2a31',soft:'#243d3b',text:'#e4e8e1',muted:'#b4c1be',line:'#3b4c51',accent:'#85d2bd',code:'#101b21','code-text':'#e4eeee',shadow:'#17332b12'},
+  warm:{bg:'#24211d',paper:'#2d2923',soft:'#3a332a',text:'#eee7d9',muted:'#c2b8a8',line:'#51483c',accent:'#d8be8b',code:'#191714','code-text':'#ece5d8',shadow:'#130f092e'}
+ },
+ white:{name:'Белая',mode:'light',description:'Чистый белый фон и чёрный текст',supportsWarmth:true,
+  neutral:{bg:'#ffffff',paper:'#ffffff',soft:'#ffffff',text:'#000000',muted:'#333333',line:'#b3b3b3',accent:'#000000',code:'#ffffff','code-text':'#000000',shadow:'#0000000f'},
+  warm:{bg:'#f7efdd',paper:'#fff7e7',soft:'#eee3cd',text:'#2a251d',muted:'#6c5b42',line:'#cab99c',accent:'#6f4f2e',code:'#f1e6d0','code-text':'#292319',shadow:'#35251314'}
+ },
+ black:{name:'Чёрная',mode:'dark',description:'Чистый чёрный фон и белый текст',supportsWarmth:true,
+  neutral:{bg:'#000000',paper:'#000000',soft:'#000000',text:'#ffffff',muted:'#cccccc',line:'#666666',accent:'#ffffff',code:'#000000','code-text':'#ffffff',shadow:'#00000000'},
+  warm:{bg:'#100d08',paper:'#17120c',soft:'#211b12',text:'#fff0d5',muted:'#d1bfa1',line:'#665339',accent:'#f1d3a0',code:'#0c0905','code-text':'#fff0d5',shadow:'#00000000'}
+ },
+ sepia:{name:'Сепия',mode:'light',description:'Кремовая страница, тёплые коричневые оттенки',supportsWarmth:true,
+  neutral:{bg:'#f1e5cc',paper:'#fbf0d9',soft:'#e8dac0',text:'#362b1e',muted:'#69573f',line:'#cdbb9c',accent:'#75502b',code:'#33291f','code-text':'#f4e6cd',shadow:'#49341b1a'},
+  warm:{bg:'#eddfc0',paper:'#f7e9ca',soft:'#e5d4b0',text:'#342719',muted:'#655037',line:'#cab58d',accent:'#704522',code:'#302419','code-text':'#f3e3c4',shadow:'#49341b20'}
+ },
+ graphite:{name:'Графит',mode:'dark',description:'Нейтральный тёмно-серый фон без синевы',supportsWarmth:true,
+  neutral:{bg:'#202020',paper:'#292929',soft:'#343434',text:'#eeeeee',muted:'#bfbfbf',line:'#505050',accent:'#d6c59d',code:'#171717','code-text':'#eeeeee',shadow:'#00000030'},
+  warm:{bg:'#27231e',paper:'#302a23',soft:'#3c342a',text:'#f0e8da',muted:'#c9bcaa',line:'#564b3d',accent:'#dfc397',code:'#1b1713','code-text':'#efe5d5',shadow:'#100c0833'}
+ },
+ midnight:{name:'Полночь',mode:'dark',description:'Глубокий тёмно-синий фон и светлый голубой акцент',supportsWarmth:true,
+  neutral:{bg:'#111b2d',paper:'#18253b',soft:'#23344d',text:'#e5edf8',muted:'#b5c5dc',line:'#425775',accent:'#a2c9fa',code:'#0c1422','code-text':'#e4edfa',shadow:'#030a1633'},
+  warm:{bg:'#211f27',paper:'#2b2933',soft:'#39343e',text:'#eee7e6',muted:'#c5babc',line:'#564b59',accent:'#d1bbdf',code:'#18161d','code-text':'#eee5e9',shadow:'#100b1338'}
+ },
+ forest:{name:'Лес',mode:'dark',description:'Приглушённые зелёные поверхности и мягкий светлый текст',supportsWarmth:true,
+  neutral:{bg:'#15231d',paper:'#1d2d25',soft:'#2b3d31',text:'#e5eddf',muted:'#bacab5',line:'#485e4a',accent:'#b7d99f',code:'#101a15','code-text':'#e3efdd',shadow:'#08130b30'},
+  warm:{bg:'#23261d',paper:'#2d3023',soft:'#3b3e2c',text:'#eeeedd',muted:'#c7c9af',line:'#555b40',accent:'#d0d69f',code:'#181b13','code-text':'#ebeed8',shadow:'#0e13082e'}
+ }
+};
+const keys=['library-theme-v1','library-reader-preset-v1','library-reader-appearance-v1'];
+const validPreset=value=>typeof value==='string'&&Object.hasOwn(presets,value);
+const read=key=>{try{return localStorage.getItem(key);}catch{return null;}};
+const finiteWarmth=value=>typeof value==='number'&&Number.isFinite(value)&&value>=0&&value<=100;
+function channels(value){return value.slice(1).match(/.{2}/g).map(part=>parseInt(part,16));}
+function mixed(from,to,amount){const a=channels(from),b=channels(to);return '#'+a.map((v,i)=>Math.round(v+(b[i]-v)*amount).toString(16).padStart(2,'0')).join('');}
+function luminance(colour){const rgb=channels(colour).map(x=>{const c=x/255;return c<=.04045?c/12.92:((c+.055)/1.055)**2.4;});return .2126*rgb[0]+.7152*rgb[1]+.0722*rgb[2];}
+function paint(){
+ const mode=read(keys[0])==='light'?'light':'dark',stored=read(keys[1]);
+ let preset=validPreset(stored)&&presets[stored].mode===mode?stored:mode==='light'?'paper':'night',warmth=0;
+ const raw=read(keys[2]);
+ if(raw&&raw.length<=4096)try{const a=JSON.parse(raw);if(a&&finiteWarmth(a.warmth))warmth=a.warmth;}catch{}
+ // Query values transport only validated scalars across separate file:// storage areas.
+ try{const q=new URLSearchParams(window.location.search),p=q.get('readerTheme'),w=q.get('warmth');
+  if(validPreset(p))preset=p;
+  if(w!==null&&w.trim()!==''&&w.length<=32&&finiteWarmth(Number(w)))warmth=Number(w);
+ }catch{}
+ const palette=presets[preset],root=document.documentElement,amount=warmth/100;
+ root.dataset.readerTheme=preset;root.dataset.theme=palette.mode;
+ root.style.setProperty('color-scheme',palette.mode);
+ const colours={};for(const [name,source]of Object.entries({bg:'bg',fg:'text',panel:'paper',line:'line',muted:'muted',accent:'accent'})){
+  colours[name]=mixed(palette.neutral[source],palette.warm[source],amount);root.style.setProperty('--'+name,colours[name]);
+ }
+ // Choose the greater of black/white contrast against the actual mixed button fill.
+ const l=luminance(colours.accent),black=(l+.05)/.05,white=1.05/(l+.05);
+ root.style.setProperty('--button-ink',black>=white?'#000000':'#ffffff');
+ root.style.setProperty('--danger',palette.mode==='dark'?'#ffb2ab':'#8e2525');
+}
+paint();
+window.addEventListener('storage',event=>{if(event.key===null||keys.includes(event.key))paint();});
+window.addEventListener('pageshow',paint);
+})();
+</script><style>
+:root{color-scheme:dark;--bg:#142027;--fg:#e4e8e1;--panel:#1c2a31;--line:#3b4c51;--accent:#85d2bd;--muted:#b4c1be;--button-ink:#000000;--danger:#ffb2ab}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:17px/1.65 system-ui,sans-serif}main{max-width:950px;margin:auto;padding:22px 18px 60px}a{color:var(--accent)}h1{font-size:clamp(1.65rem,5vw,2.3rem);line-height:1.2}h2{line-height:1.3}section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;margin:26px 0}label{display:flex;flex-direction:column;gap:5px;min-width:0}form{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}button,input,select{font:inherit;min-height:46px;border:1px solid var(--line);border-radius:8px;padding:8px 12px;max-width:100%}input,select{width:100%;background:var(--bg);color:var(--fg)}.check{flex-direction:row;align-items:center;gap:12px;min-height:46px}.check input{width:24px;height:24px;min-height:24px;flex:0 0 24px;accent-color:var(--accent)}button{background:var(--accent);color:var(--button-ink);cursor:pointer;touch-action:manipulation}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:3px}.actions{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}.secondary{background:var(--panel);color:var(--fg)}pre{white-space:pre-wrap;overflow-wrap:anywhere;font:15px/1.7 ui-monospace,monospace;border-left:3px solid var(--accent);padding:12px;background:var(--bg)}.muted{color:var(--muted)}.error{color:var(--danger)}.table-wrap{overflow:auto}table{border-collapse:collapse;width:100%;font-size:15px}th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line)}code{overflow-wrap:anywhere}nav{display:flex;flex-wrap:wrap;gap:14px}@media(max-width:390px){main{padding-inline:10px}section{padding:13px}button{flex:1 1 140px}form{grid-template-columns:1fr}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style></head><body><main>
+<p><a href="../../index.html">← Том об операционных системах</a></p><h1>Память и I/O: измените одно условие</h1>
+<p>Это расчёты и конечные модели. Они не исполняют инструкции CPU, не открывают файлы компьютера и не измеряют устройство. Формат <strong>M32-2L-v1</strong> придуман для учебника: 32-битные адреса, страницы 4 KiB, два уровня 10/10/12, 4-байтные записи с младшим байтом первым.</p>
+<nav aria-label="Модели"><a href="#translation">Трансляция</a><a href="#cow">Копирование</a><a href="#pressure">Очередь</a><a href="#durability">Устойчивость</a><a href="#buddy">Распределение</a><a href="#clock">Вытеснение</a><a href="#journal">Журнал</a></nav><p id="saved" class="muted"></p>
+<section id="translation"><h2>Записи таблиц и результат доступа</h2><p>Значения записей задайте целиком. Биты 0–6: P/W/U/X/A/D/C, биты 7–11 обязаны быть нулями, 31–12 содержат номер кадра. У записи каталога D/C запрещены; права W/U/X на двух уровнях объединяются как И. C — программная отметка COW, а не разрешение аппаратной записи.</p>
+<form id="walk"><label>Виртуальный адрес<input name="va" value="0x00403124" required autocomplete="off" spellcheck="false"></label><label>Запись каталога PDE: слово 32 бита<input name="directory" value="0x0000900f" required autocomplete="off" spellcheck="false"></label><label>Конечная запись PTE: слово 32 бита<input name="leaf" value="0x0012a007" required autocomplete="off" spellcheck="false"></label><label>Операция пользовательского потока<select name="operation"><option value="read">Чтение</option><option value="write">Запись</option><option value="execute">Исполнение</option></select></label><button>Вычислить</button></form><pre id="walk-out" tabindex="0" role="status"></pre><p>Для записи COW попробуйте leaf=0x0012a055. Затем снимите W только у directory: 0x0000900d. Наличие W у leaf не отменит запрет старшего уровня. Leaf=0 означает отсутствие; leaf=0x0012a087 нарушает зарезервированный бит.</p></section>
+<section id="cow"><h2>Один кадр до записи, два после</h2><p>Программа P уже прочитала число 42. Создайте второго владельца Q, затем запишите 43 от имени P. Копируется страница 4096 байт, хотя меняются четыре. После копии Q по-прежнему может иметь защищённый COW-перевод даже при единственном владельце старого кадра.</p><div class="actions"><button data-action="fork">Создать Q</button><button data-action="P">P записывает 43</button><button data-action="Q">Q записывает 44</button></div><div class="table-wrap"><table><thead><tr><th>Владелец</th><th>Кадр</th><th>Слово PTE</th><th>W/C/D</th><th>Число</th></tr></thead><tbody id="cow-rows"></tbody></table></div><pre id="cow-out" tabindex="0"></pre></section>
+<section id="pressure"><h2>Бюджет отложенной записи</h2><p>Считаем только накопление объёма при постоянных скоростях. Реальное ядро может объединять записи и ограничивать производителя раньше.</p><form id="budget"><label>Производство, MiB/с<input name="production" type="number" min="0" step="any" value="60" required></label><label>Сохранение, MiB/с<input name="service" type="number" min="0" step="any" value="40" required></label><label>Свободный бюджет, MiB<input name="capacity" type="number" min="0" step="any" value="200" required></label><button>Посчитать</button></form><pre id="budget-out" tabindex="0" role="status"></pre></section>
+<section id="durability"><h2>Видимость и модельная авария</h2><p>Переходы: запись временного файла → fsync файла → rename → fsync каталога. Выбирается идеализированная локальная файловая система и честное выполнение sync нижним уровнем. Возможные исходы до последнего шага — только ограниченная учебная модель, не перечень всех повреждений настоящего накопителя.</p><div class="actions"><button id="advance">Следующий этап</button><button id="crash" class="secondary">Посмотреть исход сбоя</button></div><pre id="durability-out" tabindex="0"></pre><p id="crash-out" role="status"></p></section>
+<section id="buddy"><h2>32 кадра: разделить и объединить</h2><p>Порядок k требует 2ᵏ соседних кадров. Выдайте несколько маленьких блоков; освобождение объединяет только свободных парных соседей того же порядка. Таблица показывает начала блоков, а не отдельные байты.</p><form id="allocate"><label>Порядок выдачи<select name="order"><option>0</option><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select></label><button>Выдать блок</button></form><form id="release"><label>Начало выданного блока<select name="base" id="release-base"></select></label><button id="release-button">Освободить этот блок</button></form><pre id="buddy-out" tabindex="0"></pre></section>
+<section id="clock"><h2>Один шаг вытеснения</h2><p>A недавно читалась, B изменена, C закреплена, D не имеет подготовленной копии для восстановления. Нажатие «Проверить следующий кадр» делает ровно один шаг. Для B завершение записи — отдельное событие; новая запись во время ожидания сохранит dirty.</p><p>В выводе: resident — кадр ещё занят, ref — было обращение, dirty — есть несохранённая версия, pin — нельзя освобождать, writeback — запись ожидает завершения. Число 1 означает «да», 0 — «нет».</p><div class="actions"><button data-action="clock-step">Проверить следующий кадр</button><button data-action="clock-write-B">Ещё раз изменить B</button><button data-action="clock-ok-B">Подтвердить запись B</button><button data-action="clock-fail-B" class="secondary">Ошибка записи B</button></div><pre id="clock-out" tabindex="0"></pre></section>
+<section id="journal"><h2>OSJ1: DATA без COMMIT не применяется</h2><p>Исходный домашний блок 200 содержит 42. DATA7 описывает новое 43; лишь следующая корректная COMMIT7 позволяет восстановить 43. Эти кнопки добавляют модельные устойчивые записи, не обращаясь к диску.</p><div class="actions"><button data-action="journal-data">Сохранить DATA7</button><button data-action="journal-commit">Сохранить COMMIT7</button></div><label class="check">Проверить испорченную копию DATA при восстановлении<input id="journal-corrupt" type="checkbox"></label><pre id="journal-out" tabindex="0"></pre><p>Переключатель портит только копию байтов для расчёта. Ранее сохранённые записи модели остаются на месте; снимите его, чтобы сравнить результат.</p></section>
+<p id="error" class="error" role="status"></p><button id="reset" class="secondary">Явно начать модели заново</button><p class="muted">Сброс касается только этой страницы. Папки нативной лаборатории, заметки книги и параметры читателя не меняются. Сохранение использует собственный ключ браузера; если хранение запрещено, это будет показано.</p><p><a href="README.txt">Нативные наблюдения и продолжаемая папка →</a></p>
+</main><script src="models.js"></script><script>
+'use strict';
+const M=MemoryIOModels,$=id=>document.getElementById(id),KEY='os-memory-io-lab-v1';
+const hex=n=>'0x'+n.toString(16).padStart(8,'0'),bytes=a=>a.map(n=>n.toString(16).padStart(2,'0')).join(' ');
+function newClock(){return new M.Clock([{id:'A',ref:true},{id:'B',dirty:true},{id:'C',pinned:true},{id:'D',backing:'none',dirty:true}]);}
+let events=[],cow=new M.Cow(),durable=new M.Durability(),buddy=new M.Buddy(),clock=newClock(),records=[],lastBuddy='',lastClock='',canSave=true;
+function error(message){$('error').textContent=message||'';}
+function save(){if(!canSave)return;try{localStorage.setItem(KEY,JSON.stringify({version:1,events}));$('saved').textContent='Состояние этих моделей сохранено в этом браузере.';}catch(e){canSave=false;$('saved').textContent='Браузер запретил хранение: состояние доступно до закрытия страницы.';}}
+const clockActions={'already-free':'уже свободен','pinned':'закреплён, пропустить','writeback-pending':'сохранение ещё выполняется','second-chance':'снять ref и дать второй шанс','no-backing':'нет сохранённой копии, нельзя удалить','start-writeback':'начать сохранение; кадр пока занят','evicted':'освободить кадр'};
+function buddyTransition(x,kind){return kind+': начало '+x.base+', порядок '+x.order+'; пары: '+(x.trace.map(p=>p.left+' / '+p.right+' (порядок '+p.order+')').join('; ')||'не делились/не объединялись');}
+function replay(event){if(event==='fork')cow.fork();else if(event==='P')cow.write('P',43);else if(event==='Q')cow.write('Q',44);else if(event==='advance')durable.advance();
+else if(/^buddy-allocate-[0-5]$/.test(event))lastBuddy=buddyTransition(buddy.allocate(Number(event.split('-')[2])),'Выдача');
+else if(/^buddy-release-[0-9]+$/.test(event))lastBuddy=buddyTransition(buddy.release(Number(event.split('-')[2])),'Возврат');
+else if(event==='clock-step'){const step=clock.step();lastClock=step.id+': '+clockActions[step.action];}
+else if(event==='clock-write-B'){clock.touch('B',true);lastClock='B: новая версия, dirty=1';}
+else if(event==='clock-ok-B'){clock.complete('B',true);lastClock='B: запись подтверждена; новые изменения сохраняют dirty';}
+else if(event==='clock-fail-B'){clock.complete('B',false);lastClock='B: ошибка сохранения; dirty остаётся';}
+else if(event==='journal-data'){if(records.length)throw new Error('DATA7 уже есть');records.push(M.journalRecord(1,7,200,43));}
+else if(event==='journal-commit'){if(records.length!==1)throw new Error('Сначала нужна одна DATA7; повторная COMMIT не добавляется');records.push(M.journalRecord(2,7));}
+else throw new Error('Неизвестное сохранённое действие');}
+try{const raw=localStorage.getItem(KEY);if(raw){if(raw.length>8192)throw new Error('слишком большой журнал');const data=JSON.parse(raw);if(data.version!==1||!Array.isArray(data.events)||data.events.length>160)throw new Error('неподдерживаемый журнал');for(const event of data.events)replay(event);events=data.events;$('saved').textContent='Продолжается ранее сохранённая модель.';}}catch(e){cow=new M.Cow();durable=new M.Durability();buddy=new M.Buddy();clock=newClock();records=[];lastBuddy='';lastClock='';events=[];canSave=false;$('saved').textContent='Сохранённая модель не загружена. Прежняя запись не перезаписана; явный сброс доступен ниже.';}
+function draw(){const state=cow.state();$('cow-rows').replaceChildren();for(const [owner,p]of Object.entries(state.owners)){const tr=document.createElement('tr');for(const value of [owner,hex(p.frame),hex(p.pte),[p.permissions.W,p.permissions.C,p.permissions.D].map(Number).join('/'),p.value]){const td=document.createElement('td');td.textContent=value;tr.append(td);}$('cow-rows').append(tr);}$('cow-out').textContent='VA каждого владельца: '+hex(state.virtual)+'\nСкопировано: '+state.copiedBytes+' байт\n'+state.lastTrace.join('\n');const d=durable.state();$('durability-out').textContent=d.names+'\nСейчас по имени: '+d.visible+'\nДанные нового файла сохранены: '+d.tempDurable+'\nСвязь имени сохранена: '+d.directoryDurable;$('advance').disabled=d.stage===4;drawExtra();}
+function drawExtra(){const b=buddy.state();$('buddy-out').textContent='Свободные кадры: '+b.freeFrames+' /32\n'+b.free.map((bases,k)=>'F['+k+'] по '+2**k+' кадров: '+(bases.join(', ')||'пусто')).join('\n')+'\nВыданы: '+JSON.stringify(b.allocated)+'\nПоследний переход: '+lastBuddy;$('release-base').replaceChildren();for(const a of b.allocated){const o=document.createElement('option');o.value=a.base;o.textContent=a.base+' (порядок '+a.order+')';$('release-base').append(o);}$('release-button').disabled=!b.allocated.length;
+const c=clock.state();$('clock-out').textContent='Следующая: '+c.pages[c.hand].id+'\n'+c.pages.map(p=>p.id+': resident='+Number(p.resident)+' ref='+Number(p.ref)+' dirty='+Number(p.dirty)+' pin='+Number(p.pinned)+' writeback='+Number(p.writeback)+' version='+p.generation+' sent='+p.submittedGeneration).join('\n')+'\nПереход: '+lastClock;
+const copy=records.map(r=>[...r]);if($('journal-corrupt').checked&&copy.length)copy[0][16]^=1;const recovered=M.recoverJournal({200:42},copy);$('journal-out').textContent=copy.map((r,i)=>'Запись '+i+': '+bytes(r)).join('\n')+'\nПосле модельного сбоя: block200='+recovered.blocks[200]+'\nПрименены: '+(recovered.applied.join(', ')||'нет')+'\nОстановка: '+(recovered.stop==='end'?'достигнут конец журнала':recovered.stop==='Checksum mismatch'?'Checksum mismatch — не совпала контрольная сумма':recovered.stop);
+}
+function action(event){try{if(events.length>=160)throw new Error('Журнал модели достиг 160 шагов. Сохраните наблюдения или выполните явный сброс.');replay(event);events.push(event);error('');save();draw();}catch(e){error(e.message);}}
+document.querySelectorAll('[data-action]').forEach(button=>button.addEventListener('click',()=>action(button.dataset.action)));
+$('allocate').addEventListener('submit',event=>{event.preventDefault();action('buddy-allocate-'+$('allocate').elements.order.value);});
+$('release').addEventListener('submit',event=>{event.preventDefault();if($('release-base').value!=='')action('buddy-release-'+$('release-base').value);});
+$('journal-corrupt').addEventListener('change',drawExtra);
+$('advance').addEventListener('click',()=>action('advance'));
+$('crash').addEventListener('click',()=>{$('crash-out').textContent='Допустимые значения после модельного сбоя: '+durable.state().crashAllowed.join(' или ')+'. Состояние не сброшено.';});
+$('reset').addEventListener('click',()=>{cow=new M.Cow();durable=new M.Durability();buddy=new M.Buddy();clock=newClock();records=[];lastBuddy='';lastClock='';events=[];canSave=true;error('');$('crash-out').textContent='';save();draw();});
+function walk(){try{const form=$('walk'),d=M.integer(form.elements.directory.value,0,0xffffffff,'directory'),l=M.integer(form.elements.leaf.value,0,0xffffffff,'leaf'),result=M.rawWalk(form.elements.va.value,d,l,form.elements.operation.value);let text='Байты PDE, младший первым: '+bytes(M.encode(d))+'\nБайты PTE, младший первым: '+bytes(M.encode(l))+'\n';if(result.path){const x=result.path;text+='Индексы: '+x.outer+' / '+x.inner+'; offset='+hex(x.offset)+'\nPDE по адресу '+hex(x.rootEntry)+'; PTE по адресу '+hex(x.tableEntry)+'\n';const span=M.range(x.address,4);text+='Диапазон 4 байт: VPN '+hex(span.first)+' … '+hex(span.last)+(span.crosses?' (нужна следующая PTE; здесь переведено только начало)':' (одна страница)')+'\n';}if(result.fault)text+='FAULT: '+result.fault+' — '+({'malformed-directory':'повреждена запись каталога','malformed-leaf':'повреждена конечная запись','not-present-directory':'отсутствует нижняя таблица','not-present-leaf':'отсутствует страница','protection':'доступ запрещён правами'}[result.fault]||'неизвестная причина')+(result.cowCandidate?' (COW-кандидат; решение принимает ОС)':'');else text+='PA='+hex(result.path.physical)+'\nПосле доступа PDE='+hex(result.directoryAfter)+', PTE='+hex(result.leafAfter);$('walk-out').textContent=text;error('');}catch(e){$('walk-out').textContent='Результат не вычислен: '+e.message;error(e.message);}}
+$('walk').addEventListener('submit',event=>{event.preventDefault();walk();});
+function budget(){try{const f=$('budget'),p=M.pressure(f.elements.production.value,f.elements.service.value,f.elements.capacity.value);$('budget-out').textContent='Изменение очереди: '+p.net+' MiB/с\n'+(p.fillSeconds===null?'При этих постоянных скоростях бюджет не заполняется.':'До заполнения: '+p.fillSeconds+' с');error('');}catch(e){$('budget-out').textContent='Результат не вычислен: '+e.message;error(e.message);}}
+$('budget').addEventListener('submit',event=>{event.preventDefault();budget();});draw();walk();budget();
+</script></body></html>

@@ -1,0 +1,32 @@
+/* M32-BOUND1: finite firmware ownership and nested-address teaching states. */
+(function(root){'use strict';
+const clone=s=>JSON.parse(JSON.stringify(s));function need(v,t){if(!v)throw new Error(t);}function int(n,a,b){return Number.isInteger(n)&&n>=a&&n<=b;}
+function initial(){return {schema:'M32-BOUND1',version:1,boot:{phase:'reset',mapKey:5,captured:null,owner:'firmware',services:true,exitAttempted:false,restricted:false,trace:[]},virt:{profile:'M32-VM1; abstract second-stage, not full Sv32x4',gva:0x00402200,cursor:0,result:null,mappings:[{gpa:0x8000,hpa:0x18000,read:true,write:false,present:true},{gpa:0x9000,hpa:0x19000,read:true,write:false,present:true},{gpa:0x2000,hpa:0x5000,read:true,write:true,present:true}],trace:[]}};}
+function validate(s){need(s&&s.schema==='M32-BOUND1'&&s.version===1,'Неверная схема/версия');const b=s.boot,v=s.virt;need(b&&v,'Нет состояния');need(['reset','memory','devices','image','exit','kernel'].includes(b.phase),'Boot phase');need(int(b.mapKey,1,1000000)&&(b.captured===null||int(b.captured,1,1000000)),'MapKey');need(['firmware','loader','kernel'].includes(b.owner)&&typeof b.services==='boolean','Owner/services');need(b.services===(b.owner==='firmware'),'Boot ownership invariant');need(typeof b.exitAttempted==='boolean'&&typeof b.restricted==='boolean'&&(!b.restricted||b.exitAttempted),'Exit attempt/restriction');need((b.phase==='exit')===(b.owner==='loader'),'Loader ownership invariant');need((b.phase==='kernel')===(b.owner==='kernel'),'Kernel ownership invariant');need(int(v.cursor,0,3)&&v.gva===0x00402200,'Virtual profile/range');need(v.result===null||v.result===0x5200,'Result outside finite profile');need((v.cursor===3)===(v.result!==null),'Result/cursor invariant');need(Array.isArray(v.mappings)&&v.mappings.length===3,'Mappings');const expectedPages={32768:98304,36864:102400,8192:20480};need(new Set(v.mappings.map(m=>m.gpa)).size===3,'Duplicate GPA mapping');for(const m of v.mappings){need(expectedPages[m.gpa]===m.hpa,'Mapping outside fixed M32-VM1 profile');need(int(m.gpa,0,0xFFFF)&&m.gpa%4096===0&&int(m.hpa,0,0xFF000)&&m.hpa%4096===0,'Aligned page addresses');need(['read','write','present'].every(k=>typeof m[k]==='boolean'),'Permissions');}for(const t of [b.trace,v.trace])need(Array.isArray(t)&&t.length<=100&&t.every(x=>typeof x==='string'&&x.length<=1000),'Trace');completedPrefix(v);return s;}
+function completedPrefix(v){
+ const accesses=[[0x8000,'read'],[0x9000,'read'],[0x2000,'write']];
+ for(let i=0;i<v.cursor;i++){
+  const [gpa,access]=accesses[i],mapping=v.mappings.find(m=>m.gpa===gpa);
+  need(mapping.present&&mapping[access],'Пройденный VM-шаг не согласуется с present/'+access+' для GPA 0x'+gpa.toString(16));
+ }
+}
+function reduce(s,a){const b=s.boot,v=s.virt;
+ if(a==='init-memory'){need(b.phase==='reset','Memory initialization only after reset');b.phase='memory';b.trace.push('Platform initialized usable memory; no guest page tables created');return;}
+ if(a==='discover'){need(b.phase==='memory','Сначала подготовить память');b.phase='devices';b.trace.push('Firmware discovered devices/resources; DMA not automatically allowed');return;}
+ if(a==='load-image'){need(b.phase==='devices','Сначала обнаружить загрузочный путь');b.phase='image';b.trace.push('Loader image accepted/placed by assumed policy; kernel bytes prepared; MapKey5 symbolic');return;}
+ if(a==='get-map'){need(b.phase==='image'&&b.services,'GetMemoryMap requires active Boot Services');b.captured=b.mapKey;b.trace.push('Captured current map; symbolic MapKey='+b.captured);return;}
+ if(a==='allocate'){need(b.phase==='image'&&b.services,'Allocation requires active Boot Services');b.mapKey++;b.trace.push('Allocation changed map; currentKey='+b.mapKey+', captured remains'+b.captured);return;}
+ if(a==='exit'){need(b.phase==='image'&&b.services,'Нет active loader image/Boot Services');b.exitAttempted=true;b.restricted=true;if(b.captured!==b.mapKey){b.trace.push('ExitBootServices rejected stale MapKey; conservative post-first-attempt contract: only Memory Allocation Services + GetMemoryMap/retry, no console/device calls');return {error:'EFI_INVALID_PARAMETER: stale/missing MapKey; ordinary Boot Services cannot be resumed after first attempt'};}b.phase='exit';b.owner='loader';b.services=false;b.trace.push('ExitBootServices accepted: ownership firmware→loader, Boot Services unavailable');return;}
+ if(a==='boot-service'){need(b.services&&!b.restricted,'Обычный Boot Service запрещён после первой попытки ExitBootServices; firmware may be partly shut down');b.trace.push('Permitted Boot Service call in firmware-owned phase');return;}
+ if(a==='kernel'){need(b.phase==='exit'&&b.owner==='loader','Сначала успешный ExitBootServices');b.phase='kernel';b.owner='kernel';b.trace.push('Kernel entry by explicit platform ABI; no scheduler/real firmware executed');return;}
+ if(a==='deny-data-write'||a==='remove-root'){need(v.cursor===0,'Менять prepared mapping только до нового translation scene');const m=v.mappings.find(x=>x.gpa===(a==='deny-data-write'?0x2000:0x8000));if(a==='deny-data-write')m.write=!m.write;else m.present=!m.present;return;}
+ if(a==='translate'){
+  need(v.cursor<3,'Этот finite translation уже завершён');
+  const rows=[{gpa:0x8004,access:'read',word:0x2401,why:'guest rootPTE VPN1=1'},{gpa:0x9008,access:'read',word:0x8D7,why:'guest leafPTE VPN0=2'},{gpa:0x2200,access:'write',word:43,why:'guest result bytes2B000000'}];
+  const r=rows[v.cursor],base=Math.floor(r.gpa/4096)*4096,m=v.mappings.find(x=>x.gpa===base);need(m&&m.present,'Guest-stage fault: missing G-stage mapping for GPA'+r.gpa.toString(16));need(m[r.access],'Guest-stage fault: G-stage '+r.access+' denied; first-stage allow insufficient');const hpa=m.hpa+(r.gpa-base);
+  v.trace.push(r.why+': GPA0x'+r.gpa.toString(16)+'→HPA0x'+hpa.toString(16)+', '+r.access+', word0x'+r.word.toString(16));v.cursor++;if(v.cursor===3)v.result=hpa;return;
+ }
+ throw new Error('Unknown action');}
+function step(s,a){try{validate(s);const next=clone(s),result=reduce(next,a);validate(next);if(result&&result.error)return {ok:false,state:next,changed:true,error:result.error};return {ok:true,state:next,changed:true,error:null};}catch(e){return {ok:false,state:s,error:e.message};}}
+const api={initial,validate,step,importState:t=>clone(validate(JSON.parse(t))),exportState:s=>JSON.stringify(validate(s),null,2)};if(typeof module==='object'&&module.exports)module.exports=api;root.M32Boundaries=api;
+})(typeof globalThis==='object'?globalThis:this);

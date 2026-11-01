@@ -22,6 +22,17 @@ ROOT_FILES = {
 }
 BOOKS = set(VOLUME_TITLES)
 CACHE_LAB_MODELS = {"cache/sources/eviction.js", "cache/sources/resource-labs.js", "cache/sources/resp-lab.js"}
+# These maintenance checks read chapter sources, which are deliberately absent
+# from the reading export. Portable model/native checks remain available.
+FOUNDATION_AUTHORING_FILES = {
+    "computer-architecture/READY.txt",
+    "computer-architecture/tests/memory-observed-2026-11-01.json",
+    "computer-architecture/tests/logic-source.py",
+    "computer-architecture/tests/devices_sources.py",
+    "operating-systems/tests/execution_source.py",
+    "operating-systems/tests/memory_io_sources.py",
+    "operating-systems/tests/coordination_sources.py",
+}
 REVISION = re.compile(r"[0-9a-f]{40,64}")
 
 
@@ -49,6 +60,8 @@ def verify_previous_export(output: Path) -> None:
 def is_reading_file(name: str) -> bool:
     path = PurePosixPath(name)
     if path.is_absolute() or ".." in path.parts:
+        return False
+    if name in FOUNDATION_AUTHORING_FILES:
         return False
     if name in ROOT_FILES:
         return True

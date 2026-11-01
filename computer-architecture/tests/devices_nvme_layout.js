@@ -1,0 +1,10 @@
+'use strict';const assert=require('assert'),M=require('../labs/devices/nvme_layout.js');let checks=0;
+let r=M.command({op:'READ',cid:0x11,nsid:1,slba:7n,blocks:1,prp1:0x2000,prp2:0});assert.equal(r.length,64);assert.deepStrictEqual(r.slice(0,8),[2,0,0x11,0,1,0,0,0]);assert.deepStrictEqual(r.slice(24,32),[0,0x20,0,0,0,0,0,0]);assert.deepStrictEqual(r.slice(40,52),[7,0,0,0,0,0,0,0,0,0,0,0]);checks++;
+const w=M.command({op:'WRITE',cid:0x12,nsid:1,slba:7n,blocks:1,prp1:0x2200,prp2:0,fua:true});assert.equal(w[0],1);assert.deepStrictEqual(w.slice(48,52),[0,0,0,0x40]);checks++;
+assert.equal(M.prpPlan(0x2200,0,512).kind,'PRP1 only');assert.deepStrictEqual(M.prpPlan(0x2F00,0x7000,512).segments,[{address:0x2F00,bytes:256},{address:0x7000,bytes:256}]);checks++;
+const list=M.prpPlan(0x2F00,0x6010,8704,[0x7000,0x9000,0xB000]);assert.equal(list.kind,'PRP2 list pointer');assert.equal(list.segments.reduce((n,x)=>n+x.bytes,0),8704);checks++;
+for(const fn of [()=>M.prpPlan(0x2001,0,512),()=>M.prpPlan(0x2F00,0x7004,512),()=>M.prpPlan(0x2F00,0x6014,8704,[0x7000,0x9000,0xB000]),()=>M.prpPlan(0x2F00,0x6FF8,8704,[0x7000,0x9000,0xB000]),()=>M.prpPlan(0x2F00,0x6010,8704,[0x7001,0x9000,0xB000]),()=>M.command({op:'READ',cid:1,nsid:1,slba:7,blocks:0,prp1:0x2000}),()=>M.command({op:'READ',cid:1,nsid:1,slba:Number.MAX_SAFE_INTEGER+1,blocks:1,prp1:0x2000})]){assert.throws(fn);checks++;}
+const c=M.completion({cid:0x11,sqid:2,sqhd:1,phase:1});assert.deepStrictEqual(c,[0,0,0,0,0,0,0,0,1,0,2,0,0x11,0,1,0]);assert.deepStrictEqual(M.accept(c,0,[{cid:17,sqid:2}]),{new:false});assert.equal(M.accept(c,1,[{cid:17,sqid:2}]).success,true);checks++;
+assert.throws(()=>M.accept(c,1,[{cid:18,sqid:2}]));checks++;assert.throws(()=>M.accept(c.slice(1),1,[{cid:17,sqid:2}]));checks++;
+const e=M.completion({cid:17,sqid:2,sqhd:1,phase:1,sc:2,sct:0,dnr:true});const d=M.accept(e,1,[{cid:17,sqid:2}]);assert.equal(d.success,false);assert.equal(d.sc,2);assert.equal(d.dnr,true);checks++;
+console.log(JSON.stringify({kind:'finite NVMe layout32, not real controller',checks,readSQE:r,completionCQE:c}));

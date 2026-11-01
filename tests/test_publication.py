@@ -39,6 +39,27 @@ class PublicationTests(unittest.TestCase):
         self.assertTrue(prepare_site.is_reading_file('published-volumes.json'))
         self.assertFalse(prepare_site.is_reading_file('gitlab/sources/chapter.html'))
 
+    def test_foundation_export_keeps_models_without_source_only_checks_or_author_reports(self):
+        for name in prepare_site.FOUNDATION_AUTHORING_FILES:
+            with self.subTest(name=name):
+                self.assertFalse(prepare_site.is_reading_file(name))
+        # Exercise the export policy even before these volumes are registered.
+        from unittest.mock import patch
+        with patch.object(prepare_site, 'BOOKS', prepare_site.BOOKS | {'computer-architecture', 'operating-systems'}):
+            for name in prepare_site.FOUNDATION_AUTHORING_FILES:
+                with self.subTest(name=name):
+                    self.assertFalse(prepare_site.is_reading_file(name))
+            for name in ['computer-architecture/labs/m32/contract.json',
+                         'computer-architecture/tests/m32-contract.cjs',
+                         'computer-architecture/tests/memory-view.js',
+                         'operating-systems/labs/coordination/models.js',
+                         'operating-systems/labs/memory-io/native.py',
+                         'operating-systems/tests/execution_native.py',
+                         'operating-systems/tests/coordination_adapter.cjs']:
+                with self.subTest(name=name):
+                    self.assertTrue(prepare_site.is_reading_file(name))
+            self.assertFalse(prepare_site.is_reading_file('operating-systems/sources/os-01-purpose.html'))
+
 
 if __name__ == '__main__':
     unittest.main()

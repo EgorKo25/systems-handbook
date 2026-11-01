@@ -1,0 +1,43 @@
+{
+  "format": 1,
+  "model": "Учебный путь операции ОС, не универсальный аппаратный контракт",
+  "file": {
+    "name": "counter.bin",
+    "representation": "uint32 little-endian, явно выбранный формат файла",
+    "offset_start": 0,
+    "read_length_bytes": 4,
+    "offset_after_read": 4,
+    "rewrite_offset": 0,
+    "rewrite_mode": "positioned write либо предварительный явный seek; не append",
+    "before_hex": "2a000000",
+    "before_value": 42,
+    "after_hex": "2b000000",
+    "after_value": 43
+  },
+  "memory": {
+    "address_bits": 32,
+    "page_size_bytes": 4096,
+    "user_buffer_va": "0x00403124",
+    "vpn": "0x403",
+    "offset": "0x124",
+    "pfn": "0x12a",
+    "user_buffer_pa": "0x0012a124",
+    "page_table_model": "учебная двухуровневая10/10/12; отдельно от реального x86-64",
+    "directory_index": 1,
+    "table_index": 3
+  },
+  "causal_limits": [
+    "Кэшированное чтение не обязано обращаться к устройству.",
+    "TLB miss не равен page fault; page fault не всегда требует диска.",
+    "Вход в ядро не обязательно переключает процесс.",
+    "Успешная запись не равна сохранности при потере питания.",
+    "Возврат fsync трактуется в рамках явно названного договора ОС, ФС и устройства.",
+    "Два независимых read-increment-write не образуют атомарный счётчик."
+  ],
+  "race_example": {
+    "initial": 42,
+    "two_increments_expected_if_serialized": 44,
+    "lost_update_model": 43,
+    "scope": "явная модель атомарных отдельных load/store; не обещание семантики undefined data race в языке"
+  }
+}

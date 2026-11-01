@@ -1,0 +1,219 @@
+{
+  "format": 1,
+  "revision": "2026-11-01-v1.1",
+  "name": "Учебная машина М32",
+  "scope": "Finite teaching profiles, not a full CPU or operating system emulator",
+  "file": {
+    "name": "counter.bin",
+    "format": "uint32 little-endian",
+    "before_value": 42,
+    "before_hex": "2a000000",
+    "after_value": 43,
+    "after_hex": "2b000000",
+    "logical_sector_bytes": 512,
+    "lba": 7
+  },
+  "physical": {
+    "profile": "M32-physical-RV32I-five",
+    "isa": "RV32I 2.1 subset: LUI LW ADDI SW EBREAK",
+    "ram_bytes": 65536,
+    "entry": 4096,
+    "input_start": 8192,
+    "input_bytes": 512,
+    "result_start": 8704,
+    "result_bytes": 4,
+    "register_count": 32,
+    "register_bits": 32,
+    "x0": 0,
+    "byte_order": "little-endian",
+    "instructions": [
+      {
+        "address": 4096,
+        "word": 8887,
+        "bytes": [
+          183,
+          34,
+          0,
+          0
+        ],
+        "assembly": "lui x5,0x2"
+      },
+      {
+        "address": 4100,
+        "word": 172803,
+        "bytes": [
+          3,
+          163,
+          2,
+          0
+        ],
+        "assembly": "lw x6,0(x5)"
+      },
+      {
+        "address": 4104,
+        "word": 1245971,
+        "bytes": [
+          19,
+          3,
+          19,
+          0
+        ],
+        "assembly": "addi x6,x6,1"
+      },
+      {
+        "address": 4108,
+        "word": 543334435,
+        "bytes": [
+          35,
+          160,
+          98,
+          32
+        ],
+        "assembly": "sw x6,512(x5)"
+      },
+      {
+        "address": 4112,
+        "word": 1048691,
+        "bytes": [
+          115,
+          0,
+          16,
+          0
+        ],
+        "assembly": "ebreak"
+      }
+    ],
+    "breakpoint_pc": 4112,
+    "step_is_cycle": false,
+    "ebreak": "breakpoint trap; viewer stops, no universal HALT"
+  },
+  "cache": {
+    "profile": "M32-direct-L1",
+    "line_bytes": 16,
+    "sets": 4,
+    "ways": 1,
+    "address_bits": 16,
+    "offset_bits": 4,
+    "set_bits": 2,
+    "fixtures": [
+      {
+        "address": 8192,
+        "offset": 0,
+        "set": 0,
+        "tag": 128
+      },
+      {
+        "address": 8704,
+        "offset": 0,
+        "set": 0,
+        "tag": 136
+      }
+    ]
+  },
+  "sv32": {
+    "profile": "M32-Sv32-prepared-U",
+    "va_bits": 32,
+    "spec_pa_bits": 34,
+    "page_bytes": 4096,
+    "levels": 2,
+    "entries_per_table": 1024,
+    "pte_bytes": 4,
+    "root_pa": 32768,
+    "lower_pa": 36864,
+    "satp": 2147483656,
+    "privilege": "U",
+    "ad_policy": "A/D pre-set; negative model cases explicitly name Svade",
+    "mappings": [
+      {
+        "name": "code",
+        "va": 4198400,
+        "pa": 4096
+      },
+      {
+        "name": "input",
+        "va": 4202496,
+        "pa": 8192
+      },
+      {
+        "name": "result",
+        "va": 4203008,
+        "pa": 8704
+      }
+    ],
+    "ptes": [
+      {
+        "address": 32772,
+        "word": 9217,
+        "bytes": [
+          1,
+          36,
+          0,
+          0
+        ],
+        "purpose": "non-leaf PPN9,V"
+      },
+      {
+        "address": 36868,
+        "word": 1115,
+        "bytes": [
+          91,
+          4,
+          0,
+          0
+        ],
+        "purpose": "code PPN1,V/R/X/U/A"
+      },
+      {
+        "address": 36872,
+        "word": 2263,
+        "bytes": [
+          215,
+          8,
+          0,
+          0
+        ],
+        "purpose": "data PPN2,V/R/W/U/A/D"
+      }
+    ],
+    "virtual_program_entry": 4198400,
+    "replacement_lui_word": 4203191,
+    "replacement_lui_bytes": [
+      183,
+      34,
+      64,
+      0
+    ]
+  },
+  "device": {
+    "input_dma_pa": 8192,
+    "input_dma_bytes": 512,
+    "output_sector_pa": 8704,
+    "output_sector_bytes": 512,
+    "preparation_actor": "Explicit controller software step after CPU result: copy original bytes4..511 and replace bytes0..3. Not performed by the five CPU instructions.",
+    "completion_is_durability": false
+  },
+  "os_bridge": {
+    "profile": "Separate OS tutorial model, not M32 RAM/Sv32",
+    "contract": "../../../operating-systems/labs/trace-contract.json",
+    "page_bytes": 4096,
+    "address_bits": 32,
+    "user_va": 4206884,
+    "vpn": 1027,
+    "offset": 292,
+    "pfn": 298,
+    "user_pa": 1220900,
+    "directory_index": 1,
+    "table_index": 3,
+    "ram_image_continuation": false
+  },
+  "sources": [
+    {
+      "title": "RISC-V RV32I 2.1, pinned v20260120",
+      "url": "https://docs.riscv.org/reference/isa/v20260120/unpriv/rv32.html"
+    },
+    {
+      "title": "RISC-V Supervisor ISA1.13, pinned v20260120",
+      "url": "https://docs.riscv.org/reference/isa/v20260120/priv/supervisor.html"
+    }
+  ]
+}

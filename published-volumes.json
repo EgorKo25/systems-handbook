@@ -12,6 +12,8 @@
     {"slug": "gitlab", "title": "GitLab", "build": "managed"},
     {"slug": "practicum", "title": "Практикум", "build": "managed"},
     {"slug": "docker", "title": "Docker", "build": "managed"},
-    {"slug": "sonarqube", "title": "SonarQube", "build": "managed"}
+    {"slug": "sonarqube", "title": "SonarQube", "build": "managed"},
+    {"slug": "computer-architecture", "title": "Архитектура компьютера", "build": "managed"},
+    {"slug": "operating-systems", "title": "Операционные системы", "build": "managed"}
   ]
 }

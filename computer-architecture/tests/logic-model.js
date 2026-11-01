@@ -1,0 +1,44 @@
+/* Real Node execution of the browser's pure teaching model; not native RV CPU. */
+'use strict';
+const assert=require('assert'),M=require('../labs/logic/model.js');let checks=0;
+function check(name,fn){fn();checks++;}
+const expected=[
+ {pc:0x1000,bytes:[0xb7,0x22,0,0],word:0x000022b7,op:'LUI',rd:5,imm:0x2000},
+ {pc:0x1004,bytes:[3,0xa3,2,0],word:0x0002a303,op:'LW',rd:6,rs1:5,imm:0},
+ {pc:0x1008,bytes:[0x13,3,0x13,0],word:0x00130313,op:'ADDI',rd:6,rs1:6,imm:1},
+ {pc:0x100c,bytes:[0x23,0xa0,0x62,0x20],word:0x2062a023,op:'SW',rs1:5,rs2:6,imm:512},
+ {pc:0x1010,bytes:[0x73,0,0x10,0],word:0x00100073,op:'EBREAK'},
+];
+// Independent bit construction from ISA fields, without calling decode or PROGRAM.
+function bits(value,n){return (value>>>0).toString(2).slice(-n).padStart(n,'0');}
+function word(...fields){return parseInt(fields.join(''),2)>>>0;}
+const independentlyEncoded=[word(bits(2,20),bits(5,5),'0110111'),word(bits(0,12),bits(5,5),'010',bits(6,5),'0000011'),word(bits(1,12),bits(6,5),'000',bits(6,5),'0010011'),word(bits(512>>>5,7),bits(6,5),bits(5,5),'010',bits(512&31,5),'0100011'),word('000000000001','00000','000','00000','1110011')];
+check('all five independently encoded ISA fields',()=>assert.deepEqual(independentlyEncoded,expected.map(x=>x.word)));
+for(const row of expected)check('bytes/decode '+row.op,()=>{const s=M.create();assert.deepEqual(Array.from(s.memory.slice(row.pc,row.pc+4)),row.bytes);assert.equal(M.read32(s.memory,row.pc),row.word);const d=M.decode(row.word);assert.equal(d.op,row.op);if(row.imm!==undefined)assert.equal(d.immediate,row.imm);for(const k of ['rd','rs1','rs2'])if(row[k]!==undefined)assert.equal(d[k],row[k]);});
+check('causal architectural trace',()=>{const s=M.create();assert.equal(s.memory.length,65536);assert.equal(M.read32(s.memory,0x2000),42);assert.equal(M.read32(s.memory,0x2200),0);let e=M.step(s);assert.equal(s.regs[5],0x2000);assert.equal(s.pc,0x1004);e=M.step(s);assert.equal(s.regs[6],42);assert.equal(e.read.address,0x2000);M.step(s);assert.equal(s.regs[6],43);e=M.step(s);assert.deepEqual(e.memory[0],{address:0x2200,before:[0,0,0,0],after:[43,0,0,0],value:43});M.step(s);assert.equal(s.status,'breakpoint');assert.equal(s.pc,0x1010);assert.equal(s.retired,4);assert.equal(s.attempts,5);assert.equal(M.step(s).kind,'viewer-stopped');assert.equal(s.attempts,5);assert.equal(s.memory[0x2000],42);assert.equal(s.memory[0x2204],0);});
+check('bounded randomized counter arithmetic',()=>{let seed=104729;for(let i=0;i<1000;i++){seed=(Math.imul(seed,1664525)+1013904223)>>>0;const s=M.create();M.write32(s.memory,0x2000,seed);M.run(s);assert.equal(M.read32(s.memory,0x2200),(seed+1)>>>0);assert.equal(s.regs[0],0);}});
+check('unsigned wrap no integer overflow trap',()=>{const s=M.create();M.write32(s.memory,0x2000,0xffffffff);M.run(s);assert.equal(M.read32(s.memory,0x2200),0);assert.equal(s.status,'breakpoint');});
+check('x0 is immutable',()=>{const s=M.create();M.write32(s.memory,0x1000,0x00100013);const e=M.step(s);assert.equal(s.regs[0],0);assert(e.discardedX0);assert.equal(s.pc,0x1004);});
+check('load to x0 still reads and checks its address',()=>{const code=word(bits(0,12),bits(5,5),'010',bits(0,5),'0000011'),s=M.create();s.regs[5]=0x2000;M.write32(s.memory,0x1000,code);const e=M.step(s);assert.equal(e.read.value,42);assert.equal(s.regs[0],0);assert.equal(s.retired,1);const bad=M.create();bad.regs[5]=65536;M.write32(bad.memory,0x1000,code);M.step(bad);assert.equal(bad.status,'trap');assert.equal(bad.trap.cause,'data:address-out-of-range');assert.equal(bad.pc,0x1000);assert.equal(bad.retired,0);});
+check('address addition wraps at 32 bits before RAM bounds check',()=>{const s=M.create();s.pc=0x100c;s.regs[5]=0xffffff00;s.regs[6]=43;M.step(s);assert.equal(M.read32(s.memory,0x100),43);assert.equal(s.pc,0x1010);assert.equal(M.read32(s.memory,0x2200),0);});
+check('valid full-ISA LB is explicitly outside five-op profile',()=>assert.throws(()=>M.decode(0x00028303),/unsupported-instruction/));
+check('signed 12-bit immediate',()=>{const s=M.create();s.regs[5]=0x2004;M.write32(s.memory,0x1000,word(bits(4092,12),bits(5,5),'010',bits(6,5),'0000011'));M.step(s);assert.equal(s.regs[6],42);assert.equal(M.decode(0xfff30313).immediate,-1);});
+for(const [name,mutate,cause] of [
+ ['bad fetch alignment',s=>s.pc=0x1002,'fetch/decode:address-misaligned'],
+ ['bad fetch range',s=>s.pc=65536,'fetch/decode:address-out-of-range'],
+ ['unsupported ECALL',s=>M.write32(s.memory,0x1000,0x00000073),'fetch/decode:unsupported-instruction'],
+ ['bad store alignment',s=>{s.pc=0x100c;s.regs[5]=0x2001;s.regs[6]=99;},'data:address-misaligned'],
+ ['bad store range',s=>{s.pc=0x100c;s.regs[5]=65536-512;s.regs[6]=99;},'data:address-out-of-range'],
+])check(name,()=>{const s=M.create();mutate(s);const before=Array.from(s.memory),regs=Array.from(s.regs),pc=s.pc;M.step(s);assert.equal(s.trap.cause,cause);assert.equal(s.pc,pc);assert.deepEqual(Array.from(s.memory),before);assert.deepEqual(Array.from(s.regs),regs);assert.equal(s.retired,0);});
+check('last aligned word available',()=>{const m=new Uint8Array(65536);M.write32(m,65532,0xaabbccdd);assert.equal(M.read32(m,65532),0xaabbccdd);});
+check('snapshot continuation roundtrip',()=>{const s=M.create();M.step(s);M.step(s);const r=M.restore(JSON.parse(JSON.stringify(M.snapshot(s))));M.run(r);assert.equal(M.read32(r.memory,0x2200),43);assert.equal(r.pc,0x1010);assert.equal(r.trace.length,5);});
+check('bounded trace roundtrip and continuation beyond 1000 attempts',()=>{const s=M.create();for(let i=0;i<1002;i++)M.write32(s.memory,M.ENTRY+4*i,0x13);M.write32(s.memory,M.ENTRY+4*1002,0x00100073);M.run(s,1000);M.run(s,1);assert.equal(s.status,'ready');assert.equal(s.trace.length,M.TRACE_LIMIT);assert.equal(s.traceDropped,1);assert.equal(s.retired,1001);assert.equal(s.attempts,1001);const saved=JSON.parse(JSON.stringify(M.snapshot(s))),r=M.restore(saved);assert.equal(r.pc,M.ENTRY+4*1001);assert.deepEqual(r.memory,s.memory);assert.deepEqual(r.regs,s.regs);M.run(r,16);assert.equal(r.status,'breakpoint');assert.equal(r.retired,1002);assert.equal(r.attempts,1003);assert.equal(r.trace.length,M.TRACE_LIMIT);assert.equal(r.traceDropped,3);const terminal=M.restore(JSON.parse(JSON.stringify(M.snapshot(r))));assert.equal(terminal.pc,M.ENTRY+4*1002);assert.equal(terminal.trace.at(-1).cause,'breakpoint');assert.equal(M.step(terminal).kind,'viewer-stopped');});
+check('old version1 snapshots without traceDropped remain readable',()=>{const data=M.snapshot(M.create());delete data.traceDropped;const s=M.restore(data);M.step(s);assert.equal(s.traceDropped,0);assert.equal(s.attempts,1);});
+check('snapshot negative validation',()=>{for(const mutate of [s=>s.regs[0]=1,s=>s.memory[0]=256,s=>s.profile='pretend-full-CPU',s=>s.trace=[{bytes:{}}],s=>s.retired=-1]){const data=M.snapshot(M.create());mutate(data);assert.throws(()=>M.restore(data));}});
+check('exhaustive 4-bit adder truth',()=>{for(let a=0;a<16;a++)for(let b=0;b<16;b++){const r=M.addBits(a,b);assert.equal(r.result,(a+b)%16);assert.equal(r.carryOut,Math.floor((a+b)/16));let reconstructed=0;r.rows.forEach(x=>reconstructed+=x.sum*2**x.bit);assert.equal(reconstructed,r.result);}});
+check('binary32 numeric representations',()=>{assert.equal(M.float32(1.5).hex,'3FC00000');assert.equal(M.float32(.1).hex,'3DCCCCCD');assert.equal(M.float32(-0).hex,'80000000');assert.equal(M.float32(Infinity).hex,'7F800000');});
+check('binary32 subnormal/nearest-even boundary',()=>{assert.equal(M.float32(2**-149).word,1);assert.equal(M.float32(16777217).value,16777216);assert.equal(M.float32(16777218).value,16777218);assert.equal(M.float32(16777215).value,16777215);});
+check('CMOS complementary paths for every stable input',()=>{for(const kind of ['NOT','NAND','NOR'])for(let a=0;a<2;a++)for(let b=0;b<(kind==='NOT'?1:2);b++){const r=M.cmos(kind,a,b),expected=kind==='NOT'?1-a:kind==='NAND'?1-(a&b):1-(a|b);assert.equal(r.output,expected);assert.equal(Number(r.conductingUp.length>0)+Number(r.conductingDown.length>0),1);}});
+check('changed CMOS input changes active path',()=>{const a=M.cmos('NAND',0,1),b=M.cmos('NAND',1,1);assert.deepEqual(a.conductingUp,[['P_A']]);assert.deepEqual(a.conductingDown,[]);assert.deepEqual(b.conductingUp,[]);assert.deepEqual(b.conductingDown,[['N_A','N_B']]);assert.throws(()=>M.cmos('NAND',2,0));});
+check('RC calculation uses stated units/energy',()=>{const r=M.rcCharge({resistanceOhm:10000,capacitanceFarad:10e-15,supplyVolt:1,timeSecond:100e-12});assert(Math.abs(r.tauSecond-100e-12)<1e-24);assert(Math.abs(r.outputVolt-(1-Math.exp(-1)))<1e-12);assert.equal(r.fullCycleSupplyJoule,10e-15);const larger=M.rcCharge({resistanceOhm:10000,capacitanceFarad:20e-15,supplyVolt:1,timeSecond:100e-12});assert(larger.outputVolt<r.outputVolt);});
+console.log(JSON.stringify({kind:'executed-pure-browser-engine-in-Node',passed:true,checks,randomCounterInputs:1000,adderPairs:256,not:'native CPU, cycle timing, UI or full RV32I validation'}));

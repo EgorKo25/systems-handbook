@@ -16,7 +16,7 @@ BASE_SLUGS = frozenset(row['slug'] for row in PUBLISHED if row['build'] != 'mana
 GROUPS = (
     dict(id='foundations', title='Машина, оболочка и сеть',
          description='Сначала разберитесь, как исполняется программа, где живут её данные и каким путём она общается с другими машинами.',
-         volumes=('linux', 'bash', 'networks')),
+         volumes=('computer-architecture', 'operating-systems', 'linux', 'bash', 'networks')),
     dict(id='software', title='Код и исполняемая программа',
          description='Сохраните историю изменения, получите проверяемый бинарный файл и поймите границы контейнерного окружения.',
          volumes=('git', 'go', 'docker')),
@@ -47,7 +47,13 @@ def _book(title, status, prerequisites, scope, blurb=None):
 
 
 BOOKS = {
-    'linux': _book('Устройство Linux', 'released', (),
+    'computer-architecture': _book('Архитектура компьютера', 'released', (),
+        'Биты, инструкции, процессор, память, устройства и аппаратная защита.',
+        'Сигнал и байт → инструкция → процессор и память → устройства → загрузка машины.'),
+    'operating-systems': _book('Операционные системы', 'released', ('computer-architecture',),
+        'Ядро, исполнение программ, управление памятью, согласование и ввод-вывод.',
+        'Аппаратные возможности → процесс и системный вызов → память и файлы → согласование и защита.'),
+    'linux': _book('Устройство Linux', 'released', ('operating-systems',),
         'Процессор, ядро, процессы, память, файлы, устройства и службы.',
         'Команда процессора → системный вызов → процесс и память → файлы и устройства → работающая служба.'),
     'bash': _book('Bash', 'released', ('linux',),

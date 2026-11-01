@@ -1,0 +1,70 @@
+MEMORY · источники и происхождение · 1 ноября 2026
+
+Все девять глав, таблицы адресов, диаграммы, model.js/view.js, тесты и README
+написаны для книги. В папке нет копий коммерческих datasheets, ISA PDF,
+скриншотов, заимствованных изображений/кода, сторонних JS/Node библиотек,
+бинарников, шрифтов, dotfiles или сетевых runtime-зависимостей. Собственное
+лицензирование определяется общим корнем книги. По внешним ссылкам действуют
+условия соответствующих издателей; эти материалы в книгу не упакованы.
+
+М32: общий input architecture-shared-machine-contract-2026-11-01 v1,
+согласованный координатором. Physical first LUI000022B7; Sv32 second image
+LUI004022B7. RAM64KiB/LE; inputPA2000, outputPA2200, codePA1000;42→43.
+Cache16B/4sets — учебный профиль. MESI1, SB-FIFO-2C, DRAM-T1 и NUMA-варианты
+названы отдельно; не объявлены микроархитектурой реального CPU.
+
+RISC-V Ratified Specifications Library v20260120:
+Supervisor-Level ISA1.13, §11.1.1 satp, SUM/MXR, SFENCE.VMA;
+§11.1.3 Sv32, PTE layout/permissions/A-D options, translation algorithm:
+https://docs.riscv.org/reference/isa/v20260120/priv/supervisor.html
+RVWMO Memory Consistency Model2.0:
+https://docs.riscv.org/reference/isa/v20260120/unpriv/rvwmo.html
+A Extension for Atomic Instructions2.1:
+https://docs.riscv.org/reference/isa/v20260120/unpriv/a-st-ext.html
+Официальные latest-страницы проверены как redirect кv20260120. Sv32 пример
+арифметически пересчитан; движок различает VA32 и PAдо34бит, PTE/page fault
+и физический access fault. Выбран Svade; автоматическое A/D не симулируется.
+Малый SB-FIFO не используется как формальное доказательство RVWMO.
+
+Intel SDM catalogue, updated 9 October 2026, SDM 093:
+https://www.intel.com/content/www/us/en/developer/articles/technical/intel-sdm.html
+Фактически открытый Volume 3A, order 253668-093US, September2026:
+https://cdrdv2.intel.com/v1/dl/getContent/671190
+§14.3 cache types, §14.4/Table14-4 MESI, §11.2 memory ordering.
+Общие названия/правила использованы для сопоставления. WT/WA и16B/4sets
+не выдаются за конкретный Intel memory type/геометрию. Диаграммы оригинальны.
+
+Microchip controller documentation, revision 21, DDR memory/timing roles:
+https://onlinedocs.microchip.com/oxy/GUID-AFCB5DCC-964F-4BE7-AA46-C756FA87ED7B-en-US-21/GUID-A29420D1-4E36-4920-B9BB-DD0B63F5E787.html
+ACT/READ/PRECHARGE, tRCD/tRP/tRAS/tRC/tRFC и необходимость учёта единиц.
+DRAM-T1 со значениями12/12/36/48ns и собственными CL/burst — явно учебный
+расчёт, не выбранный partnumber и не валидированная конфигурация DDR.
+
+Первичная1T1C работа R.H.Dennard, Field-effect transistor memory,
+US3387286A, publication 4 June 1968:
+https://patents.google.com/patent/US3387286A/en
+Используется для происхождения однотранзисторной ячейки и восстановления.
+30/300fF,1V и взвешенный charge-sharing пример собственные, не параметры патента.
+
+R.W.Hamming, Error Detecting and Error Correcting Codes,
+Bell System Technical Journal 29(2),147–160,April 1950,
+DOI10.1002/j.1538-7305.1950.tb00463.x:
+https://ieeexplore.ieee.org/document/6772729
+Издательский указатель также подтверждён Bell Labs:
+https://www.nokia.com/bell-labs/about/history/innovation-stories/bell-labs-technical-journal/
+Полный текст Wiley не доступен browsing tool(403); его полное чтение не
+заявлено. Код(8,4), размещение битов, синдром,16кодовых слов и контрпримеры
+самостоятельно выведены из явно выписанных четырёх паритетных уравнений.
+Чужие формулировки, рисунки и исходники не копировались.
+
+Roofline: S.Williams,A.Waterman,D.A.Patterson, UC Berkeley report
+EECS-2008-134,17 October 2008, §3 (operational intensity/upper bound):
+https://www2.eecs.berkeley.edu/Pubs/TechRpts/2008/EECS-2008-134.html
+https://www2.eecs.berkeley.edu/Pubs/TechRpts/2008/EECS-2008-134.pdf
+В книге — собственные числа100GFLOP/s/25.6GB/s, пример A=B+2C и явный
+WA/traffic расчёт. Измерения оборудования авторов и их графики не переносились.
+
+Ограничение доступа: исторический media-www.micron.com URL8GbDDR4datasheet
+и поиск Micron technical note не дали прочитанного полного документа.
+Значения не приписываются непрочитанному Micron/закрытому JEDEC standard.
+Все модельные числа и реально наблюдённые проверки перечисляются раздельно.

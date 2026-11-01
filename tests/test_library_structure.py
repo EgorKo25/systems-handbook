@@ -14,7 +14,8 @@ PUBLICATION = dict(networks='I', linux='II', bash='III', postgres='IV', cache='V
                    git='VI', go='VII', jenkins='VIII', gitlab='IX', practicum='X')
 NEW_TECHNOLOGIES = {'docker', 'sonarqube', 'nexus', 'artifactory', 'terraform',
                     'ansible', 'flyway', 'mongodb', 's3', 'minio', 'ceph', 'vault',
-                    'kubernetes', 'helm', 'argocd', 'prometheus', 'grafana'}
+                    'kubernetes', 'helm', 'argocd', 'prometheus', 'grafana',
+                    'computer-architecture', 'operating-systems'}
 
 
 class Page(HTMLParser):
@@ -88,6 +89,8 @@ class StructureTests(unittest.TestCase):
             for prerequisite in book['prerequisites']:
                 self.assertLess(order[prerequisite], order[slug], (slug, prerequisite))
         self.assertIn('docker', structure.BOOKS['kubernetes']['prerequisites'])
+        self.assertEqual(structure.BOOKS['operating-systems']['prerequisites'], ('computer-architecture',))
+        self.assertEqual(structure.BOOKS['linux']['prerequisites'], ('operating-systems',))
         self.assertIn('kubernetes', structure.BOOKS['helm']['prerequisites'])
         self.assertIn('helm', structure.BOOKS['argocd']['prerequisites'])
         self.assertIn('postgres', structure.BOOKS['flyway']['prerequisites'])
@@ -102,7 +105,7 @@ class StructureTests(unittest.TestCase):
         for slug, number in PUBLICATION.items():
             self.assertEqual(books[slug]['publication_volume'], number)
             self.assertEqual(books[slug]['href'], slug+'/index.html')
-        self.assertEqual(self.route()['order'][0], 'linux')
+        self.assertEqual(self.route()['order'][:3], ['computer-architecture', 'operating-systems', 'linux'])
         self.assertEqual(books['linux']['publication_volume'], 'II')
 
     def test_empty_missing_unregistered_and_boolean_stats_cannot_publish_a_card(self):

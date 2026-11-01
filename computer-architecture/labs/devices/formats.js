@@ -1,0 +1,13 @@
+/* DEVICES-FORMATS1: selected PCIe2.1 3DW headers and LAN743x RX words.
+ * Pure encoders; no packet I/O, PCI bus, NIC emulator or timing. */
+(function(root){'use strict';
+function need(v,m){if(!v)throw new Error(m);}function uint(v,max,n){need(Number.isInteger(v)&&v>=0&&v<=max,n+' outside selected width');return v;}
+function be32(v){return [(v>>>24)&255,(v>>>16)&255,(v>>>8)&255,v&255];}
+function le32(v){return [v&255,(v>>>8)&255,(v>>>16)&255,(v>>>24)&255];}
+function readHeader(address,length,requester=0x100,tag=0x5A){uint(address,0xFFFFFFFF,'address');uint(length,4096,'length');uint(requester,65535,'requester');uint(tag,255,'tag');need(length>=4&&length%4===0&&address%4===0,'Selected MRd requires positive aligned DWORDs');need(address+length<=2**32,'32-bit request end overflow');need((address%4096)+length<=4096,'Request crosses 4KiB');const dw=length/4;return [...be32(dw===1024?0:dw),requester>>>8,requester&255,tag,dw===1?15:255,...be32(address)];}
+function completions(address,length,piece=64,requester=0x100,tag=0x5A){readHeader(address,length,requester,tag);need(piece===64||piece===128,'Finite example only RCB64 pieces64/128');need(address%64===0&&length%piece===0,'Selected pieces require RCB aligned exact split');const rows=[];for(let done=0;done<length;done+=piece){const count=length-done;rows.push({address:address+done,bytes:piece,byteCount:count,lowerAddress:(address+done)&127,header:[...be32(0x4A000000|(piece/4)),0,0,(count>>>8)&15,count&255,requester>>>8,requester&255,tag,(address+done)&127]});}return rows;}
+function rxOwned(address,capacity){uint(address,0xFFFFFFFF,'address');uint(capacity,16383,'capacity');need(capacity>0,'This finite single-buffer example requires nonzero capacity');need(address+capacity<=2**32,'RX range end overflow');return [...le32(0x8000|capacity),...le32(address),...le32(0),...le32(0)];}
+function rxReturnedWord({used,frameLength,first,last,extension=false}){uint(used,16383,'used');uint(frameLength,16383,'frameLength');need([first,last,extension].every(v=>typeof v==='boolean'),'RX flags must be boolean');need(!extension,'Finite encoder only RX data without extension');need(used>0,'Final data cannot use zero buffer');need(!last||frameLength>=used,'Last fragment exceeds frame length');return ((first?0x80000000:0)|(last?0x40000000:0)|(frameLength<<16)|used)>>>0;}
+function hex(bytes){return bytes.map(x=>x.toString(16).padStart(2,'0').toUpperCase()).join(' ');}
+const api={readHeader,completions,rxOwned,rxReturnedWord,hex};if(typeof module==='object'&&module.exports)module.exports=api;root.DevicesFormats=api;
+})(typeof globalThis==='object'?globalThis:this);
