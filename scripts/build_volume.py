@@ -279,9 +279,12 @@ def home():
         if route['books'][slug]['status'] != 'available':
             continue
         diagrams = [d for name in cfg['diagram_modules'] for d in module(ROOT/slug/'sources'/f'{name}.py').DIAGRAMS]
-        if not diagrams:
+        illustrations = cfg.get('illustration_links', [])
+        if not diagrams and not illustrations:
             continue
-        links = '<details data-'+slug+'-map><summary>'+cfg['short']+' · '+str(len(diagrams))+' схем</summary><ul>'+''.join(f'<li><a href="{slug}/index.html#{d["id"]}">{escape(d["title"])}</a> <span class="small">· {len(d["steps"])} шагов</span></li>' for d in diagrams)+'</ul></details>'
+        entries = ''.join(f'<li><a href="{slug}/index.html#{d["id"]}">{escape(d["title"])}</a> <span class="small">· {len(d["steps"])} шагов</span></li>' for d in diagrams)
+        entries += ''.join(f'<li><a href="{slug}/index.html#{escape(d["id"], quote=True)}">{escape(d["title"])}</a> <span class="small">· {escape(d["label"])}</span></li>' for d in illustrations)
+        links = '<details data-'+slug+'-map><summary>'+cfg['short']+' · '+str(len(diagrams)+len(illustrations))+' схем</summary><ul>'+entries+'</ul></details>'
         page = page.replace('</section><section class="notes" style="margin-top:22px"><h2>Как читать',links+'</section><section class="notes" style="margin-top:22px"><h2>Как читать',1)
     depth_path = ROOT/'networks/sources/depth-diagrams.json'
     if depth_path.exists():

@@ -15,11 +15,15 @@ class FirstBuildTests(unittest.TestCase):
             root = Path(directory)
             (root/'index.html').write_text(
                 '<html><head></head><body><main><div class="grid"></div>'
-                '<section class="notes">Notes</section></main></body></html>')
+                '<section class="notes">Notes</section>'
+                '<section class="notes" style="margin-top:22px"><h2>Как читать</h2>'
+                '</section></main></body></html>')
             (root/'library-stats.json').write_text('[]')
             slugs = ('computer-architecture', 'operating-systems')
             configs = {slug: dict(volume=number, short=slug, blurb=slug, diagram_modules=[])
                        for slug, number in zip(slugs, ('XXIX', 'XXX'))}
+            configs['operating-systems']['illustration_links'] = [
+                dict(id='os-cow-page', title='Page P & Q', label='6 состояний')]
             published = [dict(slug=slug, build='managed') for slug in slugs]
             built = []
 
@@ -50,6 +54,9 @@ class FirstBuildTests(unittest.TestCase):
                     self.assertEqual(route['books'][slug]['href'], slug+'/index.html')
                     self.assertIn('href="'+slug+'/index.html"', page)
                 self.assertEqual(route['order'][:3], [*slugs, 'linux'])
+                self.assertIn('operating-systems · 1 схем', page)
+                self.assertEqual(page.count('href="operating-systems/index.html#os-cow-page"'), 1)
+                self.assertIn('Page P &amp; Q', page)
                 return 420
 
             with patch.object(build_library, 'ROOT', root), \
@@ -60,6 +67,9 @@ class FirstBuildTests(unittest.TestCase):
                  patch.object(build_volume, 'CONFIGS', configs), \
                  patch.object(library_catalog, 'refresh', side_effect=final_catalog):
                 build_library.main()
+                build_volume.home()
+                self.assertEqual((root/'index.html').read_text().count(
+                    'href="operating-systems/index.html#os-cow-page"'), 1)
 
 
 if __name__ == '__main__':

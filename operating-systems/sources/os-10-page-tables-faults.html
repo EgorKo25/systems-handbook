@@ -68,6 +68,133 @@ PFN = 0x12a; P=1 W=1 U=1 X=0 A=0 D=0 C=0
 <p>Полный алгоритм удерживает ссылку на старый кадр и проверяет, что отображение по-прежнему то же; выделяет новый кадр; копирует; снова под защитой нужной блокировки сравнивает текущую PTE с ожидаемой; публикует новый перевод и согласует TLB; отпускает лишнюю ссылку. Если другой поток уже заменил PTE, приготовленная копия не устанавливается поверх чужого результата: она освобождается по правильному протоколу, а причина проверяется заново. Если выделение отказало, нельзя оставить PTE, указывающую на несуществующую либо неинициализированную память.</p>
 <p>После ухода P у старого кадра может остаться только Q, хотя PTE Q всё ещё W=0/C=1. При следующей записи Q ядро может убедиться, что копия больше никому не нужна, и сделать существующий кадр доступным без физического копирования. Безопасность такой оптимизации требует знать всех значимых владельцев и ограничения кадра, а не считать только видимые процессы в таблице учебника. Наш Cow-модуль моделирует два обычных владельца и не моделирует DMA, закреплённые страницы, файловые частные отображения, гонки ядра или отказ выделения.</p>
 
+<figure class="cow-cutaway" id="os-cow-page" data-cow-cutaway>
+<style>
+.cow-cutaway{margin:2rem 0;padding:1.1rem 0;border-block:1px solid var(--line);color:var(--text)}.cow-cutaway svg{display:block;width:100%;height:auto;max-width:680px;margin:auto}.cow-cutaway svg text{font-family:var(--sans);fill:var(--text);font-size:22px}.cow-cutaway .cow-small{font-size:20px;fill:var(--muted)}.cow-cutaway .cow-heading{font-size:23px;font-weight:650}.cow-cutaway .cow-mono{font-family:var(--mono);font-size:22px}.cow-cutaway .cow-byte{font-family:var(--mono);font-size:27px}.cow-cutaway .cow-value{font-family:var(--mono);font-size:32px;font-weight:700}.cow-cutaway .cow-paper{fill:var(--paper)}.cow-cutaway .cow-frame{fill:none;stroke:var(--muted);stroke-width:2}.cow-cutaway .cow-unallocated{fill:none;stroke:var(--line);stroke-width:2;stroke-dasharray:8 6}.cow-cutaway .cow-rule{stroke:var(--line);stroke-width:1.5;fill:none}.cow-cutaway .cow-byte-bg{fill:var(--accent);fill-opacity:.13}.cow-cutaway .cow-p-link{fill:none;stroke:var(--accent);stroke-width:3}.cow-cutaway .cow-q-link{fill:none;stroke:var(--muted);stroke-width:2.5;stroke-dasharray:6 4}.cow-cutaway .cow-fill{fill:var(--accent)}.cow-cutaway .cow-muted-fill{fill:var(--muted)}.cow-cutaway .cow-controls{display:flex;align-items:center;justify-content:space-between;gap:.65rem;margin:.8rem 0}.cow-cutaway .cow-controls[hidden]{display:none}.cow-cutaway .cow-controls button{font:inherit;color:var(--text);background:var(--paper);border:1px solid var(--line);border-radius:.6rem;min-width:5.2rem;min-height:44px;padding:.45rem .7rem;touch-action:manipulation}.cow-cutaway button:disabled{opacity:.45}.cow-cutaway button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}.cow-cutaway .cow-controls output{font-size:.9em;text-align:center}.cow-cutaway .cow-print{display:none}.cow-cutaway figcaption{color:var(--muted)}.cow-cutaway .cow-table{overflow-x:auto}.cow-cutaway table{font-size:.9em;min-width:36rem}.cow-cutaway th,.cow-cutaway td{text-align:left;vertical-align:top}.cow-cutaway details{margin:1rem 0}.cow-cutaway [data-cow-title]{font-weight:650;margin-bottom:.4rem}.cow-cutaway [data-cow-description]{min-height:5em}
+@media(max-width:420px){.cow-cutaway .cow-controls button{min-width:4.6rem}.cow-cutaway [data-cow-description]{min-height:7em}}
+@media print{.cow-cutaway{--paper:#fff;--text:#111;--muted:#444;--accent:#222;--line:#aaa}.cow-cutaway .cow-screen,.cow-cutaway details{display:none!important}.cow-cutaway .cow-print{display:block}.cow-cutaway .cow-print svg{max-width:420px;break-inside:avoid}.cow-cutaway table{min-width:0;font-size:9pt}.cow-cutaway .cow-table{overflow:visible}.cow-cutaway h3{break-after:avoid}}
+</style>
+<h3 id="os-cow-page-title">Куда указывает одна и та же страница P и Q</h3>
+<p>Строки сверху — записи двух разных таблиц страниц. Прямоугольники снизу — физические кадры, каждый по 4096 байт. Высота нарисованных участков условна; четыре выделенных байта лежат по смещению 0x124, то есть 292. W разрешает запись, C отмечает копирование при записи, D отмечает выполненную запись. Признаки и адреса взяты из уже разобранного M32-2L-v1.</p>
+<div class="cow-screen" data-plain-skip="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 720" role="img" aria-labelledby="cow-cut-title-screen cow-cut-desc-screen">
+<title id="cow-cut-title-screen">После записи P: отдельная 43, прежняя 42 у Q</title><desc id="cow-cut-desc-screen">Два одинаковых виртуальных адреса переводятся в разные физические кадры. PTE P=0x0012b037, Q=0x0012a055. P видит2b000000, Q видит2a000000. Признаки и адреса принадлежат учебному формату M32-2L-v1.</desc>
+<defs><marker id="cow-arrow-P-screen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" class="cow-fill"/></marker><marker id="cow-arrow-Q-screen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" class="cow-muted-fill"/></marker></defs>
+<rect class="cow-paper" x="0" y="0" width="600" height="720"/>
+<text x="28" y="32" class="cow-heading">Отображения процессов</text><text x="28" y="60" class="cow-small">Один VPN 0x403; разные таблицы у P и Q</text>
+<path d="M28 104H572M28 171H572M28 238H572" class="cow-rule"/>
+<text x="30" y="91" class="cow-small">Процесс / VA</text><text x="268" y="91" class="cow-small">PTE: кадр и признаки</text>
+<text x="30" y="131" class="cow-heading">P</text><text x="74" y="131" class="cow-mono">0x00403124</text><text x="268" y="131" class="cow-mono" data-cow="pteP">0x0012b037</text><text x="74" y="156" class="cow-small" data-cow="paP">PA 0x0012b124</text><text x="420" y="156" class="cow-small" data-cow="flagsP">W1 C0 D1</text>
+<g data-cow="qrow"><text x="30" y="198" class="cow-heading">Q</text><text x="74" y="198" class="cow-mono">0x00403124</text><text x="268" y="198" class="cow-mono" data-cow="pteQ">0x0012a055</text><text x="74" y="223" class="cow-small" data-cow="paQ">PA 0x0012a124</text><text x="420" y="223" class="cow-small" data-cow="flagsQ">W0 C1 D0</text></g>
+<text x="30" y="198" class="cow-small" data-cow="noQ" visibility="hidden">Q ещё не создан</text>
+<path d="M568 171H584V312H470V335" class="cow-p-link" marker-end="url(#cow-arrow-P-screen)" data-cow="linkP"/><text x="563" y="287" class="cow-small">P</text>
+<path d="M304 238V296H164V335" class="cow-q-link" marker-end="url(#cow-arrow-Q-screen)" data-cow="linkQ"/><text x="310" y="292" class="cow-small" data-cow="qLinkLabel">Q</text>
+<text x="28" y="265" class="cow-heading">Физическая память</text>
+<g><rect x="28" y="350" width="260" height="275" rx="4" class="cow-frame"/>
+<text x="44" y="380" class="cow-mono">F · PFN 0x12a</text><text x="44" y="407" class="cow-small">База 0x0012a000</text>
+<text x="45" y="438" class="cow-small">0…0x123: 292 байта</text><rect x="44" y="450" width="228" height="49" class="cow-byte-bg"/>
+<text x="54" y="483" class="cow-byte">2a</text><text x="111" y="483" class="cow-byte">00</text><text x="168" y="483" class="cow-byte">00</text><text x="225" y="483" class="cow-byte">00</text>
+<text x="44" y="528" class="cow-small">+0x124…+0x127: 4 байта</text><text x="44" y="556" class="cow-small">0x128…0xfff: 3800 байт</text><text x="44" y="593" class="cow-value">42</text><text x="110" y="594" class="cow-small" data-cow="refsF">Отображений: 1</text>
+</g>
+<g data-cow="gframe"><rect x="312" y="350" width="260" height="275" rx="4" class="cow-frame"/>
+<text x="328" y="380" class="cow-mono">G · PFN 0x12b</text><text x="328" y="407" class="cow-small">База 0x0012b000</text>
+<text x="329" y="438" class="cow-small">0…0x123: 292 байта</text><rect x="328" y="450" width="228" height="49" class="cow-byte-bg"/>
+<text x="338" y="483" class="cow-byte" data-cow="byteG">2b</text><text x="395" y="483" class="cow-byte">00</text><text x="452" y="483" class="cow-byte">00</text><text x="509" y="483" class="cow-byte">00</text>
+<text x="328" y="528" class="cow-small">+0x124…+0x127: 4 байта</text><text x="328" y="556" class="cow-small">0x128…0xfff: 3800 байт</text><text x="328" y="593" class="cow-value" data-cow="valueG">43</text><text x="394" y="594" class="cow-small" data-cow="refsG">Отображений: 1</text>
+</g><g data-cow="noG" visibility="hidden"><rect x="312" y="350" width="260" height="275" rx="4" class="cow-unallocated"/><text x="331" y="454" class="cow-small">Нового кадра ещё нет</text><text x="331" y="485" class="cow-small">Копирование не началось</text></g>
+<text x="28" y="666" class="cow-small" data-cow="copyCount">Скопировано 4096 байт; инструкция изменяет 4 байта.</text><text x="28" y="697" class="cow-small">Схематический разрез; высота участков не в масштабе.</text>
+</svg><div class="cow-controls" data-cow-controls hidden><button type="button" data-cow-prev>← Назад</button><output data-cow-position aria-live="polite">Шаг 6 из 6</output><button type="button" data-cow-next>Дальше →</button></div><p data-cow-title>Повтор записи P получает 43</p><p data-cow-description>После замены перевода CPU записал 43 только в G. Q сохранил F со значением 42. Без JavaScript показан этот последний шаг; полный порядок есть ниже.</p></div>
+<details><summary>Текстовое объяснение всех шагов</summary><div class="cow-table"><table><thead><tr><th>Шаг</th><th>P:PFN/PTE/число</th><th>Q:PFN/PTE/число</th><th>Что меняется</th></tr></thead><tbody><tr><td>1. Только P, чтение уже было</td><td>0x12a /0x0012a017 /42</td><td>Нет</td><td>F один; W1/C0/D0.</td></tr>
+<tr><td>2. Создали Q</td><td>0x12a /0x0012a055 /42</td><td>0x12a /0x0012a055 /42</td><td>Оба с W0/C1/D0; старый writable TLB согласован до запуска Q.</td></tr>
+<tr><td>3. P попытался записать 43</td><td>Без изменения</td><td>Без изменения</td><td>Защитный fault; байты пока 2a000000.</td></tr>
+<tr><td>4. Копия подготовлена</td><td>Пока ещё F/42</td><td>F/42</td><td>Ядро удерживает G: 4096 байт скопированы, в G тоже 42; PTE ещё не опубликована.</td></tr>
+<tr><td>5. Новый перевод P</td><td>0x12b /0x0012b017 /42</td><td>F/0x0012a055 /42</td><td>У P W1/C0/D0, TLB согласован. Копирование ещё не записало 43.</td></tr>
+<tr><td>6. Повторилась запись</td><td>0x12b /0x0012b037 /43</td><td>F/0x0012a055 /42</td><td>Только теперь CPU пишет 2b000000 в G и устанавливает D.</td></tr></tbody></table></div></details>
+<div class="cow-print" data-plain-skip="true"><p>После повторённой записи P. В таблице — все предыдущие состояния.</p><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 720" role="img" aria-labelledby="cow-cut-title-print cow-cut-desc-print">
+<title id="cow-cut-title-print">После записи P: отдельная 43, прежняя 42 у Q</title><desc id="cow-cut-desc-print">Два одинаковых виртуальных адреса переводятся в разные физические кадры. PTE P=0x0012b037, Q=0x0012a055. P видит2b000000, Q видит2a000000. Признаки и адреса принадлежат учебному формату M32-2L-v1.</desc>
+<defs><marker id="cow-arrow-P-print" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" class="cow-fill"/></marker><marker id="cow-arrow-Q-print" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" class="cow-muted-fill"/></marker></defs>
+<rect class="cow-paper" x="0" y="0" width="600" height="720"/>
+<text x="28" y="32" class="cow-heading">Отображения процессов</text><text x="28" y="60" class="cow-small">Один VPN 0x403; разные таблицы у P и Q</text>
+<path d="M28 104H572M28 171H572M28 238H572" class="cow-rule"/>
+<text x="30" y="91" class="cow-small">Процесс / VA</text><text x="268" y="91" class="cow-small">PTE: кадр и признаки</text>
+<text x="30" y="131" class="cow-heading">P</text><text x="74" y="131" class="cow-mono">0x00403124</text><text x="268" y="131" class="cow-mono" data-cow="pteP">0x0012b037</text><text x="74" y="156" class="cow-small" data-cow="paP">PA 0x0012b124</text><text x="420" y="156" class="cow-small" data-cow="flagsP">W1 C0 D1</text>
+<g data-cow="qrow"><text x="30" y="198" class="cow-heading">Q</text><text x="74" y="198" class="cow-mono">0x00403124</text><text x="268" y="198" class="cow-mono" data-cow="pteQ">0x0012a055</text><text x="74" y="223" class="cow-small" data-cow="paQ">PA 0x0012a124</text><text x="420" y="223" class="cow-small" data-cow="flagsQ">W0 C1 D0</text></g>
+<text x="30" y="198" class="cow-small" data-cow="noQ" visibility="hidden">Q ещё не создан</text>
+<path d="M568 171H584V312H470V335" class="cow-p-link" marker-end="url(#cow-arrow-P-print)" data-cow="linkP"/><text x="563" y="287" class="cow-small">P</text>
+<path d="M304 238V296H164V335" class="cow-q-link" marker-end="url(#cow-arrow-Q-print)" data-cow="linkQ"/><text x="310" y="292" class="cow-small" data-cow="qLinkLabel">Q</text>
+<text x="28" y="265" class="cow-heading">Физическая память</text>
+<g><rect x="28" y="350" width="260" height="275" rx="4" class="cow-frame"/>
+<text x="44" y="380" class="cow-mono">F · PFN 0x12a</text><text x="44" y="407" class="cow-small">База 0x0012a000</text>
+<text x="45" y="438" class="cow-small">0…0x123: 292 байта</text><rect x="44" y="450" width="228" height="49" class="cow-byte-bg"/>
+<text x="54" y="483" class="cow-byte">2a</text><text x="111" y="483" class="cow-byte">00</text><text x="168" y="483" class="cow-byte">00</text><text x="225" y="483" class="cow-byte">00</text>
+<text x="44" y="528" class="cow-small">+0x124…+0x127: 4 байта</text><text x="44" y="556" class="cow-small">0x128…0xfff: 3800 байт</text><text x="44" y="593" class="cow-value">42</text><text x="110" y="594" class="cow-small" data-cow="refsF">Отображений: 1</text>
+</g>
+<g data-cow="gframe"><rect x="312" y="350" width="260" height="275" rx="4" class="cow-frame"/>
+<text x="328" y="380" class="cow-mono">G · PFN 0x12b</text><text x="328" y="407" class="cow-small">База 0x0012b000</text>
+<text x="329" y="438" class="cow-small">0…0x123: 292 байта</text><rect x="328" y="450" width="228" height="49" class="cow-byte-bg"/>
+<text x="338" y="483" class="cow-byte" data-cow="byteG">2b</text><text x="395" y="483" class="cow-byte">00</text><text x="452" y="483" class="cow-byte">00</text><text x="509" y="483" class="cow-byte">00</text>
+<text x="328" y="528" class="cow-small">+0x124…+0x127: 4 байта</text><text x="328" y="556" class="cow-small">0x128…0xfff: 3800 байт</text><text x="328" y="593" class="cow-value" data-cow="valueG">43</text><text x="394" y="594" class="cow-small" data-cow="refsG">Отображений: 1</text>
+</g><g data-cow="noG" visibility="hidden"><rect x="312" y="350" width="260" height="275" rx="4" class="cow-unallocated"/><text x="331" y="454" class="cow-small">Нового кадра ещё нет</text><text x="331" y="485" class="cow-small">Копирование не началось</text></g>
+<text x="28" y="666" class="cow-small" data-cow="copyCount">Скопировано 4096 байт; инструкция изменяет 4 байта.</text><text x="28" y="697" class="cow-small">Схематический разрез; высота участков не в масштабе.</text>
+</svg><div class="cow-table"><table><thead><tr><th>Шаг</th><th>P:PFN/PTE/число</th><th>Q:PFN/PTE/число</th><th>Что меняется</th></tr></thead><tbody><tr><td>1. Только P, чтение уже было</td><td>0x12a /0x0012a017 /42</td><td>Нет</td><td>F один; W1/C0/D0.</td></tr>
+<tr><td>2. Создали Q</td><td>0x12a /0x0012a055 /42</td><td>0x12a /0x0012a055 /42</td><td>Оба с W0/C1/D0; старый writable TLB согласован до запуска Q.</td></tr>
+<tr><td>3. P попытался записать 43</td><td>Без изменения</td><td>Без изменения</td><td>Защитный fault; байты пока 2a000000.</td></tr>
+<tr><td>4. Копия подготовлена</td><td>Пока ещё F/42</td><td>F/42</td><td>Ядро удерживает G: 4096 байт скопированы, в G тоже 42; PTE ещё не опубликована.</td></tr>
+<tr><td>5. Новый перевод P</td><td>0x12b /0x0012b017 /42</td><td>F/0x0012a055 /42</td><td>У P W1/C0/D0, TLB согласован. Копирование ещё не записало 43.</td></tr>
+<tr><td>6. Повторилась запись</td><td>0x12b /0x0012b037 /43</td><td>F/0x0012a055 /42</td><td>Только теперь CPU пишет 2b000000 в G и устанавливает D.</td></tr></tbody></table></div></div>
+<script>
+(function(root){'use strict';
+ const VA=0x00403124,OFFSET=0x124,SIZE=4096,F=0x12a,G=0x12b;
+ const hex=n=>'0x'+n.toString(16).padStart(8,'0');
+ function page(n){const a=new Uint8Array(SIZE);for(let i=0;i<4;i++)a[OFFSET+i]=(n>>>8*i)&255;return a;}
+ function owner(frame,W,C,D){return{frame,W,C,D,pte:frame*SIZE+1+4+16+(W?2:0)+(C?64:0)+(D?32:0),pa:frame*SIZE+OFFSET};}
+ function states(){
+  const initial=page(42),copied=initial.slice(),changed=copied.slice();changed[OFFSET]=43;
+  const p0=owner(F,true,false,false),shared=owner(F,false,true,false),private42=owner(G,true,false,false),private43=owner(G,true,false,true);
+  const names=['Один P: разрешена обычная запись','P и Q читают один кадр','Запись P остановлена на W=0','Копия G готова; в ней всё ещё 42','У P новый перевод; данные всё ещё 42','Повтор записи P получает 43'];
+  const descriptions=[
+   'P уже прочитал 42. Его виртуальная страница 0x403 отображается на F. Q ещё нет. Запись с W=1 могла бы пройти без COW.',
+   'Ядро создало частное отображение Q того же F и запретило аппаратную запись обоим. До исполнения Q прежний writable-перевод P должен быть отозван. Программно частная запись разрешена.',
+   'P уже вычислил 43 и пытается сохранить четыре байта. MMU видит W=0: инструкция не закончена, F остаётся 42. C=1 помогает ядру выбрать COW; сам бит C не разрешает аппаратную запись.',
+   'Проверив отображение и ресурсы, ядро выделило G и скопировало все 4096 байт F. Обе PTE пока указывают на F, G удерживается ядром. Копирование переносит 42; P ещё не записал 43.',
+   'Ядро повторно проверило исходную PTE, установило только P→G с W=1/C=0 и согласовало TLB. Q остаётся на F. В обоих кадрах пока 42; D новой PTE ещё 0.',
+   'Возврат повторяет остановленную запись P. CPU записывает 2b000000 в G, D становится 1. P видит 43, Q по прежнему VA видит 42. Уже выполненное отдельной инструкцией сложение повторять не нужно.'
+  ];
+  return Array.from({length:6},(_,i)=>({index:i,name:names[i],description:descriptions[i],virtual:VA,offset:OFFSET,P:i===0?p0:i<4?shared:i===4?private42:private43,Q:i===0?null:shared,frames:{[F]:initial.slice(),...(i>=3?{[G]:(i===5?changed:copied).slice()}: {})},copiedBytes:i>=3?SIZE:0}));
+ }
+ function draw(element,state){
+  const q=name=>element.querySelector('[data-cow="'+name+'"]');
+  const text=(name,value)=>{q(name).textContent=value;};
+  const visibility=(name,yes)=>q(name).setAttribute('visibility',yes?'visible':'hidden');
+  for(const name of ['P','Q']){
+   const o=state[name];if(!o)continue;
+   text('pte'+name,hex(o.pte));text('pa'+name,'PA '+hex(o.pa));text('flags'+name,'W'+Number(o.W)+' C'+Number(o.C)+' D'+Number(o.D));
+  }
+  visibility('qrow',!!state.Q);visibility('noQ',!state.Q);visibility('linkQ',!!state.Q);visibility('qLinkLabel',!!state.Q);
+  const end=state.P.frame===F?140:470;
+  q('linkP').setAttribute('d','M568 171H584V312H'+end+'V335');
+  visibility('gframe',!!state.frames[G]);visibility('noG',!state.frames[G]);
+  const refs=frame=>[state.P,state.Q].filter(o=>o&&o.frame===frame).length;
+  text('refsF','Отображений: '+refs(F));
+  if(state.frames[G]){const byte=state.frames[G][OFFSET];text('byteG',byte.toString(16).padStart(2,'0'));text('valueG',String(byte));text('refsG','Отображений: '+refs(G));}
+  text('copyCount',state.copiedBytes?'Скопировано 4096 байт; инструкция изменяет 4 байта.':'Байты ещё не копировались; исходная 42 сохранена.');
+  const svg=element.querySelector('.cow-screen svg');svg.querySelector('title').textContent=state.name;svg.querySelector('desc').textContent=state.description;
+  element.querySelector('[data-cow-title]').textContent=state.name;element.querySelector('[data-cow-description]').textContent=state.description;
+ }
+ function attach(element){
+  const all=states();let index=0;
+  const controls=element.querySelector('[data-cow-controls]'),prev=element.querySelector('[data-cow-prev]'),next=element.querySelector('[data-cow-next]'),status=element.querySelector('[data-cow-position]');
+  function show(){draw(element,all[index]);status.textContent='Шаг '+(index+1)+' из '+all.length;prev.disabled=index===0;next.disabled=index===all.length-1;}
+  prev.addEventListener('click',()=>{if(index>0){index--;show();}});next.addEventListener('click',()=>{if(index<all.length-1){index++;show();}});
+  controls.hidden=false;show();return{position:()=>index};
+ }
+ const api={states,draw,attach,VA,OFFSET,SIZE,F,G,hex};
+ if(typeof module==='object'&&module.exports)module.exports=api;
+ else if(typeof document==='object')document.querySelectorAll('[data-cow-cutaway]').forEach(attach);
+})(typeof globalThis==='object'?globalThis:this);
+</script>
+<figcaption>PA вычисляется как PFN×4096+0x124: у F это 0x0012a124, у G — 0x0012b124. Копия переносит 42; пользовательская запись позже получает 43. Все остальные байты копии совпадают с F. После ухода P у Q остаётся один владелец F, но W0/C1 не обязаны исчезнуть без следующего обращения к ядру. Если выделение отказало или частная запись не разрешена, переход к новому кадру не выполняется. Лабораторная Cow.write сворачивает промежуточные действия в один вызов; здесь они разделены для объяснения. Модель не меняет таблицы хоста, не воспроизводит гонки ядра/ISA и не записывает counter.bin на накопитель.</figcaption>
+</figure>
+
 <h2>Изменение таблицы должно дойти до процессоров</h2>
 <p>Нельзя снять разрешение в памяти и считать прежний перевод исчезнувшим из TLB всех ядер. ОС использует предусмотренные ISA операции инвалидации и межпроцессорное согласование. ASID, address space identifier, либо похожая метка позволяет различать кэшированные переводы пространств без полного очищения при каждом переключении. Метки конечны, повторное использование и миграция потоков требуют корректного протокола. Цена массового изменения отображений зависит от числа процессоров, размера диапазона и механизма инвалидации.</p>
 <p>Отсюда практический вывод: программа с частым созданием и удалением мелких отображений может тратить время не только на свои данные, но и на структуры ядра и согласование переводов. Прежде чем увеличивать память или число потоков, измеряют частоту отображений, ошибок страниц и системное время. Отдельный fault может быть ожидаемой работой; серия faults с длительными ожиданиями уже требует объяснения.</p>

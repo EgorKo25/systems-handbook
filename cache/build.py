@@ -54,8 +54,45 @@ class Text(HTMLParser):
         if not self.skip: self.parts.append(data)
 
 
+class _ProjectedText(Text):
+    """Omit only explicitly marked rendering subtrees from text export."""
+    VOID = {'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input',
+            'link', 'meta', 'param', 'source', 'track', 'wbr'}
+
+    def __init__(self):
+        super().__init__()
+        self.hidden = []
+
+    def handle_starttag(self, tag, attrs):
+        if self.hidden or dict(attrs).get('data-plain-skip') == 'true':
+            if tag not in self.VOID:
+                self.hidden.append(tag)
+            return
+        super().handle_starttag(tag, attrs)
+
+    def handle_endtag(self, tag):
+        if self.hidden:
+            if tag not in self.VOID:
+                if self.hidden[-1] != tag:
+                    raise ValueError('Unbalanced data-plain-skip subtree')
+                self.hidden.pop()
+            return
+        super().handle_endtag(tag)
+
+    def handle_data(self, data):
+        if not self.hidden:
+            super().handle_data(data)
+
+    def finish(self):
+        if self.hidden:
+            raise ValueError('Unclosed data-plain-skip subtree')
+
+
 def plain(value):
-    parser = Text(); parser.feed(value)
+    parser = _ProjectedText() if 'data-plain-skip' in value.lower() else Text()
+    parser.feed(value)
+    if isinstance(parser, _ProjectedText):
+        parser.finish()
     text = re.sub(r'[ \t]+(?=\n)', '', ''.join(parser.parts))
     return re.sub(r'\n[ \t]*\n(?:[ \t]*\n)+', '\n\n', text).strip()
 

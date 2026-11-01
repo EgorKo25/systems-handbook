@@ -25,7 +25,7 @@
     {
       "id": "04-quoting-and-expansions",
       "title": "Кавычки и подстановки",
-      "words": 3238
+      "words": 2958
     },
     {
       "id": "05-parameters-and-substitution",
@@ -40,7 +40,7 @@
     {
       "id": "07-pipelines-streams",
       "title": "Конвейеры и потоки",
-      "words": 4253
+      "words": 5074
     },
     {
       "id": "08-status-tests-control",
@@ -103,7 +103,7 @@
       "words": 6035
     }
   ],
-  "words": 48444,
+  "words": 48985,
   "terms": 273,
   "external_assets": 0
 }

@@ -48,6 +48,9 @@ CONFIG = {'volume': 'XXX',
  'term_modules': ['reference_execution', 'reference_memory_io', 'reference_coordination'],
  'command_modules': ['reference_execution', 'reference_memory_io', 'reference_coordination'],
  'diagram_modules': ['diagrams_execution', 'diagrams_memory_io', 'diagrams_coordination', 'diagrams_end_to_end'],
+ 'illustration_links': [{'id': 'os-cow-page',
+                         'title': 'Куда указывает одна и та же страница P и Q',
+                         'label': '6 состояний'}],
  'base_terms': [],
  'blurb': 'Аппаратные механизмы → исполняемая программа → память и согласование → ввод-вывод и '
           'сохранность → защищённая система.'}

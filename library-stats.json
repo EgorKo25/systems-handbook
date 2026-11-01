@@ -19,7 +19,7 @@
     "slug": "bash",
     "title": "Bash: от объектов ядра до надёжного сценария",
     "volume": "IV",
-    "words": 48444,
+    "words": 48985,
     "chapters": 19,
     "terms": 273
   },
@@ -107,7 +107,7 @@
     "slug": "operating-systems",
     "title": "Операционные системы: от аппаратных механизмов до управляемой программы",
     "volume": "II",
-    "words": 86052,
+    "words": 86008,
     "chapters": 38,
     "terms": 268
   }
