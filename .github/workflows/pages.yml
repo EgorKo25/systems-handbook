@@ -36,7 +36,9 @@ jobs:
           go-version: '1.27.3'
           cache: false
       - name: Check the Go teaching service and build contract
-        run: python3 go/labs/check.py
+        run: |
+          python3 go/labs/check.py
+          python3 gitlab/labs/check.py
       - name: Check the stateful Git laboratory
         run: python3 git/labs/check_lab.py
       - name: Check pages, anchors, JSON and JavaScript

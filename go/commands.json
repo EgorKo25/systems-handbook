@@ -9998,5 +9998,283 @@
         "result": "Записанные позиции с этим префиксом меняются; конечная воспроизводимость смешанного бинарника требует также учёта C-компилятора и link."
       }
     ]
+  },
+  {
+    "name": "gitlab-ctl status",
+    "aliases": [],
+    "purpose": "Показать состояние служб своей Linux-package поставки GitLab; наличие процесса отличается от полной прикладной готовности.",
+    "syntax": "gitlab-ctl status [СЛУЖБА]",
+    "chapter": "02-install-and-addresses",
+    "volume": "gitlab",
+    "source": "https://docs.gitlab.com/omnibus/maintenance/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.gitlab.com/omnibus/maintenance/"
+      }
+    ],
+    "flags": [],
+    "situations": [
+      "Проверить, поднялись ли Puma, Gitaly и другие службы после собственного запуска."
+    ]
+  },
+  {
+    "name": "gitlab-ctl tail",
+    "aliases": [],
+    "purpose": "Читать журналы компонентов собственной Linux-поставки. Вывод может содержать чувствительные детали; выбор службы уменьшает лишний объём.",
+    "syntax": "gitlab-ctl tail [СЛУЖБА]",
+    "chapter": "14-performance-and-diagnostics",
+    "volume": "gitlab",
+    "source": "https://docs.gitlab.com/omnibus/maintenance/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.gitlab.com/omnibus/maintenance/"
+      }
+    ],
+    "flags": [],
+    "situations": [
+      "Сопоставить отказ HTTP с журналом puma или nginx; прекратить просмотр Ctrl+C."
+    ]
+  },
+  {
+    "name": "gitlab-ctl reconfigure",
+    "aliases": [],
+    "purpose": "Применить настройки gitlab.rb и привести службы поставки к предусмотренной конфигурации. Может изменять файлы и перезапускать компоненты своего экземпляра.",
+    "syntax": "gitlab-ctl reconfigure",
+    "chapter": "02-install-and-addresses",
+    "volume": "gitlab",
+    "source": "https://docs.gitlab.com/omnibus/maintenance/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.gitlab.com/omnibus/maintenance/"
+      }
+    ],
+    "flags": [],
+    "situations": [
+      "После проверенного изменения конфигурации в личном стенде; сначала иметь её сохранённую копию."
+    ]
+  },
+  {
+    "name": "gitlab-ctl stop",
+    "aliases": [],
+    "purpose": "Штатно остановить выбранную службу или весь собственный экземпляр поставки. Это изменяющее обслуживание, не средство читать статус.",
+    "syntax": "gitlab-ctl stop [СЛУЖБА]",
+    "chapter": "15-backup-and-upgrade",
+    "volume": "gitlab",
+    "source": "https://docs.gitlab.com/omnibus/maintenance/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.gitlab.com/omnibus/maintenance/"
+      }
+    ],
+    "flags": [],
+    "situations": []
+  },
+  {
+    "name": "gitlab-ctl start",
+    "aliases": [],
+    "purpose": "Запустить выбранные службы собственной Linux-поставки. После запуска отдельно проверяются готовность и необходимые операции.",
+    "syntax": "gitlab-ctl start [СЛУЖБА]",
+    "chapter": "15-backup-and-upgrade",
+    "volume": "gitlab",
+    "source": "https://docs.gitlab.com/omnibus/maintenance/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.gitlab.com/omnibus/maintenance/"
+      }
+    ],
+    "flags": [],
+    "situations": []
+  },
+  {
+    "name": "gitlab-ctl backup-etc",
+    "aliases": [],
+    "purpose": "Сохранить конфигурацию /etc/gitlab в защищённый архив. Включает чувствительные материалы и не заменяет прикладной backup данных.",
+    "syntax": "gitlab-ctl backup-etc",
+    "chapter": "15-backup-and-upgrade",
+    "volume": "gitlab",
+    "source": "https://docs.gitlab.com/omnibus/settings/backups/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.gitlab.com/omnibus/settings/backups/"
+      }
+    ],
+    "flags": [],
+    "situations": []
+  },
+  {
+    "name": "gitlab-rake",
+    "aliases": [],
+    "purpose": "Выполнить именованную прикладную задачу GitLab в своей установленной среде. Разные задачи имеют разный эффект; имя задачи — существенный аргумент.",
+    "syntax": "gitlab-rake ЗАДАЧА [НАСТРОЙКА=ЗНАЧЕНИЕ]",
+    "chapter": "14-performance-and-diagnostics",
+    "volume": "gitlab",
+    "source": "https://docs.gitlab.com/administration/raketasks/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.gitlab.com/administration/raketasks/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-T",
+        "action": "Вывести перечень описанных Rake-задач, а не выполнить их все.",
+        "when": "Исследовать доступные задачи точной версии.",
+        "example": "gitlab-rake -T",
+        "result": "Получен список; изучение описания не выдаёт право произвольно менять данные. Присутствуют и изменяющие задачи."
+      }
+    ],
+    "situations": []
+  },
+  {
+    "name": "gitlab-backup create",
+    "aliases": [],
+    "purpose": "Создать прикладную резервную копию собственного экземпляра согласно его конфигурации. Конфигурацию/секреты и внешние backend учитывают отдельно.",
+    "syntax": "gitlab-backup create [ПАРАМЕТР=ЗНАЧЕНИЕ]",
+    "chapter": "15-backup-and-upgrade",
+    "volume": "gitlab",
+    "source": "https://docs.gitlab.com/administration/backup_restore/backup_gitlab/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.gitlab.com/administration/backup_restore/backup_gitlab/"
+      }
+    ],
+    "flags": [],
+    "situations": []
+  },
+  {
+    "name": "gitlab-runner",
+    "aliases": [],
+    "purpose": "Программа получения и исполнения CI-заданий. Подкоманды регистрации, проверки и работы имеют разные эффекты и используют частный config.toml.",
+    "syntax": "gitlab-runner [ГЛОБАЛЬНЫЕ_ФЛАГИ] ПОДКОМАНДА [ФЛАГИ]",
+    "chapter": "07-runners-and-executors",
+    "volume": "gitlab",
+    "source": "https://docs.gitlab.com/runner/commands/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.gitlab.com/runner/commands/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "--version",
+        "action": "Вывести версию программы и завершиться без регистрации или запуска job.",
+        "when": "Зафиксировать Runner отдельно от GitLab Server.",
+        "example": "gitlab-runner --version",
+        "result": "Выведен используемый Runner; это не версия удалённого сервера."
+      },
+      {
+        "flag": "--debug",
+        "action": "Включить подробное журналирование применимого вызова.",
+        "when": "Короткий диагностический опыт в своём стенде.",
+        "example": "gitlab-runner --debug verify --config \"$LAB_RUNNER_CONFIG\"",
+        "result": "Больше диагностических данных; секреты и приватные параметры нужно защитить. Не требуется для обычной работы."
+      }
+    ],
+    "situations": []
+  },
+  {
+    "name": "gitlab-runner register",
+    "aliases": [],
+    "purpose": "Интерактивно связать установленный Runner с уже созданной записью GitLab. Сохраняет чувствительную конфигурацию на машине.",
+    "syntax": "gitlab-runner register --config ФАЙЛ",
+    "chapter": "07-runners-and-executors",
+    "volume": "gitlab",
+    "source": "https://docs.gitlab.com/runner/register/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.gitlab.com/runner/register/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "--config <файл>",
+        "action": "Выбрать частный config.toml этой регистрации.",
+        "when": "Изолировать личный учебный менеджер от других настроек.",
+        "example": "gitlab-runner register --config \"$LAB_RUNNER_CONFIG\"",
+        "result": "Регистрация записывается в выбранный файл; родительский каталог и права подготавливают заранее."
+      },
+      {
+        "flag": "--url <URL>",
+        "action": "Указать базовый URL экземпляра GitLab.",
+        "when": "Явная неинтерактивная регистрация своего подготовленного Runner.",
+        "example": "gitlab-runner register --url https://gitlab.example.invalid",
+        "result": "Адрес должен быть доступен с Runner с корректной проверкой TLS; это не URL конкретного проекта."
+      },
+      {
+        "flag": "--executor <тип>",
+        "action": "Выбрать способ исполнения, например docker либо shell.",
+        "when": "Настроить заранее выбранную границу изоляции.",
+        "example": "gitlab-runner register --executor docker",
+        "result": "В конфигурации выбран executor; Docker и образы этим не устанавливаются."
+      },
+      {
+        "flag": "--non-interactive",
+        "action": "Использовать переданные параметры без обычного опроса.",
+        "when": "Только подготовленная автоматизация с безопасным источником токена.",
+        "example": "gitlab-runner register --non-interactive ...",
+        "result": "Нужен полный допустимый набор параметров; многоточие обозначает пропущенные входы, а не готовую команду."
+      }
+    ],
+    "situations": []
+  },
+  {
+    "name": "gitlab-runner verify",
+    "aliases": [],
+    "purpose": "Проверить связь зарегистрированных Runner с GitLab. Не исполняет пользовательскую сборку и не доказывает готовность executor.",
+    "syntax": "gitlab-runner verify --config ФАЙЛ",
+    "chapter": "07-runners-and-executors",
+    "volume": "gitlab",
+    "source": "https://docs.gitlab.com/runner/commands/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.gitlab.com/runner/commands/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "--config <файл>",
+        "action": "Прочитать регистрации из выбранного частного файла.",
+        "when": "Проверить именно личную конфигурацию.",
+        "example": "gitlab-runner verify --config \"$LAB_RUNNER_CONFIG\"",
+        "result": "Проверена аутентификация указанных записей; доступ к образам, модулям и целям доставки проверяется другими действиями."
+      }
+    ],
+    "situations": []
+  },
+  {
+    "name": "gitlab-runner run",
+    "aliases": [],
+    "purpose": "Запустить основной обработчик заданий в переднем плане с выбранной конфигурацией. После получения работы начнёт исполнять её согласно полномочиям executor.",
+    "syntax": "gitlab-runner run --config ФАЙЛ",
+    "chapter": "07-runners-and-executors",
+    "volume": "gitlab",
+    "source": "https://docs.gitlab.com/runner/commands/",
+    "sources": [
+      {
+        "title": "Официальная документация",
+        "url": "https://docs.gitlab.com/runner/commands/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "--config <файл>",
+        "action": "Использовать явно выбранный config.toml менеджера.",
+        "when": "Учебный запуск в выделенной VM, который легко остановить.",
+        "example": "gitlab-runner run --config \"$LAB_RUNNER_CONFIG\"",
+        "result": "Процесс запрашивает работу; файлы, сеть и лимиты определяются этим конфигом. Сервисная автозагрузка этим не создаётся."
+      }
+    ],
+    "situations": []
   }
 ]

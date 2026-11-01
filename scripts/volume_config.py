@@ -19,4 +19,6 @@ CONFIGS = {
     base_terms=list(range(98,111))+list(range(114,118))+list(range(132,139)),
     blurb='Скачивание и установка → настройка и плагины → агенты → движок Pipeline → эксплуатация и восстановление.'),
 }
+from gitlab.volume_config import CONFIG as GITLAB_CONFIG
+CONFIGS['gitlab'] = {**GITLAB_CONFIG, 'command_modules': ['reference'], 'revision': '1 ноября 2026'}
 TARGETS = {identifier:slug for slug,cfg in CONFIGS.items() for _,ids in cfg['sections'] for identifier in ids if identifier not in {'00-route','99-glossary'}}

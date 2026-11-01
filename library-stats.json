@@ -62,5 +62,13 @@
     "words": 27960,
     "chapters": 16,
     "terms": 88
+  },
+  {
+    "slug": "gitlab",
+    "title": "GitLab: платформа, исполнение CI и эксплуатация",
+    "volume": "IX",
+    "words": 22352,
+    "chapters": 18,
+    "terms": 167
   }
 ]

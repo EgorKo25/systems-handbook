@@ -1,0 +1,62 @@
+# Original personal-lab example. Prepare a pinned Go + Python 3 image and a runner
+# tagged personal-go. This file is not claimed to have run on a live GitLab here.
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS && $CI_PIPELINE_SOURCE == "push"'
+      when: never
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+    - when: never
+
+stages: [check, build, verify]
+
+default:
+  image: $LAB_GO_PYTHON_IMAGE
+  tags: [personal-go]
+
+variables:
+  GOTOOLCHAIN: "local"
+  GOENV: "off"
+  GOWORK: "off"
+  GOTELEMETRY: "off"
+  GOPATH: "$CI_PROJECT_DIR/.cache/gopath"
+  GOMODCACHE: "$CI_PROJECT_DIR/.cache/gopath/pkg/mod"
+  GOCACHE: "$CI_PROJECT_DIR/.cache/go-build"
+  LAB_VERSION: "0.1.0"
+
+unit:
+  stage: check
+  timeout: 10m
+  script:
+    - python3 tools/ci.py test
+  artifacts:
+    when: always
+    paths: [reports/]
+    reports:
+      junit: reports/junit.xml
+    expire_in: 7 days
+
+vet:
+  stage: check
+  timeout: 10m
+  script:
+    - go vet ./...
+
+build:
+  stage: build
+  timeout: 10m
+  script:
+    - python3 tools/ci.py build
+  artifacts:
+    paths: [dist/]
+    expire_in: 7 days
+
+verify:
+  stage: verify
+  timeout: 10m
+  needs:
+    - job: build
+      artifacts: true
+  script:
+    - python3 tools/ci.py verify

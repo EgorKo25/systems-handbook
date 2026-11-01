@@ -5,7 +5,7 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-for book in ('cache', 'go', 'jenkins', 'git'):
+for book in ('cache', 'go', 'jenkins', 'git', 'gitlab'):
     subprocess.run([sys.executable, str(ROOT / book / 'build.py')], cwd=ROOT, check=True)
 from library_catalog import refresh
 print(f'Shared dictionary: {refresh()} definitions')

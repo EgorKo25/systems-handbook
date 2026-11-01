@@ -13,7 +13,7 @@ else:
 ROOT = Path(__file__).resolve().parents[1]
 VOLUMES = {'networks': 'Сети', 'linux': 'Linux', 'bash': 'Bash',
            'postgres': 'PostgreSQL', 'cache': 'Кэш и базы в памяти',
-           'git': 'Git', 'go': 'Go', 'jenkins': 'Jenkins'}
+           'git': 'Git', 'go': 'Go', 'jenkins': 'Jenkins', 'gitlab': 'GitLab'}
 
 
 def write(path, value):

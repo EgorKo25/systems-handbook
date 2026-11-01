@@ -29,6 +29,16 @@ class ExportTests(unittest.TestCase):
         self.write("git/sources/01.html", "authoring fragment")
         self.write("go/sources/01.html", "Go authoring")
         self.write("jenkins/sources/01.html", "Jenkins authoring")
+        self.write("gitlab/index.html", "<h1>GitLab</h1>")
+        self.write("gitlab/build.py", "GitLab builder")
+        self.write("gitlab/sources/01.html", "GitLab authoring")
+        self.write("gitlab/labs/service/.gitlab-ci.yml", "stages: [test]\n")
+        self.write("networks/sources/01.html", "Network authoring")
+        self.write("labs-personal/README.md", "Personal lab recipes")
+        self.write("labs-personal/vm/world.py", "print('lab controller')")
+        self.write("labs-personal/runtime/world.json", "personal progress")
+        self.write("labs-personal/assets/base.qcow2", "large disk")
+        self.write("labs-personal/private/ssh.key", "private credential")
         self.write("go/build.py", "Go builder")
         self.write("jenkins/build.py", "Jenkins builder")
         self.write("git/labs/trainer.py", "print('trainer')")
@@ -56,9 +66,9 @@ class ExportTests(unittest.TestCase):
         self.assertTrue((output / "guide/textbook/index.html").is_file())
         for name in [".git", ".github", "guide/index.html", "cache/sources/00.html", "cache/labs/private-untracked.txt"]:
             self.assertFalse((output / name).exists(), name)
-        for name in ["git/index.html", "git/labs/trainer.py", "git/labs/template/.gitignore", "git/labs/template/tools/build.py", "go/labs/service/.gitignore", "go/labs/service/go.mod"]:
+        for name in ["git/index.html", "git/labs/trainer.py", "git/labs/template/.gitignore", "git/labs/template/tools/build.py", "go/labs/service/.gitignore", "go/labs/service/go.mod", "gitlab/index.html", "gitlab/labs/service/.gitlab-ci.yml", "labs-personal/README.md", "labs-personal/vm/world.py"]:
             self.assertTrue((output / name).is_file(), name)
-        for name in ["git/build.py", "git/sources/01.html", "go/build.py", "go/sources/01.html", "jenkins/build.py", "jenkins/sources/01.html"]:
+        for name in ["git/build.py", "git/sources/01.html", "go/build.py", "go/sources/01.html", "jenkins/build.py", "jenkins/sources/01.html", "gitlab/build.py", "gitlab/sources/01.html", "networks/sources/01.html", "labs-personal/runtime/world.json", "labs-personal/assets/base.qcow2", "labs-personal/private/ssh.key"]:
             self.assertFalse((output / name).exists(), name)
         lines = (output / "SHA256SUMS").read_text().splitlines()
         for line in lines:

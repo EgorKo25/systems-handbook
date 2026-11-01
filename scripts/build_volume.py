@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build independent Git, Go and Jenkins volumes with the common offline reader."""
+"""Build independent technology volumes with the common offline reader."""
 from pathlib import Path
 from html import escape, unescape
 import importlib.util
@@ -28,7 +28,7 @@ def remap_links(body, slug):
         if len(parts) != 2:
             return match[0]
         path, anchor = parts
-        if path not in ('', 'index.html', '../git/index.html', '../go/index.html', '../jenkins/index.html'):
+        if path not in ('', 'index.html', *('../'+name+'/index.html' for name in CONFIGS)):
             return match[0]
         if anchor in ('90-git-book', '92-jenkins-book'):
             target = 'git' if anchor == '90-git-book' else 'jenkins'
@@ -47,7 +47,10 @@ def command_catalog():
     extra = module(ROOT/'go/sources/go_deep_reference.py').COMMANDS
     complete = module(ROOT/'go/sources/tool_flag_reference.py').COMMANDS
     merged = {c['name']: dict(c) for c in json.loads((ROOT/'bash/commands.json').read_text())}
-    for c in original + extra + complete:
+    added = [command for slug,cfg in CONFIGS.items()
+             for name in cfg.get('command_modules', [])
+             for command in module(ROOT/slug/'sources'/f'{name}.py').COMMANDS]
+    for c in original + extra + complete + added:
         c = dict(c)
         c['volume'] = TARGETS.get(c['chapter'], c['volume'])
         merged[c['name']] = c
@@ -55,6 +58,7 @@ def command_catalog():
 
 
 def reader_commands(page):
+    native = "['"+"','".join(CONFIGS)+"']"
     # Go also has the punctuation-named compiler flags -% and -+.
     page = page.replace(r'([+-]{1,2}[A-Za-z0-9][A-Za-z0-9-]*)',
                         r'([+-]{1,2}(?:[A-Za-z0-9_][A-Za-z0-9_-]*|[%+]))')
@@ -102,14 +106,14 @@ def reader_commands(page):
     const exact = candidates[0]?.command || null;''')
     old = "'<div data-learning-terminal></div>'+"
     assert page.count(old) == 1
-    page = page.replace(old, "(['git','go','jenkins'].includes(command.volume)?'<p class=\"callout\">Эта команда выполняется в отдельном учебном окружении. <a href=\"'+escapeHTML(chapter)+'\" data-reference-chapter>Условия и практический разбор →</a></p>':'<div data-learning-terminal></div>')+")
+    page = page.replace(old, "("+native+".includes(command.volume)?'<p class=\"callout\">Эта команда выполняется в отдельном учебном окружении. <a href=\"'+escapeHTML(chapter)+'\" data-reference-chapter>Условия и практический разбор →</a></p>':'<div data-learning-terminal></div>')+")
     old = '''<button type="button" data-try-example="'+flagIndex+'">В терминал ↑</button>'''
     assert old in page
-    page = page.replace(old, """'+(['git','go','jenkins'].includes(command.volume)?'':'<button type="button" data-try-example="'+flagIndex+'">В терминал ↑</button>')+'""")
+    page = page.replace(old, "'+("+native+".includes(command.volume)?'':'<button type=\"button\" data-try-example=\"'+flagIndex+'\">В терминал ↑</button>')+'")
     page = page.replace('commands.some(command => matchesCommand(command, token))',
                         'commands.some(command => commandPrefix(command, tokenizeQuery(input.value)))')
     page = page.replace('function mount(container,command){for(const details',
-                        "function mount(container,command){if(['git','go','jenkins'].includes(command.volume))return;for(const details")
+                        "function mount(container,command){if("+native+".includes(command.volume))return;for(const details")
     return page
 
 
@@ -187,7 +191,7 @@ def build(slug):
     page = re.sub(r'<meta name="description"[^>]*>',lambda _: '<meta name="description" content="'+escape(cfg['description'],quote=True)+'">',page,count=1)
     page = page.replace('<div class="bookname">Bash</div>','<div class="bookname">'+cfg['short']+'</div>')
     total = sum(r['words'] for r in stats)
-    page = re.sub(r'<div class="subtitle">.*?</div>',f'<div class="subtitle">Том {cfg["volume"]}<br>{total:,} слов · {len(stats)} глав<br>Редакция 31 октября 2026</div>',page,count=1,flags=re.S)
+    page = re.sub(r'<div class="subtitle">.*?</div>',f'<div class="subtitle">Том {cfg["volume"]}<br>{total:,} слов · {len(stats)} глав<br>Редакция {cfg.get("revision", "31 октября 2026")}</div>',page,count=1,flags=re.S)
     page = re.sub(r'<nav class="chapter-nav">.*?</nav>',lambda _: nav,page,count=1,flags=re.S)
     page = page.replace('</noscript>','</noscript>'+''.join(articles),1)
     commands = command_catalog()
@@ -233,6 +237,8 @@ def build(slug):
 def home():
     page = (ROOT/'index.html').read_text(encoding='utf-8')
     stats = {r['slug']:r for r in json.loads((ROOT/'library-stats.json').read_text())}
+    if any(slug not in stats or not (ROOT/slug/'index.html').exists() for slug in CONFIGS):
+        return
     for slug,cfg in CONFIGS.items():
         page = re.sub(r'<a class="volume" href="'+slug+r'/index.html">.*?</a>','',page,flags=re.S)
         row = stats[slug]
@@ -241,7 +247,11 @@ def home():
     cards = {slug: re.search(r'<a class="volume" href="'+slug+r'/index.html">.*?</a>',page,re.S)[0] for slug in ['networks','linux','bash','postgres','cache',*CONFIGS]}
     page = re.sub(r'(<div class="grid">).*?(</div><section class="notes">)',lambda m:m[1]+''.join(cards.values())+m[2],page,count=1,flags=re.S)
     page = re.sub(r'<section class="notes" data-inner-books>.*?</section>','',page,flags=re.S)
-    page = page.replace('Шесть связанных томов: сеть, ядро Linux, Bash, PostgreSQL, кэширование, Git и сборка.','Восемь связанных томов: сети, Linux, Bash, PostgreSQL, кэширование, Git, Go и Jenkins.')
+    page = re.sub(r'<p class="lead">.*?</p>', '<p class="lead">Девять связанных томов: сети, Linux, Bash, PostgreSQL, кэширование, Git, Go, Jenkins и GitLab. От устройства механизма до расчёта ресурсов, наблюдения и восстановления.</p>', page, count=1, flags=re.S)
+    for slug in ('networks','linux','bash','postgres','cache'):
+        row = stats[slug]
+        counts = f'<div class="counts">{row["chapters"]} глав · {row["words"]:,} слов · словарь: {row["terms"]}</div>'
+        page = re.sub(r'(<a class="volume" href="'+slug+r'/index.html">.*?)<div class="counts">.*?</div>', lambda m: m[1]+counts, page, count=1, flags=re.S)
     for slug,cfg in CONFIGS.items():
         page = re.sub(r'<details data-'+slug+r'-map>.*?</details>','',page,flags=re.S)
         diagrams = [d for name in cfg['diagram_modules'] for d in module(ROOT/slug/'sources'/f'{name}.py').DIAGRAMS]

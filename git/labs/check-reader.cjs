@@ -6,7 +6,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const assert = require('node:assert/strict');
 const root = path.resolve(__dirname, '../..');
-const volumes = ['git', 'go', 'jenkins'];
+const volumes = ['git', 'go', 'jenkins', 'gitlab'];
 const endMarker = "})(typeof globalThis !== 'undefined' ? globalThis : this);";
 let assertions = 0;
 function ok(value, message) { assert(value, message); assertions++; }
@@ -39,8 +39,9 @@ function shippedSearch(page, slug) {
     equal(typeof search[key], 'function', slug + ': exports ' + key);
   }
   // Native tools must link to the real lab rather than offer fake browser execution.
-  ok(/\['git','go','jenkins'\]\.includes\(command\.volume\)/.test(bundle), slug + ': native command guard');
-  ok(/function mount\(container,command\)\{if\(\['git','go','jenkins'\]\.includes\(command\.volume\)\)return;/.test(bundle), slug + ': flag emulator guard');
+  const native = "['" + volumes.join("','") + "']";
+  ok(bundle.includes(native + '.includes(command.volume)'), slug + ': native command guard');
+  ok(bundle.includes('function mount(container,command){if(' + native + '.includes(command.volume))return;'), slug + ': flag emulator guard');
   return search;
 }
 function resultFor(search, commands, query, name, label) {
