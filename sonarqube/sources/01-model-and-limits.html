@@ -6,6 +6,137 @@
 <p>Web обслуживает браузер и программные HTTP-запросы. CE обрабатывает результаты в фоне. Elasticsearch — встроенный поисковый движок, который поддерживает индексированное представление данных для поиска и фильтрации. Дополнительный управляющий Java-процесс следит за жизнью внутренних процессов. Java здесь — среда исполнения платформы; она нужна даже для проекта, в котором весь прикладной код написан на Go. Отдельная Java-машина сканера и серверная Java-машина имеют собственные версии и память.</p>
 <p>PostgreSQL хранит основное прикладное состояние: настройки экземпляра, проекты, результаты, находки и данные очереди отчётов. Индекс Elasticsearch помогает эффективно находить эти сведения; он не заменяет базу как основу восстановления. Поэтому перенос только <code>data</code> контейнера SonarQube не переносит всю платформу. И наоборот, восстановленная БД может потребовать перестроения индексов прежде, чем все поисковые функции станут доступны. Логи объясняют переходы, но не являются резервной копией результатов.</p>
 <p>У каждой роли свой симптом. Страница проекта открывается, но свежий результат не появляется — исследуем очередь и CE. Список задач сохранён, но поиск находок ведёт себя неполно — изучаем индексирование. HTTP-посредник вернул 502, а Java ещё запускается — это не заключение о качестве исходников. Тесты упали раньше запуска сканера — причины нет ни в индексе, ни в очереди SonarQube. Такая классификация сокращает область исследования до того, как мы начнём менять параметры памяти.</p>
+<!-- SONAR_ARTIFACT_ORIGIN_03_BEGIN -->
+<section id="sonar-report-life" class="sonar-origin-ribbon" aria-labelledby="so17-origin-title">
+<style>
+.sonar-origin-ribbon{font-family:var(--sans);color:var(--text);margin:1.5rem 0;max-width:100%}
+.sonar-origin-ribbon *{box-sizing:border-box;min-width:0}
+.sonar-origin-ribbon .so-purpose,.sonar-origin-ribbon figcaption{color:var(--muted)}
+.sonar-origin-ribbon .so-lane{margin:1.25rem 0;padding:1rem;border:2px solid var(--line);background:var(--paper);break-inside:avoid}
+.sonar-origin-ribbon .so-lane h4{margin:.1rem 0 .75rem}
+.sonar-origin-ribbon .so-route{display:flex;align-items:stretch;gap:.55rem}
+.sonar-origin-ribbon .so-inputs{flex:1.2}.sonar-origin-ribbon .so-processing{flex:1.2}.sonar-origin-ribbon .so-receipt{flex:1}
+.sonar-origin-ribbon .so-source{border-left:5px solid var(--accent);padding:.6rem .75rem;background:var(--soft)}
+.sonar-origin-ribbon .so-file{border:1px solid var(--line);padding:.6rem .75rem;margin:.7rem 0;background:var(--paper);border-radius:0 1rem 0 0}
+.sonar-origin-ribbon .so-run{border:2px solid var(--accent);padding:.6rem .75rem;margin:.7rem 0}
+.sonar-origin-ribbon .so-scanner{border:2px solid var(--text);padding:.6rem .75rem;border-radius:1rem 1rem .2rem .2rem}
+.sonar-origin-ribbon .so-ticket{border:2px dashed var(--line);padding:.6rem .75rem;margin:.7rem 0}
+.sonar-origin-ribbon .so-receipt{border:3px double var(--text);padding:.7rem}
+.sonar-origin-ribbon .so-bad-result{border:3px double var(--text);padding:.7rem;background:repeating-linear-gradient(135deg,var(--soft),var(--soft) 7px,var(--paper) 7px,var(--paper) 14px)}
+.sonar-origin-ribbon .so-good-result{border-left:5px solid var(--accent);padding:.7rem;background:var(--soft)}
+.sonar-origin-ribbon .so-stamp{display:block;color:var(--muted);font-size:.88em;margin:.3rem 0}
+.sonar-origin-ribbon .so-wire{flex:0 0 1.8rem;align-self:center;width:1.8rem;height:1.8rem;color:var(--text)}
+.sonar-origin-ribbon .so-down{display:block;width:1.4rem;height:1.4rem;margin:.35rem auto;transform:rotate(90deg)}
+.sonar-origin-ribbon pre{font-family:ui-monospace,monospace;font-size:.82em;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;max-width:100%;padding:.5rem;background:var(--soft);color:var(--text)}
+.sonar-origin-ribbon code,.sonar-origin-ribbon dd{overflow-wrap:anywhere}
+.sonar-origin-ribbon dl{margin:.5rem 0}.sonar-origin-ribbon dt{font-weight:700}.sonar-origin-ribbon dd{margin:0 0 .35rem}
+.sonar-origin-ribbon del{text-decoration-thickness:2px}.sonar-origin-ribbon ins{text-decoration:none;font-weight:700}
+.sonar-origin-ribbon .so-transcript{border-top:2px solid var(--line);margin-top:1.2rem}
+.sonar-origin-ribbon .so-transcript li{margin:1rem 0;break-inside:avoid}
+.sonar-origin-ribbon .so-full-states{font-size:.9em;color:var(--muted)}
+.sonar-origin-ribbon summary{padding:.65rem 0;min-height:44px;cursor:pointer}
+.sonar-origin-ribbon summary:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+@media(max-width:1050px){.sonar-origin-ribbon .so-route{flex-direction:column}.sonar-origin-ribbon .so-wire{flex-basis:auto;transform:rotate(90deg)}}
+@media print{.sonar-origin-ribbon{--text:#000;--muted:#333;--accent:#000;--paper:#fff;--soft:#fff;--line:#888}.sonar-origin-ribbon .so-route{display:block}.sonar-origin-ribbon .so-wire,.sonar-origin-ribbon .so-down{display:none}.sonar-origin-ribbon .so-lane{break-inside:auto}.sonar-origin-ribbon .so-bad-result{background:var(--paper);border:3px double var(--text)}.sonar-origin-ribbon pre{font-size:9pt}.sonar-origin-ribbon .so-full-states{color:var(--text)}.sonar-origin-ribbon details.so-transcript>summary{display:none}.sonar-origin-ribbon details.so-transcript>.so-transcript-body{display:block!important}.sonar-origin-ribbon details.so-transcript::details-content{content-visibility:visible!important;display:block!important}}
+</style>
+<span id="sonar-report-life-title" aria-hidden="true"></span>
+<h3 id="so17-origin-title">От commit к gate: целость файлов и происхождение — разные проверки</h3>
+<p class="so-purpose">После изменения internal/httpapp/handler.go сохранён C17. Рядом остались целые reports/test.jsonl и reports/coverage.out от C16. Если передать их Scanner с меткой C17, успешный импорт и условный OK сами по себе не докажут, что тесты запускались на C17.</p>
+<p>Перед схемой разделим две проверки. Commit — сохранённый снимок Git, рабочее дерево — файлы, которые сейчас читает инструмент. C16 и C17 ниже — условные имена разных снимков, не настоящие Git-хеши. После изменения кода и сохранения C17 старые отчёты C16 могут остаться побайтно целыми. Контрольная сумма SHA-256 отвечает на вопрос «изменились ли выбранные байты», но сама не отвечает «какой код породил эти байты».</p>
+<p>В ручном пути <code>prepare_reports.py</code> создаёт <code>reports/test.jsonl</code> — JSONL-события тестов, по JSON-объекту на строку, и <code>reports/coverage.out</code> — профиль покрытия. Его <code>reports/reports-manifest.json</code> содержит <code>test_exit</code>, <code>vet_exit</code> и словарь <code>files</code>: у записей <code>test.jsonl</code>, <code>coverage.out</code> и диагностических файлов есть <code>bytes</code> и <code>sha256</code>. Ноль — успешный код соответствующего прошлого процесса; поля исходного commit здесь нет. Повтор helper удаляет его прежние отчёты; неверный случай ниже пропускает этот повтор после изменения кода.</p>
+<p>В правильном ручном пути оператор сначала подтверждает нужный commit и соответствие ему рабочих файлов, затем вызывает helper: <code>--project</code> выбирает корень Go-проекта, <code>--go</code> — уже установленный инструмент Go. Он принимает только успешное новое выполнение test и vet и сохраняет эти же неизменные входы до Scanner. Это внешний инвариант — условие, поддерживаемое порядком действий; helper не проверяет Git и не подписывает происхождение. Сведения о задаче из <code>.scannerwork/report-task.txt</code> относятся уже к последующей отправке Scanner. Все ответы сервера в схеме условные; настоящие команды подготовки и импорт разбираются в <a href="#06-go-analysis">главе Go-анализа</a>.</p>
+
+<figure aria-describedby="so17-caption">
+<figcaption id="so17-caption">Два независимых случая до выпуска: на широком экране читайте от исходников к квитанции справа, на узком — сверху вниз. Даты взяты из придуманного учебного журнала, не из manifest и не из файлового mtime. C16/C17, Tbad/T17 и Abad/A17 условны. Хеши/bytes посчитаны из искусственных файлов; Go, Scanner и сервер этой лентой не запускаются.</figcaption>
+<article class="so-lane" aria-labelledby="so17-stale-title">
+<h4 id="so17-stale-title">Неверный случай: C17 со старыми отчётами C16</h4>
+<div class="so-route">
+<div class="so-inputs">
+<div class="so-source"><strong>Исходники C17</strong><time class="so-stamp" datetime="2026-11-01T10:05:00Z">Учебный журнал: 01.11.2026, 10:05:00 UTC</time><code>internal/httpapp/handler.go</code><pre><del>if len(name) &gt; 128</del>
+<ins>if len(name) &gt; 127</ins></pre><p>Изменение условия — условный пример нового содержимого, а не выполненный Git-коммит.</p></div>
+
+<div class="so-bad-result"><strong>Повтор Go пропущен</strong><p>Целые файлы и прежние коды 0 ошибочно приняли за тестирование C17.</p></div>
+
+<div class="so-file"><strong>Два импортируемых файла</strong><time class="so-stamp" datetime="2026-11-01T10:00:00Z">Журнал запуска на C16: 01.11.2026, 10:00:00 UTC</time><p><code>reports/test.jsonl</code><br><code>reports/coverage.out</code></p>
+<code>reports/reports-manifest.json</code><pre>test_exit=0
+vet_exit=0
+files = {
+  &quot;test.jsonl&quot;: {
+    &quot;bytes&quot;: 114,
+    &quot;sha256&quot;: &quot;4027c67b96b120f44a4367c719e93eb978bb492d84c2983e07b63753c5ed346b&quot;
+  },
+  &quot;coverage.out&quot;: {
+    &quot;bytes&quot;: 84,
+    &quot;sha256&quot;: &quot;6eac55bf43ad4971707b3a4915924c32218a19a59b7317c70af0a6c5de67a735&quot;
+  }
+}</pre><p>Показан фрагмент files. C16/C17 и дата — отдельные пометки учебного журнала; таких полей в manifest нет. bytes/sha256 вычислены для искусственных файлов этой модели.</p></div>
+</div>
+<svg class="so-wire" viewBox="0 0 48 28" aria-hidden="true" focusable="false"><path d="M3 14 H42 M31 4 L43 14 L31 24" fill="none" stroke="currentColor" stroke-width="3"/></svg>
+<div class="so-processing">
+<div class="so-scanner"><strong>Scanner читает два входа</strong><time class="so-stamp" datetime="2026-11-01T10:06:00Z">Учебная отправка: 10:06:00 UTC</time><pre>исходники: C17
+отчёты Go: C16
+sonar.scm.revision=C17</pre><p>revision задаёт метку анализа. Go-тесты этим параметром не запускаются; происхождение отчётов не удостоверяется.</p></div>
+<svg class="so-down" viewBox="0 0 48 28" aria-hidden="true" focusable="false"><path d="M3 14 H42 M31 4 L43 14 L31 24" fill="none" stroke="currentColor" stroke-width="3"/></svg>
+<div class="so-file"><strong>Новая квитанция отправки</strong><code>.scannerwork/report-task.txt</code><pre>ceTaskId=Tbad</pre></div>
+<div class="so-ticket"><strong>Web → очередь PostgreSQL → CE</strong><p>В выбранном случае Web сохранил Tbad, CE взял задачу и обработал её.</p><pre>GET /api/ce/task?id=Tbad
+task.id=Tbad
+task.status=SUCCESS
+task.analysisId=Abad</pre><time class="so-stamp" datetime="2026-11-01T10:07:00Z">Условный ответ CE: 10:07:00 UTC</time><p>CE сохранил Abad в БД и обновил поисковую копию. Индекс не подтверждает gate; общая внешняя транзакция БД/индекса не обещается.</p></div>
+</div>
+<svg class="so-wire" viewBox="0 0 48 28" aria-hidden="true" focusable="false"><path d="M3 14 H42 M31 4 L43 14 L31 24" fill="none" stroke="currentColor" stroke-width="3"/></svg>
+<div class="so-receipt"><strong>Квитанция gate для Abad</strong><pre>GET /api/qualitygates/project_status?analysisId=Abad
+projectStatus.status=OK</pre><p>CI получает ответ через Web/API. Все ответы этой ленты придуманы; старые отчёты не обязаны всегда импортироваться и давать OK.</p><div class="so-bad-result"><strong>НЕОБОСНОВАННЫЙ ВЫВОД</strong><p><del>«Тесты C17 прошли»</del></p><p>Принят Abad, но файлы созданы на C16. Этот OK не доказывает нового запуска Go. Выпуск в сравнении ещё не начат.</p></div></div>
+</div></article>
+<p><strong>Отдельный правильный случай.</strong> Возвращаемся к состоянию до допуска; это сравнение двух порядков действий, а не удаление истории Tbad/Abad или отмена уже выполненного выпуска.</p>
+<article class="so-lane" aria-labelledby="so17-fresh-title">
+<h4 id="so17-fresh-title">Правильный повтор: новый запуск на C17</h4>
+<div class="so-route">
+<div class="so-inputs">
+<div class="so-source"><strong>Исходники C17</strong><time class="so-stamp" datetime="2026-11-01T10:05:00Z">Учебный журнал: 01.11.2026, 10:05:00 UTC</time><code>internal/httpapp/handler.go</code><pre><del>if len(name) &gt; 128</del>
+<ins>if len(name) &gt; 127</ins></pre><p>Изменение условия — условный пример нового содержимого, а не выполненный Git-коммит.</p></div>
+<svg class="so-down" viewBox="0 0 48 28" aria-hidden="true" focusable="false"><path d="M3 14 H42 M31 4 L43 14 L31 24" fill="none" stroke="currentColor" stroke-width="3"/></svg>
+<div class="so-run"><strong>Новый процесс Go на неизменном C17</strong><p>prepare_reports.py заново удалил свои прежние файлы, выполнил test/vet и создал следующие два отчёта.</p><pre>test_exit=0
+vet_exit=0</pre><p>Оператор удерживает C17 между запуском Go и Scanner; это запись порядка действий, не поле manifest.</p></div>
+<svg class="so-down" viewBox="0 0 48 28" aria-hidden="true" focusable="false"><path d="M3 14 H42 M31 4 L43 14 L31 24" fill="none" stroke="currentColor" stroke-width="3"/></svg>
+<div class="so-file"><strong>Два импортируемых файла</strong><time class="so-stamp" datetime="2026-11-01T10:10:00Z">Журнал запуска на C17: 01.11.2026, 10:10:00 UTC</time><p><code>reports/test.jsonl</code><br><code>reports/coverage.out</code></p>
+<code>reports/reports-manifest.json</code><pre>test_exit=0
+vet_exit=0
+files = {
+  &quot;test.jsonl&quot;: {
+    &quot;bytes&quot;: 118,
+    &quot;sha256&quot;: &quot;a9522decb8298f38f9aad19a4936d795df19fd3a6d1898eb0893d7f66fb73273&quot;
+  },
+  &quot;coverage.out&quot;: {
+    &quot;bytes&quot;: 84,
+    &quot;sha256&quot;: &quot;6eac55bf43ad4971707b3a4915924c32218a19a59b7317c70af0a6c5de67a735&quot;
+  }
+}</pre><p>Показан фрагмент files. C16/C17 и дата — отдельные пометки учебного журнала; таких полей в manifest нет. bytes/sha256 вычислены для искусственных файлов этой модели.</p></div>
+</div>
+<svg class="so-wire" viewBox="0 0 48 28" aria-hidden="true" focusable="false"><path d="M3 14 H42 M31 4 L43 14 L31 24" fill="none" stroke="currentColor" stroke-width="3"/></svg>
+<div class="so-processing">
+<div class="so-scanner"><strong>Scanner читает два входа</strong><time class="so-stamp" datetime="2026-11-01T10:11:00Z">Учебная отправка: 10:11:00 UTC</time><pre>исходники: C17
+отчёты Go: C17
+sonar.scm.revision=C17</pre><p>revision задаёт метку анализа. Go-тесты этим параметром не запускаются; происхождение отчётов не удостоверяется.</p></div>
+<svg class="so-down" viewBox="0 0 48 28" aria-hidden="true" focusable="false"><path d="M3 14 H42 M31 4 L43 14 L31 24" fill="none" stroke="currentColor" stroke-width="3"/></svg>
+<div class="so-file"><strong>Новая квитанция отправки</strong><code>.scannerwork/report-task.txt</code><pre>ceTaskId=T17</pre></div>
+<div class="so-ticket"><strong>Web → очередь PostgreSQL → CE</strong><p>В выбранном случае Web сохранил T17, CE взял задачу и обработал её.</p><pre>GET /api/ce/task?id=T17
+task.id=T17
+task.status=SUCCESS
+task.analysisId=A17</pre><time class="so-stamp" datetime="2026-11-01T10:12:00Z">Условный ответ CE: 10:12:00 UTC</time><p>CE сохранил A17 в БД и обновил поисковую копию. Индекс не подтверждает gate; общая внешняя транзакция БД/индекса не обещается.</p></div>
+</div>
+<svg class="so-wire" viewBox="0 0 48 28" aria-hidden="true" focusable="false"><path d="M3 14 H42 M31 4 L43 14 L31 24" fill="none" stroke="currentColor" stroke-width="3"/></svg>
+<div class="so-receipt"><strong>Квитанция gate для A17</strong><pre>GET /api/qualitygates/project_status?analysisId=A17
+projectStatus.status=OK</pre><p>CI получает ответ через Web/API. Все ответы этой ленты придуманы; старые отчёты не обязаны всегда импортироваться и давать OK.</p><div class="so-good-result"><strong>Два условия допуска выполнены</strong><p>Новый запуск относится к неизменному C17, а OK получен для A17 из T17. Продолжение C17 разрешено в этом выбранном случае.</p></div></div>
+</div></article>
+<p>Один coverage.out в двух случаях имеет одинаковые байты и хеш. Новый контролируемый запуск может сохранить те же счётчики; обязательного изменения хеша нет. Внешний порядок запуска обеспечивает происхождение, а проверка bytes/sha256 — целость выбранных файлов.</p>
+</figure>
+<p>В шаблоне GitLab <code>go-report</code> заново выполняет test/vet, а <code>sonar-main</code> получает его два отчёта через <code>needs: job: go-report, artifacts: true</code> в том же pipeline. Это другой путь, не вызов helper: <code>reports-manifest.json</code> этот job не создаёт. <code>sonar.scm.revision="$CI_COMMIT_SHA"</code> передаёт обозначение выбранного снимка; параметр не запускает тесты и не удостоверяет происхождение файлов. Договор CI по-прежнему требует checkout нужной ревизии, артефактов этого запуска и неизменности входов. Один параметр ревизии не заменяет эти условия.</p>
+<details><summary>Проверьте понимание: можно ли принять C17 по прежнему manifest и новому OK?</summary><p>Нет. Пусть все <code>files.*.sha256</code> совпали, прежние <code>test_exit=0</code> и <code>vet_exit=0</code>, а gate нового анализа вернул OK. Это не доказывает выполнение Go-тестов на C17. Нужен новый запуск на подтверждённом неизменном дереве C17, принятие обоих кодов, последующая отправка этих входов и цепочка нового <code>ceTaskId</code> → успешного <code>task.analysisId</code> → <code>projectStatus.status=OK</code> для этого анализа. Хеш нового отчёта может даже совпасть со старым: происхождение обеспечивает контролируемый запуск, а не обязательное различие байтов.</p></details>
+
+<details class="so-transcript" aria-labelledby="so17-transcript-title"><summary id="so17-transcript-title">Полный путь: восемь снимков текстом и для печати</summary><div class="so-transcript-body"><p>На четвёртом снимке начинается новое независимое сравнение до допуска. Числа 0 — коды успешного завершения процессов; время обработки здесь не измерялось.</p><ol><li class="so-snapshot"><h5>1. Неверный случай: C17 и отчёты C16</h5><p>После сохранения C17 файлы reports/test.jsonl и reports/coverage.out оставили от C16 вместе с reports/reports-manifest.json. Проверка их bytes и sha256 совпала: никто не менял эти старые файлы. Полей исходного commit в manifest нет.</p><p>Действует: Автор и неверная проверка.</p><p class="so-full-states">Исходники: C17; код изменён; Go-отчёты: C16; bytes/sha256 верны; Scanner: ещё не запущен; Web / API: нет запроса; PostgreSQL: исходная история; CE: нет новой задачи; Elasticsearch: исходный поиск; Допуск: НЕВЕРНО: принял целость за свежесть</p><ul><li><strong>Целость и происхождение:</strong> files.&lt;имя&gt;.bytes и sha256 совпали → происхождение C17 не доказано. test_exit=0 и vet_exit=0 описывают прежний запуск Go. sonar.scm.revision=C17 не выполняет тесты и не связывает с ними старые файлы.</li></ul></li><li class="so-snapshot"><h5>2. Scanner получил несогласованные входы</h5><p>Ошибочный путь всё же запустил Scanner на C17 с прежними Go-файлами. В выбранном условном исходе импорт принят, Web сохранил задачу Tbad в очереди PostgreSQL. ceTaskId взят из нового .scannerwork/report-task.txt, но это идентичность отправки, не проверка происхождения Go-отчётов.</p><p>Действует: Scanner и Web.</p><p class="so-full-states">Исходники: C17; Go-отчёты: по-прежнему C16; Scanner: C17 + старые Go-файлы; Web / API: принял Tbad; PostgreSQL: Tbad: PENDING; CE: ещё не взял Tbad; Elasticsearch: прежний поиск; Допуск: ошибка входов не исправлена</p><ul><li><strong>Импорт:</strong> два входа разных запусков → ceTaskId=Tbad. Параметры sonar.go.tests.reportPaths и sonar.go.coverage.reportPaths задают пути; они не удостоверяют commit, на котором Go создал содержимое.</li></ul></li><li class="so-snapshot"><h5>3. Даже выбранный OK не исправляет входы</h5><p>В этом придуманном случае CE взял Tbad, сохранил Abad в БД и обновил поиск. Web/API вернул task.status=SUCCESS, task.analysisId=Abad и projectStatus.status=OK для Abad. Неверная проверка сочла это достаточным для допуска C17. В сравнении выпуск ещё не запущен. Совпавшая цепочка task→analysis→gate не доказала, что тесты выполнялись на C17.</p><p>Действует: CE, Web/API и неверная автоматизация.</p><p class="so-full-states">Исходники: C17; Go-отчёты: остались от C16; Scanner: завершён; Web / API: gate Abad=OK (условно); PostgreSQL: Abad сохранён; CE: SUCCESS → Abad; Elasticsearch: копия Abad; Допуск: ОШИБКА вывода; выпуск не начат</p><ul><li><strong>Чего не проверял OK:</strong> входы C17 + отчёты C16 → gate OK для именно этих входов. Здесь не утверждается, что старые отчёты всегда импортируются или всегда дают OK. Даже выбранный успешный исход не является свидетельством нового запуска Go.</li></ul></li><li class="so-snapshot"><h5>4. Новый случай: заново получили отчёты</h5><p>Начинается независимое правильное сравнение: допуск ещё не выдан, Tbad/Abad не продолжаются. Рабочие файлы соответствуют сохранённому C17. Оператор заново запустил prepare_reports.py с --project и --go; helper удалил свои старые файлы, выполнил реальные test/vet и вернул 0. После этого входы не меняют. Сам журнал связи C17 с запуском ведёт оператор, не helper.</p><p>Действует: Оператор и Go.</p><p class="so-full-states">Исходники: C17; дерево неизменно; Go-отчёты: новый запуск на C17; Scanner: не запущен в этом случае; Web / API: нет новой отправки; PostgreSQL: исходная история: новый случай; CE: нет T17; Elasticsearch: исходный поиск: новый случай; Допуск: допуск ещё не выдан</p><ul><li><strong>Внешний инвариант:</strong> commit C17 до запуска Go → тот же C17 до Scanner; оба кода 0. При неуспехе test/vet или изменении файлов цепочка прекращается до Scanner. Равенство нового и старого хеша допустимо: новый запуск иногда создаёт те же байты.</li></ul></li><li class="so-snapshot"><h5>5. Свежие входы отправлены вместе</h5><p>Scanner прочитал исходники C17 и новые Go-отчёты того же неизменного дерева. Web принял его report и сохранил T17 в очереди PostgreSQL. Новый .scannerwork/report-task.txt содержит ceTaskId=T17. Отчёты Go и report Scanner — разные входы и результаты.</p><p>Действует: Scanner и Web.</p><p class="so-full-states">Исходники: C17; Go-отчёты: запуск C17; оба кода 0; Scanner: передача завершена; Web / API: принял T17; PostgreSQL: T17: PENDING; CE: ещё не взял T17; Elasticsearch: прежний поиск; Допуск: ждёт новую задачу T17</p><ul><li><strong>Связь отправки:</strong> новый запуск Go на C17 → ceTaskId=T17. Сохраняют report-task.txt именно этой отправки. Старый файл от другого запуска не заменяет успешную новую передачу.</li></ul></li><li class="so-snapshot"><h5>6. CE начал T17</h5><p>CE взял T17 из сохранённой очереди. API задачи показывает task.status=IN_PROGRESS; analysisId успешного завершения ещё не получен. Предыдущий анализ проекта не даёт допуск C17.</p><p>Действует: CE.</p><p class="so-full-states">Исходники: C17; Go-отчёты: тот же запуск C17; Scanner: может завершиться без wait; Web / API: API T17 доступен; PostgreSQL: T17: IN_PROGRESS; CE: обрабатывает T17; Elasticsearch: прежний поиск; Допуск: допуска нет</p><ul><li><strong>Ожидание:</strong> task.status=PENDING → task.status=IN_PROGRESS. Ожидание очереди и работа CE — разные интервалы; здесь нет измерения длительности.</li></ul></li><li class="so-snapshot"><h5>7. SUCCESS связал T17 с A17</h5><p>В выбранном успешном исходе CE сохранил A17 в БД и обновил поисковую копию. Ответ GET /api/ce/task?id=T17 даёт task.status=SUCCESS и task.analysisId=A17. Это завершение обработки; решение качества нужно получить отдельно.</p><p>Действует: CE, CI и Web/API.</p><p class="so-full-states">Исходники: C17; Go-отчёты: тот же запуск C17; Scanner: окончен; Web / API: T17 → A17; PostgreSQL: A17 сохранён; CE: SUCCESS → A17; Elasticsearch: копия A17; Допуск: ещё не разрешён</p><ul><li><strong>Два идентификатора:</strong> ceTaskId=T17 → task.analysisId=A17. Индекс не подтверждает gate. Отказ CE или отсутствие нового analysisId закрывают путь к допуску.</li></ul></li><li class="so-snapshot"><h5>8. Допуск связан и с входами, и с A17</h5><p>CI через Web/API запрашивает GET /api/qualitygates/project_status?analysisId=A17. В выбранном ответе projectStatus.status=OK; внешний инвариант нового Go-запуска на C17 также выполнен. Только совместно эти условия разрешают продолжить C17. ERROR, неизвестный статус, отказ запроса или нарушение инварианта не разрешают продолжение.</p><p>Действует: CI через Web/API.</p><p class="so-full-states">Исходники: C17; Go-отчёты: новый запуск C17 подтверждён порядком; Scanner: окончен; Web / API: projectStatus.status=OK; PostgreSQL: A17; CE: SUCCESS → A17; Elasticsearch: поиск отдельно; Допуск: разрешён C17 по двум условиям</p><ul><li><strong>Основание допуска:</strong> известна только идентичность анализа → новые входы C17 + OK конкретного A17. Запрос по одному projectKey мог бы вернуть A18. Даже правильный analysisId не заменяет отдельное обеспечение происхождения импортированных отчётов.</li></ul></li></ol></div></details>
+</section>
+<!-- SONAR_ARTIFACT_ORIGIN_03_END -->
+
 <h2>Из чего состоит статический анализ</h2>
 <p>Для понимания анализатора полезны три слоя. Сначала текст превращается в токены и синтаксическое дерево: дерево отражает конструкции языка, например вызов, условие и возврат. Затем анализатор устанавливает доступные семантические связи: к какому имени относится обращение, какие сведения о типах и модуле доступны. Далее правила исследуют дерево и предусмотренные потоки данных или управления. Поток управления описывает возможный переход между операциями; поток данных — происхождение и дальнейшее использование значения. Реальная глубина этих исследований зависит от конкретного языка, правила и версии поставки.</p>
 <p>Проверка вида «строка читается, но результат проверки игнорируется» проще, чем доказательство отсутствия гонки между несколькими процессами и общей БД. Динамический SQL, регистрация обработчиков через отражение, условная компиляция и генерируемый код усложняют видимую модель. Анализатор вынужден выбирать допустимую стоимость и приближения. Поэтому отсутствие находок означает отсутствие найденных проблем в выбранном охвате, а не математическое доказательство корректности программы при всех входах.</p>

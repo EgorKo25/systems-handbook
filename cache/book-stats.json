@@ -44,7 +44,7 @@
   {
     "id": "06-memory",
     "title": "Память, вытеснение и рабочий набор",
-    "words": 1948,
+    "words": 2013,
     "part": "I. Кэширование",
     "number": "I.6"
   },
@@ -142,7 +142,7 @@
   {
     "id": "18-redis-data",
     "title": "Структуры Redis и организация клиентских запросов",
-    "words": 1985,
+    "words": 3094,
     "part": "II. Redis",
     "number": "II.3"
   },
@@ -184,7 +184,7 @@
   {
     "id": "22-redis-sentinel",
     "title": "Репликация Redis и автоматическое переключение Sentinel",
-    "words": 3617,
+    "words": 3823,
     "part": "II. Redis",
     "number": "II.9"
   },

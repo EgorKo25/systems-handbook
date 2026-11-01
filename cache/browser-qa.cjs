@@ -38,10 +38,11 @@ function assert(value,message){if(!value)throw Error(message);}
   const lab=page.locator('.replication-lab');
   for(const scenario of ['loss','delivered','timeout']){
    await lab.locator('[data-scenario]').selectOption(scenario);
-   for(let i=0;i<7;i++){
-    assert((await lab.locator('[data-counter]').innerText()).includes('Шаг '+(i+1)+' из 7'),'replication step');
+   const count=await lab.locator('#replication-scenarios').evaluate(el=>JSON.parse(el.textContent)[document.querySelector('[data-scenario]').value].steps.length);
+   for(let i=0;i<count;i++){
+    assert((await lab.locator('[data-counter]').innerText()).includes('Шаг '+(i+1)+' из '+count),'replication step');
     assert((await lab.locator('[data-replication-state]').innerText()).length>80,'replication explanation');
-    if(i<6)await lab.locator('[data-forward]').click();
+    if(i<count-1)await lab.locator('[data-forward]').click();
    }
   }
   await lab.locator('svg').scrollIntoViewIfNeeded();
@@ -83,10 +84,11 @@ function assert(value,message){if(!value)throw Error(message);}
   for(const id of ids){
    await page.goto(url+'#'+id);await page.waitForTimeout(90);
    const sketch=page.locator('#'+id),buttons=sketch.locator('.ds-steps button');
-   assert(await buttons.count()===6,'step count '+id);
-   for(let i=0;i<6;i++){
+   const count=await sketch.locator('script.ds-data').evaluate(el=>JSON.parse(el.textContent).steps.length);
+   assert(await buttons.count()===count,'step count '+id);
+   for(let i=0;i<count;i++){
     await buttons.nth(i).click();
-    assert((await sketch.locator('[data-ds-count]').innerText()).includes(String(i+1)+' из 6'),'step failed');
+    assert((await sketch.locator('[data-ds-count]').innerText()).includes(String(i+1)+' из '+count),'step failed');
     const geometry=await page.evaluate(id=>{
       const el=document.getElementById(id),svg=el.querySelector('svg');
       return {width:innerWidth,scroll:document.documentElement.scrollWidth,svgWidth:svg.getBoundingClientRect().width,box:svg.getAttribute('viewBox')};

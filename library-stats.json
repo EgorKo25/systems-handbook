@@ -35,7 +35,7 @@
     "slug": "cache",
     "title": "Кэш и базы данных в памяти: от ускорения чтения до Redis и Memcached",
     "volume": "X",
-    "words": 77219,
+    "words": 78599,
     "chapters": 40,
     "terms": 226
   },
@@ -75,7 +75,7 @@
     "slug": "practicum",
     "title": "Практикум: от своей сети до эксплуатации продукта",
     "volume": "XIV",
-    "words": 37629,
+    "words": 39953,
     "chapters": 26,
     "terms": 38
   },
@@ -91,7 +91,7 @@
     "slug": "sonarqube",
     "title": "SonarQube: от установки до доказуемой проверки изменений",
     "volume": "XI",
-    "words": 19165,
+    "words": 20945,
     "chapters": 15,
     "terms": 183
   },

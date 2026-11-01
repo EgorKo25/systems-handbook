@@ -17,7 +17,102 @@
     <li>Проверка архива списком файлов ещё не доказывает восстановление. Извлеките данные в новый каталог и сравните содержимое.</li>
   </ol>
 </details><details><summary>Разбор и проверка результата</summary>
-  <h3>Ограниченный опыт на новом образе</h3>
+  <h3>Продолжить тот же образ после неудачного монтирования</h3>
+<p>Это отдельный случай повторения уже принятого P07; первый проход начинается в следующем разделе. Пусть P07 уже выполнен: в сохранённом <code>data.img</code> есть ext4 и <code>sentinel.txt</code> со строкой <code>persistent-study-data</code> и переводом строки — 22 байта. Файл-образ имеет логический размер 512 МиБ. Перед паузой владелец сохранил согласованную холодную точку <code>done-p07-storage-recovery</code> (A в разборе), описание VM и отдельную копию контрольного файла. В условном опыте RAM затем увеличили с 1024 до 2048 МиБ при выключенном госте; файл-образ не заменяли. Это не измеренные требования к памяти.</p>
+<p>После загрузки каталог <code>mount</code> остался, а прежнее подключение loop и mount — нет. Если записать файл сейчас, он попадёт в родительскую ФС гостя, а не в ext4 образа. Команда <code>findmnt -T ПУТЬ</code> показывает ФС, содержащую путь, и потому может успешно показать родителя. <code>findmnt --mountpoint ПУТЬ</code> (коротко <code>-M</code>) требует именно эту точку. Перед записью дополнительно сверяем источник по <code>MAJ:MIN</code> — паре номеров блочного устройства текущего ядра. Она не является постоянным именем файла-образа.</p>
+<p>Сначала прочитайте прежний журнал и найдите тот же каталог опыта. Не повторяйте <code>mktemp</code>, <code>truncate</code> и <code>mkfs</code> над сохранённым образом. Заново получите свободный loop через показанный ниже <code>losetup --find --show --nooverlap</code> для этого <code>data.img</code> и проверьте связь. Пример ожидаемого вывода после успешного монтирования: <code>/dev/loop43 /home/student/study-storage.EXAMPLE/mount 7:43</code>. Имена и номера здесь условные; в командах используются ваши переменные и фактический <code>MAJ:MIN</code>. В той же оболочке сохраните имя в <code>lab_storage_loop</code>. В новой оболочке <code>--nooverlap</code> позволяет вновь получить уже связанный loop вместо второго подключения того же файла; затем функция всё равно сверяет связь через <code>--associated</code>. Ошибка mount оставляет запись закрытой; после исправления повторяется mount и та же проба, без форматирования.</p>
+<p>Для продолжения в новом терминале задайте полный прежний каталог из журнала вместо условного пути в первой строке. Затем заново подключите сохранённый файл; не создавайте вместо него новый. Определение функции <code>lab_storage_write_probe</code> из следующего раздела тоже вводится заново, но команды первого форматирования не повторяются.</p>
+<pre><code>lab_storage_dir=/ПОЛНЫЙ/ПУТЬ/ИЗ/ЖУРНАЛА
+test -f "$lab_storage_dir/data.img" &amp;&amp;
+lab_storage_loop=$(sudo losetup --find --show --nooverlap "$lab_storage_dir/data.img") &amp;&amp;
+sudo losetup --list --output NAME,BACK-FILE "$lab_storage_loop"</code></pre>
+<p>Подкоманда <code>restore</code> для точки A не обходит смену RAM даже с подтверждениями <code>--guest-stopped</code> и <code>--confirm</code>: helper сравнивает весь сохранённый <code>config</code> с текущим и при несовпадении отказывает до создания новой ветки и изменения <code>active_disk</code>. Это ограничение контроллера, а не доказательство повреждения диска. Точка A и текущий диск остаются отдельно. Для данного продолжения исправьте монтирование в текущем мире; после приёмки и штатного выключения создайте новую точку <code>after-p07-mount-retry</code> (C) с текущим config; существующие точки не перезаписывайте. Возврат A требует отдельно выбранного совместимого описания машины, а не удаления проверки.</p>
+<figure id="pc-storage-mount-retry" class="pc-mount-cut"><style>
+.pc-mount-cut{margin:1.5rem 0;padding:1rem;border:1px solid var(--line,#777);border-radius:.5rem;color:var(--text,#202020);background:var(--paper,#fff);font-family:var(--sans,system-ui,sans-serif)}
+.pc-mount-cut *{box-sizing:border-box}
+.pc-mount-cut h4{margin:.25rem 0 .75rem;font-size:1.05rem;line-height:1.4}
+.pc-mount-cut p,.pc-mount-cut li,.pc-mount-cut dd{line-height:1.55}
+.pc-mount-cut code{overflow-wrap:anywhere;white-space:normal}
+.pc-mount-cut .pc-cut-views{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.25rem;margin:1rem 0}
+.pc-mount-cut .pc-cut-view{min-width:0}
+.pc-mount-cut .pc-cut-view svg{display:block;width:100%;max-width:23rem;height:auto;margin:auto;overflow:visible;color:var(--text,#202020);font-family:var(--sans,system-ui,sans-serif);font-size:14px}
+.pc-mount-cut svg text{fill:currentColor}
+.pc-mount-cut .pc-cut-surface{fill:var(--paper,#fff);stroke:var(--text,#202020);stroke-width:1.5}
+.pc-mount-cut .pc-cut-soft{fill:var(--soft,#eee);stroke:var(--line,#777);stroke-width:1.5}
+.pc-mount-cut .pc-cut-tree{fill:none;stroke:var(--text,#202020);stroke-width:1.5}
+.pc-mount-cut .pc-cut-link{fill:none;stroke:var(--accent,#165baa);stroke-width:3}
+.pc-mount-cut .pc-cut-off{fill:none;stroke:var(--text,#202020);stroke-width:2;stroke-dasharray:5 4}
+.pc-mount-cut .pc-cut-small{font-size:14px}
+.pc-mount-cut .pc-cut-main{font-size:16px;font-weight:650}
+.pc-mount-cut .pc-cut-muted{fill:var(--muted,#555)}
+.pc-mount-cut .pc-cut-saved{fill:none;stroke:var(--text,#202020);stroke-width:1;stroke-dasharray:4 3}
+.pc-mount-cut .pc-cut-answer{border-left:3px solid var(--accent,#165baa);padding-left:.75rem}
+.pc-mount-cut .pc-cut-transcript{border-top:1px solid var(--line,#777);margin-top:1rem;padding-top:.75rem}
+.pc-mount-cut .pc-cut-transcript dt{font-weight:650;margin-top:.75rem}
+.pc-mount-cut .pc-cut-transcript dd{margin:.2rem 0 0}
+.pc-mount-cut details>summary{min-height:44px;padding:.65rem 0;cursor:pointer;font-weight:650}
+.pc-mount-cut details>summary:focus-visible{outline:2px solid var(--accent,#165baa);outline-offset:3px}
+.pc-mount-cut figcaption{border-top:1px solid var(--line,#777);padding-top:.75rem;margin-top:1rem}
+@media(max-width:700px){.pc-mount-cut .pc-cut-views{grid-template-columns:1fr}.pc-mount-cut{padding:.75rem}.pc-mount-cut .pc-cut-view+ .pc-cut-view{border-top:1px solid var(--line,#777);padding-top:1rem}}
+@media print{.pc-mount-cut{--text:#000;--muted:#333;--accent:#000;--paper:#fff;--soft:#fff;--line:#888}.pc-mount-cut{break-inside:auto;background:#fff;color:#000}.pc-mount-cut .pc-cut-views{grid-template-columns:1fr}.pc-mount-cut .pc-cut-view{break-inside:avoid}.pc-mount-cut .pc-cut-link,.pc-mount-cut .pc-cut-off,.pc-mount-cut .pc-cut-tree,.pc-mount-cut .pc-cut-surface,.pc-mount-cut .pc-cut-saved{stroke:#000}.pc-mount-cut .pc-cut-surface,.pc-mount-cut .pc-cut-soft{fill:#fff}.pc-mount-cut .pc-cut-muted{fill:#000}.pc-mount-cut .pc-cut-view svg{max-width:18rem}.pc-mount-cut .pc-cut-answer{border-color:#000}.pc-mount-cut details>summary{display:none}.pc-mount-cut details>.pc-cut-details-body{display:block!important}.pc-mount-cut details::details-content{content-visibility:visible!important;display:block!important}}
+</style><h4>Каталог остался; источник файлов изменяет только успешный mount</h4><p>Два среза одного условного опыта. Полный путь точки — <code>/home/student/study-storage.EXAMPLE/mount</code>. Родитель — <code>/dev/vda1</code> (<code>253:0</code>), образ — <code>data.img</code>, выбранный loop — <code>/dev/loop43</code> (<code>7:43</code>). Это имена рисунка, не результат проверки вашей VM. <code>parent-only.txt</code> — условный файл внутри исходного <code>mount/</code> на родительской ФС, создавать его для P07 не требуется. <code>LF</code> означает один байт перевода строки.</p><div class="pc-cut-views"><div class="pc-cut-view"><h4>1. Mount не завершён: путь открывает родителя</h4><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 520" role="img" aria-labelledby="pc-cut-failed-title pc-cut-failed-desc">
+<title id="pc-cut-failed-title">1. Mount не завершён: путь открывает родителя</title><desc id="pc-cut-failed-desc">Записи mount для этого каталога и loop нет. Каталог остался на /dev/vda1; tee не вызван. Видимый файл: parent-only.txt. Образ содержит неизменный sentinel.txt.</desc>
+<defs><marker id="pc-cut-failed-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M1 1 L7 4 L1 7" fill="none" stroke="currentColor" stroke-width="1.5"/></marker></defs>
+<path class="pc-cut-soft" d="M14 42 C14 17 286 17 286 42 V289 C286 314 14 314 14 289 Z"/>
+<ellipse class="pc-cut-surface" cx="150" cy="42" rx="136" ry="18"/>
+<text x="34" y="48" class="pc-cut-main">/dev/vda1 · 253:0</text>
+<text x="30" y="87" class="pc-cut-main">study-storage.EXAMPLE/</text>
+<path class="pc-cut-tree" d="M40 98 V167 M40 124 H53 M40 167 H53 M72 183 V199 H80"/>
+<path class="pc-cut-surface" d="M56 108 H68 L76 116 V138 H56 Z M68 108 V116 H76"/>
+<text x="84" y="128">data.img · 512 МиБ</text>
+<path class="pc-cut-surface" d="M56 155 H78 L84 161 H273 V183 H56 Z"/>
+<text x="93" y="174" class="pc-cut-main">mount/</text>
+<text x="84" y="204">parent-only.txt</text>
+<text x="84" y="223" class="pc-cut-small pc-cut-muted">виден через mount/</text>
+<rect class="pc-cut-surface" x="28" y="242" width="245" height="51" rx="3"/>
+<text x="40" y="261" class="pc-cut-small">Видно по пути mount/:</text>
+<text x="40" y="283" class="pc-cut-main">parent-only.txt</text>
+<path class="pc-cut-saved" d="M56 137 H4 V349 H24"/>
+<text x="25" y="333" class="pc-cut-small">Разрез того же data.img ↓</text>
+<path class="pc-cut-soft" d="M24 363 C24 342 280 342 280 363 V449 C280 470 24 470 24 449 Z"/>
+<ellipse class="pc-cut-surface" cx="152" cy="363" rx="128" ry="14"/>
+<text x="42" y="368" class="pc-cut-main">ext4 · корень /</text>
+<text x="42" y="400" class="pc-cut-main">sentinel.txt · 22 байта</text>
+<text x="42" y="422" class="pc-cut-small">persistent-study-data + LF</text>
+<text x="42" y="445" class="pc-cut-small">/dev/loop43 · 7:43</text>
+<path class="pc-cut-off" d="M280 445 H306 V280 M306 250 V168 H280"/><path class="pc-cut-tree" d="M298 257 L314 273 M314 257 L298 273"/>
+<text x="22" y="490" class="pc-cut-main">НЕТ АКТИВНОЙ ПАРЫ</text>
+<text x="22" y="513" class="pc-cut-small">СТОП: tee не вызван</text>
+</svg><p class="pc-cut-answer">Записи mount для этого каталога и loop нет. Каталог остался на /dev/vda1; tee не вызван.</p></div><div class="pc-cut-view"><h4>2. Тот же образ подключён: путь открывает ext4</h4><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 520" role="img" aria-labelledby="pc-cut-correct-title pc-cut-correct-desc">
+<title id="pc-cut-correct-title">2. Тот же образ подключён: путь открывает ext4</title><desc id="pc-cut-correct-desc">Проверены data.img → /dev/loop43 и точная активная пара 7:43 → mount/. Родительский файл скрыт, а не удалён. Видимый файл: sentinel.txt. Образ содержит неизменный sentinel.txt.</desc>
+<defs><marker id="pc-cut-correct-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M1 1 L7 4 L1 7" fill="none" stroke="currentColor" stroke-width="1.5"/></marker></defs>
+<path class="pc-cut-soft" d="M14 42 C14 17 286 17 286 42 V289 C286 314 14 314 14 289 Z"/>
+<ellipse class="pc-cut-surface" cx="150" cy="42" rx="136" ry="18"/>
+<text x="34" y="48" class="pc-cut-main">/dev/vda1 · 253:0</text>
+<text x="30" y="87" class="pc-cut-main">study-storage.EXAMPLE/</text>
+<path class="pc-cut-tree" d="M40 98 V167 M40 124 H53 M40 167 H53 M72 183 V199 H80"/>
+<path class="pc-cut-surface" d="M56 108 H68 L76 116 V138 H56 Z M68 108 V116 H76"/>
+<text x="84" y="128">data.img · 512 МиБ</text>
+<path class="pc-cut-surface" d="M56 155 H78 L84 161 H273 V183 H56 Z"/>
+<text x="93" y="174" class="pc-cut-main">mount/</text>
+<text x="84" y="204">parent-only.txt</text>
+<text x="84" y="223" class="pc-cut-small pc-cut-muted">скрыт, но сохранён</text>
+<rect class="pc-cut-surface" x="28" y="242" width="245" height="51" rx="3"/>
+<text x="40" y="261" class="pc-cut-small">Видно по пути mount/:</text>
+<text x="40" y="283" class="pc-cut-main">sentinel.txt</text>
+<path class="pc-cut-saved" d="M56 137 H4 V349 H24"/>
+<text x="25" y="333" class="pc-cut-small">Разрез того же data.img ↓</text>
+<path class="pc-cut-soft" d="M24 363 C24 342 280 342 280 363 V449 C280 470 24 470 24 449 Z"/>
+<ellipse class="pc-cut-surface" cx="152" cy="363" rx="128" ry="14"/>
+<text x="42" y="368" class="pc-cut-main">ext4 · корень /</text>
+<text x="42" y="400" class="pc-cut-main">sentinel.txt · 22 байта</text>
+<text x="42" y="422" class="pc-cut-small">persistent-study-data + LF</text>
+<text x="42" y="445" class="pc-cut-small">/dev/loop43 · 7:43</text>
+<path class="pc-cut-link" d="M280 445 H306 V168 H280" marker-end="url(#pc-cut-correct-arrow)"/>
+<text x="22" y="490" class="pc-cut-main">ПАРА ПОДТВЕРЖДЕНА</text>
+<text x="22" y="513" class="pc-cut-small">tee разрешён после проверки</text>
+</svg><p class="pc-cut-answer">Проверены data.img → /dev/loop43 и точная активная пара 7:43 → mount/. Родительский файл скрыт, а не удалён.</p></div></div><p>Сплошная линия со стрелкой показывает активное подключение образа к точке. Разрыв с крестом означает отсутствие этой связи. Пунктир от <code>data.img</code> к нижнему разрезу обозначает увеличенный разрез содержимого того же файла, а не второй образ. В правом срезе <code>parent-only.txt</code> остаётся на родительской ФС и скрывается под монтированием; он не перемещён в образ и не удалён. В образе этого упражнения нет GPT и разделов: <code>mkfs.ext4</code> форматирует выбранный loop целиком. Loop представляет байты файла блочным устройством; mount открывает корень ext4 этого устройства по пути <code>mount/</code>.</p><details class="pc-cut-transcript"><summary>Восемь снимков: сохранить, остановиться, повторить</summary><div class="pc-cut-details-body"><dl><dt>1. data.img</dt><dd>P07 принят: ext4, sentinel.txt 22 байта → тот же образ сохранён. До паузы сохранены холодная точка A, описание VM и отдельная копия контрольного файла.</dd><dt>2. config.memory_mib</dt><dd>1024 МиБ → 2048 МиБ. Условная смена RAM при выключенном госте не заменяет active_disk или data.img; vCPU остаётся 1.</dd><dt>3. mount/</dt><dd>после загрузки существует каталог → подключения образа ещё нет. Каталог и данные сохранились на диске; временные loop/mount не являются конфигурацией загрузки.</dd><dt>4. lab_storage_write_probe</dt><dd>mount вернул ошибку либо точная пара не найдена → tee не вызван. Цепочка &amp;&amp; и проверка findmnt закрывают запись; данные образа и неизвестная ФС не меняются автоматически.</dd><dt>5. data.img → loop</dt><dd>сохранённый путь из журнала → ровно /dev/loop43; 7:43. После исправления причины losetup --associated проверяет связь; номера относятся только к условному текущему ядру.</dd><dt>6. 7:43 → mount/</dt><dd>точная пара не подтверждена → /dev/loop43 /home/student/study-storage.EXAMPLE/mount 7:43. Успешный mount и findmnt --uniq --mountpoint ... --source 7:43 разрешают ту же пробу без mkfs.</dd><dt>7. видимый файл sentinel.txt</dt><dd>в образе сохранены 22 байта → проба пишет ту же строку; проверяются файл и отдельная копия. Активное монтирование направляет путь в ext4 образа. parent-only.txt в родителе скрыт, но сохранён.</dd><dt>8. world.py restore A</dt><dd>saved.config.memory_mib=1024, текущий config.memory_mib=2048 → отказ; A и active_disk не заменены. Helper сравнивает весь config до клонирования. Продолжение P07 идёт в текущем мире; новую точку C создают после проверки и выключения.</dd></dl></div></details><p><strong>Самопроверка.</strong> После отказа mount команда <code>findmnt -T</code> показывает <code>/dev/vda1</code>. Разрешает ли это запись sentinel.txt? Нужно ли повторять mkfs после исправления причины?</p><p><strong>Ответ.</strong> Нет: найден родитель пути, а точная пара источника и mountpoint не подтверждена. Не форматируйте сохранённый образ. После исправления повторите mount того же образа и проверку <code>data.img → loop → точный mountpoint</code>; только затем ту же пробу записи. Если config RAM изменён, старая точка не становится совместимой от успешного mount.</p><details class="pc-cut-conditions"><summary>Условия примера</summary><div class="pc-cut-details-body"><p>Один оператор и одно представление монтирований гостя (mount namespace), без конкурирующих перемонтирований. Loop представляет весь <code>data.img</code>, без смещения (offset) и ограничения размера (sizelimit). Чужую файловую систему функция сама не отключает.</p></div></details></figure>
+<h3>Ограниченный опыт на новом образе</h3>
   <p>Только внутри выделенного гостя создайте уникальную папку. Переменные ниже относятся к одному терминалу; не заменяйте их запомненным <code>/dev/sda</code> или общим «первым диском»:</p>
   <pre><code>lab_storage_dir=$(mktemp -d "$HOME/study-storage.XXXXXX")
 truncate -s 512M "$lab_storage_dir/data.img"
@@ -25,12 +120,58 @@ mkdir "$lab_storage_dir/mount"
 lab_storage_loop=$(sudo losetup --find --show --nooverlap "$lab_storage_dir/data.img")
 sudo losetup --list --output NAME,BACK-FILE "$lab_storage_loop"</code></pre>
   <p><code>mktemp -d</code> создаёт новый каталог; это защищает предыдущую попытку от случайного перезаписывания. <code>truncate</code> задаёт логический размер sparse-файла, но не обещает заранее выделенных физических блоков. <code>--find</code> выбирает свободный loop, <code>--show</code> возвращает его имя, <code>--nooverlap</code> помогает избежать второго независимого подключения того же образа. Проверьте, что BACK-FILE совпал с новым data.img, прежде чем продолжать.</p>
-  <pre><code>sudo mkfs.ext4 -L study-data "$lab_storage_loop"
-sudo mount "$lab_storage_loop" "$lab_storage_dir/mount"
-printf '%s\n' 'persistent-study-data' | sudo tee "$lab_storage_dir/mount/sentinel.txt"
-findmnt -T "$lab_storage_dir/mount/sentinel.txt"
-df -h "$lab_storage_dir/mount"
-df -i "$lab_storage_dir/mount"</code></pre>
+  <pre><code>lab_storage_write_probe() (
+    set -uo pipefail
+    : "${lab_storage_dir:?Нужен каталог сохранённого опыта}"
+    : "${lab_storage_loop:?Заново получите и проверьте loop-устройство}"
+    lab_storage_associated=$(sudo losetup --list \
+        --associated "$lab_storage_dir/data.img" \
+        --noheadings --raw --output NAME) || {
+        printf '%s\n' 'Остановка: losetup не подтвердил связь образа' &gt;&amp;2
+        exit 1
+    }
+    [[ "$lab_storage_associated" == "$lab_storage_loop" ]] || {
+        printf '%s\n' 'Остановка: data.img не связан ровно с выбранным loop' &gt;&amp;2
+        exit 1
+    }
+    lab_storage_device_id=$(lsblk --nodeps --noheadings --raw \
+        --output MAJ:MIN -- "$lab_storage_loop") || {
+        printf '%s\n' 'Остановка: lsblk не прочитал номер устройства' &gt;&amp;2
+        exit 1
+    }
+    [[ "$lab_storage_device_id" =~ ^[0-9]+:[0-9]+$ ]] || {
+        printf '%s\n' 'Остановка: не получен один номер устройства' &gt;&amp;2
+        exit 1
+    }
+    findmnt --kernel --uniq --mountpoint "$lab_storage_dir/mount" \
+        --source "$lab_storage_device_id" --noheadings --raw \
+        --output SOURCE,TARGET,MAJ:MIN || {
+        printf '%s\n' 'Остановка: нет точной активной пары источник → mountpoint' &gt;&amp;2
+        exit 1
+    }
+    printf '%s\n' 'persistent-study-data' |
+        sudo tee "$lab_storage_dir/mount/sentinel.txt" || {
+        printf '%s\n' 'Остановка: запись контрольного файла не завершена' &gt;&amp;2
+        exit 1
+    }
+    df -h "$lab_storage_dir/mount" || {
+        printf '%s\n' 'Остановка: df -h завершился ошибкой' &gt;&amp;2
+        exit 1
+    }
+    df -i "$lab_storage_dir/mount" || {
+        printf '%s\n' 'Остановка: df -i завершился ошибкой' &gt;&amp;2
+        exit 1
+    }
+)</code></pre>
+<p>Функция ниже проверяет связь <code>data.img → выбранный loop → точный mountpoint</code> перед записью. <code>losetup --associated</code> должен вернуть ровно выбранное устройство; несколько строк или другой loop закрывают пробу. <code>lsblk --nodeps</code> даёт один MAJ:MIN. <code>findmnt --uniq</code> исключает записи, скрытые верхним монтированием; <code>--source</code> и <code>--mountpoint</code> проверяют пару одновременно. Действия выполняются в том же mount namespace выделенного гостя, пока другие процессы не меняют его монтирования. Функция не размонтирует чужую ФС и не исправляет ошибку автоматически. Семантика опций: <a href="https://man7.org/linux/man-pages/man8/findmnt.8.html">findmnt</a>, <a href="https://man7.org/linux/man-pages/man8/losetup.8.html">losetup</a> и <a href="https://man7.org/linux/man-pages/man8/lsblk.8.html">lsblk</a>.</p>
+<p>Только для первого нового пустого образа:</p>
+<pre><code>sudo mkfs.ext4 -L study-data "$lab_storage_loop" &amp;&amp;
+sudo mount "$lab_storage_loop" "$lab_storage_dir/mount" &amp;&amp;
+lab_storage_write_probe</code></pre>
+<p>Первый вызов с <code>mkfs.ext4</code> допустим только для нового пустого образа после проверки BACK-FILE из предыдущего блока. Цепочка <code>&amp;&amp;</code> не вызывает функцию после отказа форматирования или mount. Внутри функции каждый отказ <code>losetup</code>, <code>lsblk</code>, <code>findmnt</code>, <code>tee</code> и <code>df</code> явно завершает подоболочку с ошибкой. Это работает и при вызове функции в <code>if</code> или слева от <code>&amp;&amp;</code>: одного <code>set -e</code> в таких контекстах недостаточно. <code>pipefail</code> позволяет проверить результат всего конвейера записи.</p>
+<p>Если mount не удался, сохраните его сообщение и образ, исправьте найденную причину и повторите только следующий блок над тем же файлом. Если в каталоге уже смонтирована другая ФС, сначала исследуйте её и сохраните данные; функция сама её не отключает. При уже правильном активном монтировании достаточно <code>lab_storage_write_probe</code>, повторный mount не нужен. После новой загрузки заново определяются переменные и функция; номера loop не запоминают как постоянные.</p>
+<pre><code>sudo mount "$lab_storage_loop" "$lab_storage_dir/mount" &amp;&amp;
+lab_storage_write_probe</code></pre>
   <p><code>mkfs.ext4</code> создаёт новую ФС и уничтожает прежние структуры на указанном устройстве; здесь это только наш пустой образ. Метка <code>-L</code> удобна для узнавания, но не является защитой от неверного устройства. Сравните общий размер, доступное место и inode. Часть ext4 может быть зарезервирована, метаданные тоже занимают место, поэтому размер полезных файлов не равен размеру исходного файла-образа.</p>
   <p>Сохраните контрольный файл в отдельный архив или копию, затем извлеките в новый каталог и сравните <code>cmp</code>. Не храните единственную резервную копию внутри той самой ФС, отказ которой моделируете. Для расширения остановите процессы, использующие точку монтирования, и выполните:</p>
   <pre><code>if sudo umount "$lab_storage_dir/mount" &amp;&amp;
