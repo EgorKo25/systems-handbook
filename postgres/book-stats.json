@@ -2,7 +2,7 @@
   "slug": "postgres",
   "title": "PostgreSQL: от SQL до эксплуатации и высокой доступности",
   "short_title": "PostgreSQL",
-  "volume": "IV",
+  "volume": "IX",
   "topic": "PostgreSQL",
   "description": "Подробный офлайн-учебник: SQL и модель данных, протокол, каталоги, страницы, WAL, MVCC, права, восстановление, измерение нагрузки и высокая доступность с Patroni. Базовая версия PostgreSQL 18.6; различия с 11 и границы версий выделены явно.",
   "storage_key": "postgres-book-v1",

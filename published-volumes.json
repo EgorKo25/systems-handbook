@@ -1,19 +1,91 @@
 {
   "format": 1,
   "volumes": [
-    {"slug": "networks", "title": "Сети", "build": "network"},
-    {"slug": "linux", "title": "Linux", "build": "legacy"},
-    {"slug": "bash", "title": "Bash", "build": "legacy"},
-    {"slug": "postgres", "title": "PostgreSQL", "build": "legacy"},
-    {"slug": "cache", "title": "Кэш и базы в памяти", "build": "cache"},
-    {"slug": "git", "title": "Git", "build": "managed"},
-    {"slug": "go", "title": "Go", "build": "managed"},
-    {"slug": "jenkins", "title": "Jenkins", "build": "managed"},
-    {"slug": "gitlab", "title": "GitLab", "build": "managed"},
-    {"slug": "practicum", "title": "Практикум", "build": "managed"},
-    {"slug": "docker", "title": "Docker", "build": "managed"},
-    {"slug": "sonarqube", "title": "SonarQube", "build": "managed"},
-    {"slug": "computer-architecture", "title": "Архитектура компьютера", "build": "managed"},
-    {"slug": "operating-systems", "title": "Операционные системы", "build": "managed"}
+    {
+      "slug": "networks",
+      "title": "Сети",
+      "build": "network"
+    },
+    {
+      "slug": "linux",
+      "title": "Linux",
+      "build": "legacy"
+    },
+    {
+      "slug": "bash",
+      "title": "Bash",
+      "build": "legacy"
+    },
+    {
+      "slug": "postgres",
+      "title": "PostgreSQL",
+      "build": "legacy"
+    },
+    {
+      "slug": "cache",
+      "title": "Кэш и базы в памяти",
+      "build": "cache"
+    },
+    {
+      "slug": "git",
+      "title": "Git",
+      "build": "managed"
+    },
+    {
+      "slug": "go",
+      "title": "Go",
+      "build": "managed"
+    },
+    {
+      "slug": "jenkins",
+      "title": "Jenkins",
+      "build": "managed"
+    },
+    {
+      "slug": "gitlab",
+      "title": "GitLab",
+      "build": "managed"
+    },
+    {
+      "slug": "practicum",
+      "title": "Практикум",
+      "build": "managed"
+    },
+    {
+      "slug": "docker",
+      "title": "Docker",
+      "build": "managed"
+    },
+    {
+      "slug": "sonarqube",
+      "title": "SonarQube",
+      "build": "managed"
+    },
+    {
+      "slug": "computer-architecture",
+      "title": "Архитектура компьютера",
+      "build": "managed"
+    },
+    {
+      "slug": "operating-systems",
+      "title": "Операционные системы",
+      "build": "managed"
+    }
+  ],
+  "reading_order": [
+    "computer-architecture",
+    "operating-systems",
+    "linux",
+    "bash",
+    "networks",
+    "git",
+    "go",
+    "docker",
+    "postgres",
+    "cache",
+    "sonarqube",
+    "jenkins",
+    "gitlab",
+    "practicum"
   ]
 }

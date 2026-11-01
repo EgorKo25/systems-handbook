@@ -2,7 +2,7 @@
   {
     "slug": "networks",
     "title": "Сети: от сигнала до приложения",
-    "volume": "I",
+    "volume": "V",
     "words": 93518,
     "chapters": 24,
     "terms": 374
@@ -10,7 +10,7 @@
   {
     "slug": "linux",
     "title": "Linux: от команды процессора до работающей службы",
-    "volume": "II",
+    "volume": "III",
     "words": 51025,
     "chapters": 19,
     "terms": 341
@@ -18,7 +18,7 @@
   {
     "slug": "bash",
     "title": "Bash: от объектов ядра до надёжного сценария",
-    "volume": "III",
+    "volume": "IV",
     "words": 48444,
     "chapters": 19,
     "terms": 273
@@ -26,7 +26,7 @@
   {
     "slug": "postgres",
     "title": "PostgreSQL: от SQL до эксплуатации и высокой доступности",
-    "volume": "IV",
+    "volume": "IX",
     "words": 75128,
     "chapters": 25,
     "terms": 441
@@ -34,7 +34,7 @@
   {
     "slug": "cache",
     "title": "Кэш и базы данных в памяти: от ускорения чтения до Redis и Memcached",
-    "volume": "V",
+    "volume": "X",
     "words": 77219,
     "chapters": 40,
     "terms": 226
@@ -58,7 +58,7 @@
   {
     "slug": "jenkins",
     "title": "Jenkins: от установки и плагинов до устройства и эксплуатации Pipeline",
-    "volume": "VIII",
+    "volume": "XII",
     "words": 29685,
     "chapters": 16,
     "terms": 88
@@ -66,7 +66,7 @@
   {
     "slug": "gitlab",
     "title": "GitLab: платформа, исполнение CI и эксплуатация",
-    "volume": "IX",
+    "volume": "XIII",
     "words": 24153,
     "chapters": 18,
     "terms": 167
@@ -74,7 +74,7 @@
   {
     "slug": "practicum",
     "title": "Практикум: от своей сети до эксплуатации продукта",
-    "volume": "X",
+    "volume": "XIV",
     "words": 37629,
     "chapters": 26,
     "terms": 38
@@ -82,7 +82,7 @@
   {
     "slug": "docker",
     "title": "Docker: от образа до работающей и восстанавливаемой системы",
-    "volume": "XI",
+    "volume": "VIII",
     "words": 39565,
     "chapters": 18,
     "terms": 142
@@ -90,7 +90,7 @@
   {
     "slug": "sonarqube",
     "title": "SonarQube: от установки до доказуемой проверки изменений",
-    "volume": "XII",
+    "volume": "XI",
     "words": 19165,
     "chapters": 15,
     "terms": 183
@@ -98,7 +98,7 @@
   {
     "slug": "computer-architecture",
     "title": "Архитектура компьютера: от сигнала до исполняемой машины",
-    "volume": "XXIX",
+    "volume": "I",
     "words": 58080,
     "chapters": 36,
     "terms": 210
@@ -106,7 +106,7 @@
   {
     "slug": "operating-systems",
     "title": "Операционные системы: от аппаратных механизмов до управляемой программы",
-    "volume": "XXX",
+    "volume": "II",
     "words": 86052,
     "chapters": 38,
     "terms": 268

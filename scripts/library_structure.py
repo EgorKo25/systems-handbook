@@ -1,4 +1,4 @@
-"""Original learning map, independent of fixed publication numbers and course order.
+"""Original learning map with publication numbers following its reading order.
 
 Availability is a property of the built reading copy, not of this work queue.
 No private course URLs, lesson text, progress or deployment settings belong here.
@@ -189,7 +189,7 @@ def reading_map(root, stats, configs):
                            stats={key: row[key] for key in ('chapters', 'words', 'terms')} if available else None,
                            blurb=cfg.get('blurb', meta.get('blurb', meta['scope'])))
     return dict(schema=SCHEMA, order=list(RECOMMENDED_ORDER),
-                order_note='Номер тома — постоянный номер издания. Порядок групп — рекомендуемый путь по предпосылкам; соседние ветки можно изучать независимо.',
+                order_note='Номера идут по порядку доступных томов в библиотеке. Книги в очереди номера пока не получают; соседние ветки можно изучать независимо.',
                 practice_note='Практикум можно начать после первых глав Linux и Bash и продолжать вместе с изучаемой технологией.',
                 groups=[{**group, 'volumes': list(group['volumes'])} for group in GROUPS],
                 books=books, threads=[{**thread, 'volumes': list(thread['volumes'])} for thread in THREADS],

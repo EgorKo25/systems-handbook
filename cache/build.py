@@ -12,6 +12,9 @@ import sys
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
+sys.path.insert(0, str(ROOT))
+from scripts.publication import VOLUME_NUMBERS
+VOLUME_NUMBER = VOLUME_NUMBERS['cache']
 sys.path.insert(0, str(HERE / 'sources'))
 from diagrams import DIAGRAMS
 from depth_diagrams import DEPTH_DIAGRAMS
@@ -145,7 +148,7 @@ def main():
         contents='<details class="local-toc"><summary>Содержание главы</summary><ol>'+''.join(f'<li><a href="#{a}">{escape(t)}</a></li>' for a,t in toc)+'</ol></details>' if toc else ''
         prev='#'+pages[index-1]['id'] if index else '../index.html'
         nxt='#'+pages[index+1]['id'] if index+1<len(pages) else '../index.html'
-        articles.append(f'''<article class="chapter" id="{p['id']}"{' hidden' if index else ''}><header class="hero"><div class="eyebrow">Том V · {p['part']} · {p['number']}</div><h1>{escape(p['title'])}</h1><div class="meta">{p['lead']} · {words} слов</div></header>{contents}{body}
+        articles.append(f'''<article class="chapter" id="{p['id']}"{' hidden' if index else ''}><header class="hero"><div class="eyebrow">Том {VOLUME_NUMBER} · {p['part']} · {p['number']}</div><h1>{escape(p['title'])}</h1><div class="meta">{p['lead']} · {words} слов</div></header>{contents}{body}
 <footer class="chapter-footer"><button class="read-toggle" aria-pressed="false">Отметить прочитанной</button><div style="margin-top:20px"><label for="note-{p['id']}">Вопросы и заметки к главе</label><textarea class="note" id="note-{p['id']}" placeholder="Что хочется проверить или перечитать…"></textarea><div class="note-state">Заметки сохраняются в этом браузере. Выгрузите отдельную копию перед переносом.</div></div><div class="footer-nav"><a href="{prev}">← Назад</a><a href="{nxt}">Дальше →</a></div></footer></article>''')
     s=(HERE/'sources/reader-shell.html').read_text(encoding='utf-8')
     s=s.replace('data-volume="bash"','data-volume="cache"').replace('data-storage-key="bash-book-v1"','data-storage-key="cache-book-v1"')
@@ -153,7 +156,7 @@ def main():
     s=re.sub(r'<meta name="description"[^>]*>', '<meta name="description" content="Redis и Memcached: причины внедрения, расчёты нагрузки, свежесть, память, отказы, метрики и практика.">',s,count=1)
     s=s.replace('<div class="bookname">Bash</div>','<div class="bookname">Кэш и базы в памяти</div>')
     total=sum(c['words'] for c in data)
-    s=re.sub(r'<div class="subtitle">.*?</div>',f'<div class="subtitle">Том V · Redis и Memcached<br>{total:,} слов · {len(pages)} глав<br>Редакция 31 октября 2026</div>',s,count=1,flags=re.S)
+    s=re.sub(r'<div class="subtitle">.*?</div>',f'<div class="subtitle">Том {VOLUME_NUMBER} · Redis и Memcached<br>{total:,} слов · {len(pages)} глав<br>Редакция 31 октября 2026</div>',s,count=1,flags=re.S)
     nav='<nav class="chapter-nav">'
     for section,identifiers in SECTIONS:
         nav+='<div class="course-label">'+escape(section)+'</div>'
@@ -211,11 +214,11 @@ def main():
     write_text(HERE/'Справочник-команд.txt','\n\n'.join(c['name']+'\n'+c['purpose']+'\n'+c['syntax']+'\n'+'\n'.join(f['flag']+' — '+f['action']+'\nКогда: '+f['when']+'\n'+f['example']+'\nРезультат: '+f['result'] for f in c['flags']) for c in commands))
     write_text(HERE/'book-stats.json',json.dumps(data,ensure_ascii=False,indent=2)+'\n')
     stats=json.loads((ROOT/'library-stats.json').read_text(encoding='utf-8'))
-    stats=[r for r in stats if r['slug']!='cache']+[dict(slug='cache',title=TITLE,volume='V',words=total,chapters=len(pages),terms=len(glossary))]
+    stats=[r for r in stats if r['slug']!='cache']+[dict(slug='cache',title=TITLE,volume=VOLUME_NUMBER,words=total,chapters=len(pages),terms=len(glossary))]
     write_text(ROOT/'library-stats.json',json.dumps(stats,ensure_ascii=False,indent=2)+'\n')
     home=(ROOT/'index.html').read_text(encoding='utf-8')
     home=re.sub(r'<a class="volume" href="cache/index.html">.*?</a>','',home,flags=re.S)
-    card=f'<a class="volume" href="cache/index.html"><div class="tag">Том V</div><h2>Кэш и базы в памяти</h2><p>Причины внедрения → расчёт пользы → свежесть и память → Redis и Memcached → измерения и отказы.</p><div class="counts">{len(pages)} глав · {total:,} слов · словарь: {len(glossary)}</div><span class="open">Открыть том →</span></a>'
+    card=f'<a class="volume" href="cache/index.html"><div class="tag">Том {VOLUME_NUMBER}</div><h2>Кэш и базы в памяти</h2><p>Причины внедрения → расчёт пользы → свежесть и память → Redis и Memcached → измерения и отказы.</p><div class="counts">{len(pages)} глав · {total:,} слов · словарь: {len(glossary)}</div><span class="open">Открыть том →</span></a>'
     home=home.replace('</div><section class="notes">',card+'</div><section class="notes">',1)
     home=home.replace('Четыре связанных тома: как данные проходят сеть, как ядро предоставляет ресурсы, как оболочка управляет процессами и как база превращает запрос в устойчивое изменение.', 'Пять связанных томов: сеть, ядро Linux, Bash, PostgreSQL и кэширование. От устройства механизма до расчёта ресурсов, наблюдения и восстановления.')
     home=re.sub(r'<details data-cache-map>.*?</details>','',home,flags=re.S)

@@ -32,4 +32,8 @@ for slug in MANAGED_VOLUMES:
         CONFIGS[slug] = {'revision': '1 ноября 2026', **config}
 if set(CONFIGS) != set(MANAGED_VOLUMES):
     raise ValueError('Managed volume configuration and publication registry differ')
+# Registry reading_order owns display numbers; historical per-book literals are ignored.
+from scripts.publication import VOLUME_NUMBERS
+for slug, cfg in CONFIGS.items():
+    cfg['volume'] = VOLUME_NUMBERS[slug]
 TARGETS = {identifier:slug for slug,cfg in CONFIGS.items() for _,ids in cfg['sections'] for identifier in ids if identifier not in {'00-route','99-glossary'}}

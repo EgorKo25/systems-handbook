@@ -8,8 +8,10 @@ import re
 
 if __package__:
     from .reader_navigation import normalize_reader_navigation
+    from .publication import VOLUME_NUMBERS
 else:
     from reader_navigation import normalize_reader_navigation
+    from publication import VOLUME_NUMBERS
 
 ROOT = Path(__file__).resolve().parents[1]
 HERE = ROOT / 'networks'
@@ -86,7 +88,7 @@ def main():
         article = re.sub(r'<details class="local-toc">.*?</details>', '', article, count=1, flags=re.S)
         article = article.replace('</header>', '</header>'+toc, 1)
         article = re.sub(r'<article[^>]+>', '<article id="'+identifier+'" class="chapter"'+(' hidden' if number>1 else '')+'>', article, count=1)
-        article = re.sub(r'<div class="eyebrow">.*?</div>', '<div class="eyebrow">Том I · Сети · Глава '+str(number).zfill(2)+'</div>', article, count=1)
+        article = re.sub(r'<div class="eyebrow">.*?</div>', '<div class="eyebrow">Том '+VOLUME_NUMBERS['networks']+' · Сети · Глава '+str(number).zfill(2)+'</div>', article, count=1)
         prev = '#'+order[number-2] if number>1 else '../index.html'
         nxt = '#'+order[number] if number<len(order) else '../index.html'
         footer = '<div class="footer-nav"><a href="'+prev+'">← Предыдущая глава</a><a href="'+nxt+'">Следующая глава →</a></div>'
@@ -106,7 +108,7 @@ def main():
         page,n = re.subn(r'(<script[^>]*id="'+identifier+r'"[^>]*>).*?(</script>)', lambda m:m[1]+encoded+m[2],page,flags=re.S)
         assert n==1,identifier
     total = sum(r['words'] for r in stats)
-    page = re.sub(r'<div class="subtitle">.*?</div>', '<div class="subtitle">От сигнала до приложения<br>'+f'{total:,}'+' слов · '+str(len(stats))+' глав<br>Редакция 1 ноября 2026</div>',page,count=1,flags=re.S)
+    page = re.sub(r'<div class="subtitle">.*?</div>', '<div class="subtitle">Том '+VOLUME_NUMBERS['networks']+' · От сигнала до приложения<br>'+f'{total:,}'+' слов · '+str(len(stats))+' глав<br>Редакция 1 ноября 2026</div>',page,count=1,flags=re.S)
     page = page.replace('</body>', '<script src="labs/theory-models.js"></script></body>',1)
     write(HERE / 'index.html',normalize_reader_navigation(page))
     write(HERE / 'Учебник-сети.txt','СЕТИ: ОТ СИГНАЛА ДО ПРИЛОЖЕНИЯ\n\n'+'\n\n'.join(plain(a.split('<footer class="chapter-footer">')[0]) for a in articles)+'\n')
@@ -115,7 +117,7 @@ def main():
     library = json.loads((ROOT / 'library-stats.json').read_text())
     for row in library:
         if row['slug'] == 'networks':
-            row.update(title='Сети: от сигнала до приложения', words=total,
+            row.update(title='Сети: от сигнала до приложения', volume=VOLUME_NUMBERS['networks'], words=total,
                        chapters=len(stats), terms=len(glossary))
     write(ROOT / 'library-stats.json',json.dumps(library,ensure_ascii=False,indent=2)+'\n')
     print(json.dumps({k:result[k] for k in ('words','terms','edition')} | {'chapters':len(stats)},ensure_ascii=False))

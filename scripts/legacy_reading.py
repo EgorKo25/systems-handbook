@@ -8,6 +8,7 @@ from pathlib import Path
 import re
 
 from cache.build import plain, write_text
+from scripts.publication import VOLUME_NUMBERS
 
 
 class Chapters(HTMLParser):
@@ -97,10 +98,18 @@ def refresh_legacy(root, slugs=('linux', 'bash', 'postgres')):
     for slug in slugs:
         here = root/slug
         stats = json.loads((here/'book-stats.json').read_text(encoding='utf-8'))
-        page, stats, text = derive((here/'index.html').read_text(encoding='utf-8'), stats)
+        stats['volume'] = VOLUME_NUMBERS[slug]
+        page = (here/'index.html').read_text(encoding='utf-8')
+        page = re.sub(r'(<div class="(?:subtitle|eyebrow)">)Том [IVXLCDM]+',
+                      lambda m: m[1]+'Том '+stats['volume'], page)
+        page, stats, text = derive(page, stats)
+        def subtitle(match):
+            label = re.sub(r'[0-9 ,\u202f]+ слов(?:а|о)?', format(stats['words'], ',').replace(',', ' ')+' слов', match[2], count=1)
+            return match[1]+label+match[3]
+        page = re.sub(r'(<div class="subtitle">)(.*?)(</div>)', subtitle, page, count=1, flags=re.S)
         if slug not in by_slug:
             raise ValueError('Legacy book missing from library stats: '+slug)
-        by_slug[slug].update(words=stats['words'], chapters=len(stats['chapters']), terms=stats['terms'])
+        by_slug[slug].update(volume=stats['volume'], words=stats['words'], chapters=len(stats['chapters']), terms=stats['terms'])
         plans.append((here, page, stats, text))
     for here, page, stats, text in plans:
         write_text(here/'index.html', page)
