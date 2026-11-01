@@ -83,7 +83,7 @@
     "slug": "docker",
     "title": "Docker: от образа до работающей и восстанавливаемой системы",
     "volume": "XI",
-    "words": 25995,
+    "words": 39565,
     "chapters": 18,
     "terms": 142
   },
@@ -99,7 +99,7 @@
     "slug": "computer-architecture",
     "title": "Архитектура компьютера: от сигнала до исполняемой машины",
     "volume": "XXIX",
-    "words": 58000,
+    "words": 58080,
     "chapters": 36,
     "terms": 210
   },

@@ -11,7 +11,7 @@ CONFIG = dict(
         ('Эксплуатация', ['12-observability', '13-resource-efficiency', '14-backup-recovery', '15-upgrade-diagnostics']),
         ('Продолжаемый стенд', ['16-integrated-lab']),
         ('Справочник', ['99-glossary']),
-    ], term_modules=['reference'], diagram_modules=['diagrams'], command_modules=['reference'], base_terms=[],
+    ], term_modules=['reference'], diagram_modules=['diagrams', 'diagrams_network', 'diagrams_security'], command_modules=['reference'], base_terms=[],
     blurb='Официальная установка → образ и процесс → изоляция, сеть и данные → Go и Compose → измерение, резерв и обновление.',
     revision='1 ноября 2026',
 )

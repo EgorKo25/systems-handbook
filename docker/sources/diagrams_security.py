@@ -1,0 +1,24 @@
+"""Original security walkthroughs; no Docker calls, no shared-module imports."""
+def step(title,text,actor,focus,active,states,field):
+ name,before,after,why=field
+ return dict(title=title,explanation=text,actor=actor,focus=focus,active=active,states=states,
+  fields=[dict(name=name,before=before,after=after,why=why)],bands=[dict(label=name,value=after,detail=why)])
+def diagram(identifier,title,intro,assumptions,nodes,edges,steps,marker):
+ return dict(id=identifier,volume='docker',chapter='07-security-rootless',anchor='07-security-rootless',title=title,intro=intro,assumptions=assumptions,insert_before=marker,
+  nodes=[dict(id=i,label=l,sub=s)for i,l,s in nodes],edges=[dict(id=i,**{'from':a,'to':b},label=l)for i,a,b,l in edges],steps=steps)
+DIAGRAMS=[
+
+ diagram('docker-security-directory-sync','Права 0300: файл уже заменён, а HTTP вернул ошибку',
+ 'Следуйте точному порядку учебного counter. Владелец процесса совпадает с владельцем каталога и файлов; чтения каталога нет, но запись и проход есть.',
+ 'Собственная модель исходника labs/echo. Один писатель, counter изначально 42\n, каталог 0300, старый файл 0600, эффективные capabilities пусты; локальная поддерживающая fsync файловая система. Последовательность логическая: реальный Go может вызывать openat, а не функцию с таким же именем. Сбой питания не испытывается.',
+ [('ram','RAM','c.value и uncertain'),('old','Имя counter','какой объект виден'),('tmp','Временный файл','новое число'),('dir','Каталог','0300: w+x'),('sync','Открытие/Sync','нужно чтение каталога'),('http','HTTP','ответ и повтор')],
+ [('create','dir','tmp','CreateTemp'),('publish','tmp','old','Rename'),('dirsync','dir','sync','Open затем Sync'),('finish','sync','ram','после успеха'),('answer','ram','http','результат')],
+ [step('Прочитано 42','ReadFile известного имени требует x каталога и r файла. Список имён не читается.','Go',['ram','old','dir'],[],{'ram':'value=42;uncertain=false','old':'counter→42','tmp':'нет','dir':'владелец:w+x; чтения нет','sync':'ещё не запрошен','http':'GET 42'},('Начало','counter=42 в файле','RAM=42','Отсутствие права чтения каталога не мешает поиску известного имени.')),
+  step('Создано и записано новое имя','Каталог разрешает w+x. Новый файл содержит 43\n и получает 0600. Старое имя ещё указывает на 42.','Go',['tmp','dir'],['create'],{'ram':'42;false','old':'counter→42','tmp':'.counter-X→43','dir':'w+x позволили создание','sync':'ещё не запрошен','http':'POST в работе'},('Данные','нет нового объекта','временный 43','На старый файл не запрашивалось право записи.')),
+  step('Синхронизирован файл','Sync временного открытого файла успешен, затем он закрыт. Имя counter всё ещё старое.','Файловая система',['tmp'],[],{'ram':'42;false','old':'counter→42','tmp':'43;Sync успешен;закрыт','dir':'имя ещё не заменено','sync':'Sync каталога впереди','http':'ответа ещё нет'},('Устойчивость','новые байты в процессе записи','Sync файла завершён','Его успех не синхронизирует предстоящую замену имени.')),
+  step('Rename заменил имя','Запись и проход позволяют заменить counter новым объектом. Снаружи по этому имени уже читается 43.','VFS',['old','tmp'],['publish'],{'ram':'42;false','old':'counter→43','tmp':'перенесён;старого имени нет','dir':'замена имени выполнена','sync':'ещё не открыт','http':'ответа ещё нет'},('Имя','counter→42','counter→43','Для обычного rename поверх файла его старый режим 0444 тоже не запретил бы замену.')),
+  step('Open каталога получил EACCES','os.Open(dir) требует чтения каталога. При 0300 его нет, поэтому до directory.Sync дело не дошло.','Linux',['dir','sync'],['dirsync'],{'ram':'ещё 42','old':'counter→43','tmp':'уже перенесён','dir':'r отсутствует','sync':'Open отказал;Sync не выполнен','http':'готовится 503'},('Отказ','изменение имени уже выполнено','не подтверждена синхронизация каталога','Код ошибки не означает откат предшествующего rename.')),
+  step('Повтор заблокирован','Код ставит uncertain=true и не обновляет c.value. Клиент видит 503; GET ещё 42. Следующий POST откажет до новой записи.','Go',['ram','http'],['answer'],{'ram':'42;uncertain=true','old':'counter→43','tmp':'нет','dir':'0300','sync':'неуспех','http':'503;автоповтор недопустим'},('Исход','операция выполнялась','файл 43/RAM=42/503','По ответу нельзя восстановить прежнее число: сначала разбирают хранение.')),
+  step('Исправлена причина и перечитан тот же файл','Оператор прекращает POST, сверяет counter, возвращает права чтения каталога и перезапускает тот же экземпляр с тем же каталогом.','Оператор/Go',['dir','old','ram'],[],{'ram':'после старта 43;false','old':'тот же counter→43','tmp':'нет','dir':'0700/0770 по назначению','sync':'чтение каталога возможно','http':'GET 43;предыдущее действие не повторено'},('Восстановление','несогласованные наблюдения','новая RAM-копия из сохранённого 43','Это расследование результата, не сброс каталога к 42.'))],
+ '<h2 id="security-api-socket">Что происходит, если отдать процессу socket Engine</h2>')
+]

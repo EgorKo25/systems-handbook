@@ -43,15 +43,15 @@
   },
   {
     "id": "06-network-path",
-    "title": "Сетевой путь: DNS, bridge, публикация порта и NAT",
-    "words": 1376,
+    "title": "Сеть контейнера: от сокета приложения до ответа",
+    "words": 8686,
     "part": "Границы среды",
     "number": "6"
   },
   {
     "id": "07-security-rootless",
-    "title": "Полномочия: пользователь, capabilities, seccomp и rootless",
-    "words": 938,
+    "title": "Какие действия разрешены контейнеру: UID, ядро и rootless Docker",
+    "words": 7198,
     "part": "Границы среды",
     "number": "7"
   },
