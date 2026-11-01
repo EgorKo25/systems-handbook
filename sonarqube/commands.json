@@ -8399,7 +8399,7 @@
       },
       {
         "flag": "-C <каталог>",
-        "action": "Каталог: сменить рабочий каталог до поиска go.mod и относительных путей. Должен стоять первым флагом команды go, сразу после build/test.",
+        "action": "Каталог: сменить рабочий каталог до поиска go.mod и относительных путей. Должен стоять до остальных флагов подкоманды: go build -C dir ...; общий вариант go -C dir build ... тоже поддерживается.",
         "when": "Собирать соседний модуль без отдельного cd в оболочке.",
         "example": "go build -C ./flaglab -o ./out/app .",
         "result": "Модуль и out разрешаются уже из flaglab; это отличается от пути относительно исходного каталога оболочки."
@@ -8949,7 +8949,7 @@
       },
       {
         "flag": "-C <каталог>",
-        "action": "Каталог: сменить рабочий каталог до поиска go.mod и относительных путей. Должен стоять первым флагом команды go, сразу после build/test.",
+        "action": "Каталог: сменить рабочий каталог до поиска go.mod и относительных путей. Должен стоять до остальных флагов подкоманды: go build -C dir ...; общий вариант go -C dir build ... тоже поддерживается.",
         "when": "Собирать соседний модуль без отдельного cd в оболочке.",
         "example": "go test -C ./flaglab -o ./out/app .",
         "result": "Модуль и out разрешаются уже из flaglab; это отличается от пути относительно исходного каталога оболочки."
@@ -11273,6 +11273,167 @@
       "gofmt",
       "gofmt"
     ]
+  },
+  {
+    "name": "go run",
+    "purpose": "Из указанного личного модуля сначала собирает пакет main, затем исполняет его временный бинарник. Для front и generics нужен env.sh главы14 и соответствующий cd; это не запуск исходника интерпретатором.",
+    "syntax": "go run [build flags] ПАКЕТ [АРГУМЕНТЫ]",
+    "chapter": "46-go-front-end",
+    "volume": "go",
+    "aliases": [],
+    "flags": [],
+    "situations": [],
+    "source": "https://pkg.go.dev/cmd/go@go1.27.3#hdr-Compile_and_run_Go_program",
+    "sources": [
+      {
+        "title": "Официальная документация Go",
+        "url": "https://pkg.go.dev/cmd/go@go1.27.3#hdr-Compile_and_run_Go_program"
+      }
+    ],
+    "flagScopes": [],
+    "prefixFlags": {
+      "go": []
+    }
+  },
+  {
+    "name": "go tool pack",
+    "purpose": "Читает или изменяет архив Go. В маршруте используется только чтение списка членов t по существующему пути Export, полученному go list -export. При ошибке list не передавайте пустую строку pack.",
+    "syntax": "go tool pack t АРХИВ",
+    "chapter": "46-go-front-end",
+    "volume": "go",
+    "aliases": [],
+    "flags": [],
+    "situations": [],
+    "source": "https://pkg.go.dev/cmd/pack@go1.27.3",
+    "sources": [
+      {
+        "title": "Официальная документация Go",
+        "url": "https://pkg.go.dev/cmd/pack@go1.27.3"
+      }
+    ],
+    "flagScopes": [],
+    "prefixFlags": {
+      "go": [],
+      "go tool": []
+    }
+  },
+  {
+    "name": "go tool buildid",
+    "purpose": "Без -w читает build ID существующего архива или бинарника. У архива две части action/content; строки конкретного запуска не являются постоянным паспортом имени пакета.",
+    "syntax": "go tool buildid ФАЙЛ",
+    "chapter": "17-build-cache",
+    "volume": "go",
+    "aliases": [],
+    "flags": [],
+    "situations": [],
+    "source": "https://pkg.go.dev/cmd/buildid@go1.27.3",
+    "sources": [
+      {
+        "title": "Официальная документация Go",
+        "url": "https://pkg.go.dev/cmd/buildid@go1.27.3"
+      }
+    ],
+    "flagScopes": [],
+    "prefixFlags": {
+      "go": [],
+      "go tool": []
+    }
+  },
+  {
+    "name": "go tool nm",
+    "purpose": "Читает таблицу символов построенного demo в личном generics. Нужен успешный go build -gcflags=-l -o demo .; после неудачной сборки прежний файл не описывает новый вход.",
+    "syntax": "go tool nm [-size] ФАЙЛ",
+    "chapter": "47-go-types-generics",
+    "volume": "go",
+    "aliases": [],
+    "flags": [
+      {
+        "flag": "-size",
+        "action": "Показать размер каждого символа в байтах",
+        "when": "Сравнить число тел shape и словарей одного примера.",
+        "example": "go tool nm -size demo",
+        "result": "Колонки: адрес, размер, класс, имя; байты символов не равны времени вызова или полному размеру ELF."
+      }
+    ],
+    "situations": [],
+    "source": "https://pkg.go.dev/cmd/nm@go1.27.3",
+    "sources": [
+      {
+        "title": "Официальная документация Go",
+        "url": "https://pkg.go.dev/cmd/nm@go1.27.3"
+      }
+    ],
+    "flagScopes": [
+      "go tool nm"
+    ],
+    "prefixFlags": {
+      "go": [],
+      "go tool": []
+    }
+  },
+  {
+    "name": "go mod edit",
+    "purpose": "Меняет только go.mod в текущем личном модуле, не разрешая весь граф. В опыте root удаляет своё сохранённое косвенное требование c перед новым tidy.",
+    "syntax": "go mod edit [флаги]",
+    "chapter": "15-dependencies",
+    "volume": "go",
+    "aliases": [],
+    "flags": [
+      {
+        "flag": "-droprequire=<путь>",
+        "action": "Удалить требование данного модуля из текущего go.mod",
+        "when": "Повторить MVS после изменения требования b, не удерживая старый минимум у root.",
+        "example": "go mod edit -droprequire=example.org/c",
+        "result": "Следующий go mod tidy заново добавляет нужный минимум; replace и файлы соседнего c остаются прежними."
+      }
+    ],
+    "situations": [],
+    "source": "https://pkg.go.dev/cmd/go@go1.27.3#hdr-Edit_go_mod_from_tools_or_scripts",
+    "sources": [
+      {
+        "title": "Официальная документация Go",
+        "url": "https://pkg.go.dev/cmd/go@go1.27.3#hdr-Edit_go_mod_from_tools_or_scripts"
+      }
+    ],
+    "flagScopes": [
+      "go mod edit"
+    ],
+    "prefixFlags": {
+      "go": [],
+      "go mod": []
+    }
+  },
+  {
+    "name": "go tool objdump",
+    "purpose": "Дизассемблирует существующий бинарник demo: читает инструкции и символы, не исполняя main. В главе47 после успешной сборки можно сопоставить CALL, shape и загружаемый словарь.",
+    "syntax": "go tool objdump [-s РЕГУЛЯРНОЕ_ВЫРАЖЕНИЕ] ФАЙЛ",
+    "chapter": "47-go-types-generics",
+    "volume": "go",
+    "aliases": [],
+    "flags": [
+      {
+        "flag": "-s <выражение>",
+        "action": "Выбрать функции по регулярному выражению имени",
+        "when": "Ограничить вывод местом вызова Add.",
+        "example": "go tool objdump -s main.main demo",
+        "result": "Имена и адреса относятся к данному бинарнику; без нужных символов фильтр может дать пустой вывод."
+      }
+    ],
+    "situations": [],
+    "source": "https://pkg.go.dev/cmd/objdump@go1.27.3",
+    "sources": [
+      {
+        "title": "Официальная документация Go",
+        "url": "https://pkg.go.dev/cmd/objdump@go1.27.3"
+      }
+    ],
+    "flagScopes": [
+      "go tool objdump"
+    ],
+    "prefixFlags": {
+      "go": [],
+      "go tool": []
+    }
   },
   {
     "name": "go tool cgo",

@@ -239,3 +239,18 @@ COMMANDS += [
         F('-s', 'Применить поддерживаемые упрощения', 'Нужен отдельный осмысленный форматирующий проход.', 'gofmt -s -d internal/httpapp/handler.go', 'Это не общий оптимизатор производительности; смысл правки проверяется по diff.'),
     ], 'https://pkg.go.dev/cmd/gofmt'),
 ]
+
+# Commands used by the self-contained foundations route (Go 1.27.3).
+COMMANDS += [
+    card('go run', 'Из указанного личного модуля сначала собирает пакет main, затем исполняет его временный бинарник. Для front и generics нужен env.sh главы14 и соответствующий cd; это не запуск исходника интерпретатором.', 'go run [build flags] ПАКЕТ [АРГУМЕНТЫ]', '46-go-front-end', [], 'https://pkg.go.dev/cmd/go@go1.27.3#hdr-Compile_and_run_Go_program'),
+    card('go tool pack', 'Читает или изменяет архив Go. В маршруте используется только чтение списка членов t по существующему пути Export, полученному go list -export. При ошибке list не передавайте пустую строку pack.', 'go tool pack t АРХИВ', '46-go-front-end', [], 'https://pkg.go.dev/cmd/pack@go1.27.3'),
+    card('go tool buildid', 'Без -w читает build ID существующего архива или бинарника. У архива две части action/content; строки конкретного запуска не являются постоянным паспортом имени пакета.', 'go tool buildid ФАЙЛ', '17-build-cache', [], 'https://pkg.go.dev/cmd/buildid@go1.27.3'),
+    card('go tool nm', 'Читает таблицу символов построенного demo в личном generics. Нужен успешный go build -gcflags=-l -o demo .; после неудачной сборки прежний файл не описывает новый вход.', 'go tool nm [-size] ФАЙЛ', '47-go-types-generics', [
+        F('-size', 'Показать размер каждого символа в байтах', 'Сравнить число тел shape и словарей одного примера.', 'go tool nm -size demo', 'Колонки: адрес, размер, класс, имя; байты символов не равны времени вызова или полному размеру ELF.')
+    ], 'https://pkg.go.dev/cmd/nm@go1.27.3'),
+    card('go mod edit', 'Меняет только go.mod в текущем личном модуле, не разрешая весь граф. В опыте root удаляет своё сохранённое косвенное требование c перед новым tidy.', 'go mod edit [флаги]', '15-dependencies', [
+        F('-droprequire=<путь>', 'Удалить требование данного модуля из текущего go.mod', 'Повторить MVS после изменения требования b, не удерживая старый минимум у root.', 'go mod edit -droprequire=example.org/c', 'Следующий go mod tidy заново добавляет нужный минимум; replace и файлы соседнего c остаются прежними.')
+    ], 'https://pkg.go.dev/cmd/go@go1.27.3#hdr-Edit_go_mod_from_tools_or_scripts'),
+]
+
+COMMANDS += [card('go tool objdump', 'Дизассемблирует существующий бинарник demo: читает инструкции и символы, не исполняя main. В главе47 после успешной сборки можно сопоставить CALL, shape и загружаемый словарь.', 'go tool objdump [-s РЕГУЛЯРНОЕ_ВЫРАЖЕНИЕ] ФАЙЛ', '47-go-types-generics', [F('-s <выражение>', 'Выбрать функции по регулярному выражению имени', 'Ограничить вывод местом вызова Add.', 'go tool objdump -s main.main demo', 'Имена и адреса относятся к данному бинарнику; без нужных символов фильтр может дать пустой вывод.')], 'https://pkg.go.dev/cmd/objdump@go1.27.3')]

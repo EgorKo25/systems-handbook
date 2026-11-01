@@ -24,7 +24,7 @@ def lab03():
         os.close(r);os.dup2(w,1);os.close(w)
         os.execve(sys.executable,[sys.executable,'-c','import os;print("child pid=%s token=%s"%(os.getpid(),os.environ["LAB_TOKEN"]))'],dict(os.environ,LAB_TOKEN='from-parent'))
     os.close(w);out=read_all(r);os.close(r);_,s=os.waitpid(p,0)
-    line('parent_pid',os.getpid());line('child_output',out.decode().strip());line('child_exit',os.waitstatus_to_exitcode(s))
+    line('parent_pid',os.getpid());line('fork_returned_child_pid',p);line('child_output',out.decode().strip());line('child_exit',os.waitstatus_to_exitcode(s))
 def lab04():
     with tempfile.TemporaryDirectory(prefix='linux-book-') as d:
         p=Path(d)/'letters';p.write_bytes(b'ABCDEFGH');a=os.open(p,os.O_RDONLY);b=os.dup(a);c=os.open(p,os.O_RDONLY)

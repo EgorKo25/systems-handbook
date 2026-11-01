@@ -11,7 +11,7 @@
     "slug": "linux",
     "title": "Linux: от команды процессора до работающей службы",
     "volume": "II",
-    "words": 49543,
+    "words": 51025,
     "chapters": 19,
     "terms": 341
   },
@@ -19,7 +19,7 @@
     "slug": "bash",
     "title": "Bash: от объектов ядра до надёжного сценария",
     "volume": "III",
-    "words": 46387,
+    "words": 48444,
     "chapters": 19,
     "terms": 273
   },
@@ -51,7 +51,7 @@
     "slug": "go",
     "title": "Go: сборка, компилятор и исполняемая программа",
     "volume": "VII",
-    "words": 51829,
+    "words": 55636,
     "chapters": 24,
     "terms": 170
   },
