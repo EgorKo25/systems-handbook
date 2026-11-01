@@ -22,3 +22,17 @@ build, shared dictionary, export, and reader checks. Register a new volume only
 after its sources and labs have been reviewed. A working directory or a
 `volume_config.py` alone must not grant publication permission. Add new learning
 directions to `scripts/library_structure.py` without presenting them as ready.
+
+# Teaching prose
+
+Introduce the problem a tool solves and its basic objects before configuration.
+Explain a new term at its first use; a glossary link supplements that explanation.
+Before a command, establish the working directory, files, permissions and purpose.
+After it, explain the expected result and what caused it.
+
+Replace vague assurances, repetitive contrasts and abstract metaphors with the
+actual actors, representations, operations and state changes. Keep the technical
+depth. Do not add deliberate mistakes, invented personal experience or informal
+filler to make prose appear human. Read revised chapters in sequence, including
+their diagrams and examples; passing structural checks does not establish that
+an explanation is clear or complete.
