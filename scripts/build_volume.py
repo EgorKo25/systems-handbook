@@ -236,26 +236,29 @@ def build(slug):
 
 
 def home():
+    from scripts.library_structure import STYLE, reading_map, render_shelves
     page = (ROOT/'index.html').read_text(encoding='utf-8')
     stats = {r['slug']:r for r in json.loads((ROOT/'library-stats.json').read_text())}
-    if any(slug not in stats or not (ROOT/slug/'index.html').exists() for slug in CONFIGS):
-        return
-    for slug,cfg in CONFIGS.items():
-        page = re.sub(r'<a class="volume" href="'+slug+r'/index.html">.*?</a>','',page,flags=re.S)
-        row = stats[slug]
-        card = f'<a class="volume" href="{slug}/index.html"><div class="tag">Том {cfg["volume"]}</div><h2>{cfg["short"]}</h2><p>{cfg["blurb"]}</p><div class="counts">{row["chapters"]} глав · {row["words"]:,} слов · словарь: {row["terms"]}</div><span class="open">Открыть том →</span></a>'
-        page = page.replace('</div><section class="notes">',card+'</div><section class="notes">',1)
-    cards = {slug: re.search(r'<a class="volume" href="'+slug+r'/index.html">.*?</a>',page,re.S)[0] for slug in ['networks','linux','bash','postgres','cache',*CONFIGS]}
-    page = re.sub(r'(<div class="grid">).*?(</div><section class="notes">)',lambda m:m[1]+''.join(cards.values())+m[2],page,count=1,flags=re.S)
+    route = reading_map(ROOT, stats, CONFIGS)
+    shelves = render_shelves(route)
+    owned = r'<!--library-structure:start-->.*?<!--library-structure:end-->'
+    old_grid = r'<div class="grid">.*?</div>(?=<section class="notes")'
+    page, replaced = re.subn(owned if '<!--library-structure:start-->' in page else old_grid,
+                            lambda _: shelves, page, count=1, flags=re.S)
+    if replaced != 1:
+        raise ValueError('Cannot locate the library home shelf; preserve the existing page')
+    page = re.sub(r'<style id="library-structure-style">.*?</style>', '', page, flags=re.S)
+    page = page.replace('</head>', STYLE+'</head>', 1)
     page = re.sub(r'<section class="notes" data-inner-books>.*?</section>','',page,flags=re.S)
-    page = re.sub(r'<p class="lead">.*?</p>', '<p class="lead">Десять связанных томов: сети, Linux, Bash, PostgreSQL, кэширование, Git, Go, Jenkins, GitLab и сквозной практикум. От устройства механизма до собственного стенда, измерения и восстановления.</p>', page, count=1, flags=re.S)
-    for slug in ('networks','linux','bash','postgres','cache'):
-        row = stats[slug]
-        counts = f'<div class="counts">{row["chapters"]} глав · {row["words"]:,} слов · словарь: {row["terms"]}</div>'
-        page = re.sub(r'(<a class="volume" href="'+slug+r'/index.html">.*?)<div class="counts">.*?</div>', lambda m: m[1]+counts, page, count=1, flags=re.S)
+    page = re.sub(r'<p class="lead">.*?</p>', '<p class="lead">Связанные книги о том, как устроена система, как её собрать, измерить и восстановить. Выберите свою задачу или двигайтесь от основ к эксплуатации собственного стенда.</p>', page, count=1, flags=re.S)
+    page = page.replace('>План десяти новых томов</a>', '>Как развивается библиотека</a>')
     for slug,cfg in CONFIGS.items():
         page = re.sub(r'<details data-'+slug+r'-map>.*?</details>','',page,flags=re.S)
+        if route['books'][slug]['status'] != 'available':
+            continue
         diagrams = [d for name in cfg['diagram_modules'] for d in module(ROOT/slug/'sources'/f'{name}.py').DIAGRAMS]
+        if not diagrams:
+            continue
         links = '<details data-'+slug+'-map><summary>'+cfg['short']+' · '+str(len(diagrams))+' схем</summary><ul>'+''.join(f'<li><a href="{slug}/index.html#{d["id"]}">{escape(d["title"])}</a> <span class="small">· {len(d["steps"])} шагов</span></li>' for d in diagrams)+'</ul></details>'
         page = page.replace('</section><section class="notes" style="margin-top:22px"><h2>Как читать',links+'</section><section class="notes" style="margin-top:22px"><h2>Как читать',1)
     depth_path = ROOT/'networks/sources/depth-diagrams.json'
