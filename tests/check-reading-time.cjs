@@ -195,7 +195,7 @@ const hiddenBrowser=browserFixture();hiddenBrowser.doc.hidden=true;readFixture(h
 eq(hiddenBrowser.writes.length,0,'actual hidden tab cannot train');
 const blurredBrowser=browserFixture();blurredBrowser.doc.focused=false;readFixture(blurredBrowser);
 eq(blurredBrowser.writes.length,0,'actual unfocused tab cannot train');
-const volumes=['networks','linux','bash','postgres','cache','git','go','jenkins','gitlab','practicum'];
+const volumes=JSON.parse(fs.readFileSync(path.join(root,'published-volumes.json'),'utf8')).volumes.map(row=>row.slug);
 if(!sourceOnly)for(const volume of volumes){
  const html=fs.readFileSync(path.join(root,volume,'index.html'),'utf8');
  const escaped=bundle.id.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');

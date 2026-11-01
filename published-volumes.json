@@ -1,0 +1,15 @@
+{
+  "format": 1,
+  "volumes": [
+    {"slug": "networks", "title": "Сети", "build": "network"},
+    {"slug": "linux", "title": "Linux", "build": "legacy"},
+    {"slug": "bash", "title": "Bash", "build": "legacy"},
+    {"slug": "postgres", "title": "PostgreSQL", "build": "legacy"},
+    {"slug": "cache", "title": "Кэш и базы в памяти", "build": "cache"},
+    {"slug": "git", "title": "Git", "build": "managed"},
+    {"slug": "go", "title": "Go", "build": "managed"},
+    {"slug": "jenkins", "title": "Jenkins", "build": "managed"},
+    {"slug": "gitlab", "title": "GitLab", "build": "managed"},
+    {"slug": "practicum", "title": "Практикум", "build": "managed"}
+  ]
+}

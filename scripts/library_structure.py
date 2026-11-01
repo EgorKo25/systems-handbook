@@ -7,10 +7,11 @@ from html import escape
 from pathlib import Path
 import json
 import re
+from scripts.publication import PUBLISHED
 
 
 SCHEMA = 1
-BASE_SLUGS = frozenset({'networks', 'linux', 'bash', 'postgres', 'cache'})
+BASE_SLUGS = frozenset(row['slug'] for row in PUBLISHED if row['build'] != 'managed')
 
 GROUPS = (
     dict(id='foundations', title='Машина, оболочка и сеть',
@@ -79,7 +80,7 @@ BOOKS = {
         'RADOS, размещение и восстановление; отдельные пути блоков, файлов и объектов.'),
     'sonarqube': _book('SonarQube', 'authoring', ('git', 'go', 'linux', 'networks'),
         'Установка, анализаторы, правила, результаты анализа, пороги качества и обслуживание.'),
-    'nexus': _book('Nexus Repository', 'planned', ('linux', 'bash', 'networks'),
+    'nexus': _book('Nexus Repository', 'authoring', ('linux', 'bash', 'networks'),
         'Установка репозитория артефактов, форматы, прокси, права, обслуживание и восстановление.'),
     'artifactory': _book('JFrog Artifactory', 'planned', ('linux', 'bash', 'networks'),
         'Установка, хранение артефактов, метаданные, продвижение выпуска и эксплуатация.'),
@@ -97,9 +98,9 @@ BOOKS = {
         'Установка, сбор, метки, хранение, PromQL, правила и стоимость наблюдения.'),
     'grafana': _book('Grafana', 'planned', ('prometheus',),
         'Установка, источники, запросы, панели, доступ и воспроизводимое управление.'),
-    'kubernetes': _book('Kubernetes', 'planned', ('linux', 'bash', 'networks', 'docker'),
+    'kubernetes': _book('Kubernetes', 'authoring', ('linux', 'bash', 'networks', 'docker'),
         'Получение дистрибутива и установка кластера, API, контроллеры, сеть, данные, безопасность и отказы.'),
-    'helm': _book('Helm', 'planned', ('kubernetes', 'git'),
+    'helm': _book('Helm', 'authoring', ('kubernetes', 'git'),
         'Установка, chart, шаблоны, values, зависимости, выпуск, откат и проверка изменений.'),
     'argocd': _book('Argo CD', 'planned', ('kubernetes', 'helm', 'git'),
         'Установка, подключение репозитория, согласование, права, дрейф и восстановление.'),

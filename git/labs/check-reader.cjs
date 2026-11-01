@@ -6,7 +6,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const assert = require('node:assert/strict');
 const root = path.resolve(__dirname, '../..');
-const volumes = ['git', 'go', 'jenkins', 'gitlab', 'practicum'];
+const volumes = JSON.parse(fs.readFileSync(path.join(root, 'published-volumes.json'), 'utf8')).volumes.filter(row => row.build === 'managed').map(row => row.slug);
 const endMarker = "})(typeof globalThis !== 'undefined' ? globalThis : this);";
 let assertions = 0;
 function ok(value, message) { assert(value, message); assertions++; }

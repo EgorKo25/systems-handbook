@@ -5,8 +5,10 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+from scripts.publication import PUBLISHED
 subprocess.run([sys.executable, str(ROOT / 'scripts/build_networks.py')], cwd=ROOT, check=True)
-for book in ('cache', 'go', 'jenkins', 'git', 'gitlab', 'practicum'):
+for book in (row['slug'] for row in PUBLISHED if row['build'] in {'cache', 'managed'}):
     subprocess.run([sys.executable, str(ROOT / book / 'build.py')], cwd=ROOT, check=True)
 from library_catalog import refresh
 print(f'Shared dictionary: {refresh()} definitions')

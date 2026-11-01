@@ -14,6 +14,7 @@ CONFIG = dict(
         ('Справочник', ['99-glossary']),
     ],
     term_modules=['reference'],
+    command_modules=['reference'],
     diagram_modules=['diagrams'],
     base_terms=[],
     blurb='Установка и данные → права → граф CI → Runner и процессы → Go-артефакт → выпуск, измерения и восстановление.',

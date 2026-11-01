@@ -19,8 +19,17 @@ CONFIGS = {
     base_terms=list(range(98,111))+list(range(114,118))+list(range(132,139)),
     blurb='Скачивание и установка → настройка и плагины → агенты → движок Pipeline → эксплуатация и восстановление.'),
 }
-from gitlab.volume_config import CONFIG as GITLAB_CONFIG
-CONFIGS['gitlab'] = {**GITLAB_CONFIG, 'command_modules': ['reference'], 'revision': '1 ноября 2026'}
-from practicum.volume_config import CONFIG as PRACTICUM_CONFIG
-CONFIGS['practicum'] = {**PRACTICUM_CONFIG, 'revision': '1 ноября 2026'}
+from importlib.util import spec_from_file_location, module_from_spec
+from pathlib import Path
+from scripts.publication import MANAGED_VOLUMES
+for slug in MANAGED_VOLUMES:
+    if slug not in CONFIGS:
+        spec = spec_from_file_location('handbook_config_'+slug,
+                                      Path(__file__).resolve().parents[1]/slug/'volume_config.py')
+        loaded = module_from_spec(spec)
+        spec.loader.exec_module(loaded)
+        config = loaded.CONFIG
+        CONFIGS[slug] = {'revision': '1 ноября 2026', **config}
+if set(CONFIGS) != set(MANAGED_VOLUMES):
+    raise ValueError('Managed volume configuration and publication registry differ')
 TARGETS = {identifier:slug for slug,cfg in CONFIGS.items() for _,ids in cfg['sections'] for identifier in ids if identifier not in {'00-route','99-glossary'}}

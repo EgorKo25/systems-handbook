@@ -9,14 +9,18 @@ from pathlib import Path, PurePosixPath
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from scripts.publication import VOLUME_TITLES
+
 ROOT_FILES = {
-    ".nojekyll", "index.html", "library-stats.json",
+    ".nojekyll", "index.html", "library-stats.json", "published-volumes.json",
     "КАК-ЧИТАТЬ.txt", "ПЛАН-ПРАКТИЧЕСКОГО-СТЕНДА.txt",
     "ПРОВЕРКИ-БИБЛИОТЕКИ.txt", "ПЛАН-РАЗВИТИЯ.txt",
 }
-BOOKS = {"networks", "linux", "bash", "postgres", "cache", "git", "go", "jenkins", "gitlab", "practicum"}
+BOOKS = set(VOLUME_TITLES)
 CACHE_LAB_MODELS = {"cache/sources/eviction.js", "cache/sources/resource-labs.js", "cache/sources/resp-lab.js"}
 REVISION = re.compile(r"[0-9a-f]{40,64}")
 

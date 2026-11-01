@@ -4,12 +4,14 @@ from pathlib import Path
 import re
 
 if __package__:
+    from .publication import VOLUME_TITLES
     from .reader_preferences import enhance as theme_preferences
     from .reader_theme_picker import enhance as theme_picker
     from .reader_selection import enhance as selection_lookup
     from .reader_navigation import normalize_reader_navigation
     from .reader_reading_time import enhance as reading_time
 else:
+    from publication import VOLUME_TITLES
     from reader_preferences import enhance as theme_preferences
     from reader_theme_picker import enhance as theme_picker
     from reader_selection import enhance as selection_lookup
@@ -17,9 +19,7 @@ else:
     from reader_reading_time import enhance as reading_time
 
 ROOT = Path(__file__).resolve().parents[1]
-VOLUMES = {'networks': 'Сети', 'linux': 'Linux', 'bash': 'Bash',
-           'postgres': 'PostgreSQL', 'cache': 'Кэш и базы в памяти',
-           'git': 'Git', 'go': 'Go', 'jenkins': 'Jenkins', 'gitlab': 'GitLab', 'practicum':'Практикум'}
+VOLUMES = VOLUME_TITLES
 
 
 def write(path, value):

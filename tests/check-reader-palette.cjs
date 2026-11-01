@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const root = path.resolve(__dirname, '..');
-const volumes = ['networks', 'linux', 'bash', 'postgres', 'cache', 'git', 'go', 'jenkins', 'gitlab', 'practicum'];
+const volumes = JSON.parse(fs.readFileSync(path.join(root, 'published-volumes.json'), 'utf8')).volumes.map(row => row.slug);
 const files = ['index.html', ...volumes.map(name => `${name}/index.html`), 'labs-personal/index.html'];
 const names = ['bg', 'paper', 'soft', 'text', 'muted', 'line', 'accent', 'code', 'code-text', 'shadow'];
 const presetIds = ['paper', 'night', 'white', 'black', 'sepia', 'graphite', 'midnight', 'forest'];

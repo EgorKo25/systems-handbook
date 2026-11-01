@@ -22,7 +22,10 @@ import sys
 import tempfile
 from urllib.parse import unquote, urlsplit
 
-VOLUMES = {"networks", "linux", "bash", "postgres", "cache", "git", "go", "jenkins", "gitlab", "practicum"}
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from scripts.publication import VOLUME_TITLES
+
+VOLUMES = set(VOLUME_TITLES)
 JSON_TYPES = {"application/json", "application/ld+json"}
 JS_TYPES = {"", "text/javascript", "application/javascript", "module"}
 URL_ATTRIBUTES = {"href", "xlink:href", "src", "poster", "action", "formaction", "data", "cite"}
@@ -314,10 +317,20 @@ class SiteChecker:
         if target not in self.pages or anchor not in self.pages[target].ids:
             self.error(path, f"{label}: missing target {volume}/index.html#{anchor}")
 
+    def is_reading_input(self, path):
+        parts = path.relative_to(self.root).parts
+        if any(part.startswith('.') for part in parts) or parts[0] == '_site':
+            return False
+        # Chapter fragments resolve links from the eventual book, not sources/.
+        # An unregistered author may already have a volume_config.py; it does
+        # not grant export permission or hide that author's built index.html.
+        return not (len(parts) >= 2 and parts[1] == 'sources' and
+                    (parts[0] in VOLUMES or (self.root/parts[0]/'volume_config.py').is_file()))
+
     def check(self):
         if not (self.root / "index.html").is_file():
             self.error(self.root / "index.html", "site entry point is missing")
-        files = sorted(p for p in self.root.rglob("*") if p.is_file() and not any(x.startswith(".") for x in p.relative_to(self.root).parts) and p.relative_to(self.root).parts[:2] not in {(v, "sources") for v in VOLUMES})
+        files = sorted(p for p in self.root.rglob("*") if p.is_file() and self.is_reading_input(p))
         for path in files:
             if path.suffix.lower() in {".html", ".htm"}:
                 page = Page(path)
@@ -382,7 +395,7 @@ class SiteChecker:
         # Check every shipped JS file, including downloadable laboratory tools.
         known = {p for p, _, _ in self._js_sources}
         for path in sorted(p for p in self.root.rglob("*") if p.suffix in {".js", ".mjs"}):
-            if ".git" not in path.parts and path.relative_to(self.root).parts[:2] not in {(v, "sources") for v in VOLUMES} and path not in known:
+            if self.is_reading_input(path) and path not in known:
                 self._js_sources.append((path, "JavaScript file", path.read_text(encoding="utf-8")))
         with tempfile.TemporaryDirectory(prefix="handbook-js-check-") as directory:
             for index, (path, label, text) in enumerate(self._js_sources):

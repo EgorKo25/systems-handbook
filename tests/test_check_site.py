@@ -63,6 +63,19 @@ class CheckSiteTests(unittest.TestCase):
         for expected in ("duplicate HTML ID", "invalid embedded JSON", "external active resource", "missing local file", "runtime network API"):
             self.assertIn(expected, errors)
 
+    def test_fragment_sources_and_nested_export_do_not_mask_a_broken_reading_page(self):
+        self.put('index.html', '<h1>Library</h1>')
+        self.put('newbook/volume_config.py', 'CONFIG = {}')
+        self.put('newbook/sources/01.html', '<a href="../linux/index.html#later">fragment</a>')
+        self.put('_site/index.html', '<a href="old-missing.html">previous artifact</a>')
+        self.assertEqual(self.errors(), '')
+        self.put('newbook/index.html', '<a href="missing.html">broken real page</a>')
+        self.assertIn('missing.html', self.errors())
+        # A self-contained exported directory still validates its own contents.
+        checker = module.SiteChecker(self.root/'_site')
+        checker.check()
+        self.assertTrue(any('old-missing.html' in error for error in checker.errors))
+
 
 if __name__ == "__main__":
     unittest.main()
