@@ -31,6 +31,65 @@ exit "$test_status"</code></pre>
 <p>В нормальном пути <code>after_script</code> выполняется до загрузки кэша и артефактов; поэтому созданные им файлы могут попасть в эти наборы. У него есть отдельные ограничения времени и условия запуска. Принудительное завершение машины, потеря executor или исчерпанный общий timeout способны не дать ожидаемой очистке выполниться. Ошибка after_script обычно не меняет уже успешный основной script; от него нельзя делать единственный обязательный тест корректности.</p>
 <p>Cleanup, завершающая очистка, удаляет предусмотренные временные материалы, включая файловые переменные, но не откатывает вызов внешнего API, отправленное письмо или применённую миграцию БД. Отменённое job могло уже изменить службу. Для внешних действий нужны собственные идентификаторы операции, проверка фактического состояния и идемпотентность — свойство повторения без нежелательного повторного эффекта. Эти вопросы важнее выбора красивого цвета статуса cancelled.</p>
 
+<!-- GITLAB_DOCKER_JOB_CUTAWAY_V1_BEGIN -->
+<figure id="gitlab-docker-job-cutaway" class="gl08-path" aria-labelledby="gl08-path-title" aria-describedby="gl08-path-caption">
+<style>
+.gl08-path{margin:1.5rem 0;color:var(--text);font-family:var(--sans);max-width:100%}
+.gl08-path *{box-sizing:border-box;min-width:0}
+.gl08-path h3,.gl08-path h4{color:var(--text);margin:.4rem 0}
+.gl08-path figcaption{color:var(--muted);margin:.7rem 0}
+.gl08-path code,.gl08-path p{overflow-wrap:anywhere}
+.gl08-path .gl08-manager{border-top:3px solid var(--text);border-bottom:1px solid var(--line);padding:.7rem 0}
+.gl08-path .gl08-manager p{margin:.4rem 0}
+.gl08-path .gl08-steps{list-style:none;padding:0;margin:0 0 1rem 1.05rem;border-left:2px solid var(--text)}
+.gl08-path .gl08-steps>li{position:relative;padding:.8rem 0 .8rem 1.6rem;border-bottom:1px solid var(--line);break-inside:avoid}
+.gl08-path .gl08-number{position:absolute;left:-1rem;top:.9rem;display:grid;place-items:center;width:2rem;height:2rem;border:2px solid var(--text);border-radius:50%;background:var(--paper);color:var(--text);font-weight:700;font-size:16px;line-height:1}
+.gl08-path .gl08-place{display:block;color:var(--muted);font-size:.95em}
+.gl08-path .gl08-steps p{margin:.5rem 0}
+.gl08-path .gl08-file{display:block;border-left:4px solid var(--accent);padding:.4rem .7rem;margin:.5rem 0;background:var(--soft)}
+.gl08-path pre{max-width:100%;padding:.7rem;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;background:var(--soft);color:var(--text);font-size:.9em;line-height:1.5}
+.gl08-path .gl08-flow{font-weight:700}
+.gl08-path details{border-top:2px solid var(--line);padding-top:.4rem}
+.gl08-path summary{min-height:44px;padding:.65rem .2rem;cursor:pointer}
+.gl08-path summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.gl08-path .gl08-codes{padding-left:1.3rem}
+.gl08-path .gl08-codes li{margin:.6rem 0}
+@media(max-width:420px){.gl08-path .gl08-steps{margin-left:.8rem}.gl08-path .gl08-steps>li{padding-left:1.4rem}.gl08-path pre{padding:.5rem}}
+@media print{.gl08-path{--text:#000;--muted:#333;--line:#888;--accent:#000;--paper:#fff;--soft:#fff}.gl08-path .gl08-steps>li{break-inside:auto}.gl08-path details>summary{display:none}.gl08-path .gl08-exit-body{display:block!important}.gl08-path details::details-content{content-visibility:visible!important;display:block!important}}
+</style>
+<span id="gitlab-job-shell-contexts" aria-hidden="true"></span><span id="gitlab-job-shell-contexts-title" aria-hidden="true"></span>
+<h3 id="gl08-path-title">Один job: кто запускается и где остаются байты</h3>
+<figcaption id="gl08-path-caption">Учебный разрез Linux Docker executor в GitLab Runner <strong>18.5.0</strong>, обычный <code>script</code>, <code>FF_USE_NATIVE_STEPS=false</code>, Bash в подготовленном build image. Версия фиксирует разбираемые исходники и не является рекомендацией для новой установки. Это придуманный успешный job без служебных контейнеров services, отмены и превышения лимита времени; контейнеры здесь не запускаются. Первая установка shell executor из предыдущей главы остаётся самостоятельным вариантом.</figcaption>
+<p>Job — одно задание CI. Менеджер — работающий процесс <code>gitlab-runner</code>. Executor — его код, управляющий Docker через API. Helper — отдельный контейнер с инструментами Runner; build — контейнер с инструментами проекта. Между ними смонтирован общий каталог сборки. Ни helper, ни executor не являются другим сервером GitLab.</p>
+<p>Обозначим фактический <code>CI_PROJECT_DIR</code> через <strong>W</strong>; здесь он выбран как <code>/builds/acme/echo</code>. Каталог W — часть общего монтирования <code>/builds</code>, а не копия файлов, пересылаемая между каждым shell. В этом примере переменная <code>CHECK_NAME</code> заранее не задана в CI. Cache — необязательный архив для ускорения; artifact — сохранённый результат конкретного задания. Настроены <code>GIT_STRATEGY=clone</code>, cache с путём <code>.cache/go/</code> и политикой pull-push, входной artifact задания seed текущего pipeline и выходной artifact <code>reports/name.txt</code> с <code>when: always</code>. C17 и имена входов ниже условны.</p>
+<div class="gl08-manager"><strong>Вне контейнеров: менеджер Runner → Docker Engine</strong><p>Менеджер уже получил описание задания по HTTP(S). Он готовит скрипты фаз, создаёт helper подходящей версии/архитектуры и build с Bash. Через Docker передаёт скрипт в стандартный ввод (stdin) выбранного контейнера; стандартный вывод (stdout) и диагностика (stderr) возвращаются в журнал job. Сам менеджер остаётся работать после этого задания.</p></div>
+<ol class="gl08-steps">
+<li><span class="gl08-number" aria-hidden="true">1</span><h4>Получение исходников</h4><span class="gl08-place">Helper: оболочка → Git · фаза get_sources</span><p>Git получает объекты и делает checkout выбранного C17. Стратегия clone требует новой рабочей копии; схема не подменяет внутреннюю последовательность Runner одной буквальной командой git clone.</p><div class="gl08-file"><strong>В W появились:</strong> <code>.git/</code>, <code>go.mod</code>, <code>cmd/</code>, <code>internal/</code> из C17.</div></li>
+<li><span class="gl08-number" aria-hidden="true">2</span><h4>Сначала cache, затем входной artifact</h4><span class="gl08-place">Helper: shell → cache-extractor → artifacts-downloader</span><p>В выбранном случае cache найден и распакован в <code>W/.cache/go/</code>. Затем artifact seed доставляет <code>W/reports/input.txt</code>. Эти файлы не получены из Git на первом шаге. Если кэш отсутствует, его промах сам по себе не равен отказу; запрошенный обязательный artifact имеет другой договор.</p><div class="gl08-file"><strong>W теперь:</strong> исходники C17 + <code>.cache/go/</code> + <code>reports/input.txt</code>. Файла <code>reports/name.txt</code> ещё нет.</div></li>
+<li><span class="gl08-number" aria-hidden="true">3</span><h4>Основная оболочка записывает результат</h4><span class="gl08-place">Build: новый Bash · before_script + script</span><p>Runner начинает в W. В этом фрагменте <code>export</code> и <code>printf</code> — встроенные команды Bash; запуск Go был бы отдельным дочерним процессом, но для передачи пяти байтов он не нужен.</p><pre><code># before_script
+export CHECK_NAME=unit
+# script — та же основная оболочка
+mkdir -p reports
+printf '%s\n' "$CHECK_NAME" &gt; reports/name.txt</code></pre><div class="gl08-file"><strong>Процесс:</strong> <code>CHECK_NAME=unit</code>, код основной части 0.<br><strong>Файл:</strong> <code>W/reports/name.txt</code> содержит <code>unit\n</code> — 5 байтов, включая LF (перевод строки).</div></li>
+<li><span class="gl08-number" aria-hidden="true">4</span><h4>Новая оболочка читает тот же файл</h4><span class="gl08-place">Build: отдельный Bash · after_script</span><p>Контейнер build используется снова; контекст Bash создаётся заново. Восстанавливаются предусмотренные Runner переменные, а произвольный export прежней оболочки не передаётся. Начальный каталог снова W.</p><pre><code>printf 'after=%s\n' "${CHECK_NAME-unset}"
+cat reports/name.txt
+# stdout:
+# after=unset
+# unit</code></pre><div class="gl08-file"><strong>В W:</strong> <code>reports/name.txt</code> сохранился. Завершение Bash не удаляет файл на общем монтировании. Код after_script здесь 0.</div></li>
+<li><span class="gl08-number" aria-hidden="true">5</span><h4>Helper возвращается за файлами</h4><span class="gl08-place">Helper: cache-archiver, затем artifacts-uploader</span><p>Фазы выполняются после after_script. Первая сохраняет выбранный cache, вторая читает <code>reports/name.txt</code>, формирует архив и отправляет его GitLab. Архив может передаваться потоком: отдельный готовый ZIP-файл в W не обязателен. В данном случае сервер подтвердил приём.</p><div class="gl08-file"><strong>Два разных места:</strong> файл из 5 байтов в W → запись artifact данного job в GitLab. Наличие левого файла ещё не доказывает правую запись.</div></li>
+<li><span class="gl08-number" aria-hidden="true">6</span><h4>Итог сообщает менеджер</h4><span class="gl08-place">Runner → API GitLab · успешное завершение выбранного случая</span><p>Основная часть и предусмотренные передачи прошли успешно: job получает <code>success</code>. При штатной очистке Runner удаляет контейнеры задания. Срок жизни тома W задаёт конфигурация; он не становится автоматически долговечным artifact. Поэтому следующий job получает результат через явное скачивание artifact, а не через надежду найти этот каталог.</p></li>
+</ol>
+<p class="gl08-flow">Shell завершает свою фазу; итог job складывает Runner.</p>
+<details><summary>Если коды завершения различаются</summary><div class="gl08-exit-body"><p>Main ниже означает код основной части, after — код after_script. Выбраны <code>allow_failure=false</code>, <code>AFTER_SCRIPT_IGNORE_ERRORS=true</code>, нет отмены/таймаута, artifact предусмотрен с <code>when: always</code>. «Upload 0» означает успешный результат всей фазы, а не только создание локального файла.</p><ul class="gl08-codes">
+<li><strong>Main 0 → after 0 → upload 0:</strong> успешный job.</li>
+<li><strong>Main 17 → after 0 → upload 0:</strong> основной отказ сохраняется, job неуспешен. Успешное чтение файла в after_script не меняет код main.</li>
+<li><strong>Main 0 → after 7 → upload 0:</strong> при выбранном ignore-errors job остаётся успешным. Поэтому критическую проверку нельзя прятать только в after_script.</li>
+<li><strong>Main 0 → after 0 → ошибка artifact upload:</strong> job неуспешен, если ошибка загрузки дошла до Runner после предусмотренных попыток. Даже целый файл в W не означает, что GitLab его принял.</li>
+</ul><p>Менеджер не обязан завершать собственный процесс кодом job: он обслуживает следующие задания. Для диагностики сохраняют имя фазы и её ошибку, а не только последнюю видимую строку shell.</p></div></details>
+<p class="sources">Проверка версии: <a href="https://gitlab.com/gitlab-org/gitlab-runner/-/blob/v18.5.0/executors/docker/docker_command.go">Docker: выбор helper/build</a>, <a href="https://gitlab.com/gitlab-org/gitlab-runner/-/blob/v18.5.0/executors/docker/internal/exec/exec.go">stdin, stdout/stderr и завершение контейнера</a>, <a href="https://gitlab.com/gitlab-org/gitlab-runner/-/blob/v18.5.0/common/build.go">порядок фаз и итоговая ошибка</a>, <a href="https://gitlab.com/gitlab-org/gitlab-runner/-/blob/v18.5.0/shells/abstract.go">переход в W и новая after_script</a>, <a href="https://gitlab.com/gitlab-org/gitlab-runner/-/blob/v18.5.0/commands/helpers/artifacts_uploader.go">поток архива и отказ загрузки</a>. Последовательность файлов и значения CHECK_NAME придуманы для схемы.</p>
+</figure>
+<!-- GITLAB_DOCKER_JOB_CUTAWAY_V1_END -->
+
 <h2>Сервисы задания и готовность зависимости</h2>
 <p><code>services</code> может добавить к Docker-заданию отдельную службу, например PostgreSQL. Имя service становится сетевым адресом в предусмотренной сети; <code>localhost</code> основного контейнера не обозначает этот PostgreSQL. Созданный контейнер не обязательно уже принимает SQL и содержит нужную схему. Тест должен ждать осмысленного признака готовности с ограничением времени, затем отдельно готовить данные и выполнять проверку.</p>
 <p>Между основным процессом, helper-контейнером Runner, служебной БД и Docker-хостом несколько сетевых и файловых границ. Вывод «psql отсутствует» говорит о наборе программ основного образа; «connection refused» — о сокете или маршруте; «permission denied for table» — о правах внутри БД. Добавление <code>sleep 30</code> может случайно скрыть медленный старт, но не объяснит эти разные причины и не задаст проверяемую готовность.</p>

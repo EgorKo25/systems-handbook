@@ -15,8 +15,129 @@
 <h2>Полный путь: два читателя, затем писатель</h2>
 <p>Пусть вначале оба I, память содержит 42. Ядро 0 запрашивает чтение. Контроллер выясняет, что dirty-владельца и других копий нет, получает 16 B из памяти и выдаёт ядру 0 E. Чтение возвращает 42. Теперь ядро 1 тоже читает: первый участник больше не единственный, поэтому ядро 0 E→S, ядро 1 получает S. Обе копии и память содержат 42.</p>
 <p>Далее ядро 0 хочет store 43. Локальное S не даёт права менять общую линию. <strong>Invalidate</strong>, отзыв копии, сообщает другому участнику, что его прежние данные больше непригодны. <strong>ACK</strong>, acknowledgement, — подтверждение конкретного действия; здесь это подтверждение отзыва нужной линии, а не готовность дисковой записи. Наличие отправленного сообщения и полученное подтверждение — разные состояния.</p>
-<ol><li>Ядро 0 отправляет запрос исключительного права; его store остаётся незавершённым. Контроллер запоминает инициатора, адрес линии и ожидаемые подтверждения.</li><li>Ядро 1 получает отзыв, переводит свою линию S→I и возвращает подтверждение. До этого нельзя разрешать старой копии продолжать обслуживать новые чтения как пригодной.</li><li>Контроллер учитывает ACK. Только когда обязательные отзывы завершены, ядру 0 выдаётся M. В модели после grant слово ещё 42: право записи не смешано с самим изменением.</li><li>Store заменяет 4 B на 43 в копии ядра 0. Ядро 1 остаётся I; память пока 42. Завершение этого store не требует сразу записать новую версию в DRAM.</li></ol>
-<p>В <a href="labs/memory/model.html">сцене MESI</a> переходы invalidate, ack, grant и commit разделены. Попытка принять второй запрос, пока первый не завершён, отвергается. Это выбранная блокирующая реализация объяснения. Настоящий сетевой протокол может иметь несколько запросов и конкурирующих сообщений, но обязан разрешать конфликты и сохранять эквивалентные права.</p>
+<ol><li>Ядро 0 отправляет запрос исключительного права; его store остаётся незавершённым. Контроллер запоминает инициатора, адрес линии и ожидаемые подтверждения.</li><li>Ядро 1 получает отзыв, переводит свою линию S→I и возвращает подтверждение. До этого нельзя разрешать старой копии продолжать обслуживать новые чтения как пригодной.</li><li>Контроллер учитывает ACK. Только когда обязательные отзывы завершены, ядру 0 выдаётся M. В модели после grant, выдачи права, слово ещё 42: право записи не смешано с самим изменением.</li><li>Store заменяет 4 B на 43 в копии ядра 0. Ядро 1 остаётся I; память пока 42. Завершение этого store не требует сразу записать новую версию в DRAM.</li></ol>
+<p>В <a href="labs/memory/model.html">сцене MESI</a> переходы invalidate (отзыв), ack (учёт подтверждения), grant (выдача права) и commit (изменение данных) разделены. Попытка принять второй запрос, пока первый не завершён, отвергается. Это выбранная блокирующая реализация объяснения. Настоящий сетевой протокол может иметь несколько запросов и конкурирующих сообщений, но обязан разрешать конфликты и сохранять эквивалентные права.</p>
+<h3>Одна линия в трёх местах: снимки того же запроса</h3>
+<p>На рисунке слева направо идут дорожки кэша ядра 0, кэша ядра 1 и RAM, а вниз меняется состояние. На каждой дорожке показано состояние и десятичное слово PA2000. Все три места хранят линию из четырёх 32-битных слов по PA2000, PA2004, PA2008 и PA200C; последние три слова здесь равны 0. Например, линия с 43 состоит из 16 байт <code>2B 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00</code>. Передача линии включает все эти байты. Скобки <code>I · (42)</code> показывают оставшиеся непригодные биты; читать их как результат запрещено. Кружок К обозначает логическое управление запросом: стрелки к нему и от него показывают запрос права, отзыв, подтверждение и выдачу права. Это не дополнительный кэш; пересечение стрелки с дорожкой без наконечника не является доставкой сообщения этой копии.</p>
+<p>Движок хранит активный запрос в поле <code>pending</code>, а его следующий переход — в <code>pending.phase</code>. <code>Lookup</code> проверяет копию; <code>finish</code> завершает запрос. Поэтому после отзыва указано <code>ack</code>: подтверждение ещё предстоит учесть. <code>last</code> хранит результат только завершённой операции. Покой означает <code>pending=null</code>; зафиксированное право M само по себе не означает завершения запроса.</p>
+<p>Снимок M/42 перед изменением — промежуточное состояние выбранного движка: право уже выдано, а данные ещё совпадают с RAM. Отдельное имя промышленного протокола для такого ожидания здесь не вводится. Четыре буквы выше описывают устойчивые права; одних букв недостаточно, чтобы восстановить незавершённый запрос.</p>
+<style>.ca16-mesi-figure{margin:1.5em 0;break-inside:avoid}.ca16-mesi-figure .ca16-mesi-svg{display:block;width:100%;max-width:390px;height:auto;margin:0 auto}.ca16-mesi-figure figcaption{margin-top:.7em}@media print{.ca16-mesi-figure .ca16-mesi-svg{width:82mm;max-width:100%;color:#000;--reader-text:#000;--reader-paper:#fff}.ca16-mesi-figure{break-inside:avoid}}</style>
+<figure class="ca16-mesi-figure" id="ca-memory-mesi-owner">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 1080" width="390" height="1080" role="img" aria-labelledby="coh16-mesi-title coh16-mesi-desc" class="ca16-mesi-svg">
+<title id="coh16-mesi-title">Одна линия: сначала право, затем данные и завершение</title>
+<desc id="coh16-mesi-desc">MESI1, два ядра, линия PA2000–200F размером 16 байт. Три непрерывные дорожки содержат восемь снимков слова PA2000 в двух копиях и RAM. Кружок К обозначает логическое управление запросом. Направленные стрелки показывают запрос к К, отзыв к ядру1, ACK от ядра1 к К и выдачу M ядру0. От S42/S42/RAM42 через отзыв и ACK к M42/I42/RAM42; commit даёт M43/I42/RAM42, finish завершает запись. Две стрелки данных переносят все 16 байт от M владельца через RAM к читателю; итог S43/S43/RAM43. I42 хранит старые непригодные биты. Остальные три слова нулевые.</desc>
+<style>.ca16-mesi-svg{color:var(--reader-text,#202d34);font-family:system-ui,sans-serif}.ca16-mesi-svg text{fill:currentColor;font-size:16px;paint-order:stroke;stroke:var(--reader-paper,#fffcf5);stroke-width:5;stroke-linejoin:round}.ca16-mesi-svg .ca16-title{font-size:20px;font-weight:700}.ca16-mesi-svg .ca16-value{font-size:21px;font-weight:700}.ca16-mesi-svg .ca16-panel{fill:var(--reader-paper,#fffcf5);stroke:currentColor;stroke-width:1}.ca16-mesi-svg .ca16-lane{fill:none;stroke:currentColor;stroke-width:1;opacity:.45}.ca16-mesi-svg .ca16-rule{fill:none;stroke:currentColor;stroke-width:1}.ca16-mesi-svg .ca16-message{fill:none;stroke:currentColor;stroke-width:2;marker-end:url(#coh16-arrow)}.ca16-mesi-svg .ca16-paper{fill:var(--reader-paper,#fffcf5)}</style>
+<defs><marker id="coh16-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8Z" fill="currentColor"/></marker></defs>
+<rect class="ca16-paper" width="390" height="1080"/>
+<text x="10" y="24" class="ca16-title">Линия PA2000–200F · 16 B</text>
+<text x="10" y="48">PA2000: состояние и слово; ещё 3 слова — 0.</text>
+<text x="10" y="70">К — управление запросом; это не кэш.</text>
+<path class="ca16-lane" d="M70 100V967"/>
+<text x="70" y="96" text-anchor="middle">Кэш ядра 0</text>
+<path class="ca16-lane" d="M195 100V967"/>
+<text x="195" y="96" text-anchor="middle">Кэш ядра 1</text>
+<path class="ca16-lane" d="M320 100V967"/>
+<text x="320" y="96" text-anchor="middle">RAM</text>
+<g id="coh16-snapshot-shared" data-trace="shared">
+<text x="10" y="124" class="ca16-title">0 · Два читателя</text>
+<text x="10" y="146">Покой: права записи ни у кого нет</text>
+<text x="70" y="178" text-anchor="middle" class="ca16-value">S · 42</text>
+<text x="195" y="178" text-anchor="middle" class="ca16-value">S · 42</text>
+<text x="320" y="178" text-anchor="middle" class="ca16-value">42</text>
+</g>
+<g id="coh16-snapshot-request" data-trace="request">
+<text x="10" y="234" class="ca16-title">1 · Запрошена запись 43</text>
+<text x="10" y="256">После lookup: следующий шаг invalidate</text>
+<text x="70" y="288" text-anchor="middle" class="ca16-value">S · 42</text>
+<text x="195" y="288" text-anchor="middle" class="ca16-value">S · 42</text>
+<text x="320" y="288" text-anchor="middle" class="ca16-value">42</text>
+</g>
+<g id="coh16-snapshot-invalidated" data-trace="invalidated">
+<text x="10" y="344" class="ca16-title">2 · Отзыв выполнен</text>
+<text x="10" y="366">I · (42): читать нельзя; далее ack</text>
+<text x="70" y="398" text-anchor="middle" class="ca16-value">S · 42</text>
+<text x="195" y="398" text-anchor="middle" class="ca16-value">I · (42)</text>
+<text x="320" y="398" text-anchor="middle" class="ca16-value">42</text>
+</g>
+<g id="coh16-snapshot-acknowledged" data-trace="acknowledged">
+<text x="10" y="454" class="ca16-title">3 · Получен ACK</text>
+<text x="10" y="476">Отзыв подтверждён; следующий шаг grant</text>
+<text x="70" y="508" text-anchor="middle" class="ca16-value">S · 42</text>
+<text x="195" y="508" text-anchor="middle" class="ca16-value">I · (42)</text>
+<text x="320" y="508" text-anchor="middle" class="ca16-value">42</text>
+</g>
+<g id="coh16-snapshot-granted" data-trace="granted">
+<text x="10" y="564" class="ca16-title">4 · Право выдано</text>
+<text x="10" y="586">Писатель один: ядро 0; далее commit</text>
+<text x="70" y="618" text-anchor="middle" class="ca16-value">M · 42</text>
+<text x="195" y="618" text-anchor="middle" class="ca16-value">I · (42)</text>
+<text x="320" y="618" text-anchor="middle" class="ca16-value">42</text>
+</g>
+<g id="coh16-snapshot-committed" data-trace="committed">
+<text x="10" y="674" class="ca16-title">5 · Слово изменено</text>
+<text x="10" y="696">RAM устарела; запрос ещё ждёт finish</text>
+<text x="70" y="728" text-anchor="middle" class="ca16-value">M · 43</text>
+<text x="195" y="728" text-anchor="middle" class="ca16-value">I · (42)</text>
+<text x="320" y="728" text-anchor="middle" class="ca16-value">42</text>
+</g>
+<g id="coh16-snapshot-finished" data-trace="finished">
+<text x="10" y="784" class="ca16-title">6 · Запись завершена</text>
+<text x="10" y="806">Finish: last=43, pending=null</text>
+<text x="70" y="838" text-anchor="middle" class="ca16-value">M · 43</text>
+<text x="195" y="838" text-anchor="middle" class="ca16-value">I · (42)</text>
+<text x="320" y="838" text-anchor="middle" class="ca16-value">42</text>
+</g>
+<g id="coh16-snapshot-reader-finished" data-trace="reader-finished">
+<text x="10" y="902" class="ca16-title">7 · Другой читатель получил 43</text>
+<text x="10" y="924">Из M владельца: 16 B → RAM → кэш 1</text>
+<text x="70" y="956" text-anchor="middle" class="ca16-value">S · 43</text>
+<text x="195" y="956" text-anchor="middle" class="ca16-value">S · 43</text>
+<text x="320" y="956" text-anchor="middle" class="ca16-value">43</text>
+</g>
+<circle cx="14" cy="194" r="11" class="ca16-panel"/>
+<text x="14" y="200" text-anchor="middle">К</text>
+<path class="ca16-message" d="M70 194H27"/>
+<text x="102" y="199">Запрос права</text>
+<circle cx="14" cy="304" r="11" class="ca16-panel"/>
+<text x="14" y="310" text-anchor="middle">К</text>
+<path class="ca16-message" d="M27 304H195"/>
+<text x="224" y="309">Отзыв</text>
+<circle cx="14" cy="414" r="11" class="ca16-panel"/>
+<text x="14" y="420" text-anchor="middle">К</text>
+<path class="ca16-message" d="M195 414H27"/>
+<text x="224" y="419">ACK</text>
+<circle cx="14" cy="524" r="11" class="ca16-panel"/>
+<text x="14" y="530" text-anchor="middle">К</text>
+<path class="ca16-message" d="M27 524H70"/>
+<text x="102" y="529">Выдача M</text>
+<path class="ca16-message" d="M70 633V652"/>
+<text x="102" y="646">Изменить 4 B: 42 → 43</text>
+<path class="ca16-message" d="M70 861H320"/>
+<text x="230" y="853">16 B</text>
+<path class="ca16-message" d="M320 877H195"/>
+<path class="ca16-rule" d="M10 979H380"/>
+<text x="10" y="1001" class="ca16-title">Ответ: вся линия, 16 B</text>
+<rect x="10" y="1012" width="370" height="58" class="ca16-panel"/>
+<text x="56.25" y="1033" text-anchor="middle">PA2000</text>
+<text x="56.25" y="1058" text-anchor="middle" class="ca16-value">43</text>
+<path class="ca16-rule" d="M102.5 1012V1070"/>
+<text x="148.75" y="1033" text-anchor="middle">PA2004</text>
+<text x="148.75" y="1058" text-anchor="middle" class="ca16-value">0</text>
+<path class="ca16-rule" d="M195.0 1012V1070"/>
+<text x="241.25" y="1033" text-anchor="middle">PA2008</text>
+<text x="241.25" y="1058" text-anchor="middle" class="ca16-value">0</text>
+<path class="ca16-rule" d="M287.5 1012V1070"/>
+<text x="333.75" y="1033" text-anchor="middle">PA200C</text>
+<text x="333.75" y="1058" text-anchor="middle" class="ca16-value">0</text>
+</svg>
+<figcaption>MESI1: отзыв → ACK → выдача права → изменение слова → завершение. Затем новый читатель получает актуальную линию от владельца M. Ряды — логические снимки после названных действий, без масштаба времени; последний ряд объединяет передачу данных и последующее завершение чтения. <a href="assets/coherence-mesi-line.svg">Открыть тот же рисунок отдельно</a>.</figcaption></figure>
+<p><strong>Текстовый разбор рисунка.</strong> Начинаем после двух завершённых чтений: S/42 у обоих, RAM=42. Право изменить линию ещё нужно получить.</p>
+<ol><li>Ядро 0 подаёт store 43: <code>beginMesi</code> создаёт запрос с <code>phase=lookup</code>, не меняя данные. Проверка локального S выбирает следующий шаг <code>invalidate</code> и сохраняет актуальные 16 B в запросе. Второй запрос пока отвергается; первый и его данные сохраняются.</li>
+<li>Переход <code>invalidate</code> делает копию ядра 1 непригодной: S/42 → I/(42). Ядро 0 всё ещё S/42, RAM=42, следующий шаг <code>ack</code>. Затем учёт подтверждения переводит запрос к <code>grant</code>; данные по-прежнему не менялись.</li>
+<li><code>Grant</code>, выдача права, устанавливает M у ядра 0 и сохраняет у него полученную линию [42, 0, 0, 0]. Другой участник I. Следующий шаг <code>commit</code>; право записи уже есть, но 43 ещё нигде не записано.</li>
+<li><code>Commit</code>, изменение данных в этом движке, заменяет только первые 4 B: <code>2A 00 00 00 → 2B 00 00 00</code>. Теперь ядро 0 хранит M/[43, 0, 0, 0], RAM — [42, 0, 0, 0]. Запрос остаётся активным с <code>phase=finish</code>, а <code>last=null</code>. Только следующий переход <code>finish</code> удаляет запрос и устанавливает результат 43. Это точка завершения store в MESI1; слово в RAM остаётся 42.</li>
+<li>Новое чтение ядра 1 сначала получает запрос с <code>phase=lookup</code>, затем обнаруживает I и переходит к <code>read-snoop</code>, поиску пригодной копии у соседа. Переход берёт 16 B у владельца M, обновляет RAM, переводит владельца в S и заполняет S-копию читателя. У всех [43, 0, 0, 0], но результат чтения появляется только после его собственного <code>finish</code>. Весь показанный store вызвал один отзыв; последующее чтение — одну обратную запись и одно заполнение линии.</li></ol>
+<p>В этом блокирующем опыте получение данных от M и согласование новых S-копий выполняются одним объяснительным переходом; отдельной очереди байтов на соединении нет. Контроллер на рисунке представлен полем запроса, а не ещё одним таймером или реальным узлом конкретного CPU. Когда другие запросы разрешены, их реализация должна отдельно хранить ожидаемые ответы и разрешать конфликты; MESI1 такую одновременную работу не проверяет.</p>
 <h2>Другой читатель обращается к dirty-владельцу</h2>
 <p>После store ядро 1 хочет прочитать PA2000. Его I требует обращения за линией. Память 42 не подходит как источник, пока ядро 0 имеет M с 43. Контроллер должен найти владельца, дождаться актуальных данных и согласовать новое состояние. В нашей модели ядро 0 передаёт 16 B в память, M→S; ядро 1 получает те же 16 B и S. Теперь обе копии и память содержат 43, чтение возвращает 43.</p>
 <p>Эта запись в память — выбранный путь простого MESI. Реальные варианты могут передавать данные прямо между кэшами и иметь дополнительные состояния. Например, O, Owned, в семействе MOESI позволяет назначить ответственного за dirty-данные при наличии других читателей; такой протокол меняет правила ответственности за dirty-копию и допустимые сочетания состояний. Наименование MESI описывает права, но не определяет единственную разводку проводов, задержки или все внутренние сообщения.</p>

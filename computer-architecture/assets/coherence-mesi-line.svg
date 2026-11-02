@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 1080" width="390" height="1080" role="img" aria-labelledby="coh16-mesi-title coh16-mesi-desc" class="ca16-mesi-svg">
+<title id="coh16-mesi-title">Одна линия: сначала право, затем данные и завершение</title>
+<desc id="coh16-mesi-desc">MESI1, два ядра, линия PA2000–200F размером 16 байт. Три непрерывные дорожки содержат восемь снимков слова PA2000 в двух копиях и RAM. Кружок К обозначает логическое управление запросом. Направленные стрелки показывают запрос к К, отзыв к ядру1, ACK от ядра1 к К и выдачу M ядру0. От S42/S42/RAM42 через отзыв и ACK к M42/I42/RAM42; commit даёт M43/I42/RAM42, finish завершает запись. Две стрелки данных переносят все 16 байт от M владельца через RAM к читателю; итог S43/S43/RAM43. I42 хранит старые непригодные биты. Остальные три слова нулевые.</desc>
+<style>.ca16-mesi-svg{color:var(--reader-text,#202d34);font-family:system-ui,sans-serif}.ca16-mesi-svg text{fill:currentColor;font-size:16px;paint-order:stroke;stroke:var(--reader-paper,#fffcf5);stroke-width:5;stroke-linejoin:round}.ca16-mesi-svg .ca16-title{font-size:20px;font-weight:700}.ca16-mesi-svg .ca16-value{font-size:21px;font-weight:700}.ca16-mesi-svg .ca16-panel{fill:var(--reader-paper,#fffcf5);stroke:currentColor;stroke-width:1}.ca16-mesi-svg .ca16-lane{fill:none;stroke:currentColor;stroke-width:1;opacity:.45}.ca16-mesi-svg .ca16-rule{fill:none;stroke:currentColor;stroke-width:1}.ca16-mesi-svg .ca16-message{fill:none;stroke:currentColor;stroke-width:2;marker-end:url(#coh16-arrow)}.ca16-mesi-svg .ca16-paper{fill:var(--reader-paper,#fffcf5)}</style>
+<defs><marker id="coh16-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8Z" fill="currentColor"/></marker></defs>
+<rect class="ca16-paper" width="390" height="1080"/>
+<text x="10" y="24" class="ca16-title">Линия PA2000–200F · 16 B</text>
+<text x="10" y="48">PA2000: состояние и слово; ещё 3 слова — 0.</text>
+<text x="10" y="70">К — управление запросом; это не кэш.</text>
+<path class="ca16-lane" d="M70 100V967"/>
+<text x="70" y="96" text-anchor="middle">Кэш ядра 0</text>
+<path class="ca16-lane" d="M195 100V967"/>
+<text x="195" y="96" text-anchor="middle">Кэш ядра 1</text>
+<path class="ca16-lane" d="M320 100V967"/>
+<text x="320" y="96" text-anchor="middle">RAM</text>
+<g id="coh16-snapshot-shared" data-trace="shared">
+<text x="10" y="124" class="ca16-title">0 · Два читателя</text>
+<text x="10" y="146">Покой: права записи ни у кого нет</text>
+<text x="70" y="178" text-anchor="middle" class="ca16-value">S · 42</text>
+<text x="195" y="178" text-anchor="middle" class="ca16-value">S · 42</text>
+<text x="320" y="178" text-anchor="middle" class="ca16-value">42</text>
+</g>
+<g id="coh16-snapshot-request" data-trace="request">
+<text x="10" y="234" class="ca16-title">1 · Запрошена запись 43</text>
+<text x="10" y="256">После lookup: следующий шаг invalidate</text>
+<text x="70" y="288" text-anchor="middle" class="ca16-value">S · 42</text>
+<text x="195" y="288" text-anchor="middle" class="ca16-value">S · 42</text>
+<text x="320" y="288" text-anchor="middle" class="ca16-value">42</text>
+</g>
+<g id="coh16-snapshot-invalidated" data-trace="invalidated">
+<text x="10" y="344" class="ca16-title">2 · Отзыв выполнен</text>
+<text x="10" y="366">I · (42): читать нельзя; далее ack</text>
+<text x="70" y="398" text-anchor="middle" class="ca16-value">S · 42</text>
+<text x="195" y="398" text-anchor="middle" class="ca16-value">I · (42)</text>
+<text x="320" y="398" text-anchor="middle" class="ca16-value">42</text>
+</g>
+<g id="coh16-snapshot-acknowledged" data-trace="acknowledged">
+<text x="10" y="454" class="ca16-title">3 · Получен ACK</text>
+<text x="10" y="476">Отзыв подтверждён; следующий шаг grant</text>
+<text x="70" y="508" text-anchor="middle" class="ca16-value">S · 42</text>
+<text x="195" y="508" text-anchor="middle" class="ca16-value">I · (42)</text>
+<text x="320" y="508" text-anchor="middle" class="ca16-value">42</text>
+</g>
+<g id="coh16-snapshot-granted" data-trace="granted">
+<text x="10" y="564" class="ca16-title">4 · Право выдано</text>
+<text x="10" y="586">Писатель один: ядро 0; далее commit</text>
+<text x="70" y="618" text-anchor="middle" class="ca16-value">M · 42</text>
+<text x="195" y="618" text-anchor="middle" class="ca16-value">I · (42)</text>
+<text x="320" y="618" text-anchor="middle" class="ca16-value">42</text>
+</g>
+<g id="coh16-snapshot-committed" data-trace="committed">
+<text x="10" y="674" class="ca16-title">5 · Слово изменено</text>
+<text x="10" y="696">RAM устарела; запрос ещё ждёт finish</text>
+<text x="70" y="728" text-anchor="middle" class="ca16-value">M · 43</text>
+<text x="195" y="728" text-anchor="middle" class="ca16-value">I · (42)</text>
+<text x="320" y="728" text-anchor="middle" class="ca16-value">42</text>
+</g>
+<g id="coh16-snapshot-finished" data-trace="finished">
+<text x="10" y="784" class="ca16-title">6 · Запись завершена</text>
+<text x="10" y="806">Finish: last=43, pending=null</text>
+<text x="70" y="838" text-anchor="middle" class="ca16-value">M · 43</text>
+<text x="195" y="838" text-anchor="middle" class="ca16-value">I · (42)</text>
+<text x="320" y="838" text-anchor="middle" class="ca16-value">42</text>
+</g>
+<g id="coh16-snapshot-reader-finished" data-trace="reader-finished">
+<text x="10" y="902" class="ca16-title">7 · Другой читатель получил 43</text>
+<text x="10" y="924">Из M владельца: 16 B → RAM → кэш 1</text>
+<text x="70" y="956" text-anchor="middle" class="ca16-value">S · 43</text>
+<text x="195" y="956" text-anchor="middle" class="ca16-value">S · 43</text>
+<text x="320" y="956" text-anchor="middle" class="ca16-value">43</text>
+</g>
+<circle cx="14" cy="194" r="11" class="ca16-panel"/>
+<text x="14" y="200" text-anchor="middle">К</text>
+<path class="ca16-message" d="M70 194H27"/>
+<text x="102" y="199">Запрос права</text>
+<circle cx="14" cy="304" r="11" class="ca16-panel"/>
+<text x="14" y="310" text-anchor="middle">К</text>
+<path class="ca16-message" d="M27 304H195"/>
+<text x="224" y="309">Отзыв</text>
+<circle cx="14" cy="414" r="11" class="ca16-panel"/>
+<text x="14" y="420" text-anchor="middle">К</text>
+<path class="ca16-message" d="M195 414H27"/>
+<text x="224" y="419">ACK</text>
+<circle cx="14" cy="524" r="11" class="ca16-panel"/>
+<text x="14" y="530" text-anchor="middle">К</text>
+<path class="ca16-message" d="M27 524H70"/>
+<text x="102" y="529">Выдача M</text>
+<path class="ca16-message" d="M70 633V652"/>
+<text x="102" y="646">Изменить 4 B: 42 → 43</text>
+<path class="ca16-message" d="M70 861H320"/>
+<text x="230" y="853">16 B</text>
+<path class="ca16-message" d="M320 877H195"/>
+<path class="ca16-rule" d="M10 979H380"/>
+<text x="10" y="1001" class="ca16-title">Ответ: вся линия, 16 B</text>
+<rect x="10" y="1012" width="370" height="58" class="ca16-panel"/>
+<text x="56.25" y="1033" text-anchor="middle">PA2000</text>
+<text x="56.25" y="1058" text-anchor="middle" class="ca16-value">43</text>
+<path class="ca16-rule" d="M102.5 1012V1070"/>
+<text x="148.75" y="1033" text-anchor="middle">PA2004</text>
+<text x="148.75" y="1058" text-anchor="middle" class="ca16-value">0</text>
+<path class="ca16-rule" d="M195.0 1012V1070"/>
+<text x="241.25" y="1033" text-anchor="middle">PA2008</text>
+<text x="241.25" y="1058" text-anchor="middle" class="ca16-value">0</text>
+<path class="ca16-rule" d="M287.5 1012V1070"/>
+<text x="333.75" y="1033" text-anchor="middle">PA200C</text>
+<text x="333.75" y="1058" text-anchor="middle" class="ca16-value">0</text>
+</svg>

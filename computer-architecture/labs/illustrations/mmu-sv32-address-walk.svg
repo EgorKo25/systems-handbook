@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" id="mmu-sv32-plot" width="360" height="1100" viewBox="0 0 360 1100" role="img" aria-labelledby="mmu-sv32-title mmu-sv32-desc">
+<title id="mmu-sv32-title">Sv32: биты VA, две физические PTE и целевой PA</title>
+<desc id="mmu-sv32-desc">VA00402000 делится на VPN1=1, VPN0=2, offset0. При пустом TLB satp80000008 задаёт rootPA8000; PTE по8004 равна2401, её PPN9 ведёт к таблице9000. PTE по9008 равна8D7, её PPN2 и права дают PA2000 и затем значение42. TLB хранит перевод и права: VA00402200 даёт hit, offset200 и PA2200 без новых чтений PTE; SW не исполняется. После PTE8D6 и local SFENCE.VMA новый walk останавливается на V0 второй PTE: load page fault, пользовательские байты не читаются.</desc>
+<style>
+ #mmu-sv32-plot{color:var(--reader-text,#202d34)}
+ #mmu-sv32-plot text{fill:var(--reader-text,#202d34);font:16px system-ui,sans-serif}
+ #mmu-sv32-plot .mono{font-family:ui-monospace,monospace;font-size:16px}
+ #mmu-sv32-plot .head{font-size:18px;font-weight:700}
+ #mmu-sv32-plot .title{font-size:20px;font-weight:750}
+ #mmu-sv32-plot .paper{fill:var(--reader-paper,#fffcf5)}
+ #mmu-sv32-plot .field{fill:var(--reader-soft,#e8f2ec);stroke:var(--reader-text,#202d34);stroke-width:1}
+ #mmu-sv32-plot .cell{fill:var(--reader-paper,#fffcf5);stroke:var(--reader-text,#202d34);stroke-width:1}
+ #mmu-sv32-plot .flow{fill:none;stroke:var(--reader-accent,#0c6b63);stroke-width:2.5;marker-end:url(#mmu-sv32-arrow)}
+ #mmu-sv32-plot .rule{stroke:var(--reader-text,#202d34);stroke-width:1}
+ #mmu-sv32-plot .stop{fill:none;stroke:var(--reader-text,#202d34);stroke-width:2.5}
+ </style>
+ <defs><marker id="mmu-sv32-arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0 L7 3.5 L0 7Z" fill="var(--reader-accent,#0c6b63)"/></marker></defs>
+ <rect x="0" y="0" width="360" height="1100" class="paper"/>
+<text x="20" y="28" class="title">Sv32: VA → PTE → PA</text>
+<text x="20" y="52">U-mode · ASID 0 · Svade · load</text>
+<text x="20" y="81" class="head">VA 00402000 · TLB пуст</text>
+<rect x="20" y="113" width="100" height="26" class="field"/>
+<text x="22" y="132" class="mono">0000000001</text>
+<text x="20" y="106">31…22</text>
+<rect x="120" y="113" width="100" height="26" class="field"/>
+<text x="122" y="132" class="mono">0000000010</text>
+<text x="120" y="106">21…12</text>
+<rect x="220" y="113" width="120" height="26" class="field"/>
+<text x="222" y="132" class="mono">000000000000</text>
+<text x="220" y="106">11…0</text>
+<text x="20" y="162">VPN[1]=1</text>
+<text x="120" y="162">VPN[0]=2</text>
+<text x="220" y="162">offset=0</text>
+<text x="20" y="191" class="mono">satp 80000008 → root PPN 8</text>
+<text x="20" y="214" class="mono">rootPA = 8 × 1000 = 8000</text>
+<path d="M180 220 V235" class="flow"/>
+<text x="20" y="257" class="mono">8000 + VPN[1] × 4 = 8004</text>
+<rect x="20" y="270" width="320" height="29" class="cell"/>
+<text x="29" y="290" class="mono">PA8004: 01 24 00 00 → 2401</text>
+<rect x="20" y="327" width="220" height="26" class="field"/>
+<text x="22" y="346" class="mono">0000000000000000001001</text>
+<text x="20" y="320">PPN · биты31…10</text>
+<rect x="240" y="327" width="100" height="26" class="field"/>
+<text x="242" y="346" class="mono">0000000001</text>
+<text x="240" y="320">9…0</text>
+<text x="20" y="378">PPN 9; V1, R/W/X0 → non-leaf</text>
+<text x="20" y="402" class="mono">lowerPA = 9 × 1000 = 9000</text>
+<path d="M180 410 V426" class="flow"/>
+<text x="20" y="449" class="mono">9000 + VPN[0] × 4 = 9008</text>
+<rect x="20" y="462" width="320" height="29" class="cell"/>
+<text x="29" y="482" class="mono">PA9008: D7 08 00 00 → 08D7</text>
+<rect x="20" y="520" width="220" height="26" class="field"/>
+<text x="22" y="539" class="mono">0000000000000000000010</text>
+<text x="20" y="513">PPN · биты31…10</text>
+<rect x="240" y="520" width="100" height="26" class="field"/>
+<text x="242" y="539" class="mono">0011010111</text>
+<text x="240" y="513">9…0</text>
+<text x="20" y="571">RSW[9:8]=00; PPN=2 → leaf</text>
+<rect x="20" y="581" width="40" height="49" class="cell"/>
+<text x="34" y="601">D</text>
+<text x="34" y="622" class="mono">1</text>
+<rect x="60" y="581" width="40" height="49" class="cell"/>
+<text x="74" y="601">A</text>
+<text x="74" y="622" class="mono">1</text>
+<rect x="100" y="581" width="40" height="49" class="cell"/>
+<text x="114" y="601">G</text>
+<text x="114" y="622" class="mono">0</text>
+<rect x="140" y="581" width="40" height="49" class="cell"/>
+<text x="154" y="601">U</text>
+<text x="154" y="622" class="mono">1</text>
+<rect x="180" y="581" width="40" height="49" class="cell"/>
+<text x="194" y="601">X</text>
+<text x="194" y="622" class="mono">0</text>
+<rect x="220" y="581" width="40" height="49" class="cell"/>
+<text x="234" y="601">W</text>
+<text x="234" y="622" class="mono">1</text>
+<rect x="260" y="581" width="40" height="49" class="cell"/>
+<text x="274" y="601">R</text>
+<text x="274" y="622" class="mono">1</text>
+<rect x="300" y="581" width="40" height="49" class="cell"/>
+<text x="314" y="601">V</text>
+<text x="314" y="622" class="mono">1</text>
+<text x="20" y="654">U1/R1/A1 разрешают load</text>
+<text x="20" y="679" class="mono">2 × 1000 + offset0 = PA2000</text>
+<rect x="10" y="709" width="220" height="26" class="field"/>
+<text x="12" y="728" class="mono">0000000000000000000010</text>
+<text x="10" y="702">PA[33:12] · 22 бита</text>
+<rect x="230" y="709" width="120" height="26" class="field"/>
+<text x="232" y="728" class="mono">000000000000</text>
+<text x="230" y="702">PA[11:0]</text>
+<text x="20" y="758">Теперь читаются данные: 4 Б</text>
+<rect x="20" y="768" width="80" height="48" class="cell"/>
+<text x="34" y="787" class="mono">2000</text>
+<text x="45" y="808" class="mono">2A</text>
+<rect x="100" y="768" width="80" height="48" class="cell"/>
+<text x="114" y="787" class="mono">2001</text>
+<text x="125" y="808" class="mono">00</text>
+<rect x="180" y="768" width="80" height="48" class="cell"/>
+<text x="194" y="787" class="mono">2002</text>
+<text x="205" y="808" class="mono">00</text>
+<rect x="260" y="768" width="80" height="48" class="cell"/>
+<text x="274" y="787" class="mono">2003</text>
+<text x="285" y="808" class="mono">00</text>
+<text x="20" y="841">42; TLB ← ASID0 / VPN1026 / права</text>
+<path d="M20 855 H340" class="rule"/>
+<text x="20" y="881" class="head">Повтор: VA00402200 · store</text>
+<text x="20" y="905">TLB hit → PA2000 + 200 = 2200</text>
+<text x="20" y="929">PTE reads +0; W1/D1. SW не исполнен.</text>
+<path d="M20 943 H340" class="rule"/>
+<text x="20" y="969">PTE9008: 8D7 → 8D6; затем</text>
+<text x="20" y="992">local SFENCE.VMA → TLB пуст</text>
+<text x="20" y="1015">miss → 8004/2401 → 9008/8D6</text>
+<path d="M20 1027 H340" class="stop"/>
+<text x="20" y="1051">V0 → load page fault на второй PTE</text>
+<text x="20" y="1074">Данные PA2000 не читаются.</text>
+</svg>

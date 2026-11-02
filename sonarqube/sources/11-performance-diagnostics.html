@@ -35,6 +35,64 @@
 <p>Для простой модели примем один последовательный CE worker и среднее время обработки 30 с. Потолок без накладных затрат —2 анализа в минуту. Если поступают 3 в минуту достаточно долго, очередь в среднем растёт примерно на одну задачу в минуту. Через 20 минут накопятся порядка 20 дополнительных задач, то есть около 10 минут ожидания при неизменной работе. Неустойчивая очередь не лечится увеличением CI-timeout: timeout лишь позже сообщает, что система не успевает.</p>
 <p>При входе 1 анализ/мин и работе 30 с средняя загрузка этой упрощённой службы около 50%. Даже здесь всплеск из 10 одновременных задач означает, что последняя ждёт девять предыдущих, около 270 с до старта. Среднее за час может быть приемлемым, а рабочий p95 — плохим. Переключение CI на webhook освобождает исполнитель, но не уменьшает число задач, которое CE ещё должен обработать. Полезные меры — устранить дубли pipeline, отменять устаревшую работу до дорогой отправки, развести тяжёлые периодические проекты и исследовать стоимость самого анализа.</p>
 <p>Для устойчивого интервала закон Литтла связывает среднее число работ L, интенсивность завершения λ и среднее время W: <code>L=λW</code>. Если через границу «принят report → готов gate» проходит 30 задач в час, а среднее пребывание 8 минут, среднее число работ внутри около 4. В эту границу входят и ожидающие, и исполняемые задачи. Закон не даёт прогноз для бесконечно растущей очереди и не делает среднюю задержку подходящей заменой хвосту. Доступный параллелизм CE определяется редакцией и архитектурой: нельзя обещать Community горизонтальное масштабирование добавлением произвольного числа контейнеров к одной БД.</p>
+<!-- SONAR_CE_TIMELINE_V1_BEGIN -->
+<figure id="sonar-ce-report-timeline" class="sq11-time" aria-labelledby="sq11-time-title" aria-describedby="sq11-time-caption">
+<style>
+.sq11-time{color:var(--text);font-family:var(--sans);max-width:100%;margin:1.5rem 0}
+.sq11-time *{box-sizing:border-box;min-width:0}
+.sq11-time h3,.sq11-time h4{color:var(--text)}
+.sq11-time figcaption{color:var(--muted);margin:.7rem 0;overflow-wrap:anywhere}
+.sq11-time code,.sq11-time p{overflow-wrap:anywhere}
+.sq11-time .sq11-legend{display:flex;flex-wrap:wrap;gap:.5rem 1rem;margin:.9rem 0;padding:0;list-style:none}
+.sq11-time .sq11-legend li{display:flex;align-items:center;gap:.5rem}
+.sq11-time .sq11-key{display:inline-block;width:2.6rem;height:1rem;flex:0 0 2.6rem}
+.sq11-time .sq11-scan{border:2px dotted var(--text);background:var(--paper)}
+.sq11-time .sq11-wait{border:2px dashed var(--text);background:repeating-linear-gradient(135deg,var(--soft),var(--soft) 4px,var(--paper) 4px,var(--paper) 8px)}
+.sq11-time .sq11-work{border:3px double var(--text);background:var(--accent)}
+.sq11-time .sq11-axis{position:relative;height:2.4rem;border-top:1px solid var(--text);margin-top:1.1rem}
+.sq11-time .sq11-tick{position:absolute;top:.3rem;transform:translateX(-50%);font-variant-numeric:tabular-nums;white-space:nowrap;font-size:16px;line-height:1.3}
+.sq11-time .sq11-first{transform:none}.sq11-time .sq11-last{transform:translateX(-100%)}
+.sq11-time .sq11-report{padding:.4rem 0 .8rem;border-bottom:1px solid var(--line);break-inside:avoid}
+.sq11-time .sq11-report h4{margin:.5rem 0}
+.sq11-time .sq11-track{position:relative;height:2.5rem;border-left:1px solid var(--line);border-right:1px solid var(--line);background:repeating-linear-gradient(to right,transparent 0,transparent calc(9.090909% - 1px),var(--line) calc(9.090909% - 1px),var(--line) 9.090909%)}
+.sq11-time .sq11-bar{position:absolute;top:.8rem;height:1.2rem}
+.sq11-time .sq11-arrival{position:absolute;top:0;height:2.3rem;border-left:2px solid var(--text)}
+.sq11-time .sq11-arrival::before{content:"";position:absolute;top:0;left:-5px;border-left:4px solid transparent;border-right:4px solid transparent;border-top:7px solid var(--text)}
+.sq11-time .sq11-values{margin:.55rem 0 0;line-height:1.6}
+.sq11-time .sq11-result{font-weight:700}
+.sq11-time .sq11-formula{padding:.7rem 0;border-top:2px solid var(--text);margin-top:1rem}
+@media(max-width:420px){.sq11-time .sq11-legend{gap:.5rem}.sq11-time .sq11-values{line-height:1.7}}
+@media print{.sq11-time{--text:#000;--muted:#333;--paper:#fff;--soft:#fff;--line:#aaa;--accent:#fff}.sq11-time .sq11-work{background:#fff;border:3px double #000}.sq11-time .sq11-wait{background:#fff}.sq11-time .sq11-report{break-inside:avoid}}
+</style>
+<span id="sonar-ce-queue" aria-hidden="true"></span><span id="sonar-ce-queue-title" aria-hidden="true"></span>
+<h3 id="sq11-time-title">Три отправленных отчёта, один обработчик: откуда берётся задержка</h3>
+<figcaption id="sq11-time-caption">Оригинальная расчётная модель для понимания Community Build 26.10: один CE worker (обработчик), очередь сначала пуста, три разных проекта A/B/C, обслуживание по порядку приёма. Приём в моменты 0, 10 и 20 с; каждому отчёту нужно ровно 30 с в CE. Нет отказов, иных задач и задержки запуска worker. Эти условия заданы автором: диаграмма не показывает замер SonarQube и не обещает такого планирования или времени на вашем сервере.</figcaption>
+<p>Каждый Scanner заранее потратил 20 с на подготовку и передачу своего report; к обозначенному моменту приёма эти байты уже у сервера. Отрицательное время на шкале — секунды до приёма A. Вертикальная черта с треугольником отмечает <code>submittedAt</code> — появление серверной задачи. Полосы слева от неё относятся к Scanner, справа — к очереди и CE.</p>
+<ul class="sq11-legend" aria-label="Обозначения"><li><span class="sq11-key sq11-scan" aria-hidden="true"></span>Scanner: пунктир из точек</li><li><span class="sq11-key sq11-wait" aria-hidden="true"></span>Очередь: штриховая рамка</li><li><span class="sq11-key sq11-work" aria-hidden="true"></span>CE: двойная рамка</li></ul>
+<div class="sq11-axis" aria-hidden="true"><span class="sq11-tick sq11-first" style="left:0%">−20</span><span class="sq11-tick" style="left:18.181818%">0</span><span class="sq11-tick" style="left:45.454545%">30</span><span class="sq11-tick" style="left:72.727273%">60</span><span class="sq11-tick sq11-last" style="left:100%">90 с</span></div>
+<section class="sq11-report" aria-labelledby="sq11-a" data-report="A" data-scan-start="-20" data-submitted="0" data-started="0" data-ended="30" data-workers="1">
+<h4 id="sq11-a">A: сразу в свободный CE</h4>
+<div class="sq11-track" aria-hidden="true"><span class="sq11-bar sq11-scan" style="left:0%;width:18.181818%"></span><span class="sq11-bar sq11-work" style="left:18.181818%;width:27.272727%"></span><span class="sq11-arrival" style="left:18.181818%"></span></div>
+<p class="sq11-values">Scanner: −20…0 с. Приём: 0 с. CE: 0…30 с.<br>Ожидание: <strong>0 с</strong>. Работа CE: <strong>30 с</strong>.<br><span class="sq11-result">На сервере: 30 с; от начала Scanner до конца CE: 50 с.</span></p>
+</section>
+<section class="sq11-report" aria-labelledby="sq11-b" data-report="B" data-scan-start="-10" data-submitted="10" data-started="30" data-ended="60" data-workers="1">
+<h4 id="sq11-b">B: report принят, обработчик занят A</h4>
+<div class="sq11-track" aria-hidden="true"><span class="sq11-bar sq11-scan" style="left:9.090909%;width:18.181818%"></span><span class="sq11-bar sq11-wait" style="left:27.272727%;width:18.181818%"></span><span class="sq11-bar sq11-work" style="left:45.454545%;width:27.272727%"></span><span class="sq11-arrival" style="left:27.272727%"></span></div>
+<p class="sq11-values">Scanner: −10…10 с. Приём: 10 с. CE: 30…60 с.<br>Ожидание: <strong>20 с</strong>. Работа CE: <strong>30 с</strong>.<br><span class="sq11-result">На сервере: 50 с; от начала Scanner до конца CE: 70 с.</span></p>
+</section>
+<section class="sq11-report" aria-labelledby="sq11-c" data-report="C" data-scan-start="0" data-submitted="20" data-started="60" data-ended="90" data-workers="1">
+<h4 id="sq11-c">C: очередь включает остаток A и весь B</h4>
+<div class="sq11-track" aria-hidden="true"><span class="sq11-bar sq11-scan" style="left:18.181818%;width:18.181818%"></span><span class="sq11-bar sq11-wait" style="left:36.363636%;width:36.363636%"></span><span class="sq11-bar sq11-work" style="left:72.727273%;width:27.272727%"></span><span class="sq11-arrival" style="left:36.363636%"></span></div>
+<p class="sq11-values">Scanner: 0…20 с. Приём: 20 с. CE: 60…90 с.<br>Ожидание: <strong>40 с</strong>. Работа CE: <strong>30 с</strong>.<br><span class="sq11-result">На сервере: 70 с; от начала Scanner до конца CE: 90 с.</span></p>
+</section>
+<div class="sq11-formula"><p><strong>Для C:</strong> начало = max(приём 20, конец B 60) = 60 с; ожидание = 60 − 20 = 40 с; серверная задержка = 90 − 20 = 70 с = 40 с очереди + 30 с CE. Среднее пребывание на сервере для этих трёх отчётов — (30 + 50 + 70) / 3 = <strong>50 с</strong>. Это конечная пачка из трёх работ, а не измеренная стационарная нагрузка.</p></div>
+<p>В полях задачи соответствуют: <code>submittedAt</code> — приём, <code>startedAt</code> — начало CE, <code>executedAt</code> — конец; в этой идеализированной модели <code>executionTimeMs=30000</code> у каждого завершённого отчёта. У C эти 30 с не включают 40 с очереди и 20 с Scanner. Для ещё ожидающей задачи нельзя вычитать отсутствующее startedAt как ноль. У работающей задачи время выполнения ещё растёт.</p>
+<p>Шкала заканчивается завершением CE. Она не включает очередь CI Runner, подготовку checkout, тесты и получение ответа о quality gate клиентом. При <code>sonar.qualitygate.wait=true</code> Scanner может продолжать ждать сервер и опрашивать результат; это ожидание не означает, что он всё ещё анализирует Go. Успех CE связывают с <code>analysisId</code>, затем получают gate этого анализа — как разобрано раньше. CE SUCCESS сам по себе не означает gate OK.</p>
+<p>Один worker занят с 0 до 90 с; это занятость обработчика по прошедшему времени, а не доказательство 100% загрузки CPU. Внутри его 30 с могут быть ожидания БД и диска. По этой тройке нельзя оценить устойчивый p95 своего сервера: 95-й процентиль — границу длительности, в которую укладывается как минимум 95% наблюдений выбранного набора. Для оценки реальной эксплуатации нужны наблюдения размеров отчётов, частоты поступления и конкурирующей работы. Увеличение клиентского timeout не сокращает ни одну полосу.</p>
+<p class="sources">Граница модели: <a href="https://docs.sonarsource.com/sonarqube-community-build/analyzing-source-code/background-tasks">серверные отчёты Community обрабатываются последовательно</a>; <a href="https://github.com/SonarSource/sonarqube/blob/26.10.0.133078/server/sonar-webserver-webapi/src/main/java/org/sonar/server/ce/ws/TaskFormatter.java">поля времени задачи в 26.10.0.133078</a>. Времена A/B/C и расчёт — искусственный опыт этой книги.</p>
+</figure>
+<!-- SONAR_CE_TIMELINE_V1_END -->
+
 <h2>Память трёх процессов</h2>
 <p>Куча JVM — управляемая память Java-объектов; <code>-Xmx</code> ограничивает её максимум, <code>-Xms</code> задаёт начальный размер. RSS включает резидентную память процесса и не равен только Java-куче. Помимо heap есть стеки потоков, metadata, нативные библиотеки, сетевые буферы и файловые отображения. ОС также использует память для кэша файлов. Три процесса с отдельными -Xmx и PostgreSQL на том же хосте требуют общего бюджета; сумма пределов контейнеров не создаёт физическую RAM.</p>
 <p>В Community26.10 стандартные максимумы Web/CE/Search по проверенной странице —1 ГБ/1536 МБ/512 МБ. Это не три заранее полностью занятых резервирования, но и не весь верхний предел расхода экземпляра. Настройка <code>sonar.ce.javaOpts</code> заменяет соответствующее стандартное значение целиком; <code>javaAdditionalOpts</code> добавляет параметры. Без знания текущего набора не переносите одну строку -Xmx из чужого блога. Если OOM вызван контейнерным cgroup-лимитом, увеличение heap внутри того же малого лимита способно ускорить следующий отказ.</p>

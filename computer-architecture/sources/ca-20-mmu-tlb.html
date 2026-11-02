@@ -27,6 +27,131 @@
 <ol><li>Корень из satp: PA8000. Размер PTE4B. Адрес первой записи <code>8000+1×4=8004</code>. Аппаратура физически читает 32 бит PTE00002401. Это не чтение по VA8004.</li><li>V=1, R/W/X=0: запись указывает на нижнюю таблицу. PPN=<code>floor(0x2401/1024)=9</code>, её база <code>9×4096=9000</code>. Зарезервированные U/A/D0 проверены.</li><li>Адрес второй записи <code>9000+2×4=9008</code>. Физическое чтение получает 000008D7. V1/R1 означает leaf; W1 не запрещено, потому что R1.</li><li>Проверяются текущий режим и вид обращения. U1 разрешает страницу U-коду, R1 разрешает load. A1 достаточен для выбранного правила A/D; запись D1 для load не обязательна, но уже установлена.</li><li>PPN2 даёт базу PA2000. Прибавляем offset0: итог PA2000. Проверяется доступность физической цели в нашей 64 KiB карте. После этого обычный путь кэш/память может получить 4 B <code>2A 00 00 00</code>, значение 42.</li></ol>
 <p>Для VA00402200 VPN обеих уровней прежние, offset=<code>0x200=512</code>. Та же PTE даёт <code>PA2000+200=2200</code>. Store требует W1 и D1 по выбранному профилю. Данные на физическом выходе меняются только если затем действительно исполняется запись; наша сцена walker показывает перевод и предварительное содержимое, но не исполняет SW. Нельзя принять успешную трансляцию store за уже записанное 43.</p>
 <p>Для fetch VA00401000 нижний индекс 1, PTE45B, PPN1, offset0, итог PA1000. X1 разрешает выборку инструкции, а отсутствие W защищает код от обычного store U-режима. Права влияют на действие, не на шестнадцатеричный вид адреса. Одной и той же leaf может быть достаточно для load и недостаточно для fetch.</p>
+<h3>Разрез адреса и две четырёхбайтовые записи</h3>
+<p>На чертеже все адреса, слова PTE и байты записаны шестнадцатерично; VPN, PPN, число чтений и значение 42 — десятичные. Полосы делят настоящие разряды: VA на 10+10+12 битов, PTE на PPN22 и младшие 10, физический результат — на PPN22 и offset12. Геометрия обхода показывает порядок получения адресов, а не расположение узлов внутри микросхемы.</p>
+<figure id="ca-memory-sv32-walk" style="max-width:360px;width:100%;margin:1.25em auto">
+<style>#ca-memory-sv32-walk svg{display:block;max-width:100%;height:auto}@media print{#ca-memory-sv32-walk{max-width:72mm!important;margin:3mm auto;break-inside:avoid}#ca-memory-sv32-walk figcaption{font:9pt/1.2 sans-serif;color:#111}#ca-memory-sv32-walk svg{--reader-paper:#fff;--reader-soft:#fff;--reader-text:#111;--reader-accent:#111}}</style>
+<svg xmlns="http://www.w3.org/2000/svg" id="mmu-sv32-plot" width="360" height="1100" viewBox="0 0 360 1100" role="img" aria-labelledby="mmu-sv32-title mmu-sv32-desc">
+<title id="mmu-sv32-title">Sv32: биты VA, две физические PTE и целевой PA</title>
+<desc id="mmu-sv32-desc">VA00402000 делится на VPN1=1, VPN0=2, offset0. При пустом TLB satp80000008 задаёт rootPA8000; PTE по8004 равна2401, её PPN9 ведёт к таблице9000. PTE по9008 равна8D7, её PPN2 и права дают PA2000 и затем значение42. TLB хранит перевод и права: VA00402200 даёт hit, offset200 и PA2200 без новых чтений PTE; SW не исполняется. После PTE8D6 и local SFENCE.VMA новый walk останавливается на V0 второй PTE: load page fault, пользовательские байты не читаются.</desc>
+<style>
+ #mmu-sv32-plot{color:var(--reader-text,#202d34)}
+ #mmu-sv32-plot text{fill:var(--reader-text,#202d34);font:16px system-ui,sans-serif}
+ #mmu-sv32-plot .mono{font-family:ui-monospace,monospace;font-size:16px}
+ #mmu-sv32-plot .head{font-size:18px;font-weight:700}
+ #mmu-sv32-plot .title{font-size:20px;font-weight:750}
+ #mmu-sv32-plot .paper{fill:var(--reader-paper,#fffcf5)}
+ #mmu-sv32-plot .field{fill:var(--reader-soft,#e8f2ec);stroke:var(--reader-text,#202d34);stroke-width:1}
+ #mmu-sv32-plot .cell{fill:var(--reader-paper,#fffcf5);stroke:var(--reader-text,#202d34);stroke-width:1}
+ #mmu-sv32-plot .flow{fill:none;stroke:var(--reader-accent,#0c6b63);stroke-width:2.5;marker-end:url(#mmu-sv32-arrow)}
+ #mmu-sv32-plot .rule{stroke:var(--reader-text,#202d34);stroke-width:1}
+ #mmu-sv32-plot .stop{fill:none;stroke:var(--reader-text,#202d34);stroke-width:2.5}
+ </style>
+ <defs><marker id="mmu-sv32-arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0 L7 3.5 L0 7Z" fill="var(--reader-accent,#0c6b63)"/></marker></defs>
+ <rect x="0" y="0" width="360" height="1100" class="paper"/>
+<text x="20" y="28" class="title">Sv32: VA → PTE → PA</text>
+<text x="20" y="52">U-mode · ASID 0 · Svade · load</text>
+<text x="20" y="81" class="head">VA 00402000 · TLB пуст</text>
+<rect x="20" y="113" width="100" height="26" class="field"/>
+<text x="22" y="132" class="mono">0000000001</text>
+<text x="20" y="106">31…22</text>
+<rect x="120" y="113" width="100" height="26" class="field"/>
+<text x="122" y="132" class="mono">0000000010</text>
+<text x="120" y="106">21…12</text>
+<rect x="220" y="113" width="120" height="26" class="field"/>
+<text x="222" y="132" class="mono">000000000000</text>
+<text x="220" y="106">11…0</text>
+<text x="20" y="162">VPN[1]=1</text>
+<text x="120" y="162">VPN[0]=2</text>
+<text x="220" y="162">offset=0</text>
+<text x="20" y="191" class="mono">satp 80000008 → root PPN 8</text>
+<text x="20" y="214" class="mono">rootPA = 8 × 1000 = 8000</text>
+<path d="M180 220 V235" class="flow"/>
+<text x="20" y="257" class="mono">8000 + VPN[1] × 4 = 8004</text>
+<rect x="20" y="270" width="320" height="29" class="cell"/>
+<text x="29" y="290" class="mono">PA8004: 01 24 00 00 → 2401</text>
+<rect x="20" y="327" width="220" height="26" class="field"/>
+<text x="22" y="346" class="mono">0000000000000000001001</text>
+<text x="20" y="320">PPN · биты31…10</text>
+<rect x="240" y="327" width="100" height="26" class="field"/>
+<text x="242" y="346" class="mono">0000000001</text>
+<text x="240" y="320">9…0</text>
+<text x="20" y="378">PPN 9; V1, R/W/X0 → non-leaf</text>
+<text x="20" y="402" class="mono">lowerPA = 9 × 1000 = 9000</text>
+<path d="M180 410 V426" class="flow"/>
+<text x="20" y="449" class="mono">9000 + VPN[0] × 4 = 9008</text>
+<rect x="20" y="462" width="320" height="29" class="cell"/>
+<text x="29" y="482" class="mono">PA9008: D7 08 00 00 → 08D7</text>
+<rect x="20" y="520" width="220" height="26" class="field"/>
+<text x="22" y="539" class="mono">0000000000000000000010</text>
+<text x="20" y="513">PPN · биты31…10</text>
+<rect x="240" y="520" width="100" height="26" class="field"/>
+<text x="242" y="539" class="mono">0011010111</text>
+<text x="240" y="513">9…0</text>
+<text x="20" y="571">RSW[9:8]=00; PPN=2 → leaf</text>
+<rect x="20" y="581" width="40" height="49" class="cell"/>
+<text x="34" y="601">D</text>
+<text x="34" y="622" class="mono">1</text>
+<rect x="60" y="581" width="40" height="49" class="cell"/>
+<text x="74" y="601">A</text>
+<text x="74" y="622" class="mono">1</text>
+<rect x="100" y="581" width="40" height="49" class="cell"/>
+<text x="114" y="601">G</text>
+<text x="114" y="622" class="mono">0</text>
+<rect x="140" y="581" width="40" height="49" class="cell"/>
+<text x="154" y="601">U</text>
+<text x="154" y="622" class="mono">1</text>
+<rect x="180" y="581" width="40" height="49" class="cell"/>
+<text x="194" y="601">X</text>
+<text x="194" y="622" class="mono">0</text>
+<rect x="220" y="581" width="40" height="49" class="cell"/>
+<text x="234" y="601">W</text>
+<text x="234" y="622" class="mono">1</text>
+<rect x="260" y="581" width="40" height="49" class="cell"/>
+<text x="274" y="601">R</text>
+<text x="274" y="622" class="mono">1</text>
+<rect x="300" y="581" width="40" height="49" class="cell"/>
+<text x="314" y="601">V</text>
+<text x="314" y="622" class="mono">1</text>
+<text x="20" y="654">U1/R1/A1 разрешают load</text>
+<text x="20" y="679" class="mono">2 × 1000 + offset0 = PA2000</text>
+<rect x="10" y="709" width="220" height="26" class="field"/>
+<text x="12" y="728" class="mono">0000000000000000000010</text>
+<text x="10" y="702">PA[33:12] · 22 бита</text>
+<rect x="230" y="709" width="120" height="26" class="field"/>
+<text x="232" y="728" class="mono">000000000000</text>
+<text x="230" y="702">PA[11:0]</text>
+<text x="20" y="758">Теперь читаются данные: 4 Б</text>
+<rect x="20" y="768" width="80" height="48" class="cell"/>
+<text x="34" y="787" class="mono">2000</text>
+<text x="45" y="808" class="mono">2A</text>
+<rect x="100" y="768" width="80" height="48" class="cell"/>
+<text x="114" y="787" class="mono">2001</text>
+<text x="125" y="808" class="mono">00</text>
+<rect x="180" y="768" width="80" height="48" class="cell"/>
+<text x="194" y="787" class="mono">2002</text>
+<text x="205" y="808" class="mono">00</text>
+<rect x="260" y="768" width="80" height="48" class="cell"/>
+<text x="274" y="787" class="mono">2003</text>
+<text x="285" y="808" class="mono">00</text>
+<text x="20" y="841">42; TLB ← ASID0 / VPN1026 / права</text>
+<path d="M20 855 H340" class="rule"/>
+<text x="20" y="881" class="head">Повтор: VA00402200 · store</text>
+<text x="20" y="905">TLB hit → PA2000 + 200 = 2200</text>
+<text x="20" y="929">PTE reads +0; W1/D1. SW не исполнен.</text>
+<path d="M20 943 H340" class="rule"/>
+<text x="20" y="969">PTE9008: 8D7 → 8D6; затем</text>
+<text x="20" y="992">local SFENCE.VMA → TLB пуст</text>
+<text x="20" y="1015">miss → 8004/2401 → 9008/8D6</text>
+<path d="M20 1027 H340" class="stop"/>
+<text x="20" y="1051">V0 → load page fault на второй PTE</text>
+<text x="20" y="1074">Данные PA2000 не читаются.</text>
+</svg>
+<figcaption>Один load с пустым TLB и повторный перевод той же 4 KiB страницы. Внизу — новый обход после отзыва V и локального согласования трансляций. <a href="labs/illustrations/mmu-sv32-address-walk.svg">Отдельный SVG</a> использует светлые fallback-цвета без оформления reader.</figcaption>
+</figure>
+<p>Текстовая разметка полос: VA00402000 = <code>0000000001 | 0000000010 | 000000000000</code>. У rootPTE2401 PPN = <code>0000000000000000001001</code>, младшие 10 битов = <code>0000000001</code>; у dataPTE8D7 PPN = <code>0000000000000000000010</code>, младшие 10 = <code>0011010111</code>. В младшем поле два старших бита — RSW, затем D/A/G/U/X/W/R/V: <code>00 | 1 1 0 1 0 1 1 1</code>. Эти флаги разрешают выбранный load. Полный VPN равен <code>1×1024+2=1026</code> (<code>0x402</code>); leaf.PPN2 заменяет этот номер, а offset0 переносится без изменения. PTE-чтения по PA8004 и PA9008 доставляют метаданные. Только итоговый PA2000 выбирает пользовательские <code>2A 00 00 00</code>.</p>
+<p>После этого модель сохраняет ASID0, VPN1026, базу PA2000 и разобранные флаги. Для VA00402200 меняется лишь offset: <code>0000000001 | 0000000010 | 001000000000</code>. Повторная проверка сохранённых W1/D1 разрешает store-трансляцию, и PA получается 2200 без новых чтений PTE. Показанный ноль по PA2200 — прежнее содержимое; walker не выполняет SW и не превращает его в 43.</p>
+
 <h2>TLB miss, walk и fault — разные события</h2>
 <p>Полное имя TLB — translation lookaside buffer. Его запись хранит физическую базу и права страницы. При hit можно использовать сохранённую базу/права без нового чтения этих PTE. При miss результата в TLB нет, поэтому нужен walk либо другой предусмотренный механизм. Отсутствие записи в TLB не означает отсутствие действующей PTE и не требует само по себе обращения в ОС.</p>
 <p>В модели две локальные TLB-записи; ключ ASID+VPN, замещение FIFO, сохранены база физической 4 KiB области и флаги leaf. Первый load 00402000 вызывает miss и два физических чтения PTE. Следующий перевод 00402200 попадает в ту же виртуальную страницу, поэтому hit и pteReads не растёт. Число 2 означает чтения PTE движком, а не два обращения к настоящей DRAM: реальное оборудование может кэшировать таблицы и промежуточные результаты.</p>
@@ -40,7 +165,10 @@
 <p>Пусть успешный перевод 00402000 уже сохранился. Теперь привилегированное ПО меняет PTE по PA9008 на V0. RAM-слово изменилось, но сохранённая запись TLB не обязана исчезнуть сама. Модель намеренно оставляет её: повторный hit ещё использует прежнюю трансляцию. Это показывает, почему запись новой таблицы и обеспечение видимости новых правил — разные действия.</p>
 <p><strong>SFENCE.VMA</strong> задаёт необходимые правила согласования трансляций для текущего аппаратного участника. В нашей ограниченной сцене кнопка очищает обе локальные записи. После неё новый miss перечитывает V0 и получает page fault. Инструкция не является общей очисткой пользовательских данных кэша, устойчивым flush устройства или автоматическим уведомлением всех других ядер. Координация нескольких участников при отзыве прав требует дополнительного системного протокола; его реализацию оставляем книге ОС.</p>
 <p>Запись satp также не означает безусловной автоматической очистки всех переводов. ASID помогает различать пространства, но переиспользование идентификатора и смена таблиц требуют соблюдения правил спецификации. G1 обозначает отображение, общее для адресных пространств: его сохранённый перевод не ограничивается одним ASID. Для такого перевода действуют отдельные правила очистки; учебный профиль использует только G0. Наш кэш хранит по 4 KiB срезу даже для разрешённого 4MiB leaf: он показывает правильный перевод, но не моделирует реальную ёмкость TLB больших страниц.</p>
+<p>В конкретном отказе после <code>dataPTE=0x8D6</code> и локального SFENCE.VMA прежнего hit уже нет. Новый запрос load VA00402000 читает rootPTE2401 по PA8004, затем dataPTE8D6 по PA9008. У второй записи V=0: обход прекращается на проверке записи, до получения и использования базы пользовательской страницы. Модель возвращает <code>page fault</code> с <code>access=load</code>; поля успешного результата <code>pa/value</code> отсутствуют. Четыре байта <code>2A 00 00 00</code> по PA2000 не читаются этим запросом и остаются прежними. Физическое чтение самой PTE9008 было допустимо; поэтому это отказ отображения, а не access fault чтения таблицы.</p>
+
 <h2>Ошибки, которые можно проверить по битам</h2>
 <p>В <a href="labs/memory/model.html">сцене Sv32</a> сначала завершите load 00402000, затем измените dataPTE на V0. Повторите load до SFENCE и после него: различие объясняется сохранённым состоянием, а не случайностью. Для проверки W0 используйте исходную PTE8D7→8D3 и store 00402200 после очистки TLB. Для D0 используйте 857: R/W/U/A/V сохранены, D снят, поэтому отказ относится именно к Svade store. Исходную 8D7 можно вернуть явной кнопкой, затем снова очистить TLB.</p>
 <p>Счётчики requests/hits/misses/pteReads относятся только к этой сцене. Отказ не меняет пользовательские данные; движок не устанавливает A/D сам. В тесте PTE400008D7 содержит PPN100002 и вычисляет PA100002000 — выше 32 бит. Движок использует точную целую арифметику Number в этом диапазоне, не обрезает адрес 32-битным побитовым преобразованием, и сообщает access fault, потому что физический адрес находится за пределами массива 64 KiB.</p>
 <p>Два уровня позволяют не создавать нижние таблицы для каждого неиспользуемого участка: за это платят дополнительными чтениями при отсутствии сохранённого перевода. В нашем образе две полные страницы таблиц занимают 8192 B, хотя пригодны лишь две конечные PTE. Размер страницы, число записей, TLB и размещение таблиц влияют на стоимость по-разному. Walker сцены выполняет этот двухуровневый перевод; дополнительные средства физической защиты и системное создание отображений в нём отсутствуют.</p>
+<p>Точные правила выбранной редакции: <a href="https://docs.riscv.org/reference/isa/v20260120/priv/supervisor.html#satp">satp</a>, <a href="https://docs.riscv.org/reference/isa/v20260120/priv/supervisor.html#translation">формат и права Sv32, включая Svade</a>, <a href="https://docs.riscv.org/reference/isa/v20260120/priv/supervisor.html#sv32algorithm">последовательность обхода</a> и <a href="https://docs.riscv.org/reference/isa/v20260120/priv/supervisor.html#sfence.vma">локальное согласование SFENCE.VMA</a>. Две записи/FIFO и проверка карты RAM относятся к показанному движку М32; число физических DRAM-чтений и время из этих шагов не следуют.</p>

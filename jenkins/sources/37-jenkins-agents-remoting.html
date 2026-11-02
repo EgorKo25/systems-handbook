@@ -24,6 +24,103 @@
 <p>После шага <code>sh</code> агент запускает оболочку с рабочим каталогом и окружением. Оболочка создаёт Python-процесс. Его стандартный вывод и код завершения наблюдаются инфраструктурой шага. Поддержка долговременной задачи оставляет служебное состояние на стороне агента, чтобы контроллер мог продолжать наблюдение после некоторых перезапусков. Копирование большого результата, поток журнала и сообщения управления разделяют транспортные и вычислительные ресурсы; огромный вывод способен стать заметной статьёй нагрузки.</p>
 <p>Передача файла не означает перенос семантики среды. Архив Python с исходниками можно доставить на другой агент, но установленное виртуальное окружение с абсолютными путями и бинарными расширениями не обязано заработать на другой платформе. То же относится к правам файлов, архитектуре и внешним сокетам. Выходные данные передают по определённому контракту; нужные инструменты предоставляют целевой среде отдельно.</p>
 
+<figure id="jenkins-remoting-cutaway" aria-labelledby="jr-cut-title">
+<style>
+#jenkins-remoting-cutaway{margin:1.8rem 0;padding:1rem;border:1px solid currentColor;border-radius:.8rem;color:inherit;background:transparent;max-inline-size:100%;min-inline-size:0;font-size:1em;line-height:1.6;text-align:start;overflow-wrap:anywhere}
+#jenkins-remoting-cutaway *{box-sizing:border-box;min-inline-size:0}
+#jenkins-remoting-cutaway figcaption{font-size:1.16em;line-height:1.35;font-weight:700}
+#jenkins-remoting-cutaway p{margin:.65rem 0;text-align:start}
+#jenkins-remoting-cutaway code{font-size:.94em;white-space:normal;overflow-wrap:anywhere}
+#jenkins-remoting-cutaway .jr-baseline{font-size:.9em;border-block-end:1px dashed currentColor;padding-block-end:.8rem}
+#jenkins-remoting-cutaway .jr-actor{border-inline-start:3px solid currentColor;padding-inline-start:.85rem;margin-block:1rem}
+#jenkins-remoting-cutaway h3{font-size:1em;line-height:1.45;margin:.4rem 0}
+#jenkins-remoting-cutaway .jr-label{display:block;font-size:.9em;letter-spacing:.03em}
+#jenkins-remoting-cutaway .jr-channel{display:flex;align-items:center;gap:.8rem;padding-block:.6rem;border-block:1px dashed currentColor}
+#jenkins-remoting-cutaway .jr-channel svg{display:block;flex:0 0 64px;inline-size:64px;block-size:44px;fill:none;stroke:currentColor;stroke-width:2}
+#jenkins-remoting-cutaway .jr-channel p{margin:.2rem 0}
+#jenkins-remoting-cutaway .jr-tree{list-style:none;margin:.6rem 0;padding:0}
+#jenkins-remoting-cutaway .jr-tree li{position:relative;margin:.45rem 0;padding-inline-start:.9rem;border-inline-start:1px solid currentColor}
+#jenkins-remoting-cutaway .jr-tree li::before{content:"";position:absolute;inset-inline-start:0;inset-block-start:.8em;inline-size:.55rem;border-block-start:1px solid currentColor}
+#jenkins-remoting-cutaway .jr-tree ul{list-style:none;margin:.4rem 0;padding-inline-start:.6rem}
+#jenkins-remoting-cutaway .jr-disk{margin-block:1rem;border-block:2px double currentColor;padding-block:.6rem}
+#jenkins-remoting-cutaway .jr-files{margin:.65rem 0}
+#jenkins-remoting-cutaway .jr-files dt{font-weight:700;margin-block-start:.65rem}
+#jenkins-remoting-cutaway .jr-files dd{margin:.15rem 0 0}
+#jenkins-remoting-cutaway .jr-note{font-size:.9em}
+#jenkins-remoting-cutaway details{margin-block-start:1rem;border-block-start:1px solid currentColor}
+#jenkins-remoting-cutaway summary{display:list-item;min-block-size:44px;padding-block:.7rem;cursor:pointer;font-weight:700;line-height:1.5}
+#jenkins-remoting-cutaway summary:focus-visible{outline:2px solid currentColor;outline-offset:3px}
+#jenkins-remoting-cutaway .jr-loss{padding-inline-start:1.1rem;margin:.5rem 0}
+#jenkins-remoting-cutaway .jr-loss li{margin-block:.6rem}
+@media(max-width:390px){#jenkins-remoting-cutaway{padding:.8rem}#jenkins-remoting-cutaway .jr-actor{padding-inline-start:.6rem}#jenkins-remoting-cutaway .jr-channel{gap:.5rem}#jenkins-remoting-cutaway .jr-tree ul{padding-inline-start:.35rem}}
+@media print{#jenkins-remoting-cutaway{--paper:#fff;--text:#000;color:#000;background:#fff;border-radius:0;break-inside:auto}#jenkins-remoting-cutaway .jr-channel,#jenkins-remoting-cutaway .jr-files{break-inside:avoid}#jenkins-remoting-cutaway details::details-content{display:block;content-visibility:visible;block-size:auto}#jenkins-remoting-cutaway details>div{display:block!important}#jenkins-remoting-cutaway summary{display:none}}
+</style>
+<figcaption id="jr-cut-title">Один <code>sh</code>: процесс у агента, наблюдение у контроллера</figcaption>
+<p class="jr-baseline">Разрез стадии «Сборка» из <a href="labs/Jenkinsfile">учебного Jenkinsfile</a>: Linux, Jenkins 2.580.2, Java 21, отдельный inbound WebSocket-агент. Он сам подключается к контроллеру. Выбраны обычный <code>sh</code> без <code>returnStdout</code>, без shebang и стандартная оболочка <code>sh</code>; бинарная обёртка durable-task не включена. Контроллер и агент здесь — разные JVM одного домашнего пользователя.</p>
+<div class="jr-actor">
+<span class="jr-label">CONTROLLER JVM · Pipeline и журнал запуска</span>
+<h3>Шаг получает текст команды</h3>
+<code>sh 'python3 tools/build.py --version 1.0.0'</code>
+<p>Groovy-управление остаётся на контроллере. Плагин организует запись сценария, рабочий каталог, окружение и запуск на агенте. Исходники Go уже получены предыдущей стадией через <code>git clone</code>.</p>
+<p class="jr-note">В <code>controller-home</code> хранятся конфигурация задания и сохранённые данные запуска, включая уже принятый журнал. Новые байты, ещё не полученные с агента, контроллеру пока неизвестны.</p>
+</div>
+<div class="jr-channel">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 44" aria-hidden="true" focusable="false"><path d="M16 4V38M9 31L16 38L23 31M48 40V6M41 13L48 6L55 13"/></svg>
+<div><strong>Remoting поверх WebSocket</strong>
+<p>↓ удалённые вызовы, аргументы запуска, данные сценария</p>
+<p>↑ прочитанные байты журнала и сведения о завершении</p>
+</div>
+</div>
+<div class="jr-actor">
+<span class="jr-label">AGENT JVM · <code>handbook-agent</code></span>
+<h3>JVM запускает процессы ОС в каталоге <code>W</code></h3>
+<ul class="jr-tree">
+<li><code>agent.jar</code> — Java-процесс агента
+<ul>
+<li><code>nohup sh -c …</code> — запуск фоновой обёртки durable-task
+<ul>
+<li><code>sh -xe script.sh.copy</code> — оболочка рабочего сценария
+<ul>
+<li><code>python3 tools/build.py --version 1.0.0</code>
+<ul><li><code>go build</code> с аргументами <code>-mod=readonly</code>, <code>-trimpath</code>, <code>-buildvcs=false</code>, <code>-ldflags=-X main.Version=1.0.0</code>, <code>-o</code>, <code>W/dist/handbook-service</code>, <code>./cmd/handbook-service</code></li></ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="jr-note">Показана ветвь сборки; служебные вызовы Git и <code>go version</code> опущены. После фонового отделения родитель процесса может измениться: это не снимок PID. <code>-x</code> печатает трассировку команд, <code>-e</code> включает остановку оболочки при предусмотренных этим режимом ошибках. Python запускает Go и формирует манифест. Значение <code>-ldflags=-X main.Version=1.0.0</code> передаётся одним аргументом; <code>W</code> обозначает полный путь рабочего каталога.</p>
+<div class="jr-disk">
+<h3>Диск агента: рабочие данные и состояние шага</h3>
+<p><code>W</code> — фактически выделенный workspace. <code>D = W@tmp/durable-&lt;8 hex&gt;</code> — отдельный служебный каталог этого <code>sh</code>; суффикс создаётся при запуске.</p>
+<dl class="jr-files">
+<dt><code>D/script.sh</code> → <code>D/script.sh.copy</code></dt>
+<dd>Текст команды записан в UTF-8; исполняется копия. Короткий сценарий передан через инфраструктуру Remoting, а не выполнен в JVM контроллера.</dd>
+<dt><code>stdout + stderr</code> → <code>D/jenkins-log.txt</code></dt>
+<dd>Обёртка направляет сюда оба потока рабочего сценария. Python печатает JSON манифеста с переводом строки; ошибки Go и трассировка оболочки также могут попасть в журнал. Контроллер читает появившиеся данные через агента.</dd>
+<dt>Код оболочки → <code>D/jenkins-result.txt.tmp</code> → <code>D/jenkins-result.txt</code></dt>
+<dd>После выхода сценария обёртка записывает десятичный код и перевод строки, затем переименовывает файл. При успехе содержимое — <code>0\n</code>. Это состояние завершения шага, а не код закрытия WebSocket.</dd>
+<dt><code>W/dist/handbook-service</code> и <code>W/dist/manifest.json</code></dt>
+<dd>Эти файлы создаёт программа сборки. Один успешный <code>sh</code> ещё не архивирует их: проверки и <code>archiveArtifacts</code> идут последующими стадиями.</dd>
+</dl>
+</div>
+</div>
+<details>
+<summary>Разрыв канала: что остаётся и что перестаёт быть известно</summary>
+<div>
+<p>Рассмотрим короткий разрыв уже после запуска: JVM и процессы не остановлены, диск агента доступен, отмена, таймаут и очистка ещё не наступили. Это причинная модель по исходникам, не выполненный опыт сетевого отказа.</p>
+<ol class="jr-loss">
+<li><strong>Канал пропал.</strong> Контроллер временно не получает новые данные. Уже записанные <code>script.sh</code>, копия и журнал остаются на диске агента. Работающий процесс может дописывать журнал и файлы <code>dist</code>.</li>
+<li><strong>Команда завершилась без связи.</strong> Обёртка может уже опубликовать <code>jenkins-result.txt</code>, хотя контроллер ещё не знает кода. Отсутствие новых строк в интерфейсе не доказывает остановку программы.</li>
+<li><strong>Связь вернулась.</strong> При сохранившемся состоянии шаг может дочитать журнал и проверить результат. Потерянный диск или удалённый каталог <code>D</code> этим не восстанавливаются. Внешние действия программы не откатываются от потери канала.</li>
+</ol>
+<p>После штатной обработки результата служебный каталог <code>D</code> очищается. Полный Jenkinsfile позднее вызывает <code>deleteDir()</code> и для workspace; сохранённый через <code>archiveArtifacts</code> комплект имеет отдельный срок хранения.</p>
+</div>
+</details>
+<p class="jr-note">Версии плагинов: <code>durable-task 686.v80ff80875b_82</code> и <code>workflow-durable-task-step 1479.v56e587f413a_7</code>. Показаны логические операции и файлы, а не буквальный дамп Remoting. Источники: <a href="https://github.com/jenkinsci/durable-task-plugin/blob/80ff80875b82/src/main/java/org/jenkinsci/plugins/durabletask/BourneShellScript.java">сценарий и обёртка</a>, <a href="https://github.com/jenkinsci/durable-task-plugin/blob/80ff80875b82/src/main/java/org/jenkinsci/plugins/durabletask/FileMonitoringTask.java">файлы и чтение журнала</a>, <a href="https://github.com/jenkinsci/workflow-durable-task-step-plugin/blob/56e587f413a7/src/main/java/org/jenkinsci/plugins/workflow/steps/durable_task/DurableTaskStep.java">наблюдение шага</a>. <a href="labs/runtime-check.json">Старый отчёт стенда</a> подтверждает штатный restart во время <code>sleep</code>; сетевое разделение в нём не проверялось.</p>
+</figure>
 <h2>Какие каталоги принадлежат агенту</h2>
 <p>Удалённый корневой каталог узла используется Jenkins для размещения рабочих данных; внутренняя папка Remoting содержит собственные кэши и журналы. В пределах узла Jenkins выделяет workspace задания. При конкуренции могут появляться варианты имени с суффиксом, поэтому жёстко записывать привычный абсолютный путь в сценарий ненадёжно. Пользуйтесь текущим каталогом шага и предусмотренными механизмами <code>dir</code> или <code>ws</code>.</p>
 <p>Два исполнителя на одном агенте обычно работают под одной учётной записью ОС. Разные workspace защищают от случайного совпадения относительных путей, но не запрещают процессу читать соседние каталоги доступного пользователя. Для недоверенных проектов требуется более сильная изоляция: отдельные учётные записи, машины или управляемые временные среды с ограниченными правами. Наш домашний контроллер и агент под одним пользователем учат протоколу, но не являются защитной виртуальной машиной.</p>

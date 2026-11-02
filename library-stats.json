@@ -59,7 +59,7 @@
     "slug": "jenkins",
     "title": "Jenkins: от установки и плагинов до устройства и эксплуатации Pipeline",
     "volume": "XII",
-    "words": 29685,
+    "words": 30240,
     "chapters": 16,
     "terms": 88
   },
@@ -67,7 +67,7 @@
     "slug": "gitlab",
     "title": "GitLab: платформа, исполнение CI и эксплуатация",
     "volume": "XIII",
-    "words": 24153,
+    "words": 24553,
     "chapters": 18,
     "terms": 167
   },
@@ -91,7 +91,7 @@
     "slug": "sonarqube",
     "title": "SonarQube: от установки до доказуемой проверки изменений",
     "volume": "XI",
-    "words": 20945,
+    "words": 21114,
     "chapters": 15,
     "terms": 183
   },
@@ -99,7 +99,7 @@
     "slug": "computer-architecture",
     "title": "Архитектура компьютера: от сигнала до исполняемой машины",
     "volume": "I",
-    "words": 58333,
+    "words": 59706,
     "chapters": 36,
     "terms": 210
   },
