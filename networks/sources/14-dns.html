@@ -1,4 +1,4 @@
-<article id="14-dns" class="chapter" hidden><header class="hero"><div class="eyebrow">Том I · Сети · Глава 11</div><h1>DNS: от имени до ответа</h1><div class="meta">Формат сообщений, распределённый поиск и кеши · 6 434 слова · 43 мин чтения без опытов</div></header><details class="local-toc"><summary>В этой главе: 18 разделов</summary><ol><li><a href="#dnsdeep-task">11. DNS: как имя превращается в проверяемый ответ</a></li><li><a href="#dnsdeep-system-call">11.1. Кто именно запрашивает имя в операционной системе</a></li><li><a href="#dnsdeep-name-space">11.2. Имя, домен, зона и ответственность</a></li><li><a href="#dnsdeep-question-bytes">11.3. Настоящий вопрос: 30 байт от начала до конца</a></li><li><a href="#dnsdeep-header">11.4. Двенадцать байт заголовка: каждое поле и каждый флаг</a></li><li><a href="#dnsdeep-answer-bytes">11.5. Полный ответ: запись, длины, адрес и сжатое имя</a></li><li><a href="#dnsdeep-send-receive">11.6. От библиотеки до программы DNS-сервера и обратно</a></li><li><a href="#dnsdeep-types">11.7. Как устроены значения основных записей</a></li><li><a href="#dnsdeep-recursion">11.8. Рекурсивный поиск и делегирование: кто задаёт следующие вопросы</a></li><li><a href="#dnsdeep-cache">11.9. Кеш: чьи часы отсчитывают TTL</a></li><li><a href="#dnsdeep-negative">11.10. Имени нет, записи нет, сервер не справился: разные результаты</a></li><li><a href="#dnsdeep-tcp-edns">11.11. UDP, TCP и расширение размера сообщений</a></li><li><a href="#dnsdeep-dnssec">11.12. Проверка происхождения: что именно даёт DNSSEC</a></li><li><a href="#dnsdeep-split-search">11.13. Короткие имена, раздельные представления и внутренний сервер</a></li><li><a href="#dnsdeep-local-practice">11.14. Конкретные запросы к локальному dnsmasq</a></li><li><a href="#dnsdeep-offline-lab">11.15. Проверка байтов без сети и чтение захвата</a></li><li><a href="#dnsdeep-investigations">11.16. Исследование неисправностей с понятной гипотезой</a></li><li><a href="#dnsdeep-measure-latency">11.17. Найти задержку разрешения имени без подмены опыта</a></li></ol></details><h2 id="dnsdeep-task">11. DNS: как имя превращается в проверяемый ответ</h2>
+<article id="14-dns" class="chapter" hidden><header class="hero"><div class="eyebrow">Том I · Сети · Глава 11</div><h1>DNS: от имени до ответа</h1><div class="meta">Формат сообщений, распределённый поиск и кеши · 7 070 слов</div></header><details class="local-toc"><summary>В этой главе: 18 разделов</summary><ol><li><a href="#dnsdeep-task">11. DNS: как имя превращается в проверяемый ответ</a></li><li><a href="#dnsdeep-system-call">11.1. Кто именно запрашивает имя в операционной системе</a></li><li><a href="#dnsdeep-name-space">11.2. Имя, домен, зона и ответственность</a></li><li><a href="#dnsdeep-question-bytes">11.3. Настоящий вопрос: 30 байт от начала до конца</a></li><li><a href="#dnsdeep-header">11.4. Двенадцать байт заголовка: каждое поле и каждый флаг</a></li><li><a href="#dnsdeep-answer-bytes">11.5. Полный ответ: запись, длины, адрес и сжатое имя</a></li><li><a href="#dnsdeep-send-receive">11.6. От библиотеки до программы DNS-сервера и обратно</a></li><li><a href="#dnsdeep-types">11.7. Как устроены значения основных записей</a></li><li><a href="#dnsdeep-recursion">11.8. Рекурсивный поиск и делегирование: кто задаёт следующие вопросы</a></li><li><a href="#dnsdeep-cache">11.9. Кеш: чьи часы отсчитывают TTL</a></li><li><a href="#dnsdeep-negative">11.10. Имени нет, записи нет, сервер не справился: разные результаты</a></li><li><a href="#dnsdeep-tcp-edns">11.11. UDP, TCP и расширение размера сообщений</a></li><li><a href="#dnsdeep-dnssec">11.12. Проверка происхождения: что именно даёт DNSSEC</a></li><li><a href="#dnsdeep-split-search">11.13. Короткие имена, раздельные представления и внутренний сервер</a></li><li><a href="#dnsdeep-local-practice">11.14. Конкретные запросы к локальному dnsmasq</a></li><li><a href="#dnsdeep-offline-lab">11.15. Проверка байтов без сети и чтение захвата</a></li><li><a href="#dnsdeep-investigations">11.16. Исследование неисправностей с понятной гипотезой</a></li><li><a href="#dnsdeep-measure-latency">11.17. Найти задержку разрешения имени без подмены опыта</a></li></ol></details><h2 id="dnsdeep-task">11. DNS: как имя превращается в проверяемый ответ</h2>
 <p>Приложение собирается соединиться с <code>app.lab.test</code>. Для выбора маршрута ядру нужен числовой адрес, а пользователь ввёл имя. Между этими двумя представлениями находится система доменных имён, DNS. Английское название <i>Domain Name System</i> объясняет сокращение. Её задача шире адресной книги: она хранит типизированные записи об именах, распределяет ответственность за части пространства имён и позволяет временно сохранять ответы.</p>
 <p>Главный вопрос полезно формулировать точно: «какие записи типа A существуют у имени <code>app.lab.test.</code> в классе IN?» Тип A обозначает IPv4-адрес, класс IN — используемый здесь класс данных интернета. Вопрос об адресе IPv6 использует тип AAAA. Вопрос о почтовом сервере или расположении службы имеет другой тип. Ни имя приложения, ни порт его HTTP-сервиса не следуют из записи A автоматически: ответ даст адрес <code>10.77.10.20</code>, а нужный порт берётся из назначения программы и её настроек.</p>
 <p>В нашей сети клиент <code>10.77.10.100</code> обращается к службе имён на шлюзе <code>10.77.10.1</code>. Этот адрес получен через DHCP или задан явно. Приложение работает по адресу <code>10.77.10.20</code>. Сначала проследим локальный ответ от известной записи, затем построим общую модель с кешами, делегированием и проверкой достоверности. Знание маршрута и адресов соседей необходимо для доставки DNS-пакета точно так же, как для любого другого UDP- или TCP-пакета.</p>
@@ -64,6 +64,145 @@
 <p>Слова <code>RDLENGTH</code> и <code>RDATA</code> обозначают длину данных ресурса и данные ресурса. Их смысл определяется типом. Для A длина должна быть четыре, для AAAA — шестнадцать, для имени-псевдонима значение имеет формат доменного имени. Универсальное предположение «всё после RDLENGTH — строка с IP» ломает разбор других типов.</p>
 <p>Указатель <code>c0 0c</code> экономит повторение имени. Два старших бита первого байта равны единице, а остальные 14 бит двух байтов задают смещение <code>0x000c = 12</code>. Это смещение считается <strong>от первого байта заголовка DNS</strong>, без Ethernet, IP, UDP и без двухбайтового префикса TCP. При чтении имени разборщик временно переходит к меткам со смещения 12, но следующее поле самой записи всё равно находится со смещения 32.</p>
 <p>Сжатие допускает также начальные метки плюс указатель на общий хвост имени. Безопасный разборщик ограничивает переходы, проверяет границы пакета, длину каждой метки и суммарное развёрнутое имя. Например, <code>c0 00</code> в сообщении из этих же двух байтов указывает сам на себя. Без обнаружения повторного смещения программа зависнет в цикле. Программа учебного комплекта проверяет такие случаи отдельно, а не предполагает, что сетевой отправитель всегда честен.</p>
+
+<style>
+#dns-message-byte-cut{box-sizing:border-box;margin:1.5rem 0;padding:1rem;border:2px solid var(--muted);color:var(--text);background:var(--paper);font-family:var(--sans,system-ui,sans-serif)}
+#dns-message-byte-cut *{box-sizing:border-box}
+#dns-message-byte-cut figcaption{font-size:1.15rem;line-height:1.4;font-weight:700}
+#dns-message-byte-cut p,#dns-message-byte-cut li,#dns-message-byte-cut dd{line-height:1.55}
+#dns-message-byte-cut code{font-family:monospace;overflow-wrap:anywhere;white-space:normal}
+#dns-message-byte-cut .dnsbc-wire{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:.18rem;margin:1rem 0}
+#dns-message-byte-cut .dnsbc-byte{display:grid;grid-template-rows:auto auto auto;align-content:start;justify-items:center;min-width:0;padding:.1rem 0;border:1px solid var(--muted);color:var(--text);background:var(--paper)}
+#dns-message-byte-cut .dnsbc-byte code{font-size:1rem;font-weight:700;white-space:nowrap;line-height:1.5}
+#dns-message-byte-cut .dnsbc-offset{font-size:.75rem;line-height:1.5}
+#dns-message-byte-cut .dnsbc-role{font:12px/1.5 monospace}
+#dns-message-byte-cut .dnsbc-pointer{border:2px dashed var(--accent);background:var(--soft)}
+#dns-message-byte-cut .dnsbc-label-start{border-bottom:3px solid var(--text)}
+#dns-message-byte-cut .dnsbc-target{outline:2px solid var(--accent);outline-offset:1px}
+#dns-message-byte-cut .dnsbc-fields{margin:1rem 0}
+#dns-message-byte-cut .dnsbc-fields dt{font-weight:700;padding-top:.4rem;border-top:1px solid var(--muted)}
+#dns-message-byte-cut .dnsbc-fields dd{margin:.2rem 0 .6rem}
+#dns-message-byte-cut .dnsbc-reading{display:grid;grid-template-columns:minmax(0,18rem) minmax(0,1fr);gap:1rem;align-items:start}
+#dns-message-byte-cut .dnsbc-reading svg{display:block;width:100%;height:auto;max-width:18rem;margin:0 auto}
+#dns-message-byte-cut .dnsbc-reading ol{margin:0;padding-left:1.4rem}
+#dns-message-byte-cut .dnsbc-reading li{margin-bottom:.8rem;overflow-wrap:anywhere}
+#dns-message-byte-cut .dnsbc-bits{padding:.7rem;border-left:3px solid var(--accent);background:var(--soft)}
+#dns-message-byte-cut details>summary{min-height:44px;padding:.75rem 0;cursor:pointer;font-weight:700}
+#dns-message-byte-cut summary:focus-visible,#dns-message-byte-cut a:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+#dns-message-byte-cut .dnsbc-source{display:inline-flex;align-items:center;min-height:44px;padding:.4rem 0;max-width:100%;overflow-wrap:anywhere}
+@media(max-width:760px){#dns-message-byte-cut{padding:.65rem}#dns-message-byte-cut .dnsbc-wire{grid-template-columns:repeat(8,minmax(0,1fr))}#dns-message-byte-cut .dnsbc-reading{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:340px){#dns-message-byte-cut .dnsbc-wire{gap:.12rem}#dns-message-byte-cut .dnsbc-byte code{font-size:.9rem}}
+@media print{#dns-message-byte-cut{--paper:#fff;--text:#000;--muted:#333;--accent:#000;--soft:#fff;color:#000;background:#fff;border-color:#333;break-inside:auto}#dns-message-byte-cut .dnsbc-byte{color:#000;background:#fff;border-color:#333}#dns-message-byte-cut .dnsbc-pointer{border-color:#000}#dns-message-byte-cut .dnsbc-bits{color:#000;background:#fff;border-color:#000}#dns-message-byte-cut code{background:transparent;color:inherit}#dns-message-byte-cut .dnsbc-wire{grid-template-columns:repeat(8,minmax(0,1fr));break-inside:avoid}#dns-message-byte-cut .dnsbc-reading{grid-template-columns:1fr}#dns-message-byte-cut .dnsbc-reading svg{max-width:16rem;break-inside:avoid}#dns-message-byte-cut li{break-inside:avoid}#dns-message-byte-cut details>summary{display:none}#dns-message-byte-cut details>.dnsbc-details{display:block!important}#dns-message-byte-cut details::details-content{display:block!important;content-visibility:visible!important}}
+</style>
+<figure id="dns-message-byte-cut" aria-labelledby="dnsbc-title">
+<figcaption id="dnsbc-title">46 байт DNS: имя по указателю, продолжение записи — отдельно</figcaption>
+<p>Перед нами тот же синтетический ответ <code>labs/control-samples/dns-answer.bin</code>, который только что разобран в главе. Байты сформированы учебной программой, а не захвачены у живого сервера. Базовый формат — DNS по RFC 1035, без EDNS. Для заданного имени <code>app.lab.test.</code> возвращена одна запись A.</p>
+<p>Все смещения ниже десятичные, от байта 0 <strong>этого DNS-сообщения</strong>. В ячейке сверху стоит смещение, под ним — шестнадцатеричный байт, внизу — поле из списка под полосой. Каждая ячейка содержит ровно один байт; перенос строки ничего не добавляет в сообщение.</p>
+<div class="dnsbc-wire" role="list" aria-label="Все 46 байт DNS-ответа в порядке передачи">
+<span role="listitem" class="dnsbc-byte" data-offset="0" data-value="77"><span class="dnsbc-offset">0</span><code>77</code><span class="dnsbc-role">ID</span></span>
+<span role="listitem" class="dnsbc-byte" data-offset="1" data-value="10"><span class="dnsbc-offset">1</span><code>10</code><span class="dnsbc-role">ID</span></span>
+<span role="listitem" class="dnsbc-byte" data-offset="2" data-value="85"><span class="dnsbc-offset">2</span><code>85</code><span class="dnsbc-role">FL</span></span>
+<span role="listitem" class="dnsbc-byte" data-offset="3" data-value="00"><span class="dnsbc-offset">3</span><code>00</code><span class="dnsbc-role">FL</span></span>
+<span role="listitem" class="dnsbc-byte" data-offset="4" data-value="00"><span class="dnsbc-offset">4</span><code>00</code><span class="dnsbc-role">QD</span></span>
+<span role="listitem" class="dnsbc-byte" data-offset="5" data-value="01"><span class="dnsbc-offset">5</span><code>01</code><span class="dnsbc-role">QD</span></span>
+<span role="listitem" class="dnsbc-byte" data-offset="6" data-value="00"><span class="dnsbc-offset">6</span><code>00</code><span class="dnsbc-role">AN</span></span>
+<span role="listitem" class="dnsbc-byte" data-offset="7" data-value="01"><span class="dnsbc-offset">7</span><code>01</code><span class="dnsbc-role">AN</span></span>
+<span role="listitem" class="dnsbc-byte" data-offset="8" data-value="00"><span class="dnsbc-offset">8</span><code>00</code><span class="dnsbc-role">NS</span></span>
+<span role="listitem" class="dnsbc-byte" data-offset="9" data-value="00"><span class="dnsbc-offset">9</span><code>00</code><span class="dnsbc-role">NS</span></span>
+<span role="listitem" class="dnsbc-byte" data-offset="10" data-value="00"><span class="dnsbc-offset">10</span><code>00</code><span class="dnsbc-role">AR</span></span>
+<span role="listitem" class="dnsbc-byte" data-offset="11" data-value="00"><span class="dnsbc-offset">11</span><code>00</code><span class="dnsbc-role">AR</span></span>
+<span role="listitem" class="dnsbc-byte dnsbc-label-start dnsbc-target" data-offset="12" data-value="03"><span class="dnsbc-offset">12</span><code>03</code><span class="dnsbc-role">QN</span></span>
+<span role="listitem" class="dnsbc-byte" data-offset="13" data-value="61"><span class="dnsbc-offset">13</span><code>61</code><span class="dnsbc-role">QN</span></span>
+<span role="listitem" class="dnsbc-byte" data-offset="14" data-value="70"><span class="dnsbc-offset">14</span><code>70</code><span class="dnsbc-role">QN</span></span>
+<span role="listitem" class="dnsbc-byte" data-offset="15" data-value="70"><span class="dnsbc-offset">15</span><code>70</code><span class="dnsbc-role">QN</span></span>
+<span role="listitem" class="dnsbc-byte dnsbc-label-start" data-offset="16" data-value="03"><span class="dnsbc-offset">16</span><code>03</code><span class="dnsbc-role">QN</span></span>
+<span role="listitem" class="dnsbc-byte" data-offset="17" data-value="6c"><span class="dnsbc-offset">17</span><code>6c</code><span class="dnsbc-role">QN</span></span>
+<span role="listitem" class="dnsbc-byte" data-offset="18" data-value="61"><span class="dnsbc-offset">18</span><code>61</code><span class="dnsbc-role">QN</span></span>
+<span role="listitem" class="dnsbc-byte" data-offset="19" data-value="62"><span class="dnsbc-offset">19</span><code>62</code><span class="dnsbc-role">QN</span></span>
+<span role="listitem" class="dnsbc-byte dnsbc-label-start" data-offset="20" data-value="04"><span class="dnsbc-offset">20</span><code>04</code><span class="dnsbc-role">QN</span></span>
+<span role="listitem" class="dnsbc-byte" data-offset="21" data-value="74"><span class="dnsbc-offset">21</span><code>74</code><span class="dnsbc-role">QN</span></span>
+<span role="listitem" class="dnsbc-byte" data-offset="22" data-value="65"><span class="dnsbc-offset">22</span><code>65</code><span class="dnsbc-role">QN</span></span>
+<span role="listitem" class="dnsbc-byte" data-offset="23" data-value="73"><span class="dnsbc-offset">23</span><code>73</code><span class="dnsbc-role">QN</span></span>
+<span role="listitem" class="dnsbc-byte" data-offset="24" data-value="74"><span class="dnsbc-offset">24</span><code>74</code><span class="dnsbc-role">QN</span></span>
+<span role="listitem" class="dnsbc-byte dnsbc-label-start" data-offset="25" data-value="00"><span class="dnsbc-offset">25</span><code>00</code><span class="dnsbc-role">QN</span></span>
+<span role="listitem" class="dnsbc-byte" data-offset="26" data-value="00"><span class="dnsbc-offset">26</span><code>00</code><span class="dnsbc-role">QT</span></span>
+<span role="listitem" class="dnsbc-byte" data-offset="27" data-value="01"><span class="dnsbc-offset">27</span><code>01</code><span class="dnsbc-role">QT</span></span>
+<span role="listitem" class="dnsbc-byte" data-offset="28" data-value="00"><span class="dnsbc-offset">28</span><code>00</code><span class="dnsbc-role">QC</span></span>
+<span role="listitem" class="dnsbc-byte" data-offset="29" data-value="01"><span class="dnsbc-offset">29</span><code>01</code><span class="dnsbc-role">QC</span></span>
+<span role="listitem" class="dnsbc-byte dnsbc-pointer" data-offset="30" data-value="c0"><span class="dnsbc-offset">30</span><code>c0</code><span class="dnsbc-role">N</span></span>
+<span role="listitem" class="dnsbc-byte dnsbc-pointer" data-offset="31" data-value="0c"><span class="dnsbc-offset">31</span><code>0c</code><span class="dnsbc-role">N</span></span>
+<span role="listitem" class="dnsbc-byte" data-offset="32" data-value="00"><span class="dnsbc-offset">32</span><code>00</code><span class="dnsbc-role">T</span></span>
+<span role="listitem" class="dnsbc-byte" data-offset="33" data-value="01"><span class="dnsbc-offset">33</span><code>01</code><span class="dnsbc-role">T</span></span>
+<span role="listitem" class="dnsbc-byte" data-offset="34" data-value="00"><span class="dnsbc-offset">34</span><code>00</code><span class="dnsbc-role">C</span></span>
+<span role="listitem" class="dnsbc-byte" data-offset="35" data-value="01"><span class="dnsbc-offset">35</span><code>01</code><span class="dnsbc-role">C</span></span>
+<span role="listitem" class="dnsbc-byte" data-offset="36" data-value="00"><span class="dnsbc-offset">36</span><code>00</code><span class="dnsbc-role">TTL</span></span>
+<span role="listitem" class="dnsbc-byte" data-offset="37" data-value="00"><span class="dnsbc-offset">37</span><code>00</code><span class="dnsbc-role">TTL</span></span>
+<span role="listitem" class="dnsbc-byte" data-offset="38" data-value="01"><span class="dnsbc-offset">38</span><code>01</code><span class="dnsbc-role">TTL</span></span>
+<span role="listitem" class="dnsbc-byte" data-offset="39" data-value="2c"><span class="dnsbc-offset">39</span><code>2c</code><span class="dnsbc-role">TTL</span></span>
+<span role="listitem" class="dnsbc-byte" data-offset="40" data-value="00"><span class="dnsbc-offset">40</span><code>00</code><span class="dnsbc-role">L</span></span>
+<span role="listitem" class="dnsbc-byte" data-offset="41" data-value="04"><span class="dnsbc-offset">41</span><code>04</code><span class="dnsbc-role">L</span></span>
+<span role="listitem" class="dnsbc-byte" data-offset="42" data-value="0a"><span class="dnsbc-offset">42</span><code>0a</code><span class="dnsbc-role">D</span></span>
+<span role="listitem" class="dnsbc-byte" data-offset="43" data-value="4d"><span class="dnsbc-offset">43</span><code>4d</code><span class="dnsbc-role">D</span></span>
+<span role="listitem" class="dnsbc-byte" data-offset="44" data-value="0a"><span class="dnsbc-offset">44</span><code>0a</code><span class="dnsbc-role">D</span></span>
+<span role="listitem" class="dnsbc-byte" data-offset="45" data-value="14"><span class="dnsbc-offset">45</span><code>14</code><span class="dnsbc-role">D</span></span>
+</div>
+<details><summary>Поля полосы и все диапазоны байтов</summary><div class="dnsbc-details"><p>Интервал <code>[a,b)</code> включает смещение <code>a</code> и заканчивается перед <code>b</code>. ID, FL и четыре COUNT-поля вместе занимают первые 12 байт. Имя вопроса занимает 14 байт; тип и класс вопроса — ещё 4.</p><dl class="dnsbc-fields"><dt><code>ID</code> · [0,2)</dt><dd>ID = 0x7710 · 2 Б</dd>
+<dt><code>FL</code> · [2,4)</dt><dd>Флаги = 0x8500 · 2 Б</dd>
+<dt><code>QD</code> · [4,6)</dt><dd>QDCOUNT = 1 вопрос · 2 Б</dd>
+<dt><code>AN</code> · [6,8)</dt><dd>ANCOUNT = 1 ответ · 2 Б</dd>
+<dt><code>NS</code> · [8,10)</dt><dd>NSCOUNT = 0 · 2 Б</dd>
+<dt><code>AR</code> · [10,12)</dt><dd>ARCOUNT = 0 · 2 Б</dd>
+<dt><code>QN</code> · [12,26)</dt><dd>QNAME = app.lab.test. · 14 Б</dd>
+<dt><code>QT</code> · [26,28)</dt><dd>QTYPE = 1 (A) · 2 Б</dd>
+<dt><code>QC</code> · [28,30)</dt><dd>QCLASS = 1 (IN) · 2 Б</dd>
+<dt><code>N</code> · [30,32)</dt><dd>NAME: указатель c0 0c → 12 · 2 Б</dd>
+<dt><code>T</code> · [32,34)</dt><dd>TYPE = 1 (A) · 2 Б</dd>
+<dt><code>C</code> · [34,36)</dt><dd>CLASS = 1 (IN) · 2 Б</dd>
+<dt><code>TTL</code> · [36,40)</dt><dd>TTL = 300 с · 4 Б</dd>
+<dt><code>L</code> · [40,42)</dt><dd>RDLENGTH = 4 Б · 2 Б</dd>
+<dt><code>D</code> · [42,46)</dt><dd>RDATA = 10.77.10.20 · 4 Б</dd></dl>
+<p><code>0x8500</code> даёт QR=1, OPCODE=0, AA=1, TC=0, RD=1, RA=0, Z=0, AD=0, CD=0, RCODE=0. RD скопирован из вопроса; наш синтетический отвечающий узел не предлагает рекурсию. Это не флаги живого dnsmasq, у которого в опыте главы RA=1.</p>
+<p>Вопрос из <code>dns-query.bin</code> содержит 30 байт: ID тот же, флаги <code>0x0100</code>, количества <code>1/0/0/0</code>. В ответе количества <code>1/1/0/0</code>. Вопрос повторён в <code>[12,30)</code> без изменений. Запись ответа занимает 16 байт: <code>2+2+2+4+2+4</code>. Итого <code>12+18+16=46</code>.</p></div></details>
+<p>Остальные многобайтные поля читаются старшим байтом вперёд. Например, <code>77 10</code> даёт <code>119 × 256 + 16 = 30480</code>: это выбранный ID, а не длина сообщения. Четыре байта TTL <code>00 00 01 2c</code> дают <code>0 × 256³ + 0 × 256² + 1 × 256 + 44 = 300</code> секунд. Два байта <code>00 04</code> задают четыре байта RDATA; <code>0a 4d 0a 14</code> переводятся в четыре десятичных числа <code>10, 77, 10, 20</code>. В записи типа A каждая из этих четырёх частей адреса соответствует отдельному байту.</p>
+<h3>Как два байта возвращают чтение к имени</h3>
+<p class="dnsbc-bits"><code>c0 0c = 11 | 00000000001100</code><br>Два бита <code>11</code> отмечают указатель. Оставшиеся 14 бит дают <code>((0xc0 &amp; 0x3f) × 256) + 0x0c = 12</code>.</p>
+<div class="dnsbc-reading"><div><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 264 350" role="img" aria-labelledby="dnsbc-svg-title dnsbc-svg-desc">
+<title id="dnsbc-svg-title">Переход к имени и отдельное продолжение записи</title>
+<desc id="dnsbc-svg-desc">Из NAME в байтах 30–31 сплошная стрелка ведёт к метке по 12. Затем читаются метки по 16,20 и корень по 25. Пунктирная стрелка продолжает саму запись по 32, где начинается TYPE.</desc>
+<style>
+.dnsbc-box{fill:var(--paper,#fffcf5);stroke:var(--text,#202d34);stroke-width:1.5}
+.dnsbc-name{fill:var(--soft,#e8f2ec);stroke:var(--text,#202d34);stroke-width:1.5}
+.dnsbc-owner{fill:var(--soft,#e8f2ec);stroke:var(--accent,#0c6b63);stroke-width:2;stroke-dasharray:6 3}
+.dnsbc-follow{fill:none;stroke:var(--accent,#0c6b63);stroke-width:2}
+.dnsbc-resume{fill:none;stroke:var(--muted,#5a696e);stroke-width:2;stroke-dasharray:4 3}
+.dnsbc-arrow{fill:var(--accent,#0c6b63)}
+.dnsbc-next-arrow{fill:var(--muted,#5a696e)}
+.dnsbc-svgtext{fill:var(--text,#202d34);font:17px system-ui,sans-serif}
+</style>
+<defs><marker id="dnsbc-jump-head" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path class="dnsbc-arrow" d="M1 1 L6 3.5 L1 6 Z"/></marker><marker id="dnsbc-next-head" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path class="dnsbc-next-arrow" d="M1 1 L6 3.5 L1 6 Z"/></marker></defs>
+<rect class="dnsbc-name" x="14" y="20" width="210" height="42"/><text class="dnsbc-svgtext" x="24" y="47">12: 03 · app</text>
+<rect class="dnsbc-name" x="14" y="70" width="210" height="42"/><text class="dnsbc-svgtext" x="24" y="97">16: 03 · lab</text>
+<rect class="dnsbc-name" x="14" y="120" width="210" height="42"/><text class="dnsbc-svgtext" x="24" y="147">20: 04 · test</text>
+<rect class="dnsbc-name" x="14" y="170" width="210" height="42"/><text class="dnsbc-svgtext" x="24" y="197">25: 00 · корень</text>
+<rect class="dnsbc-owner" x="14" y="234" width="210" height="42"/><text class="dnsbc-svgtext" x="24" y="261">30: c0 · 31: 0c</text>
+<path class="dnsbc-follow" d="M224 255 H252 V42 H224" marker-end="url(#dnsbc-jump-head)"/>
+<path class="dnsbc-resume" d="M119 276 V300" marker-end="url(#dnsbc-next-head)"/>
+<rect class="dnsbc-box" x="14" y="300" width="210" height="38"/><text class="dnsbc-svgtext" x="24" y="325">32: TYPE = 00 01</text>
+</svg><p>Сплошная стрелка: перейти к метке 12. Пунктир: продолжить запись по 32. Рамки увеличены для чтения и не изображают пропорции длин полей.</p></div>
+<ol>
+<li><strong>Позиция 30: NAME.</strong> Два байта <code>c0 0c</code> заняли <code>[30,32)</code>. До перехода разборщик запоминает 32 как позицию следующего поля записи.</li>
+<li><strong>Позиция 12: <code>03</code>.</strong> Прочитать три байта <code>[13,16)</code>: <code>61 70 70</code>, то есть <code>app</code>. Следующая метка начинается по 16.</li>
+<li><strong>Позиция 16: <code>03</code>.</strong> Прочитать <code>[17,20)</code>: <code>6c 61 62</code>, то есть <code>lab</code>. Следующая метка — по 20.</li>
+<li><strong>Позиция 20: <code>04</code>.</strong> Прочитать <code>[21,25)</code>: <code>74 65 73 74</code>, то есть <code>test</code>. Следующий байт — 25.</li>
+<li><strong>Позиция 25: <code>00</code>.</strong> Метка нулевой длины завершает имя корнем. Получилось <code>app.lab.test.</code>; точки появились при отображении. Несжатое кодирование вместе с нулём занимает <code>4+4+5+1=14</code> байт.</li>
+<li><strong>Вернуться к сохранённой позиции 32.</strong> Поле NAME в самой записи потребило только 2 байта. Следом читаются TYPE, CLASS, TTL, RDLENGTH и RDATA до конца сообщения по 46.</li>
+</ol></div>
+<p>Указатель ссылается на смещение внутри сообщения, а не на адрес памяти. Заголовки Ethernet/IP/UDP и двухбайтовый префикс длины DNS-over-TCP в отсчёт не входят. Переход к 12 не переносит начало следующего поля записи к 26.</p>
+<p><strong>Самопроверка.</strong> Если перед этим ответом в TCP-потоке стоят два байта <code>00 2e</code>, куда ведёт тот же <code>c0 0c</code>? Где относительно начала потока, начинающегося именно этим префиксом, находится TYPE?</p>
+<details><summary>Разбор ответа</summary><div class="dnsbc-details"><p>Цель по-прежнему DNS-смещение 12; в таком фрагменте TCP-потока это смещение 14. TYPE имеет DNS-смещение 32, а в этом фрагменте потока — 34. Префикс сообщает длину 46, но не становится частью DNS-сообщения. Сегментацию и предыдущие сообщения в потоке здесь не моделируем.</p></div></details>
+<p>Полоса и последовательность чтения выше остаются текстовой альтернативой рисунку: указатель 30→12, метки 12→16→20→25, затем продолжение записи по32. Разборщик читает имя из уже полученных байтов этого ответа.</p>
+<a class="dnsbc-source" href="https://www.rfc-editor.org/rfc/rfc1035.html#section-4.1.4">Основание: RFC 1035 §4.1.1–4.1.4 — заголовок, записи и сжатие</a>
+</figure>
 
 <h2 id="dnsdeep-send-receive">11.6. От библиотеки до программы DNS-сервера и обратно</h2>
 <p>В нашем примере клиентская служба создаёт UDP-сокет и выбирает временный порт <code>53000</code>. В запросе исходный адрес <code>10.77.10.100</code>, конечный <code>10.77.10.1</code>, порты <code>53000 → 53</code>. Ядро клиента видит, что адрес назначения находится в той же подсети. При необходимости оно определяет канальный адрес шлюза как обычного соседа, формирует кадр и передаёт его карте. В кадре канальное назначение <code>02:00:00:77:10:01</code>; это адрес самой службы на шлюзе, поэтому пересылка в интернет ещё не происходит.</p>
@@ -178,7 +317,8 @@ getent ahosts app.lab.test
 
 <h2 id="dnsdeep-offline-lab">11.15. Проверка байтов без сети и чтение захвата</h2>
 <p>В каталоге <code>labs/control-samples</code> находятся синтетический вопрос на 30 байт и ответ на 46 байт, приведённые выше. Вместе с DHCP они собраны в <code>control-packets.pcap</code>. Вопрос отправлен от <code>10.77.10.100:53000</code> к <code>10.77.10.1:53</code>, ответ возвращён обратно. Синтетический отвечающий узел объявляет RA=0, поэтому его флаги <code>0x8500</code> отличаются от реального локального ответа dnsmasq <code>0x8580</code> ровно битом RA. Это видимая разница выбранных ролей, а не расхождение адресной записи.</p>
-<pre><code>cd /путь/к/network-textbook/lab-assets
+<pre><code># Откройте терминал в каталоге networks сохранённой книги:
+cd labs || exit 1
 python3 control-packets.py --self-test
 python3 control-packets.py --decode control-samples/dns-query.bin --kind dns
 python3 control-packets.py --decode control-samples/dns-answer.bin --kind dns
@@ -197,7 +337,7 @@ tcpdump -nn -vvv -r control-samples/control-packets.pcap 'port 53'</code></pre>
 
 <h2 id="dnsdeep-measure-latency">11.17. Найти задержку разрешения имени без подмены опыта</h2>
 <p>Быстрый повторный ответ DNS и медленное первое обращение могут относиться к разным путям: кеш приложения, кеш локальной службы, кеш рекурсивного резолвера, затем реальные вопросы ответственным серверам. Замер нескольких повторов подряд чаще показывает пригодный кеш, а не цену полного поиска. Это полезный результат, если именно так работает приложение; для объяснения первого открытия его недостаточно.</p>
-<p>Проверка <code>dig @192.0.2.53 app.lab.test A</code> обращается к выбранному DNS-серверу. Системный вызов разрешения имени в приложении может до DNS проверить файлы, локальную службу, поисковые суффиксы и другие настроенные источники. Поэтому время dig не нужно объявлять полным временем getaddrinfo приложения. Сопоставляют вопросы и ответы, число попыток, транспорт, кеш, имя с конечной точкой и без неё. Разный результат для A и AAAA также не означает одинаковое поведение стратегии соединения приложения.</p>
+<p>Проверка <code>dig @10.77.10.1 app.lab.test. A</code> обращается к выбранному DNS-серверу. Библиотечная функция <code>getaddrinfo()</code> в системном пути разрешения имени может использовать файлы, локальную службу, поисковые суффиксы и другие настроенные источники до внешнего DNS-запроса. Это функция библиотеки, а не отдельный системный вызов ядра. Поэтому время dig не нужно объявлять полным временем getaddrinfo приложения. Сопоставляют вопросы и ответы, число попыток, транспорт, кеш, имя с конечной точкой и без неё. Разный результат для A и AAAA также не означает одинаковое поведение стратегии соединения приложения.</p>
 <p>Если обычное время поиска составляет 2 мс, но раз в минуту возникает пауза около секунды, среднее скрывает важный путь повторов. Ищут тайм-ауты одного настроенного резолвера, обрезанный UDP-ответ с необходимостью TCP, проблемы достижимости серверов зоны и различия сетевых пространств. Смена TTL всей зоны не является универсальным лечением: она меняет срок кеширования и частоту обновления, но не исправляет потерянные пакеты и не заставляет клиент отменить уже закешированный ответ раньше прежнего срока.</p>
 <p>Для анализа нагрузки считайте не только число клиентских вопросов, но и долю попаданий в кеш, типы ответов и исходящие вопросы резолвера. Один клиентский запрос может потребовать нескольких внешних, а тысячи повторов — обслужиться одной кешированной записью. Умножение числа пользователей на «три вопроса до корня» игнорирует этот механизм и завышает обычную нагрузку. Искусственно случайные имена, наоборот, могут намеренно разрушить пользу кеша и изображать совершенно другой профиль работы.</p>
 <footer class="chapter-footer"><button class="read-toggle" aria-pressed="false">Отметить прочитанной</button><div style="margin-top:20px"><label for="note-14-dns">Свои вопросы и заметки к главе</label><textarea id="note-14-dns" class="note" placeholder="Что хочется проверить или перечитать…"></textarea><div class="note-state">Заметки хранятся только в этом браузере. Их можно выгрузить кнопкой в оглавлении.</div></div><div class="footer-nav"><a href="#13-dhcp">← Предыдущая глава</a><a href="#15-tls">Следующая глава →</a></div></footer></article>

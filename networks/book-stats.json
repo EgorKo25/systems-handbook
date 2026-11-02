@@ -1,6 +1,6 @@
 {
   "date": "2026-11-01",
-  "words": 93518,
+  "words": 96907,
   "chapters": [
     {
       "id": "01-foundations",
@@ -35,7 +35,7 @@
     {
       "id": "05-transport",
       "title": "Как устроена надёжная передача",
-      "words": 4645
+      "words": 6378
     },
     {
       "id": "06-host-receive",
@@ -55,7 +55,7 @@
     {
       "id": "12-icmp-ipv6",
       "title": "ICMP и IPv6: управление доставкой",
-      "words": 5528
+      "words": 6548
     },
     {
       "id": "13-dhcp",
@@ -65,7 +65,7 @@
     {
       "id": "14-dns",
       "title": "DNS: от имени до ответа",
-      "words": 6434
+      "words": 7070
     },
     {
       "id": "15-tls",
