@@ -1,0 +1,13 @@
+# Unexecuted single-node personal VM recipe. Replace the password before start.
+# Application may encrypt the password back into this file: protect its directory.
+configVersion: 1
+shared:
+  node:
+    id: aft-lab
+    ip: 192.168.56.20
+  database:
+    type: postgresql
+    driver: org.postgresql.Driver
+    url: jdbc:postgresql://127.0.0.1:5432/artifactory
+    username: artifactory
+    password: REPLACE_IN_PRIVATE_VM_ONLY

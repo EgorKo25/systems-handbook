@@ -1,0 +1,5 @@
+{
+  "rclass": "local",
+  "packageType": "go",
+  "description": "Own checkdigit source modules; no overwrite privilege for publisher"
+}

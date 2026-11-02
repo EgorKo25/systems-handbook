@@ -1,0 +1,8 @@
+{
+  "version": "7.161.20",
+  "url": "https://releases.jfrog.io/artifactory/artifactory-pro/org/artifactory/pro/jfrog-artifactory-pro/7.161.20/jfrog-artifactory-pro-7.161.20-linux.tar.gz",
+  "metadata_url": "https://releases.jfrog.io/artifactory/api/storage/artifactory-pro/org/artifactory/pro/jfrog-artifactory-pro/7.161.20/jfrog-artifactory-pro-7.161.20-linux.tar.gz",
+  "size": 2553569944,
+  "sha256": "0a69e185392441a8e7d3c705b15ae2083e289eff4039d139ece1d3e02888699e",
+  "verification": "official storage metadata + HEAD; archive NOT downloaded, extracted or executed"
+}

@@ -1,0 +1,43 @@
+{
+  "cli": "1.17.1",
+  "provider": "built-in terraform_data",
+  "backend": "local",
+  "parallelism": "CLI default",
+  "cold_init_excluded": true,
+  "external_api": false,
+  "p95_estimated": false,
+  "rows": [
+    {
+      "instances": 10,
+      "plan_repeats": 5,
+      "plan_wall_s": [
+        0.02294882899877848,
+        0.022823876002803445,
+        0.02224259100330528,
+        0.023167507999460213,
+        0.021654420997947454
+      ],
+      "plan_median_s": 0.022823876002803445,
+      "plan_min_s": 0.021654420997947454,
+      "plan_max_s": 0.023167507999460213,
+      "first_apply_wall_s": 0.03278285000124015,
+      "state_bytes": 5460
+    },
+    {
+      "instances": 100,
+      "plan_repeats": 5,
+      "plan_wall_s": [
+        0.051460280003084335,
+        0.053442453005118296,
+        0.058504508997430094,
+        0.05248816100356635,
+        0.05237713299720781
+      ],
+      "plan_median_s": 0.05248816100356635,
+      "plan_min_s": 0.051460280003084335,
+      "plan_max_s": 0.058504508997430094,
+      "first_apply_wall_s": 0.15955369400035124,
+      "state_bytes": 51541
+    }
+  ]
+}

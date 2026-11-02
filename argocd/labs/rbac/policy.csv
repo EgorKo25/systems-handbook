@@ -1,0 +1,6 @@
+p, role:observer, applications, get, ledger/*, allow
+p, role:deployer, applications, get, ledger/*, allow
+p, role:deployer, applications, sync, ledger/ledger-gitops, allow
+p, role:deployer, applications, delete, ledger/*, deny
+g, reader, role:observer
+g, releaser, role:deployer

@@ -1,0 +1,157 @@
+<header><h1>Собственный модуль: прочитать, сравнить, изменить, ответить</h1><p>Авторский модуль полезен, когда у операции есть модель состояния и проверяемый контракт. Он не нужен для замены каждой простой встроенной операции.</p></header>
+<h2>Зачем не shell</h2>
+<p>Нужно сохранять точный JSON-object с release, message, listen и data_file. Shell-скрипт с echo и перенаправлением переписывает файл каждый раз, трудно различает malformed исходник и отсутствие файла, теряет типы и требует нескольких уровней quoting. Встроенный template/copy уже хорошо решает обычную доставку конфигурации. Собственный <code>counter_config</code> в <a href="labs/local/library/counter_config.py">практикуме</a> нужен как учебный разбор интерфейса: он читает/валидирует существующий объект, формирует канонические байты, сравнивает режим доступа и отдельно реализует check/diff. Для production мы сначала предпочли бы поддерживаемый builtin, если его контракт достаточен.</p>
+<h2>Аргументы и наблюдение</h2>
+<pre><code>module = AnsibleModule(
+    argument_spec=dict(
+        path=dict(type='path', required=True),
+        config=dict(type='dict', required=True),
+        mode=dict(type='str', default='0640')),
+    supports_check_mode=True)
+</code></pre>
+<p><code>AnsibleModule</code> из module_utils разбирает аргументы и предоставляет нормализованный ответ. <code>path</code> должен быть абсолютным, parent уже существовать. Существующий destination проверяется <code>lstat</code>: допускается только regular file, symlink отвергается. Существующий файл открывается как UTF-8-текст. Параметр <code>newline</code> не задан, поэтому <code>open</code> использует <code>newline=None</code> и преобразует переводы строк CRLF и CR в LF. Затем <code>json.loads(before)</code> разбирает прочитанную строку, а <code>isinstance(old, dict)</code> требует объект в корне. Полученный словарь <code>old</code> служит только для этой проверки; сравнение состояния ниже использует исходную прочитанную строку <code>before</code>. Такая проверка не задаёт схему полей. Стандартный анализатор Python также принимает <code>NaN</code> и <code>Infinity</code>, а при повторяющихся именах полей сохраняет последнее значение; текущий модуль не запрещает эти случаи при чтении. Ошибка декодирования UTF-8, ошибка разбора или другой тип корня приводят к <code>failed</code> до записи, с сохранением существующего файла. Отсутствующий файл означает новое создание. Режим — ограниченная octal-строка без специальных bits.</p>
+<p>Желаемый <code>config</code> преобразуется в строку <code>after</code>: ключи сортируются, вложенность выделяется двумя пробелами, не-ASCII-символы сохраняются, в конце добавляется LF. При этой сериализации <code>allow_nan=False</code> отвергает нечисловое значение NaN и бесконечности; отказ происходит до записи. Далее <code>changed = before != after or previous_mode != mode</code> сравнивает две строки и режим доступа. Поэтому одинаковые JSON-объекты с разным количеством пробелов или порядком ключей могут дать <code>changed=true</code>. Но различие исходных байтов само по себе не гарантирует изменения: если в канонически оформленном файле заменить все LF на CRLF, сохранив права, чтение восстановит прежнюю строку <code>before</code>. Она совпадёт с <code>after</code>, модуль вернёт <code>changed=false</code>, и даже реальный запуск оставит CRLF на диске. Повтор с той же прочитанной строкой и режимом доступа также не создаёт изменения. Вход <code>config</code> описывает полный желаемый объект: при записи поля, отсутствующие в нём, не переносятся из старого объекта.</p>
+<h2>Check и запись</h2>
+<pre><code>changed = before != after or previous_mode != wanted_mode
+if changed and not module.check_mode:
+    # Private temporary file in the destination directory.
+    # Write, set mode, flush+fsync, then os.replace.
+    write_candidate_and_replace()
+module.exit_json(changed=changed, path=path)
+</code></pre>
+<p>Этот фрагмент показывает порядок; полная рабочая реализация находится в комплекте. Check читает/проверяет и считает changed, но не создаёт файл и не меняет mode. Diff возвращается только когда движок запросил <code>module._diff</code>; в нём нет секретов этого тестового образца. Секретный модуль потребовал бы <code>no_log</code> для чувствительных options и собственной политики diff. Нельзя сначала создать временный файл с desired secret, а затем сказать «check ничего не изменил».</p>
+<p>При реальном изменении temporary file создаётся в том же каталоге, получает mode до публикации, затем содержимое flush/fsync и заменяет destination через <code>os.replace</code>. Читатель не должен увидеть половину JSON. Это атомарность одного имени в локальной файловой системе с соответствующей семантикой, не транзакция над config+процессом. Пример не делает directory fsync после rename, не гарантирует долговечность при потере питания и не сохраняет ACL/xattrs/owner исходного файла. Он рассчитан на одного писателя в частном parent. Проверка lstat и последующая запись не защищают от злонамеренной гонки замены parent. Эти ограничения — причина не объявлять учебный модуль production-заменой copy.</p>
+<style>
+#an-module-flight{margin:2rem 0;padding:clamp(1rem,3vw,1.6rem);border:1px solid currentColor;border-radius:1rem;color:inherit;background:transparent;font-size:1em;line-height:1.6;text-align:left;overflow-wrap:anywhere}
+#an-module-flight *{box-sizing:border-box}
+#an-module-flight figcaption{margin:0 0 1rem}
+#an-module-flight .an-mf-kicker{display:block;font-size:.9em;letter-spacing:.06em;text-transform:uppercase}
+#an-module-flight .an-mf-title{display:block;font-size:1.3em;line-height:1.3;font-weight:700;margin:.3rem 0 .7rem}
+#an-module-flight p{margin:.6rem 0;text-align:left}
+#an-module-flight code{font-size:.95em;white-space:normal;overflow-wrap:anywhere}
+#an-module-flight .an-mf-scope{padding:.8rem 0;border-top:1px dashed currentColor;border-bottom:1px dashed currentColor}
+#an-module-flight .an-mf-flow{position:relative;margin:1.5rem 0;padding:0;list-style:none;counter-reset:an-mf-step}
+#an-module-flight .an-mf-row:not(:last-child)::after{content:"";position:absolute;left:1rem;top:2.4rem;bottom:.4rem;border-left:2px solid currentColor;opacity:.35}
+#an-module-flight .an-mf-row{position:relative;display:grid;grid-template-columns:2.2rem minmax(0,1fr);gap:.8rem;padding:0 0 1.5rem;min-width:0}
+#an-module-flight .an-mf-row:last-child{padding-bottom:0}
+#an-module-flight .an-mf-number{position:relative;display:flex;align-items:center;justify-content:center;align-self:start;width:2rem;height:2rem;border-radius:50%;border:2px solid currentColor;font-size:.9rem;font-weight:700;background:transparent;color:inherit}
+#an-module-flight .an-mf-content{min-width:0}
+#an-module-flight .an-mf-place{font-size:.9em;letter-spacing:.05em;text-transform:uppercase;opacity:.8}
+#an-module-flight .an-mf-heading{margin:0;font-size:1.08em;line-height:1.4;font-weight:700}
+#an-module-flight .an-mf-object{display:flex;align-items:center;gap:.75rem;min-width:0;margin:.7rem 0}
+#an-module-flight .an-mf-icon{display:block;flex:0 0 56px;width:56px;height:64px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#an-module-flight .an-mf-object>div{min-width:0}
+#an-module-flight .an-mf-caption{font-size:.92em}
+#an-module-flight .an-mf-channel{display:flex;align-items:center;gap:.75rem;padding:.5rem 0}
+#an-module-flight .an-mf-arrow{width:64px;height:32px;flex:0 0 64px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#an-module-flight .an-mf-files{margin:.8rem 0;padding-left:1rem;border-left:3px double currentColor}
+#an-module-flight .an-mf-state{display:flex;align-items:baseline;flex-wrap:wrap;gap:.3rem .65rem;margin:.5rem 0}
+#an-module-flight .an-mf-json{margin:.6rem 0;padding:.8rem;border:1px solid currentColor;border-radius:.5rem;white-space:pre-wrap;overflow-wrap:anywhere;font-size:.92em;line-height:1.5;color:inherit;background:transparent}
+#an-module-flight .an-mf-json code{white-space:pre-wrap}
+#an-module-flight .an-mf-codes{margin:1rem 0}
+#an-module-flight .an-mf-codes dt{font-weight:700;margin-top:.7rem}
+#an-module-flight .an-mf-codes dd{margin:.15rem 0 0}
+#an-module-flight details{margin-top:1rem;border-top:1px solid currentColor}
+#an-module-flight summary{min-height:44px;display:list-item;padding:.75rem 0;cursor:pointer;line-height:1.5}
+#an-module-flight summary:focus-visible{outline:2px solid currentColor;outline-offset:3px}
+#an-module-flight .an-mf-sources{font-size:.9em}
+@media (max-width:430px){#an-module-flight{padding:1rem .8rem}#an-module-flight .an-mf-row{gap:.6rem;grid-template-columns:2rem minmax(0,1fr)}#an-module-flight .an-mf-object{gap:.5rem}#an-module-flight .an-mf-icon{flex-basis:42px;width:42px;height:52px}#an-module-flight .an-mf-title{font-size:1.18em}}
+@media print{#an-module-flight{--paper:#fff;--text:#000;border-radius:0;color:#000;background:#fff;break-inside:auto}#an-module-flight .an-mf-number{color:#000;background:#fff}#an-module-flight .an-mf-row{break-inside:avoid}#an-module-flight details>div{display:block!important}#an-module-flight details::details-content{display:block;content-visibility:visible;height:auto}#an-module-flight summary{display:none}}
+</style>
+<figure id="an-module-flight" aria-labelledby="an-module-flight-title">
+<figcaption>
+<span class="an-mf-kicker">Разрез одного вызова · Python-модуль</span>
+<strong id="an-module-flight-title" class="an-mf-title">Два назначения временных файлов в одном вызове</strong>
+<p>Управляющая машина отправляет исполняемый код; уже этот код решает, менять ли конфигурацию на целевой машине. Временный файл исполнения и временный кандидат конфигурации появляются по разным причинам.</p>
+</figcaption>
+<p class="an-mf-scope"><strong>Условия рисунка.</strong> Обычный SSH, <code>pipelining</code> выключен, <code>become: false</code>; вход пользователя и Python уже проверены. На target заранее создан принадлежащий этому пользователю приватный каталог <code>/tmp/ansible-reader-lab/counter_a</code>. Это разбор переноса нашего <code>counter_config</code> на подготовленную VM, не отчёт выполненного SSH-опыта. Комплект <code>labs/local</code> запускает его локально; VM-роль использует <code>template</code>.</p>
+<ol class="an-mf-flow">
+<li class="an-mf-row">
+<span class="an-mf-number" aria-hidden="true">1</span>
+<div class="an-mf-content">
+<div class="an-mf-place">Управляющая машина</div>
+<h3 class="an-mf-heading">Core собирает код и аргументы</h3>
+<div class="an-mf-object">
+<svg class="an-mf-icon" viewBox="0 0 56 64" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg"><path d="M8 14V6h29l11 11v33H22M37 6v12h11M4 24h30v34H4zM12 34l-4 4 4 4m14-8 4 4-4 4m-6-10-4 14"/></svg>
+<div><code>counter_config.py</code><br/><code>module_utils</code><br/><code>path + config + mode</code></div>
+</div>
+<p>После подстановки переменных управляющая часть действия передаёт core готовые аргументы. Для этого Python-модуля core упаковывает код с нужными вспомогательными модулями в обёртку AnsiballZ и включает сериализованные аргументы. YAML-файл целиком на target не исполняется.</p>
+</div>
+</li>
+<li class="an-mf-row">
+<span class="an-mf-number" aria-hidden="true">2</span>
+<div class="an-mf-content">
+<div class="an-mf-place">Между машинами</div>
+<h3 class="an-mf-heading">SSH доставляет и запускает</h3>
+<div class="an-mf-channel">
+<svg class="an-mf-arrow" viewBox="0 0 64 32" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg"><path d="M2 16h56m-9-9 9 9-9 9M22 10V7a5 5 0 0 1 10 0v3m-13 0h16v14H19z"/></svg>
+<span>код и аргументы → проверенный сервер</span>
+</div>
+<p>SSH-плагин использует SSH-клиент: клиент проверяет ключ сервера, а SSH-сервер проверяет подлинность пользователя и разрешает или запрещает вход. Для передачи файла могут применяться SFTP, SCP или передача через SSH — выбор зависит от настроек. Рисунок показывает смысл обмена, а не сетевые байты или число соединений.</p>
+</div>
+</li>
+<li class="an-mf-row">
+<span class="an-mf-number" aria-hidden="true">3</span>
+<div class="an-mf-content">
+<div class="an-mf-place">Целевая машина · пользователь SSH</div>
+<h3 class="an-mf-heading">Временный файл № 1: исполняемая обёртка</h3>
+<div class="an-mf-object">
+<svg class="an-mf-icon" viewBox="0 0 56 64" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg"><path d="M7 5h28l14 14v40H7zM35 5v14h14M16 30l-5 6 5 6m24-12 5 6-5 6m-9-15-6 18"/></svg>
+<div><code>~/.ansible/tmp/…/<wbr/>AnsiballZ_counter_config.py</code><br/><span class="an-mf-caption">Пример пути: корень и случайный суффикс зависят от настроек.</span></div>
+</div>
+<p>Команда запуска проходит через оболочку пользователя SSH; выбранный Python запускает обёртку и код модуля. <code>AnsibleModule</code> разбирает аргументы и режим check. Файл обёртки не является конфигурацией сервиса. Здесь показаны два файла с разным назначением, а не полный перечень служебных файлов: обёртка также создаёт временный ZIP с кодом. При поддерживаемом pipelining код обёртки может поступить в стандартный ввод Python без переданного файла, но временный ZIP всё равно создаётся.</p>
+</div>
+</li>
+<li class="an-mf-row">
+<span class="an-mf-number" aria-hidden="true">4</span>
+<div class="an-mf-content">
+<div class="an-mf-place">Целевая машина · файловая система</div>
+<h3 class="an-mf-heading">Временный файл № 2: новые байты конфигурации</h3>
+<p>Модуль читает <code>config.json</code>, проверяет JSON и режим доступа, затем сравнивает их с желаемым объектом и <code>mode</code>. Родительский каталог он не создаёт.</p>
+<div class="an-mf-files">
+<div class="an-mf-object">
+<svg class="an-mf-icon" viewBox="0 0 56 64" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg"><path d="M7 5h28l14 14v40H7zM35 5v14h14M16 30h22M16 39h22M16 48h15"/><path d="M2 57h12m-5-5 5 5-5 5"/></svg>
+<div><code>/tmp/ansible-reader-lab/counter_a/<wbr/>.counter-…</code><br/><span class="an-mf-caption">Кандидат рядом с назначением: создание → права → запись и flush/fsync → os.replace.</span></div>
+</div>
+<div class="an-mf-state"><span aria-hidden="true">↓</span><strong><code>config.json</code></strong><span>имя теперь указывает на новый файл</span></div>
+</div>
+<p><strong>Apply при различии:</strong> создаёт кандидата и заменяет файл. <strong>Повтор без различия:</strong> кандидата нет, <code>changed=false</code>. <strong>Check при различии:</strong> <code>changed=true</code>, но кандидат конфигурации не создаётся и файл не меняется. При этом временный файл исполнения из шага 3 всё ещё может понадобиться.</p>
+</div>
+</li>
+<li class="an-mf-row">
+<span class="an-mf-number" aria-hidden="true">5</span>
+<div class="an-mf-content">
+<div class="an-mf-place">Ответ с target → управляющая машина</div>
+<h3 class="an-mf-heading">JSON по stdout, затем результат задачи</h3>
+<div class="an-mf-channel">
+<svg class="an-mf-arrow" viewBox="0 0 64 32" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg"><path d="M62 16H6m9-9-9 9 9 9M26 7h28M26 25h28"/></svg>
+<span><code>exit_json</code> → стандартный вывод → SSH → разбор core</span>
+</div>
+<pre class="an-mf-json"><code>{"changed": true,
+ "path": "/tmp/ansible-reader-lab/counter_a/config.json"}</code></pre>
+<p>Показаны только значимые поля успешного ответа. Дополнительные поля и оформление зависят от core и запроса diff. JSON — сообщение модуля; цветной <code>changed</code> в терминале создаёт обработчик вывода уже на управляющей машине. <code>changed_when</code> и <code>failed_when</code> могут изменить итоговую оценку задачи.</p>
+</div>
+</li>
+</ol>
+<dl class="an-mf-codes">
+<dt><code>changed</code> — смысл результата</dt>
+<dd>У <code>counter_config</code> это различие прочитанного UTF-8-текста или режима доступа. Чтение в текстовом режиме нормализует переводы строк: файл с CRLF может сравняться со строкой, содержащей LF, хотя исходные байты различаются. Само поле не сообщает, был ли включён check: режим известен управляющему процессу и модулю.</dd>
+<dt>Код завершения Python — состояние процесса</dt>
+<dd><code>exit_json</code> выводит результат и завершает модуль с кодом 0; <code>fail_json</code> выводит <code>failed=true</code> с причиной и завершает его с кодом 1. Необработанный сбой может прервать модуль без пригодного JSON.</dd>
+<dt><code>rc</code> в JSON и код SSH-клиента — разные уровни</dt>
+<dd>Наш модуль не возвращает поле <code>rc</code>. У <code>command</code> это код запущенной команды. SSH-клиент имеет собственный код: 255 обычно означает ошибку соединения, но возможен конфликт с таким же кодом удалённой команды. Причину читают вместе со stderr и ответом модуля.</dd>
+</dl>
+<p><strong>Если ответ потерялся после <code>os.replace</code>:</strong> файл уже мог измениться. Потеря SSH сама по себе не откатывает замену. Следующий запуск заново читает файл; при совпадении прочитанного текста и режима доступа он вернёт <code>changed=false</code>. Атомарная замена имени не гарантирует сохранность при отключении питания.</p>
+<details>
+<summary>Пройти путь текстом</summary>
+<div>
+<p>Сначала управляющий core формирует обёртку с кодом модуля, вспомогательными модулями и аргументами. SSH доставляет её на подготовленный target, где выбранный Python запускает модуль от пользователя соединения. В показанном режиме Ansible нужен временный файл исполнения; его путь отличается от пути управляемого файла.</p>
+<p>Модуль читает конфигурацию и сравнивает состояние. Только реальное применение различия создаёт второго кандидата — <code>.counter-…</code> рядом с <code>config.json</code> — и публикует новые байты через замену имени. Check сообщает прогноз без этой записи. Затем модуль печатает JSON в stdout; управляющая машина разбирает ответ и оценивает задачу. Потерянный ответ не доказывает, что изменения не произошло. Коды завершения процессов и поля JSON проверяют отдельно.</p>
+</div>
+</details>
+<p class="an-mf-sources">Механизм привязан к ansible-core 2.21.5: <a href="https://github.com/ansible/ansible/blob/v2.21.5/lib/ansible/executor/module_common.py#L1293-L1390">сборка обёртки и аргументов</a>, <a href="https://github.com/ansible/ansible/blob/v2.21.5/lib/ansible/plugins/action/__init__.py#L1170-L1334">доставка и разбор ответа</a>, <a href="https://github.com/ansible/ansible/blob/v2.21.5/lib/ansible/module_utils/basic.py#L1528-L1597">exit_json / fail_json</a>, <a href="https://github.com/ansible/ansible/blob/v2.21.5/lib/ansible/plugins/connection/ssh.py#L24">код 255</a>. Файловая операция — из <a href="labs/local/library/counter_config.py">нашего учебного модуля</a>. Эти ссылки нужны для сверки; сама схема и её текст работают офлайн.</p>
+</figure>
+<h2>Ответ и ошибки</h2>
+<p><code>exit_json</code> печатает протокольный JSON и завершает модуль; <code>fail_json</code> возвращает явный отказ с причиной. Никаких print для отладки в stdout. Ожидаемые OSError/ValueError/TypeError превращаются в failed с полезным сообщением, временный кандидат удаляется в finally. Если rename прошёл, но ответ потерялся, повтор прочтёт опубликованный файл и станет no-op. Если write не удался до rename, прежний destination должен остаться, хотя полноценные disk-full/power-loss эксперименты здесь не выполнялись.</p>
+<h2>Что реально проверяется</h2>
+<p><code>lab_check.py</code> вызывает модуль через настоящий core 2.21.5. Проверены создание, повтор, исправление mode, check без изменения hash/mtime, diff, отказ на malformed JSON и symlink с сохранением старого содержимого. Эти tests лучше, чем mock, повторяющий строку changed из реализации: они наблюдают файловую систему до/после через отдельный процесс. Не проверены враждебный конкурентный писатель, NFS, нестандартные ACL, disk-full и reboot. Для публикуемой коллекции дополнительно нужны ansible-test sanity/unit/integration, документация и матрица поддерживаемых версий. Архитектура проверена по <a href="https://docs.ansible.com/projects/ansible/latest/dev_guide/developing_modules_general.html">developing modules</a>, 01.11.2026.</p>

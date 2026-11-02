@@ -1,0 +1,131 @@
+{
+  "cli": "1.17.1",
+  "commands": [
+    {
+      "name": "terraform",
+      "flags": 1,
+      "help_returncode": 0
+    },
+    {
+      "name": "terraform version",
+      "flags": 1,
+      "help_returncode": 0
+    },
+    {
+      "name": "terraform init",
+      "flags": 7,
+      "help_returncode": 0
+    },
+    {
+      "name": "terraform fmt",
+      "flags": 3,
+      "help_returncode": 0
+    },
+    {
+      "name": "terraform validate",
+      "flags": 1,
+      "help_returncode": 0
+    },
+    {
+      "name": "terraform console",
+      "flags": 0,
+      "help_returncode": 0
+    },
+    {
+      "name": "terraform plan",
+      "flags": 12,
+      "help_returncode": 0
+    },
+    {
+      "name": "terraform apply",
+      "flags": 3,
+      "help_returncode": 0
+    },
+    {
+      "name": "terraform show",
+      "flags": 1,
+      "help_returncode": 0
+    },
+    {
+      "name": "terraform output",
+      "flags": 2,
+      "help_returncode": 0
+    },
+    {
+      "name": "terraform state list",
+      "flags": 0,
+      "help_returncode": 0
+    },
+    {
+      "name": "terraform state show",
+      "flags": 0,
+      "help_returncode": 0
+    },
+    {
+      "name": "terraform state pull",
+      "flags": 0,
+      "help_returncode": 0
+    },
+    {
+      "name": "terraform state push",
+      "flags": 1,
+      "help_returncode": 0
+    },
+    {
+      "name": "terraform state mv",
+      "flags": 1,
+      "help_returncode": 0
+    },
+    {
+      "name": "terraform state rm",
+      "flags": 1,
+      "help_returncode": 0
+    },
+    {
+      "name": "terraform import",
+      "flags": 0,
+      "help_returncode": 0
+    },
+    {
+      "name": "terraform force-unlock",
+      "flags": 0,
+      "help_returncode": 0
+    },
+    {
+      "name": "terraform providers",
+      "flags": 0,
+      "help_returncode": 0
+    },
+    {
+      "name": "terraform providers schema",
+      "flags": 1,
+      "help_returncode": 0
+    },
+    {
+      "name": "terraform providers lock",
+      "flags": 1,
+      "help_returncode": 0
+    },
+    {
+      "name": "terraform providers mirror",
+      "flags": 1,
+      "help_returncode": 0
+    },
+    {
+      "name": "terraform graph",
+      "flags": 1,
+      "help_returncode": 0
+    },
+    {
+      "name": "terraform destroy",
+      "flags": 0,
+      "help_returncode": 0
+    },
+    {
+      "name": "terraform test",
+      "flags": 0,
+      "help_returncode": 0
+    }
+  ],
+  "flags_checked": 38
+}

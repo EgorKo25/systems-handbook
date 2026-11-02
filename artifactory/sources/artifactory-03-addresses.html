@@ -1,0 +1,48 @@
+<header><h1>Адрес, защищённый маршрут и доверие до передачи токена</h1><p>Три адреса с похожим именем могут требовать разные протоколы и полномочия.</p></header>
+<h2 id="artifactory-03-addresses-section-1">Первый вход через SSH</h2>
+<p>SSH — протокол защищённого удалённого соединения. До настройки HTTPS нельзя пересылать начальный пароль в открытый 8082 через недоверенную сеть. На своей клиентской машине с уже проверенным SSH-доступом к личной VM выполните <code>ssh -N -L127.0.0.1:18082:127.0.0.1:8082 ВАШ_ПОЛЬЗОВАТЕЛЬ@АДРЕС_VM</code>. Подставьте действительную личность VM, не имя служебного artifactory. Проверка ключа SSH-сервера выполняется по заранее полученному отпечатку; StrictHostKeyChecking не отключается. -N не запускает удалённую команду, -L создаёт локальную пересылку. Только 127.0.0.1 слушает на 18082; терминал с SSH остаётся открытым.</p>
+<p>В браузере того же клиента откройте http://127.0.0.1:18082/ui/. HTTP-участок до локального SSH защищён границами вашей машины, дальше идёт SSH. Это ограниченный путь первичного администрирования: им не настраивают навсегда все package clients. Смените начальную пару, создайте собственного администратора, отключите anonymous access до выдачи определённого чтения и проверьте лицензию. При недоступном UI сначала проверьте локальный 18082, SSH и прямой ping в VM; ошибка туннеля не говорит о повреждении БД.</p>
+<h2 id="artifactory-03-addresses-section-2">Имя и удостоверяющая сторона</h2>
+<p>Для постоянного маршрута выбраны https://aft.lab.example и порт 443. TLS — защита транспортного соединения; клиент одновременно проверяет цепочку сертификата и соответствие имени. CA, certification authority, — удостоверяющая сторона, которой клиент решил доверять. SAN, subject alternative name, — список имён в сертификате; одного похожего CN недостаточно. Наш пример создаёт отдельную учебную CA, не добавляет её всем пользователям рабочей ОС и не заменяет доверенные корневые сертификаты хоста.</p>
+<p>Дальше действует только владелец своей VM из защищённого work/private/tls. OpenSSL уже установлен в ней по <a href="#artifactory-01-install">главе об установке</a>. Umask077 запрещает доступ другим пользователям к новым ключам. Каталог не публикуется, CA key не копируется клиентам. В обычном развёртывании сертификат выдаёт ваша принятая CA; тогда используйте её процесс вместо создания новой стороны доверия.</p>
+<p>Блок запускается в Bash как отдельная подоболочка: ошибка завершает её и запрещает зависимые подпись и проверку, сохраняя интерактивный терминал открытым.</p>
+<pre><code>(
+set -euo pipefail
+mkdir -p "$HOME/artifactory-handbook/work/private/tls"
+cd "$HOME/artifactory-handbook/work/private/tls"
+umask 077
+for name in ca.key ca.crt ca.srl server.key server.csr server.ext server.crt; do
+  if test -e "$name" || test -L "$name"; then
+    printf 'Сохранённый TLS-файл уже существует: %s; проверьте прежнее состояние\n' "$name" &gt;&amp;2
+    exit 1
+  fi
+done
+openssl req -x509 -newkey rsa:3072 -nodes -days 30 \
+  -subj '/CN=Artifactory handbook private CA' \
+  -addext 'basicConstraints=critical,CA:TRUE' \
+  -addext 'keyUsage=critical,keyCertSign,cRLSign' \
+  -keyout ca.key -out ca.crt
+openssl req -new -newkey rsa:3072 -nodes \
+  -subj '/CN=aft.lab.example' -keyout server.key -out server.csr
+printf '%s\n' 'subjectAltName=DNS:aft.lab.example' \
+  'extendedKeyUsage=serverAuth' 'basicConstraints=CA:FALSE' &gt; server.ext
+openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key \
+  -CAcreateserial -days 14 -sha256 -extfile server.ext -out server.crt
+openssl verify -CAfile ca.crt -verify_hostname aft.lab.example server.crt
+)</code></pre>
+<p>Проверка имён перед созданием запрещает перезапись уже сохранённой CA, сертификата, запроса или файла расширений. После прерванного опыта исследуйте оставшиеся файлы и завершите либо отдельно спланируйте перевыпуск: не удаляйте весь каталог для обхода проверки. Замена CA требует заново доставить доверенный ca.crt клиентам; прежние клиенты автоматически ей не доверяют.</p>
+<p>Req создаёт ключ и запрос; -x509 в первом вызове выпускает самоподписанный сертификат CA. -nodes оставляет ключ без парольного шифрования для автоматической службы, поэтому права файла и защита копий обязательны. X509 подписывает серверный запрос; -extfile переносит SAN и назначение. Verify должен закончиться server.crt:OK. При неверном имени следующий сетевой шаг не выполняется. Ключи реальной VM автор не создавал. Точная последовательность создания CA и серверного сертификата отдельно исполнена во временном каталоге; проверено принятие правильного имени и отклонение чужого. Другой локальный опыт проверяет Go с ограниченным доверием CA и учётными данными.</p>
+<h2 id="artifactory-03-addresses-section-3">Reverse proxy и приёмка цепочки</h2>
+<p>NGINX — отдельная HTTP-служба, принимающая HTTPS и передающая запрос к Router. В своей VM администратор создаёт /etc/nginx/artifactory-tls, копирует server.crt и server.key, последний с mode0600/root, затем устанавливает <a href="labs/recipes/nginx-api.conf">nginx-api.conf</a> в /etc/nginx/conf.d/artifactory.conf. Эти пути относятся к VM, не к рабочему хосту. Перед reload выполните <code>sudo nginx -t</code>; при ошибке не перезагружайте службу. После успешной проверки <code>sudo systemctl reload nginx</code> применяет конфигурацию. Если служба ещё остановлена, сначала запустите её и проверьте status. Не создавайте второй server с тем же именем/портом поверх старого.</p>
+<p>Proxy_pass указывает 8082Router, X-Forwarded-Proto сообщает исходный HTTPS, Host сохраняет имя клиента, X-JFrog-Override-Base-Url фиксирует адрес формирования внешних ссылок. Отсутствие этих соглашений способно вернуть клиенту адрес внутреннегоHTTPили неправильный адрес выдачи токена. Proxy_request_buffering off уменьшает предварительную запись большого upload в промежуточный файл, но не делает запись мгновенной и не отменяет лимиты/защиту своего NGINX. Базовый образец обслуживает UI/API/Go/Generic. Конфигурация native OCI отдельно генерируется по методу маршрутизации в <a href="#artifactory-10-oci">главе об OCI</a>; произвольный proxy location не объявлен готовым registry.</p>
+<p>DNS, служба разрешения имён, должен вернуть личный IP VM для aft.lab.example. Для опыта клиентом может быть сама VM: её владелец добавляет в её /etc/hosts одну корректную запись и проверяет <code>getent hosts aft.lab.example</code>. Для другого клиента настройте собственную учебную зону или запись на нём осознанно. Не рассчитывайте, что домен примера уже существует. Первую проверку curl можно выполнить без изменения DNS: <code>curl --fail --cacert ca.crt --resolve aft.lab.example:443:192.168.56.20 https://aft.lab.example/artifactory/api/system/ping</code>. --resolve меняет адрес соединения, сохраняя имя проверки TLS; это не аналог --insecure.</p>
+<h2 id="artifactory-03-addresses-section-4">Не смешать URL разных интерфейсов</h2>
+<table><thead><tr><th>Цель</th><th>Маршрут стенда</th><th>Что он означает</th></tr></thead><tbody>
+<tr><td>Платформа</td><td>https://aft.lab.example</td><td>База конфигурации JFrog CLI</td></tr>
+<tr><td>Артефакт Generic</td><td>/artifactory/generic-releases/receipt/1.0.0/receipt-linux-amd64</td><td>Именованный файл</td></tr>
+<tr><td>Go protocol</td><td>/artifactory/api/go/go-virtual</td><td>База GOPROXY, не файлZIP</td></tr>
+<tr><td>Artifactory API</td><td>/artifactory/api/system/ping</td><td>Проверка службы</td></tr>
+<tr><td>OCI client reference</td><td>aft.lab.example/oci-local/receipt:1.0.0</td><td>Имя registry без https:// после настройки registry routing</td></tr>
+</tbody></table>
+<p>Перенос /artifactory в неправильное место не исправляется повторной выдачей токена. Путь Go не заменяется Generic-ссылкой на ZIP. Artifactory→upstream, внешний источник пакетов, использует отдельный маршрут, отдельные секреты и доверие TLS; клиентская CA не настраивает Java trust внутри сервера. Для внешнего private registry доверенные сертификаты добавляют по поддержанному vendor-процессу, а не отключением проверки на все hosts. Lenient Host Authentication способен расширить передачу upstream credentials на адрес перенаправления; включать его автоматически опасно.</p>
+<h2 id="artifactory-03-addresses-section-5">Первичные источники и версия</h2><p>Проверено 1 ноября 2026: <a href="https://docs.jfrog.com/installation/docs/http-settings">HTTP settings и reverse proxy</a>, <a href="https://docs.jfrog.com/artifactory/docs/go-modules">Go endpoint</a>, <a href="https://docs.jfrog.com/artifactory/docs/oci-repositories">OCI reference</a>, <a href="https://docs.openssl.org/3.0/man1/openssl-req/">OpenSSL req</a>, <a href="https://docs.openssl.org/3.0/man1/openssl-x509/">OpenSSL x509</a>, <a href="https://docs.openssl.org/3.0/man1/openssl-verification-options/">проверка имени</a>. VM/NGINX/сертификаты реального Artifactory не запускались.</p>

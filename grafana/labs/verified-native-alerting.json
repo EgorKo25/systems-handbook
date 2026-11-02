@@ -1,0 +1,695 @@
+{
+  "version": "13.3.0 OSS",
+  "boundary": "Native evaluator and native notification router actually executed. Prometheus responses are authored; no PromQL, real scrape, external notifications, browser, SMTP or HA tested. Temporary DB and listeners removed.",
+  "checks": [
+    {
+      "check": "file-provisioned paused rule parsed and preserves30s recovery",
+      "result": "PASS"
+    },
+    {
+      "check": "API preserves explicit keep_firing_for",
+      "result": "PASS"
+    },
+    {
+      "check": "API config creates 10s evaluation group and loopback-only notification route",
+      "result": "PASS"
+    },
+    {
+      "check": "low numeric input is Normal/inactive",
+      "result": "PASS"
+    },
+    {
+      "check": "high numeric input enters Pending",
+      "result": "PASS"
+    },
+    {
+      "check": "persistent high input reaches Alerting/firing after pending",
+      "result": "PASS"
+    },
+    {
+      "check": "actual notification route sends firing payload to own loopback receiver",
+      "result": "PASS"
+    },
+    {
+      "check": "low input enters Recovering with keepFiringFor",
+      "result": "PASS"
+    },
+    {
+      "check": "recovery interval ends in Normal",
+      "result": "PASS"
+    },
+    {
+      "check": "own loopback receiver receives resolved payload",
+      "result": "PASS"
+    },
+    {
+      "check": "empty source result honors configured Pending",
+      "result": "PASS"
+    },
+    {
+      "check": "empty source result creates DatasourceNoData after pending",
+      "result": "PASS"
+    },
+    {
+      "check": "own receiver gets separate DatasourceNoData labels",
+      "result": "PASS"
+    },
+    {
+      "check": "source HTTP500 honors configured Pending",
+      "result": "PASS"
+    },
+    {
+      "check": "source HTTP500 creates DatasourceError after pending",
+      "result": "PASS"
+    },
+    {
+      "check": "own receiver gets separate DatasourceError labels",
+      "result": "PASS"
+    },
+    {
+      "check": "every received webhook targets own fixture rule or datasource event",
+      "result": "PASS"
+    }
+  ],
+  "observations": [
+    {
+      "elapsed_seconds": 4.87,
+      "mode": "low",
+      "state": "inactive",
+      "health": "ok",
+      "lastError": null,
+      "alerts": []
+    },
+    {
+      "elapsed_seconds": 4.88,
+      "mode": "high",
+      "state": "inactive",
+      "health": "ok",
+      "lastError": null,
+      "alerts": []
+    },
+    {
+      "elapsed_seconds": 17.01,
+      "mode": "high",
+      "state": "pending",
+      "health": "ok",
+      "lastError": null,
+      "alerts": [
+        {
+          "state": "Pending",
+          "labels": {
+            "alertname": "Native state fixture",
+            "grafana_folder": "Alert Fixtures",
+            "instance": "fixture",
+            "service": "authored-fixture"
+          },
+          "activeAt": "2026-11-01T19:12:30+03:00"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 36.75,
+      "mode": "high",
+      "state": "firing",
+      "health": "ok",
+      "lastError": null,
+      "alerts": [
+        {
+          "state": "Alerting",
+          "labels": {
+            "alertname": "Native state fixture",
+            "grafana_folder": "Alert Fixtures",
+            "instance": "fixture",
+            "service": "authored-fixture"
+          },
+          "activeAt": "2026-11-01T19:12:50+03:00"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 36.76,
+      "mode": "low",
+      "state": "firing",
+      "health": "ok",
+      "lastError": null,
+      "alerts": [
+        {
+          "state": "Alerting",
+          "labels": {
+            "alertname": "Native state fixture",
+            "grafana_folder": "Alert Fixtures",
+            "instance": "fixture",
+            "service": "authored-fixture"
+          },
+          "activeAt": "2026-11-01T19:12:50+03:00"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 41.81,
+      "mode": "low",
+      "state": "recovering",
+      "health": "ok",
+      "lastError": null,
+      "alerts": [
+        {
+          "state": "Recovering",
+          "labels": {
+            "alertname": "Native state fixture",
+            "grafana_folder": "Alert Fixtures",
+            "instance": "fixture",
+            "service": "authored-fixture"
+          },
+          "activeAt": "2026-11-01T19:13:00+03:00"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 62.04,
+      "mode": "low",
+      "state": "inactive",
+      "health": "ok",
+      "lastError": null,
+      "alerts": [
+        {
+          "state": "Normal",
+          "labels": {
+            "alertname": "Native state fixture",
+            "grafana_folder": "Alert Fixtures",
+            "instance": "fixture",
+            "service": "authored-fixture"
+          },
+          "activeAt": "2026-11-01T19:13:20+03:00"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 62.05,
+      "mode": "empty",
+      "state": "inactive",
+      "health": "ok",
+      "lastError": null,
+      "alerts": [
+        {
+          "state": "Normal",
+          "labels": {
+            "alertname": "Native state fixture",
+            "grafana_folder": "Alert Fixtures",
+            "instance": "fixture",
+            "service": "authored-fixture"
+          },
+          "activeAt": "2026-11-01T19:13:20+03:00"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 76.73,
+      "mode": "empty",
+      "state": "pending",
+      "health": "ok",
+      "lastError": null,
+      "alerts": [
+        {
+          "state": "Pending (NoData)",
+          "labels": {
+            "alertname": "Native state fixture",
+            "datasource_uid": "alert-fixture",
+            "grafana_folder": "Alert Fixtures",
+            "ref_id": "A",
+            "service": "authored-fixture"
+          },
+          "activeAt": "2026-11-01T19:13:30+03:00"
+        },
+        {
+          "state": "Normal",
+          "labels": {
+            "alertname": "Native state fixture",
+            "grafana_folder": "Alert Fixtures",
+            "instance": "fixture",
+            "service": "authored-fixture"
+          },
+          "activeAt": "2026-11-01T19:13:20+03:00"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 81.79,
+      "mode": "empty",
+      "state": "pending",
+      "health": "ok",
+      "lastError": null,
+      "alerts": [
+        {
+          "state": "Pending (NoData)",
+          "labels": {
+            "alertname": "Native state fixture",
+            "datasource_uid": "alert-fixture",
+            "grafana_folder": "Alert Fixtures",
+            "ref_id": "A",
+            "service": "authored-fixture"
+          },
+          "activeAt": "2026-11-01T19:13:30+03:00"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 96.96,
+      "mode": "empty",
+      "state": "inactive",
+      "health": "nodata",
+      "lastError": null,
+      "alerts": [
+        {
+          "state": "NoData",
+          "labels": {
+            "alertname": "Native state fixture",
+            "datasource_uid": "alert-fixture",
+            "grafana_folder": "Alert Fixtures",
+            "ref_id": "A",
+            "service": "authored-fixture"
+          },
+          "activeAt": "2026-11-01T19:13:50+03:00"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 96.97,
+      "mode": "low",
+      "state": "inactive",
+      "health": "nodata",
+      "lastError": null,
+      "alerts": [
+        {
+          "state": "NoData",
+          "labels": {
+            "alertname": "Native state fixture",
+            "datasource_uid": "alert-fixture",
+            "grafana_folder": "Alert Fixtures",
+            "ref_id": "A",
+            "service": "authored-fixture"
+          },
+          "activeAt": "2026-11-01T19:13:50+03:00"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 102.02,
+      "mode": "low",
+      "state": "inactive",
+      "health": "ok",
+      "lastError": null,
+      "alerts": [
+        {
+          "state": "Normal",
+          "labels": {
+            "alertname": "Native state fixture",
+            "grafana_folder": "Alert Fixtures",
+            "instance": "fixture",
+            "service": "authored-fixture"
+          },
+          "activeAt": "2026-11-01T19:14:00+03:00"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 102.03,
+      "mode": "error",
+      "state": "inactive",
+      "health": "ok",
+      "lastError": null,
+      "alerts": [
+        {
+          "state": "Normal",
+          "labels": {
+            "alertname": "Native state fixture",
+            "grafana_folder": "Alert Fixtures",
+            "instance": "fixture",
+            "service": "authored-fixture"
+          },
+          "activeAt": "2026-11-01T19:14:00+03:00"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 116.69,
+      "mode": "error",
+      "state": "pending",
+      "health": "error",
+      "lastError": "[sse.dataQueryError] failed to execute query [A]: unexpected response with status code 500: authored source failure",
+      "alerts": [
+        {
+          "state": "Pending (Error)",
+          "labels": {
+            "alertname": "Native state fixture",
+            "datasource_uid": "alert-fixture",
+            "grafana_folder": "Alert Fixtures",
+            "ref_id": "A",
+            "service": "authored-fixture"
+          },
+          "activeAt": "2026-11-01T19:14:10+03:00"
+        },
+        {
+          "state": "Normal",
+          "labels": {
+            "alertname": "Native state fixture",
+            "grafana_folder": "Alert Fixtures",
+            "instance": "fixture",
+            "service": "authored-fixture"
+          },
+          "activeAt": "2026-11-01T19:14:00+03:00"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 121.75,
+      "mode": "error",
+      "state": "pending",
+      "health": "error",
+      "lastError": "[sse.dataQueryError] failed to execute query [A]: unexpected response with status code 500: authored source failure",
+      "alerts": [
+        {
+          "state": "Pending (Error)",
+          "labels": {
+            "alertname": "Native state fixture",
+            "datasource_uid": "alert-fixture",
+            "grafana_folder": "Alert Fixtures",
+            "ref_id": "A",
+            "service": "authored-fixture"
+          },
+          "activeAt": "2026-11-01T19:14:10+03:00"
+        }
+      ]
+    },
+    {
+      "elapsed_seconds": 136.92,
+      "mode": "error",
+      "state": "inactive",
+      "health": "error",
+      "lastError": "[sse.dataQueryError] failed to execute query [A]: unexpected response with status code 500: authored source failure",
+      "alerts": [
+        {
+          "state": "Error",
+          "labels": {
+            "alertname": "Native state fixture",
+            "datasource_uid": "alert-fixture",
+            "grafana_folder": "Alert Fixtures",
+            "ref_id": "A",
+            "service": "authored-fixture"
+          },
+          "activeAt": "2026-11-01T19:14:30+03:00"
+        }
+      ]
+    }
+  ],
+  "webhooks": [
+    {
+      "elapsed_seconds": 36.66,
+      "payload": {
+        "receiver": "OwnLoopback",
+        "status": "firing",
+        "alerts": [
+          {
+            "status": "firing",
+            "labels": {
+              "alertname": "Native state fixture",
+              "grafana_folder": "Alert Fixtures",
+              "instance": "fixture",
+              "service": "authored-fixture"
+            },
+            "annotations": {
+              "summary": "Own loopback test only"
+            },
+            "startsAt": "2026-11-01T19:12:50+03:00",
+            "endsAt": "0001-01-01T00:00:00Z",
+            "generatorURL": "http://127.0.0.1:51689/alerting/grafana/native-state-rule/view?orgId=1",
+            "fingerprint": "7c6ea49585fdac29",
+            "silenceURL": "http://127.0.0.1:51689/alerting/silence/new?alertmanager=grafana&matcher=__alert_rule_uid__%3Dnative-state-rule&matcher=instance%3Dfixture&matcher=service%3Dauthored-fixture&orgId=1",
+            "dashboardURL": "",
+            "panelURL": "",
+            "ruleUID": "native-state-rule",
+            "values": {
+              "A": 0.9,
+              "B": 0.9,
+              "C": 1
+            },
+            "valueString": "[ var='A' labels={instance=fixture} type='query' value=0.9 ], [ var='B' labels={instance=fixture} type='reduce' value=0.9 ], [ var='C' labels={instance=fixture} type='threshold' value=1 ]",
+            "orgId": 1
+          }
+        ],
+        "groupLabels": {
+          "alertname": "Native state fixture"
+        },
+        "commonLabels": {
+          "alertname": "Native state fixture",
+          "grafana_folder": "Alert Fixtures",
+          "instance": "fixture",
+          "service": "authored-fixture"
+        },
+        "commonAnnotations": {
+          "summary": "Own loopback test only"
+        },
+        "externalURL": "http://127.0.0.1:51689/",
+        "appVersion": "13.3.0",
+        "version": "1",
+        "groupKey": "{}:{alertname=\"Native state fixture\"}",
+        "truncatedAlerts": 0,
+        "orgId": 1,
+        "title": "[FIRING:1] Native state fixture (Alert Fixtures fixture authored-fixture)",
+        "state": "alerting",
+        "message": "**Firing**\n\nValue: A=0.9, B=0.9, C=1\nLabels:\n - alertname = Native state fixture\n - grafana_folder = Alert Fixtures\n - instance = fixture\n - service = authored-fixture\nAnnotations:\n - summary = Own loopback test only\nSource: http://127.0.0.1:51689/alerting/grafana/native-state-rule/view?orgId=1\nSilence: http://127.0.0.1:51689/alerting/silence/new?alertmanager=grafana&matcher=__alert_rule_uid__%3Dnative-state-rule&matcher=instance%3Dfixture&matcher=service%3Dauthored-fixture&orgId=1\n"
+      }
+    },
+    {
+      "elapsed_seconds": 61.66,
+      "payload": {
+        "receiver": "OwnLoopback",
+        "status": "resolved",
+        "alerts": [
+          {
+            "status": "resolved",
+            "labels": {
+              "alertname": "Native state fixture",
+              "grafana_folder": "Alert Fixtures",
+              "instance": "fixture",
+              "service": "authored-fixture"
+            },
+            "annotations": {
+              "summary": "Own loopback test only"
+            },
+            "startsAt": "2026-11-01T19:12:50+03:00",
+            "endsAt": "2026-11-01T19:13:20+03:00",
+            "generatorURL": "http://127.0.0.1:51689/alerting/grafana/native-state-rule/view?orgId=1",
+            "fingerprint": "7c6ea49585fdac29",
+            "silenceURL": "http://127.0.0.1:51689/alerting/silence/new?alertmanager=grafana&matcher=__alert_rule_uid__%3Dnative-state-rule&matcher=instance%3Dfixture&matcher=service%3Dauthored-fixture&orgId=1",
+            "dashboardURL": "",
+            "panelURL": "",
+            "ruleUID": "native-state-rule",
+            "values": {
+              "A": 0.2,
+              "B": 0.2,
+              "C": 0
+            },
+            "valueString": "[ var='A' labels={instance=fixture} type='query' value=0.2 ], [ var='B' labels={instance=fixture} type='reduce' value=0.2 ], [ var='C' labels={instance=fixture} type='threshold' value=0 ]",
+            "orgId": 1
+          }
+        ],
+        "groupLabels": {
+          "alertname": "Native state fixture"
+        },
+        "commonLabels": {
+          "alertname": "Native state fixture",
+          "grafana_folder": "Alert Fixtures",
+          "instance": "fixture",
+          "service": "authored-fixture"
+        },
+        "commonAnnotations": {
+          "summary": "Own loopback test only"
+        },
+        "externalURL": "http://127.0.0.1:51689/",
+        "appVersion": "13.3.0",
+        "version": "1",
+        "groupKey": "{}:{alertname=\"Native state fixture\"}",
+        "truncatedAlerts": 0,
+        "orgId": 1,
+        "title": "[RESOLVED] Native state fixture (Alert Fixtures fixture authored-fixture)",
+        "state": "ok",
+        "message": "**Resolved**\n\nValue: A=0.2, B=0.2, C=0\nLabels:\n - alertname = Native state fixture\n - grafana_folder = Alert Fixtures\n - instance = fixture\n - service = authored-fixture\nAnnotations:\n - summary = Own loopback test only\nSource: http://127.0.0.1:51689/alerting/grafana/native-state-rule/view?orgId=1\nSilence: http://127.0.0.1:51689/alerting/silence/new?alertmanager=grafana&matcher=__alert_rule_uid__%3Dnative-state-rule&matcher=instance%3Dfixture&matcher=service%3Dauthored-fixture&orgId=1\n"
+      }
+    },
+    {
+      "elapsed_seconds": 96.65,
+      "payload": {
+        "receiver": "OwnLoopback",
+        "status": "firing",
+        "alerts": [
+          {
+            "status": "firing",
+            "labels": {
+              "alertname": "DatasourceNoData",
+              "datasource_uid": "alert-fixture",
+              "grafana_folder": "Alert Fixtures",
+              "ref_id": "A",
+              "rulename": "Native state fixture",
+              "service": "authored-fixture"
+            },
+            "annotations": {
+              "summary": "Own loopback test only"
+            },
+            "startsAt": "2026-11-01T19:13:50+03:00",
+            "endsAt": "0001-01-01T00:00:00Z",
+            "generatorURL": "http://127.0.0.1:51689/alerting/grafana/native-state-rule/view?orgId=1",
+            "fingerprint": "10fb132f3fbf3ee8",
+            "silenceURL": "http://127.0.0.1:51689/alerting/silence/new?alertmanager=grafana&matcher=__alert_rule_uid__%3Dnative-state-rule&matcher=datasource_uid%3Dalert-fixture&matcher=ref_id%3DA&matcher=rulename%3DNative+state+fixture&matcher=service%3Dauthored-fixture&orgId=1",
+            "dashboardURL": "",
+            "panelURL": "",
+            "ruleUID": "native-state-rule",
+            "values": null,
+            "valueString": "",
+            "orgId": 1
+          }
+        ],
+        "groupLabels": {
+          "alertname": "DatasourceNoData"
+        },
+        "commonLabels": {
+          "alertname": "DatasourceNoData",
+          "datasource_uid": "alert-fixture",
+          "grafana_folder": "Alert Fixtures",
+          "ref_id": "A",
+          "rulename": "Native state fixture",
+          "service": "authored-fixture"
+        },
+        "commonAnnotations": {
+          "summary": "Own loopback test only"
+        },
+        "externalURL": "http://127.0.0.1:51689/",
+        "appVersion": "13.3.0",
+        "version": "1",
+        "groupKey": "{}:{alertname=\"DatasourceNoData\"}",
+        "truncatedAlerts": 0,
+        "orgId": 1,
+        "title": "[FIRING:1] DatasourceNoData (alert-fixture Alert Fixtures A Native state fixture authored-fixture)",
+        "state": "alerting",
+        "message": "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = DatasourceNoData\n - datasource_uid = alert-fixture\n - grafana_folder = Alert Fixtures\n - ref_id = A\n - rulename = Native state fixture\n - service = authored-fixture\nAnnotations:\n - summary = Own loopback test only\nSource: http://127.0.0.1:51689/alerting/grafana/native-state-rule/view?orgId=1\nSilence: http://127.0.0.1:51689/alerting/silence/new?alertmanager=grafana&matcher=__alert_rule_uid__%3Dnative-state-rule&matcher=datasource_uid%3Dalert-fixture&matcher=ref_id%3DA&matcher=rulename%3DNative+state+fixture&matcher=service%3Dauthored-fixture&orgId=1\n"
+      }
+    },
+    {
+      "elapsed_seconds": 101.65,
+      "payload": {
+        "receiver": "OwnLoopback",
+        "status": "resolved",
+        "alerts": [
+          {
+            "status": "resolved",
+            "labels": {
+              "alertname": "DatasourceNoData",
+              "datasource_uid": "alert-fixture",
+              "grafana_folder": "Alert Fixtures",
+              "ref_id": "A",
+              "rulename": "Native state fixture",
+              "service": "authored-fixture"
+            },
+            "annotations": {
+              "grafana_state_reason": "MissingSeries",
+              "summary": "Own loopback test only"
+            },
+            "startsAt": "2026-11-01T19:13:50+03:00",
+            "endsAt": "2026-11-01T19:14:00+03:00",
+            "generatorURL": "http://127.0.0.1:51689/alerting/grafana/native-state-rule/view?orgId=1",
+            "fingerprint": "10fb132f3fbf3ee8",
+            "silenceURL": "http://127.0.0.1:51689/alerting/silence/new?alertmanager=grafana&matcher=__alert_rule_uid__%3Dnative-state-rule&matcher=datasource_uid%3Dalert-fixture&matcher=ref_id%3DA&matcher=rulename%3DNative+state+fixture&matcher=service%3Dauthored-fixture&orgId=1",
+            "dashboardURL": "",
+            "panelURL": "",
+            "ruleUID": "native-state-rule",
+            "values": null,
+            "valueString": "",
+            "orgId": 1
+          }
+        ],
+        "groupLabels": {
+          "alertname": "DatasourceNoData"
+        },
+        "commonLabels": {
+          "alertname": "DatasourceNoData",
+          "datasource_uid": "alert-fixture",
+          "grafana_folder": "Alert Fixtures",
+          "ref_id": "A",
+          "rulename": "Native state fixture",
+          "service": "authored-fixture"
+        },
+        "commonAnnotations": {
+          "grafana_state_reason": "MissingSeries",
+          "summary": "Own loopback test only"
+        },
+        "externalURL": "http://127.0.0.1:51689/",
+        "appVersion": "13.3.0",
+        "version": "1",
+        "groupKey": "{}:{alertname=\"DatasourceNoData\"}",
+        "truncatedAlerts": 0,
+        "orgId": 1,
+        "title": "[RESOLVED] DatasourceNoData (alert-fixture Alert Fixtures A Native state fixture authored-fixture)",
+        "state": "ok",
+        "message": "**Resolved**\n\nValue: [no value]\nLabels:\n - alertname = DatasourceNoData\n - datasource_uid = alert-fixture\n - grafana_folder = Alert Fixtures\n - ref_id = A\n - rulename = Native state fixture\n - service = authored-fixture\nAnnotations:\n - grafana_state_reason = MissingSeries\n - summary = Own loopback test only\nSource: http://127.0.0.1:51689/alerting/grafana/native-state-rule/view?orgId=1\nSilence: http://127.0.0.1:51689/alerting/silence/new?alertmanager=grafana&matcher=__alert_rule_uid__%3Dnative-state-rule&matcher=datasource_uid%3Dalert-fixture&matcher=ref_id%3DA&matcher=rulename%3DNative+state+fixture&matcher=service%3Dauthored-fixture&orgId=1\n"
+      }
+    },
+    {
+      "elapsed_seconds": 136.65,
+      "payload": {
+        "receiver": "OwnLoopback",
+        "status": "firing",
+        "alerts": [
+          {
+            "status": "firing",
+            "labels": {
+              "alertname": "DatasourceError",
+              "datasource_uid": "alert-fixture",
+              "grafana_folder": "Alert Fixtures",
+              "ref_id": "A",
+              "rulename": "Native state fixture",
+              "service": "authored-fixture"
+            },
+            "annotations": {
+              "Error": "[sse.dataQueryError] failed to execute query [A]: unexpected response with status code 500: authored source failure",
+              "summary": "Own loopback test only"
+            },
+            "startsAt": "2026-11-01T19:14:30+03:00",
+            "endsAt": "0001-01-01T00:00:00Z",
+            "generatorURL": "http://127.0.0.1:51689/alerting/grafana/native-state-rule/view?orgId=1",
+            "fingerprint": "9e3507484d6d1f29",
+            "silenceURL": "http://127.0.0.1:51689/alerting/silence/new?alertmanager=grafana&matcher=__alert_rule_uid__%3Dnative-state-rule&matcher=datasource_uid%3Dalert-fixture&matcher=ref_id%3DA&matcher=rulename%3DNative+state+fixture&matcher=service%3Dauthored-fixture&orgId=1",
+            "dashboardURL": "",
+            "panelURL": "",
+            "ruleUID": "native-state-rule",
+            "values": null,
+            "valueString": "",
+            "orgId": 1
+          }
+        ],
+        "groupLabels": {
+          "alertname": "DatasourceError"
+        },
+        "commonLabels": {
+          "alertname": "DatasourceError",
+          "datasource_uid": "alert-fixture",
+          "grafana_folder": "Alert Fixtures",
+          "ref_id": "A",
+          "rulename": "Native state fixture",
+          "service": "authored-fixture"
+        },
+        "commonAnnotations": {
+          "Error": "[sse.dataQueryError] failed to execute query [A]: unexpected response with status code 500: authored source failure",
+          "summary": "Own loopback test only"
+        },
+        "externalURL": "http://127.0.0.1:51689/",
+        "appVersion": "13.3.0",
+        "version": "1",
+        "groupKey": "{}:{alertname=\"DatasourceError\"}",
+        "truncatedAlerts": 0,
+        "orgId": 1,
+        "title": "[FIRING:1] DatasourceError (alert-fixture Alert Fixtures A Native state fixture authored-fixture)",
+        "state": "alerting",
+        "message": "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = DatasourceError\n - datasource_uid = alert-fixture\n - grafana_folder = Alert Fixtures\n - ref_id = A\n - rulename = Native state fixture\n - service = authored-fixture\nAnnotations:\n - Error = [sse.dataQueryError] failed to execute query [A]: unexpected response with status code 500: authored source failure\n - summary = Own loopback test only\nSource: http://127.0.0.1:51689/alerting/grafana/native-state-rule/view?orgId=1\nSilence: http://127.0.0.1:51689/alerting/silence/new?alertmanager=grafana&matcher=__alert_rule_uid__%3Dnative-state-rule&matcher=datasource_uid%3Dalert-fixture&matcher=ref_id%3DA&matcher=rulename%3DNative+state+fixture&matcher=service%3Dauthored-fixture&orgId=1\n"
+      }
+    }
+  ]
+}

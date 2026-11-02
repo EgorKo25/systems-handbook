@@ -1,0 +1,194 @@
+<header><h1>Полный путь запроса панели: от браузера до координат на экране</h1><p>Одна линия проходит через несколько процессов и форматов. Проследим реальный запрос Grafana 13.3.0, проверим каждое поле и отделим работу модуля Prometheus от вычисления PromQL.</p></header>
+<h2>Участники и единицы данных</h2>
+<p>Панель — сохранённое описание запросов и отображения. Браузер получает JSON доски, выбирает диапазон времени и значения переменных. Запрос панели, в модели называемый target, содержит выражение и refId: локальное имя результата, например A. Идентификатор источника данных prom-local указывает сохранённое подключение с URL и правами. Он позволяет перенести доску без встраивания пароля или адреса сервера в каждое выражение.</p>
+<p>Серверная часть Grafana принимает авторизованный запрос, проверяет право обращаться к источнику, читает конфигурацию подключения и расшифровывает необходимые секреты. Встроенный модуль Prometheus переводит запрос Grafana в HTTP API Prometheus. Последний выбирает измерения и исполняет PromQL. Затем модуль переводит ответ в таблицу данных Grafana: data frame, структуру с описанием полей и одинаковой длиной столбцов значений. В браузере таблица проходит настроенные преобразования и отрисовку.</p>
+<p>Модуль расширения, plugin, — код, добавляющий источник, панель или приложение. В данном проходе используется встроенный модуль Prometheus без дополнительной установки. Его серверный HTTP-клиент, а не браузер читателя, обращается к URL источника. Поэтому 127.0.0.1 в подключении означает машину процесса Grafana. Секрет источника браузеру для отображения линии не нужен.</p>
+<h2>Точный JSON, отправленный в Grafana</h2>
+<p>Этот блок создаётся из той же функции labs/query_payload.py, что и запрос фактического теста. Проверка источников извлекает видимый текст HTML и выполняет json.loads, затем сравнивает объект с функцией. Вложенные кавычки выражения экранированы обратным слешем по JSON, а HTML дополнительно кодирует их как сущности.</p>
+<pre id="grafana-query-payload"><code>{
+  &quot;from&quot;: &quot;1700000000000&quot;,
+  &quot;to&quot;: &quot;1700000030000&quot;,
+  &quot;queries&quot;: [
+    {
+      &quot;refId&quot;: &quot;A&quot;,
+      &quot;expr&quot;: &quot;lab_inflight_requests{job=\&quot;go-lab\&quot;}&quot;,
+      &quot;range&quot;: true,
+      &quot;instant&quot;: false,
+      &quot;format&quot;: &quot;time_series&quot;,
+      &quot;datasource&quot;: {
+        &quot;type&quot;: &quot;prometheus&quot;,
+        &quot;uid&quot;: &quot;prom-local&quot;
+      },
+      &quot;intervalMs&quot;: 15000,
+      &quot;maxDataPoints&quot;: 120
+    }
+  ]
+}</code></pre>
+<table><thead><tr><th>Поле</th><th>Что означает и где действует</th></tr></thead><tbody>
+<tr><td>from/to</td><td>Строки с миллисекундами от Unix epoch. Их разность 30000 означает диапазон 30 секунд. Это время запроса, а не срок ожидания ответа.</td></tr>
+<tr><td>queries</td><td>Массив отдельных запросов. Несколько элементов могут выполняться независимо; буквы A/B не создают общей транзакции внешнего сервера.</td></tr>
+<tr><td>refId=A</td><td>Имя, по которому результат вернётся в results.A. Это не имя метрики и не идентификатор доски.</td></tr>
+<tr><td>datasource.type/uid</td><td>Тип модуля prometheus и постоянный идентификатор подключения prom-local. URL и секрет читаются на сервере из конфигурации этого подключения.</td></tr>
+<tr><td>expr</td><td>Текст PromQL. В примере селектор lab_inflight_requests с ограничением job. Grafana не заменяет PromQL собственной реализацией rate.</td></tr>
+<tr><td>range=true,instant=false</td><td>Выбран запрос по сетке времени через query_range. Мгновенный запрос использует query с одним моментом time; он тоже может содержать сложную агрегацию.</td></tr>
+<tr><td>intervalMs=15000</td><td>Подготовленный интервал 15 секунд. Модуль учитывает его при выборе шага. Это не изменение scrape_interval Prometheus.</td></tr>
+<tr><td>maxDataPoints=120</td><td>Целевой бюджет точек для подготовки запроса, а не универсальный запрет получить 121 строку от любого источника.</td></tr>
+<tr><td>format=time_series</td><td>Запрошено представление временных рядов. Поля ответа всё равно описаны явной схемой.</td></tr>
+</tbody></table>
+<h2>Внешний запрос и одна таблица измерений</h2>
+<p>Тест запускает настоящий Grafana 13.3.0 и собственный HTTP-имитатор Prometheus на loopback. Внешний запрос ниже перехвачен имитатором. Заголовок с искусственным секретом скрыт; фиксируется только факт его правильного получения. Имитация отвечает 401 при отсутствии правильного заголовка. Поэтому этот результат проверяет конкретную передачу расшифрованного секрета, а не просто HTTP 200.</p>
+<pre><code>{
+  &quot;path&quot;: &quot;/api/v1/query_range&quot;,
+  &quot;decoded_form&quot;: {
+    &quot;query&quot;: &quot;lab_inflight_requests{job=\&quot;go-lab\&quot;}&quot;,
+    &quot;start&quot;: 1699999995,
+    &quot;end&quot;: 1700000025,
+    &quot;step&quot;: 15
+  },
+  &quot;has_fixture_header&quot;: true
+}</code></pre>
+<p>В запросе к Prometheus start/end выражены в секундах, а не миллисекундах. Исходные границы 1700000000..1700000030 модуль выровнял вниз на сетку 15 секунд:1699999995..1700000025. Это наблюдение выбранной версии и настроек. Оно объясняет, почему визуально выбранный диапазон и точные параметры HTTP могут отличаться. Проверять их следует в инспекторе запросов, а не догадкой по ширине панели.</p>
+<p>Авторская исходная таблица имитатора состоит из четырёх пар: [1699999980,0], [1699999995,1], [1700000010,2], [1700000025,3]. Имитатор выбирает только заданные точки, попавшие на start+n×step и в диапазон. Он не разбирает PromQL, не реализует поиск последнего измерения, staleness или rate. На шаге 15 он возвращает три пары [1699999995,&quot;1&quot;], [1700000010,&quot;2&quot;], [1700000025,&quot;3&quot;]. В настоящем Prometheus аналогичную форму matrix возвращает его движок после выполнения выражения.</p>
+<h2>Реальная схема и данные ответа Grafana</h2>
+<p>Ниже сохранён фактический ответ встроенного модуля на эти три пары. Имя числового поля здесь lab_inflight_requests, а не обязательно буквальное Value: нельзя писать клиент, предполагающий одно имя для всех источников.</p>
+<pre id="grafana-query-frame"><code>{
+  &quot;results&quot;: {
+    &quot;A&quot;: {
+      &quot;status&quot;: 200,
+      &quot;frames&quot;: [
+        {
+          &quot;schema&quot;: {
+            &quot;refId&quot;: &quot;A&quot;,
+            &quot;meta&quot;: {
+              &quot;type&quot;: &quot;timeseries-multi&quot;,
+              &quot;typeVersion&quot;: [
+                0,
+                1
+              ],
+              &quot;custom&quot;: {
+                &quot;calculatedMinStep&quot;: 15000,
+                &quot;resultType&quot;: &quot;matrix&quot;
+              },
+              &quot;executedQueryString&quot;: &quot;Expr: lab_inflight_requests{job=\&quot;go-lab\&quot;}\nStep: 15s&quot;
+            },
+            &quot;fields&quot;: [
+              {
+                &quot;name&quot;: &quot;Time&quot;,
+                &quot;type&quot;: &quot;time&quot;,
+                &quot;typeInfo&quot;: {
+                  &quot;frame&quot;: &quot;time.Time&quot;
+                },
+                &quot;config&quot;: {
+                  &quot;interval&quot;: 15000
+                }
+              },
+              {
+                &quot;name&quot;: &quot;lab_inflight_requests&quot;,
+                &quot;type&quot;: &quot;number&quot;,
+                &quot;typeInfo&quot;: {
+                  &quot;frame&quot;: &quot;float64&quot;
+                },
+                &quot;labels&quot;: {
+                  &quot;__name__&quot;: &quot;lab_inflight_requests&quot;,
+                  &quot;instance&quot;: &quot;127.0.0.1:18080&quot;,
+                  &quot;job&quot;: &quot;go-lab&quot;
+                },
+                &quot;config&quot;: {
+                  &quot;displayNameFromDS&quot;: &quot;lab_inflight_requests{instance=\&quot;127.0.0.1:18080\&quot;, job=\&quot;go-lab\&quot;}&quot;
+                }
+              }
+            ]
+          },
+          &quot;data&quot;: {
+            &quot;values&quot;: [
+              [
+                1699999995000,
+                1700000010000,
+                1700000025000
+              ],
+              [
+                1,
+                2,
+                3
+              ]
+            ]
+          }
+        }
+      ]
+    }
+  }
+}</code></pre>
+<p>results.A связывает ответ с refId=A запроса. status200 относится к результату запроса; при нескольких запросах нужно осматривать каждый результат, а не только общий HTTP-код. frames — массив таблиц: один ряд Prometheus обычно становится одной таблицей в данном формате timeseries-multi. schema описывает тип и поля, data.values содержит столбцы, не строки.</p>
+<p>Первый столбец соответствует schema.fields[0], полю Time типа time. Числа 1699999995000,1700000010000,1700000025000 — те же времена в миллисекундах: умножение секунд на 1000 произошло при преобразовании ответа. Второй столбец соответствует числовому полю с type=number: строковые значения Prometheus &quot;1&quot;/&quot;2&quot;/&quot;3&quot; стали числами 1/2/3. Оба столбца имеют длину 3, значит таблица содержит три строки. labels принадлежат числовому полю и описывают идентичность ряда; job/instance не являются дополнительными измеренными числами.</p>
+<p>meta.custom.resultType=matrix отражает форму внешнего ответа. calculatedMinStep=15000 и config.interval=15000 выражены в миллисекундах; executedQueryString записывает выражение и Step:15s для диагностики. displayNameFromDS даёт предлагаемую подпись, которую панель может переопределить. Эти метаданные помогают расследованию, но не доказывают, что выражение верно измеряет бизнес-смысл.</p>
+<h2>Тот же диапазон, intervalMs=30000</h2>
+<p>Второй запрос меняет только intervalMs с 15000 на 30000. maxDataPoints120 и исходная авторская таблица остаются теми же. Реальный модуль передал step30, start1699999980,end1700000010. Имитатор вернул точки 0 и 2, поскольку это узлы новой сетки; никакое среднее 1/2/3 не вычислялось.</p>
+<pre><code>{
+  &quot;upstream&quot;: {
+    &quot;path&quot;: &quot;/api/v1/query_range&quot;,
+    &quot;body&quot;: &quot;end=1700000010&amp;query=lab_inflight_requests%7Bjob%3D%22go-lab%22%7D&amp;start=1699999980&amp;step=30&quot;,
+    &quot;has_fixture_header&quot;: true
+  },
+  &quot;frame&quot;: {
+    &quot;schema&quot;: {
+      &quot;refId&quot;: &quot;A&quot;,
+      &quot;meta&quot;: {
+        &quot;type&quot;: &quot;timeseries-multi&quot;,
+        &quot;typeVersion&quot;: [
+          0,
+          1
+        ],
+        &quot;custom&quot;: {
+          &quot;calculatedMinStep&quot;: 30000,
+          &quot;resultType&quot;: &quot;matrix&quot;
+        },
+        &quot;executedQueryString&quot;: &quot;Expr: lab_inflight_requests{job=\&quot;go-lab\&quot;}\nStep: 30s&quot;
+      },
+      &quot;fields&quot;: [
+        {
+          &quot;name&quot;: &quot;Time&quot;,
+          &quot;type&quot;: &quot;time&quot;,
+          &quot;typeInfo&quot;: {
+            &quot;frame&quot;: &quot;time.Time&quot;
+          },
+          &quot;config&quot;: {
+            &quot;interval&quot;: 30000
+          }
+        },
+        {
+          &quot;name&quot;: &quot;lab_inflight_requests&quot;,
+          &quot;type&quot;: &quot;number&quot;,
+          &quot;typeInfo&quot;: {
+            &quot;frame&quot;: &quot;float64&quot;
+          },
+          &quot;labels&quot;: {
+            &quot;__name__&quot;: &quot;lab_inflight_requests&quot;,
+            &quot;instance&quot;: &quot;127.0.0.1:18080&quot;,
+            &quot;job&quot;: &quot;go-lab&quot;
+          },
+          &quot;config&quot;: {
+            &quot;displayNameFromDS&quot;: &quot;lab_inflight_requests{instance=\&quot;127.0.0.1:18080\&quot;, job=\&quot;go-lab\&quot;}&quot;
+          }
+        }
+      ]
+    },
+    &quot;data&quot;: {
+      &quot;values&quot;: [
+        [
+          1699999980000,
+          1700000010000
+        ],
+        [
+          0,
+          2
+        ]
+      ]
+    }
+  }
+}</code></pre>
+<p>Теперь оба столбца имеют длину 2, calculatedMinStep/config.interval равны 30000. Изменилось число вычислительных моментов и выравнивание границ. В настоящем Prometheus более крупный step уменьшает число вычислений выражения, но не изменяет уже сохранённые исходные измерения и не гарантирует, что узкий пик попадёт в сетку. Если нужно максимум за окно, смысл задаёт функция вроде max_over_time, а не надежда на автоматическое усреднение шагом. Два запроса здесь доказывают перевод параметров и формата в Grafana; семантика движка отдельно разобрана в <a href="../prometheus/index.html#prom-08-time-evaluation">томе Prometheus</a>.</p>
+<h2>От таблицы данных к изображению</h2>
+<p>Браузер получает столбцы, применяет transformations — заданные преобразования таблиц, например фильтрацию, соединение или сведение. Далее field overrides меняют настройки выбранных полей: подпись, единицу, ось, цвет. Настройка единицы меняет отображение числа; единица bytes не превращает секунды в байты и не исправляет исходное выражение. Рендерер сопоставляет время с горизонтальной координатой, значение с вертикальной, строит линию и подсказку. Разрывы и null требуют явной политики; соседние главы разбирают её отдельно.</p>
+<p>Серверный вычислитель тревог не запускает браузерные преобразования и переменные доски. Условие, зависящее от соединения таблиц в панели, нужно заново выразить серверным запросом или вычислением. Инспектор запросов показывает запрос, ответ, статистику и данные, но успешный кадр ещё не проверяет подпись оси, null или результат браузерного соединения.</p>
+<p>Пустая линия диагностируется последовательно: отправлен ли запрос браузером; прошли ли вход и проверка прав; доступен ли источник; успешен ли status внешнего JSON; есть ли строки; не отфильтровало ли их преобразование; не скрыт ли диапазон осью. Увеличение частоты обновления не устраняет ошибку селектора или права 403. Для отчёта достаточно очищенных от секретов UID/refId, времени/выражения, внешнего кода, схемы и количества строк. Cookies, заголовки авторизации и приватные значения меток не публикуют.</p>
+<p class="source-note">Первичные источники, проверено 01.11.2026: <a href="https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/data_source/">API источников данных</a>, <a href="https://grafana.com/docs/grafana/latest/datasources/prometheus/query-editor/">Редактор запросов Prometheus</a>, <a href="https://grafana.com/developers/plugin-tools/key-concepts/data-frames">Структура data frame</a>. Фактические запросы и ответы: labs/verified-native.json, воспроизведение: labs/native_check.py.</p>

@@ -1,0 +1,145 @@
+Terraform — журнал реально выполненных проверок
+Дата: 1 ноября 2026. Это исходники отдельного тома; общий build не запускался.
+
+1. Дистрибутив (реально)
+Terraform 1.17.1, linux_amd64, опубликован 28.10.2026.
+Источник: https://releases.hashicorp.com/terraform/1.17.1/
+Архив: terraform_1.17.1_linux_amd64.zip
+SHA-256: 4638628058e71a55212b1c563712eac03b902128f40740f3dc8174df12135061
+Сверен с SHA256SUMS; GPG detached signature SHA256SUMS проверена.
+Primary fingerprint:
+C874 011F 0AB4 0511 0D02 1055 3436 5D94 72D7 468F
+Signing subkey:
+374E C75B 4859 1360 4A83 1CC7 C820 C6D5 CD27 AB87
+Результат: Good signature. Локальный owner trust unknown оставлен как есть;
+доверие не повышалось ради скрытия предупреждения. Fingerprint сверялся с
+официальным руководством verify-hashicorp-binary. Binary распакован только
+в собственную временную область, системные службы/PATH хоста не менялись.
+terraform version -json: terraform_version 1.17.1, platform linux_amd64.
+
+2. Основная лаборатория (реальное выполнение CLI)
+Из корня репозитория, подготовленный binary в PATH:
+python3 terraform/labs/check.py --terraform terraform
+Для записи результата: добавить --report terraform/labs/check-results.json
+Результат: 15 PASS. Полный перечень в check-results.json.
+Одна продолжаемая цепочка собственного TemporaryDirectory, без reset после
+ошибок; удаление только своей области после завершения:
+- fmt/check, init, validate без внешнего provider;
+- saved plan → apply → пустой detailed plan;
+- изменение unmanaged rendered-файла даёт пустой plan (ожидаемый предел);
+- explicit replace исправляет creation effect;
+- input update сохраняет ID и НЕ перезапускает writer;
+- moved service→node сохраняет оба ID;
+- stale saved plan отвергнут после другого apply;
+- конкурентный plan отвергнут во время настоящего local state lock;
+- partial apply сохранил b2 у services и tainted у failed gate;
+- fail_gate=false продолжил тот же state до пустого плана;
+- lower serial state push отвергнут, force не использовался;
+- явный snapshot/restore вернул source/state/files, прежняя область сохранена;
+- plan JSON подтверждает delete/create и create/delete при lifecycle;
+- prevent_destroy отвергает replacement;
+- destroy выполнен только для terraform_data собственного временного state.
+После добавления validations ключей/build тест повторён на итоговых исходниках.
+
+3. HCL/state fixtures (реальное выполнение CLI)
+python3 terraform/labs/check_language.py --terraform terraform --report terraform/labs/language-results.json
+Результат: 10 PASS, отдельные собственные временные fixture-каталоги:
+unknown key отказ/known key успех; cycle отказ; диапазон/дробный port отказ;
+sensitive скрыт в обычном stdout, но dummy value есть в state и JSON output;
+removed destroy=false забывает association; возврат старого текста предлагает
+create; import block terraform_data возвращает ID, config возвращает input;
+ignore_changes input.port подавляет коррекцию; count сдвигает позиции,
+for_each сохраняет worker по стабильному ключу.
+Dummy sensitive string специально не является настоящим секретом.
+Импорт terraform_data не доказывает import VM/API discovery.
+
+4. CLI cards (реальная справка CLI)
+python3 terraform/tests/check_cli_help.py --terraform terraform --report terraform/tests/cli-help-results.json
+Проверены 25 команд и 38 имён флагов по -help реально скачанного 1.17.1.
+Совпадение имени не означает испытания всех сочетаний/удалённых backend.
+
+5. Libvirt-адаптер (реальная schema/validate; никакого libvirt API)
+CLI 1.17.1; community dmacvicar/libvirt 0.9.9 linux_amd64.
+В собственной временной копии:
+init -backend=false -input=false; validate; providers schema -json.
+Итоговые коды 0/0/0. Затем подготовлен private filesystem mirror и повторены:
+python3 terraform/labs/adapters/libvirt/check_schema.py --terraform terraform --mirror /YOUR/PRIVATE/provider-mirror
+Повтор: init -backend=false -input=false -lockfile=readonly, validate,
+providers schema -json — 0/0/0. Direct fallback отсутствует.
+Результат: labs/adapters/libvirt/schema-check.json; сохранён provider lock.
+Пакет был authenticated self-signed developer key 0833E38C51E74D26;
+это подпись community developer, не утверждение аудита HashiCorp.
+Реальный validate выявил ошибку upstream Example Usage в docs v0.9.9:
+boot_devices=["hd"] не проходит schema; требуется [{dev="hd"}].
+Адаптер исправлен по nested schema, затем validate 0.
+Не было plan, apply, подключения URI, domain/network creation, запуска
+QEMU/гостя/SSH. Никакая рабочая сеть и host libvirt не менялись.
+
+6. Измерение (реальное, локальное, ограниченное)
+python3 terraform/labs/benchmark.py --terraform terraform --counts 10,100 --repeats 5 --report terraform/labs/benchmark-results.json
+linux_amd64, CLI 1.17.1, built-in terraform_data, local backend,
+default parallelism; init исключён, по 5 пустых plan после первого apply.
+10: median 0.022823876 с, min 0.021654421 с, max 0.023167508 с, state 5460 байт.
+100: median 0.052488161 с, min 0.051460280 с, max 0.058504509 с, state 51541 байт.
+Не измерялись отдельно CPU/RSS/disk/API; нет утверждения причины/порога.
+Из 5 наблюдений p95 не оценивался. Числа не переносимы на облачный API.
+
+7. Исходники и ссылки (статический QA)
+PYTHONDONTWRITEBYTECODE=1 python3 terraform/tests/check_sources.py
+CONFIG, 23 HTML sources+generated glossary chapter, уникальные tf-* IDs,
+HTML nesting, local chapter links, cards, 89 terms, 25 commands/38 flags,
+5 diagram models/30 steps, marker insertion points, references node/edge,
+Python AST. В итоговом прогоне PASS; число слов сообщает сам QA.
+В собственной области выполнен terraform fmt -check -recursive terraform/labs.
+Primary source link reachability проверена через HTTP, результаты в
+terraform/tests/source-links.json. Это проверка ссылок, не API-приёмка.
+
+8. Явные модели и неисполненное
+Все DIAGRAMS — автономные пошаговые модели с символическими IDs,
+не трасса байтов RPC и не настоящий runtime в браузере.
+Не выполнялись: VM/hypervisor install, provider API create/update/delete,
+remote backend/S3/HCP, облако/покупки, многооператорная удалённая эксплуатация,
+SSH/Go-служба на гостях, full mirror для всех ОС/providers/modules,
+upgrade/downgrade реального удалённого state, аварийное force-unlock/push-force.
+Команды этих тем — рецепты для личной VM и review, не придуманные результаты.
+Build wrapper, общий renderer, registration, export, commit и push не выполнялись.
+Интегратор отдельно проверяет читательский HTML в изолированной копии.
+
+9. Source-only перечитывание 2 ноября 2026 (этот кандидат)
+Исходные61содержательных файла/343790B проверены против immutable Git
+347d611d4c069ed0dfb333818f4dd788332ed075. Freeze62/349786B дополнительно
+содержит старый pyc5996B: он сохранён как evidence, исключён из candidate;
+пост-freeze volume_config.pyc также не включён. Хостовые caches не удалялись.
+Ранее принятый editorial22patch986d09f8… восстановлен в памяти с22afterSHA;
+поверх него сохранены5narrative-followup deltas. Эти native результаты1ноября
+не присваиваются текущему перечитыванию.
+
+Собственные реально выполненные проверки, python3 -B, только память/stdout:
+- Полное чтение reader-order23HTML,89terms,25cards/38flags,5исходных моделей,
+  всех labs/fixtures/tests/results/config/README; новые пути перечитаны повторно.
+- Строгие source splices по единственному OLD; before/after SHA и точный
+  forward/inverse unified replay. Candidate формируется только в памяти.
+- Новый fixed model:6состояний update/replacement/partialfailure/repair,
+  точныеJSONbytes+LF, выбранныеусловияпортов, count/key identity, цикл,
+  критическийпуть4/6/9с, selected lineage/serial refusals.
+- Observer:совпадение/расхождение/отсутствиефайла, service→node безсменыID,
+ 6некорректныхилинеподдержанныхJSONviews отклонены, inputsнеизменны.
+- HTML nesting/unique IDs/ARIA/figcaption position; прежниеh2labels и
+  originalanchors02/20 сохранены; scoped CSS/44px summary/static mobile constraints.
+- Python AST всехисходников; Bash -n новогоinstallrecipe PASS, безегоисполнения.
+- benchmarkmedian/min/max пересчитаны из10сохранённыхнаблюдений;
+  median100/median10=2.29970409045,state51541/5460=9.43974358974.
+Ни новой загрузки binary/provider, ни init/validate/fmt/plan/apply не было.
+Null diagnostics foundation пока только static; весь новый native прогон pending.
+
+Primary browser-fetch чтение: официальные HashiCorp CLI1.17.x/language/protocol/
+Framework RPCs/plan-modification, libvirtvirsh. Часть pinned GitHub/raw1.17.1
+ответила Cache miss; её текущим сетевым подтверждением не объявляем.
+Сохранённое native evidence подтверждает terraform_version/platform.
+Поле format_version у version этим evidence не подтверждено и в описании
+команды не заявляется; для show -json оно сохраняется по его документации.
+
+Не выполнены:HTML build/export/registry, mobile320/390/8тем/теплота,
+реальнаяпечать/клавиатурныйбраузер, remoteAPI/backend/VM/SSH/службы.
+Новые HTML-иллюстрации не имеют SVG: XML/raster проверка книмнеприменима.
+Это private source candidate,неприменённый публичный том.

@@ -1,0 +1,30 @@
+# Optional resource, add explicitly to Git after reviewing AppProject and images.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ledger-http-test
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
+    argocd.argoproj.io/sync-wave: "5"
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: wget
+          image: busybox:1.37.0
+          command: [wget]
+          args: [-q, -O, "-", "http://ledger-gitops/api/hello"]
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]

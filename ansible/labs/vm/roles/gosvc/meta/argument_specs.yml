@@ -1,0 +1,37 @@
+argument_specs:
+  main:
+    short_description: Prepare the declared personal Linux VM counter layout
+    options:
+      counter_release:
+        type: str
+        required: true
+      counter_sha256:
+        type: str
+        required: true
+      counter_artifact:
+        type: str
+        required: true
+      counter_root:
+        type: str
+        default: /opt/counter
+      counter_data_dir:
+        type: str
+        default: /var/lib/counter
+      counter_config_dir:
+        type: str
+        default: /etc/counter
+      counter_listen:
+        type: str
+        default: '127.0.0.1:8080'
+      counter_message:
+        type: str
+        default: 'Persistent personal VM counter'
+      counter_force_restart:
+        type: bool
+        default: false
+  configure:
+    short_description: Validate a candidate config with an already staged binary
+    options:
+      counter_release:
+        type: str
+        required: true

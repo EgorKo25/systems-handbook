@@ -1,0 +1,36 @@
+{
+  "date": "2026-11-01",
+  "version": "Grafana OSS13.3.0",
+  "archive_sha256": "cec8f98cc59bc1a1945833b652371a073be678c5c159a9b1695ad63c04fae5a7",
+  "native_api_assertions": 25,
+  "native_alerting_assertions": 17,
+  "init_unittest_cases": 3,
+  "literal_bash_guard_unittest_cases": 5,
+  "helper_argparse_help_commands": 5,
+  "model": "check_samples: null/zero, counter reset/extrapolation, histogram interpolation, inclusive grid, limited numeric alert timeline",
+  "static": "source structure, unique IDs, links, glossary/cards/steps, Python AST, JSON/YAML, dashboard generation, units, literal request JSON and native frame schema",
+  "unexecuted": [
+    "real Prometheus scrape/PromQL in these tests",
+    "browser rendering/transform engine",
+    "package/systemd installation",
+    "HTTPS/CA/reverse proxy",
+    "OAuth/SSO/LDAP",
+    "HA/shared SQL",
+    "external plugins install/update",
+    "external notification services/SMTP",
+    "silence/inhibition native runtime",
+    "upgrade between releases"
+  ],
+  "measurements": {
+    "startup_seconds": [
+      3.272,
+      1.504,
+      1.503
+    ],
+    "platform": "Linux x86_64",
+    "health20_median_ms": 0.207,
+    "health20_max_ms": 0.355,
+    "own_process_rss_kib": 295688,
+    "stopped_sqlite_bytes": 1601536
+  }
+}

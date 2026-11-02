@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: ledger
+  namespace: argocd
+spec:
+  description: Reader-owned ledger, no cluster-scoped application resources
+  sourceRepos:
+    - https://git.example.invalid/reader/ledger-config.git
+  destinations:
+    - namespace: gitops-lab
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist: []
+  namespaceResourceWhitelist:
+    - group: apps
+      kind: Deployment
+    - group: ""
+      kind: Service
+    - group: ""
+      kind: ConfigMap
+    - group: ""
+      kind: Secret
+    - group: batch
+      kind: Job
+  orphanedResources:
+    warn: true

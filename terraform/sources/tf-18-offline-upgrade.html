@@ -1,0 +1,27 @@
+<header><h1>Зависимости, mirror и обновление без потери доверия</h1><p>Constraints описывают допустимый выбор, lock file сохраняет выбранные пакеты providers, mirror доставляет байты. Каждая часть решает свою задачу.</p></header>
+<h2>Constraints и lock file</h2>
+<p><code>= 1.17.1</code> фиксирует CLI в лаборатории. <code>~> 2.4.0</code> допускает версии начиная с 2.4.0 до 2.5.0, <code>~> 2.4</code> — до 3.0.0. Запятая объединяет условия пересечением. Если root требует &lt; 3.0, а child >= 3.0, подходящего provider нет; init должен отказать. Ослабление ограничения без проверки совместимости не устраняет техническое противоречие.</p>
+<p><code>.terraform.lock.hcl</code> хранит выбранные версии внешних providers и допустимые hashes. Он не фиксирует CLI binary, state version, credentials и все modules. <code>h1:</code> и <code>zh:</code> — разные виды checksums в поддерживаемой модели пакетов, а не строки, которые следует дописывать вручную при mismatch. Проверка подписи provider release, источник получения hashes и первый доверенный выбор важны: слепое принятие впервые скачанного пакета не создаёт доказанного доверия.</p>
+<h2>Обычный init и сознательный upgrade</h2>
+<pre><code>terraform init -lockfile=readonly
+terraform init -upgrade
+terraform providers lock -platform=linux_amd64 -platform=windows_amd64</code></pre>
+<p>Readonly сохраняет существующий выбор и отказывает при необходимости обновить lock. Upgrade пересматривает подходящий выбор в пределах constraints и может обновить providers/modules; diff lock и исходников читают как изменение зависимости. Providers lock получает checksums для перечисленных целевых платформ по предусмотренному источнику. Это подготовка доверенного набора, не установка binary Windows в Linux и не проверка работы provider на Windows. В лаборатории с built-in provider внешнего package lock может вообще не быть — не создавайте фиктивный hash, чтобы файл выглядел «как у взрослых».</p>
+<h2>Cache и mirror не одно</h2>
+<p>Plugin cache — оптимизация повторных установок уже выбранных пакетов. Он не утверждает происхождение и не всегда является полностью автономным источником provider discovery. Filesystem/network mirror — заранее подготовленный источник установки с определённой структурой и политикой доступа. Не размещайте cache и filesystem mirror в одном каталоге. Ограничения concurrent writers и пути cache проверяйте по CLI docs; один общий writable cache в CI может стать источником гонок.</p>
+<pre><code># На доверенной подключённой машине для конкретной конфигурации:
+terraform providers lock -platform=linux_amd64
+terraform providers mirror -platform=linux_amd64 ./provider-mirror</code></pre>
+<p>После подготовки переносят mirror вместе с проверенным lock file, исходниками, точными modules и CLI. На изолированной машине отдельный <code>TF_CLI_CONFIG_FILE</code> выбирает installation policy. В Unix пример относительного авторского расположения заменяется абсолютным путём собственной offline-копии:</p>
+<pre><code>provider_installation {
+  filesystem_mirror {
+    path    = "/YOUR/OFFLINE/provider-mirror"
+    include = ["registry.terraform.io/*/*"]
+  }
+}</code></pre>
+<p>Здесь нет direct fallback: отсутствующий пакет должен дать понятный отказ, а не незаметно потребовать сеть. Пример рассчитан на заранее выбранные registry sources; иные hostnames добавляются сознательно. Provider mirror не скачивает исходники remote modules за вас. Registry/Git modules надо получить и проверить отдельно, либо подготовить reviewable local copies с объяснением происхождения. .terraform/modules — служебный working cache, а не долговечный каталог поставки.</p>
+<h2>Проверка настоящего офлайна</h2>
+<p>В личной VM запретите выход по её собственной сетевой политике либо используйте подготовленную изолированную среду, затем создайте новый рабочий каталог, init и validate. Проверка на уже инициализированном каталоге с полным cache слабее: отсутствующая dependency может остаться незамеченной. Для этой книги реальная foundation цепочка не требует сети после получения CLI и исходников, потому что provider встроен, module local. Это не результат firewall-теста всех внешних providers.</p>
+<h2>Маршрут обновления</h2>
+<p>Сначала protected backup и release notes CLI/provider; затем новый binary в отдельном пользовательском каталоге, проверка sums/signature, validate/test на безопасной копии, plan и review. Provider может обновлять schema в state; возврат старого binary/lock не гарантирует чтение нового state. Для отката нужна проверенная совместимость или согласованное восстановление с учётом внешних изменений. Обновляйте по одной осмысленной оси: CLI отдельно от крупного module refactor легче диагностировать. Saved plans старой версии заново строят и согласуют, не переносят как универсальный артефакт через upgrade.</p>
+<p>Источники 01.11.2026: <a href="https://developer.hashicorp.com/terraform/language/expressions/version-constraints">constraints</a>, <a href="https://developer.hashicorp.com/terraform/language/files/dependency-lock">lock file</a>, <a href="https://developer.hashicorp.com/terraform/cli/config/config-file">CLI installation policy/cache</a>, <a href="https://developer.hashicorp.com/terraform/cli/commands/providers/mirror">mirror</a>, <a href="https://developer.hashicorp.com/terraform/cli/commands/providers/lock">providers lock</a>, <a href="https://developer.hashicorp.com/terraform/language/upgrade-guides">upgrade guides</a>.</p>

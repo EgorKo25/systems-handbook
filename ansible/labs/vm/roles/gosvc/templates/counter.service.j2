@@ -1,0 +1,20 @@
+[Unit]
+Description=Personal laboratory persistent Go counter
+After=network.target
+
+[Service]
+Type=simple
+User=counter
+Group=counter
+ExecStart={{ counter_root }}/current/counter --config {{ counter_config_dir }}/config.json
+Restart=on-failure
+RestartSec=2
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths={{ counter_data_dir }}
+UMask=0027
+
+[Install]
+WantedBy=multi-user.target

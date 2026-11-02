@@ -1,0 +1,14 @@
+{
+  "chapters_with_glossary": 24,
+  "html_sources": 23,
+  "words_in_sources": 17966,
+  "terms": 89,
+  "commands": 25,
+  "flags": 38,
+  "diagrams": 4,
+  "diagram_steps": 24,
+  "inline_subject_figures": 2,
+  "result": "PASS",
+  "basis": "in-memory source checks; source word metric includes inline style text, not measured reading time",
+  "checked": "2026-11-02"
+}

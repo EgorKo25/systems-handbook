@@ -1,0 +1,60 @@
+---
+- name: Persistent local file laboratory, no SSH or services
+  hosts: counters
+  gather_facts: false
+  serial: 1
+  vars:
+    counter_release: '0.1.0'
+    counter_message: 'Hello from the saved lab'
+    counter_state:
+      release: '{{ counter_release }}'
+      message: '{{ counter_message }}'
+      listen: '127.0.0.1:8080'
+      data_file: '{{ lab_root }}/{{ inventory_hostname }}/data/count.txt'
+  pre_tasks:
+    - name: Require explicit isolated root
+      ansible.builtin.assert:
+        that:
+          - lab_root is defined
+          - lab_root is string
+          - lab_root.startswith('/tmp/ansible-')
+          - ansible_connection == 'local'
+          - not (ansible_become | default(false) | bool)
+        fail_msg: Use the documented temporary local lab root without become
+  tasks:
+    - name: Prepare separate node and data directories
+      ansible.builtin.file:
+        path: '{{ lab_root }}/{{ inventory_hostname }}/{{ counter_dir }}'
+        state: directory
+        mode: '0750'
+      loop: ['', data]
+      loop_control:
+        loop_var: counter_dir
+    - name: Seed data once and preserve later writes
+      ansible.builtin.copy:
+        dest: '{{ lab_root }}/{{ inventory_hostname }}/data/count.txt'
+        content: "7\n"
+        force: false
+        mode: '0640'
+    - name: Converge typed configuration through the author module
+      counter_config:
+        path: '{{ lab_root }}/{{ inventory_hostname }}/config.json'
+        config: '{{ counter_state }}'
+        mode: '0640'
+      register: counter_config_result
+      notify: Record configuration applied
+    - name: Apply notified work before checking marker
+      ansible.builtin.meta: flush_handlers
+    - name: Observe the marker
+      ansible.builtin.stat:
+        path: '{{ lab_root }}/{{ inventory_hostname }}/applied.json'
+      register: counter_marker
+    - name: Require the application marker on an existing lab
+      ansible.builtin.assert:
+        that: counter_marker.stat.exists
+  handlers:
+    - name: Record configuration applied
+      ansible.builtin.copy:
+        dest: '{{ lab_root }}/{{ inventory_hostname }}/applied.json'
+        content: '{{ counter_state | to_nice_json }}'
+        mode: '0640'

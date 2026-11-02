@@ -1,0 +1,37 @@
+[
+  {
+    "url": "https://github.com/grafana/grafana/blob/v13.3.0/pkg/cmd/grafana-cli/commands/commands.go",
+    "ref": "v13.3.0",
+    "git_blob_sha": "84606e69dfc43c2186caedae7439cc22c594fa8a",
+    "read_scope": "lines90..260, flag and alias declarations",
+    "checked": "2026-11-02"
+  },
+  {
+    "url": "https://github.com/grafana/grafana/blob/v13.3.0/pkg/cmd/grafana-cli/commands/reset_password_command.go",
+    "ref": "v13.3.0",
+    "git_blob_sha": "b2193246a2fc4370902cfad23bbf3acffd3ec55b",
+    "read_scope": "complete reset_password_command.go returned by connector",
+    "checked": "2026-11-02"
+  },
+  {
+    "url": "https://github.com/grafana/grafana/blob/v13.3.0/docs/sources/alerting/fundamentals/alert-rule-evaluation/_index.md",
+    "ref": "v13.3.0",
+    "git_blob_sha": "02c66a82c5707cba385da91de4b6327210e584fa",
+    "read_scope": "complete source returned and read before recovery",
+    "checked": "2026-11-02"
+  },
+  {
+    "url": "https://grafana.com/docs/grafana/latest/visualizations/panels-visualizations/query-transform-data/transform-data/",
+    "ref": "v13.3 latest on date",
+    "read_scope": "Labels to fields / Join by field and order; mutable docs, no binary execution",
+    "checked": "2026-11-02"
+  },
+  {
+    "url": "https://grafana.com/grafana/download/13.3.0?edition=oss",
+    "ref": "13.3.0",
+    "read_scope": "release date2026-10-27,OSS/AGPLv3,linuxamd64 archive and .deb SHA",
+    "archive_sha256": "cec8f98cc59bc1a1945833b652371a073be678c5c159a9b1695ad63c04fae5a7",
+    "deb_sha256": "458cb47824fda2c1e93c51e5d9c4893543f7fe24c58c2f5cb9c7a91d7360070f",
+    "checked": "2026-11-02"
+  }
+]

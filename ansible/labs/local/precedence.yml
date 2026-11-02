@@ -1,0 +1,30 @@
+---
+- name: Observe precedence without changing files
+  hosts: counters
+  gather_facts: false
+  vars:
+    counter_port: 8083
+    counter_expected_port: 8083
+  tasks:
+    - name: Task vars override play and inventory, unless extra vars win
+      ansible.builtin.assert:
+        that:
+          - counter_port == (8085 if extra_case | default(false) else 8084)
+          - counter_port is integer
+      vars:
+        counter_port: 8084
+    - name: Next task sees play scope or extra vars
+      ansible.builtin.assert:
+        that:
+          - counter_port == counter_expected_port
+          - counter_port is integer
+    - name: Capture the current expression result
+      ansible.builtin.set_fact:
+        counter_frozen_port: '{{ counter_port }}'
+    - name: The frozen value differs from a later task context
+      ansible.builtin.assert:
+        that:
+          - counter_frozen_port == counter_expected_port
+          - counter_port == (8085 if extra_case | default(false) else 9090)
+      vars:
+        counter_port: 9090

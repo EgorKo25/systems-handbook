@@ -1,0 +1,56 @@
+<header><h1>Фазы, волны и hooks: порядок с остановками</h1><p>Зависимость должна иметь проверяемое условие, а не только красивый номер.</p></header>
+
+<h2 id="argocd-09-waves-hooks-section-1">Фаза и волна</h2>
+<p>Фаза определяет роль ресурса в операции: PreSync перед обычными ресурсами, Sync во время основного применения, PostSync после успешной синхронизации и здоровья, SyncFail при неудаче. В 3.5.6 есть также PreDelete перед удалением ресурсов приложения и PostDelete после их удаления; это фазы удаления, не обычного sync. Hook — ресурс с аннотацией argocd.argoproj.io/hook, который контроллер исполняет в соответствующей фазе. Обычный ресурс без такой аннотации относится к основному применению.</p>
+<p>Волна, sync wave, — целое число в аннотации argocd.argoproj.io/sync-wave; допускаются отрицательные числа, по умолчанию 0. Приоритет: фаза, затем волна, затем вид ресурса и имя. PreSync с волной 10 не становится позднее обычного Sync с волной-10: граница фаз старше номера. Внутри применения сначала выбирается самая ранняя волна с несоответствующим или нездоровым ресурсом; следующая волна ждёт продвижения предыдущей.</p>
+<p>Стандартная задержка между волнами — 2 секунды, настраиваемая ARGOCD_SYNC_WAVE_DELAY. Это пауза для реакции контроллеров, а не доказательство, что внешняя система стала готовой. Здоровье и собственные проверки нужны всё равно. При удалении порядок волн обратный: сначала более высокие номера. Ошибка удаления ранней для этого порядка волны может удержать остальные.</p>
+<h2 id="argocd-09-waves-hooks-deepening-1">Прочитать остановку по конкретному ресурсу</h2>
+<p>В рассматриваемом примере PreSync Job находится в волне 10, ConfigMap — в Sync/−1, Deployment — в Sync/0, HTTP Job — в PostSync/5. Сортировать четыре числа как один список нельзя: сначала завершается фаза PreSync. После ConfigMap контроллер применяет Deployment, затем наблюдает готовность. Если новое поколение Deployment не готово, PostSync Job ещё не должен начинать проверку.</p>
+<p>Две секунды между волнами дают другим контроллерам время увидеть изменения. Это не оценка нужной длительности миграции и не замена барьеру здоровья. Отказ ранней волны оставляет уже применённые объекты на месте. При удалении через prune волны обходятся в обратном направлении: высокий номер удаляется раньше низкого. Исправление ошибки удаления и повтор продолжаются при фактическом частичном состоянии.</p>
+<p>PreDelete Job при неуспехе может удерживать удаление приложения; исправный PostDelete запускается после удаления ресурсов. Сохраните журналы и состояние Job до уборки. Удалять объект hook, не выяснив его внешний эффект, опасно: следующее создание может повторно выполнить миграцию, даже если предыдущая успела изменить БД перед обрывом ответа.</p>
+<figure id="argocd-sync-order" class="argo-subject-figure">
+<style>
+#argocd-sync-order{margin:1.8rem 0;padding:.8rem;border:1px solid currentColor;border-radius:.5rem;background:var(--paper);color:var(--text);overflow-wrap:anywhere}
+#argocd-sync-order svg{display:block;width:100%;height:auto;max-width:27rem;margin:.8rem auto;color:inherit}
+#argocd-sync-order text{font:16px system-ui,sans-serif;fill:currentColor}
+#argocd-sync-order path,#argocd-sync-order line,#argocd-sync-order rect,#argocd-sync-order circle{stroke:currentColor;fill:none;stroke-width:1.5}
+#argocd-sync-order .argo-sheet-title{font-weight:700}
+#argocd-sync-order p{font-size:1em;text-align:start}
+@media print{#argocd-sync-order{--paper:#fff;--text:#000;background:#fff;color:#000;break-inside:avoid}#argocd-sync-order svg{max-width:20rem}}
+</style>
+<figcaption><strong id="argocd-sync-order-title">Временная шкала: здоровье удерживает PostSync</strong></figcaption>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 760" role="img" aria-labelledby="argocd-sync-order-svg-title argocd-sync-order-desc">
+<title id="argocd-sync-order-svg-title">Временная шкала: здоровье удерживает PostSync</title><desc id="argocd-sync-order-desc">Условная последовательность: PreSync 10, Sync минус1, Sync0. Неготовый Deployment удерживает PostSync5. Исправление C4 требует новой операции с повторной проверкой фаз.</desc>
+<path d="M28 28V715 M21 706L28 718L35 706"/>
+<circle cx="28" cy="62" r="5"/><text x="48" y="57" class="argo-sheet-title">t0 · PreSync / 10</text><text x="48" y="84">Job завершился успешно</text>
+<circle cx="28" cy="152" r="5"/><text x="48" y="147" class="argo-sheet-title">t1 · Sync / −1</text><text x="48" y="174">ConfigMap принята API</text>
+<circle cx="28" cy="242" r="5"/><text x="48" y="237" class="argo-sheet-title">t2 · Sync / 0</text><text x="48" y="264">Deployment C3 принят API</text>
+<circle cx="28" cy="332" r="5"/><text x="48" y="327" class="argo-sheet-title">t3 · новый Pod не готов</text><text x="48" y="354">/missing-readyz → 404</text>
+<line x1="12" y1="385" x2="344" y2="385"/><line x1="12" y1="391" x2="344" y2="391"/>
+<text x="48" y="425">PostSync / 5 ещё не создан</text><text x="48" y="452">Пауза 2 с не снимает барьер</text>
+<path d="M28 470V495" stroke-dasharray="3 5"/>
+<circle cx="28" cy="530" r="5"/><text x="48" y="525" class="argo-sheet-title">t4 · новая операция C4</text><text x="48" y="552">Фазы проверяются снова</text><text x="48" y="579">Deployment → Healthy</text>
+<circle cx="28" cy="660" r="5"/><text x="48" y="655" class="argo-sheet-title">t5 · PostSync / 5</text><text x="48" y="682">HTTP Job → Succeeded</text>
+<text x="48" y="735">t0…t5 — порядок, не секунды</text>
+</svg>
+<p>Сначала заканчивается PreSync, хотя его волна 10 численно выше −1. Затем идут ConfigMap и Deployment. Неверная readiness удерживает PostSync; старые готовые Pod могут продолжать обслуживать Service. C4 исправляет цель новой операцией, которая повторно проходит необходимые фазы. Пример PreSync условный; поставленный необязательный HTTP Job — PostSync/5. Это схема причин, а не выполненный журнал.</p>
+</figure>
+<h2 id="argocd-09-waves-hooks-section-2">Одна проверка после сервиса</h2>
+<p>Файл fixtures/post-sync-test.yaml описывает Job, выполняющий HTTP-запрос к Service ledger-gitops и пути /api/hello. Его PostSync означает, что до проверки должны успешно завершиться обычные ресурсы и их оценка готовности. Волна 5 упорядочивает его относительно других PostSync-hooks. Для выполнения нужен образ busybox:1.37.0, сеть и разрешённый AppProject вид Job; автор не скачивал этот образ и не запускал Job на кластере.</p>
+<pre><code>metadata:
+  name: ledger-http-test
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/sync-wave: "5"
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded</code></pre>
+<p>Повтор именованного hook определяется политикой удаления. При отсутствии явной политики Argo 3.5.6 подразумевает BeforeHookCreation: прежний одноимённый объект удаляется перед новым созданием. HookSucceeded очищает результат при успешной синхронизации; завершившийся PreSync не обязан исчезнуть немедленно, пока дальнейшие фазы ещё идут. При generateName каждый запуск получает новое имя; без политики уборки результаты накапливаются. Job TTL и удаление hook — разные механизмы: слишком раннее внешнее удаление может осложнить наблюдение результата. Сохраните нужные журналы до уборки.</p>
+<h2 id="argocd-09-waves-hooks-section-3">Почему миграция не является откатом данных</h2>
+<p>PreSync часто выбирают для миграции схемы прикладной БД. У самой Argo CD нет придуманной SQL-базы, но у приложения она может быть. Завершившийся Job мог изменить внешнее хранилище навсегда; последующий отказ Deployment не возвращает эти байты. Повтор операции может повторить hook, поэтому миграция должна быть идемпотентной либо иметь безопасную проверку уже выполненной версии. Одна аннотация волны этого не обеспечивает.</p>
+<p>SyncFail-hook помогает собрать диагностику или выполнить заранее спроектированную компенсацию. Его отказ не превращается в успешную операцию и не гарантирует возврат всех внешних эффектов. PostDelete срабатывает в жизненном цикле удаления, а не как обычный PostSync. Нельзя использовать удаление Application как универсальную процедуру резервного копирования.</p>
+<h2 id="argocd-09-waves-hooks-section-4">Намеренный отказ readiness</h2>
+<p>После исправного первого запуска практикум меняет в том же дереве только readiness на /missing-readyz. Deployment принимается API, новый Pod запускает тот же процесс и получает 404 на проверке. Старые готовые Pod при RollingUpdate и maxUnavailable=0 могут продолжать обслуживать Service, а приложение останется Progressing или дойдёт до Degraded по правилу Deployment. PostSync не должен перескочить незавершённую готовность.</p>
+<p>Если поменять одновременно селектор Service, образ и готовность, причинность станет неясной. Поэтому одно задание изменяет одну границу, сохраняет предыдущую MESSAGE и доказательства. Возврат выполняется новым исправляющим изменением того же дерева, без удаления namespace и без переустановки Argo. История операции должна показать различие между «текст принят», «новые Pod готовы» и «HTTP-проверка прошла».</p>
+<h2 id="argocd-09-waves-hooks-section-5">Ограничения отбора</h2>
+<p>Выборочная синхронизация --resource не запускает hooks. Это особенно важно, если человек рассчитывает на обязательный PreSync-тест безопасности или миграцию. ApplyOutOfSyncOnly=true у политики — не синоним этого выбора: hooks и запись истории в 3.5 сохраняются. Skip-hook намеренно пропускается; это не способ оставить незавершённый Job как успешное доказательство. Helm-аннотации hooks частично переводятся Argo, но привычный Helm test не следует считать автоматически той же фазой: смешанную модель нужно проверять по таблице поддерживаемых hooks выбранной версии.</p>
+
+<h2 id="argocd-09-waves-hooks-section-6">Источники и версия</h2><p>Проверено 1 ноября 2026. Argo CD 3.5.6. <a href="https://github.com/argoproj/argo-cd/blob/v3.5.6/docs/user-guide/sync-waves.md">Фазы и волны</a>, <a href="https://github.com/argoproj/argo-cd/blob/v3.5.6/docs/user-guide/resource_hooks.md">Hooks</a>, <a href="https://github.com/argoproj/argo-cd/blob/v3.5.6/docs/user-guide/helm.md">Helm hooks</a>.</p>

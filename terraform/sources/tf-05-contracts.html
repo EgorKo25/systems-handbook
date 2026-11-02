@@ -1,0 +1,53 @@
+<header><h1>Входы, locals, outputs и проверка договоров</h1><p>Хорошая ошибка появляется там, где нарушен входной договор. Внутренняя нормализация и внешний output решают разные задачи.</p></header>
+<h2>Корневой модуль получает значения</h2>
+<p>Variable — объявленный вход модуля. У корневого модуля значение может прийти из default, переменной окружения <code>TF_VAR_name</code>, файлов tfvars и аргументов CLI. Terraform автоматически читает <code>terraform.tfvars</code>, <code>terraform.tfvars.json</code>, затем <code>*.auto.tfvars</code>/<code>*.auto.tfvars.json</code> в лексическом порядке. Аргументы <code>-var-file</code>/<code>-var</code> задают более поздние переопределения в порядке командной строки. Окружение перекрывает default, но уступает перечисленным файлам и CLI. Конфликтующие источники лучше удалить из обычного пути, чем помнить длинную таблицу наизусть.</p>
+<p>В основном стенде нет входа stage. Для этого опыта подготовьте отдельный маленький корневой модуль из приложенного <code>labs/fixtures/contracts/</code>. Он содержит variable stage, проверку допустимых dev/test и output effective_stage; управляемых ресурсов в нём нет. Значение в review.tfvars равно test. Не добавляйте эту конфигурацию к main.tf основного стенда.</p>
+<pre><code>mkdir -p "$TF_LAB_ROOT/language"
+if [ ! -e "$TF_LAB_ROOT/language/contracts" ]; then
+  cp -a "$TF_LAB_TOOLS/fixtures/contracts" "$TF_LAB_ROOT/language/contracts"
+fi
+terraform -chdir="$TF_LAB_ROOT/language/contracts" init -input=false
+export TF_VAR_stage=from-env
+terraform -chdir="$TF_LAB_ROOT/language/contracts" plan -var-file=review.tfvars
+terraform -chdir="$TF_LAB_ROOT/language/contracts" plan -var-file=review.tfvars -var='stage=dev'
+unset TF_VAR_stage</code></pre>
+<p>Первый запуск показывает effective_stage = "test", второй — "dev". Неподходящее значение from-env не вызывает ошибку, потому что более поздний источник его перекрыл до validation. Если убрать файл и аргумент CLI, эта переменная окружения дала бы ошибку проверки. После опыта unset убирает её из текущего shell, чтобы она не повлияла на следующие запуски. Ни один вызов без apply не изменяет управляемые объекты, но provider Read во время plan может обращаться к внешнему API. Не вводите секрет как literal <code>-var</code> в историю shell. У дочернего модуля иной путь: вызывающий module block явно передаёт значения аргументами; root tfvars не «виден» всем модулям автоматически.</p>
+<h2>Validation проверяет смысл входа</h2>
+<pre><code>variable "port" {
+  type     = number
+  nullable = false
+  validation {
+    condition = var.port >= 1024 && var.port &lt;= 65535 && floor(var.port) == var.port
+    error_message = "port: целое число от 1024 до 65535 для учебного непривилегированного сервиса."
+  }
+}
+variable "stage" {
+  type    = string
+  default = "dev"
+  validation {
+    condition     = contains(["dev", "test"], var.stage)
+    error_message = "stage должен быть dev или test в этом стенде."
+  }
+}</code></pre>
+<p>Тип number сам по себе не отвергает дробь. Здесь validation фиксирует единицы и допустимую область упражнения, а не универсальное правило всех TCP-портов. Проверка не доказывает свободность порта и не выдаёт OS-права. Для map сервисов проверьте каждый элемент через <code>alltrue</code>, при необходимости уникальность портов через длины <code>distinct</code> и исходной последовательности. Непустой build тоже самостоятельное требование, если от него зависит замена объекта.</p>
+<h2>Local — имя вычисления</h2>
+<p><code>locals</code> не является изменяемой переменной Go. Это именованные выражения, которые вычисляются по зависимостям. Сколько бы блоков locals ни было, ссылаться нужно через <code>local.name</code>. Цикл <code>a = local.b + 1</code>, <code>b = local.a + 1</code> не имеет первого значения и недопустим. Разделяйте исходный input, нормализованную структуру и итоговый контракт. Повторять три почти одинаковых for-выражения труднее проверять, чем назвать один вычисленный объект.</p>
+<p>Но local не кэш для внешнего HTTP-запроса, не транзакционная таблица и не способ управлять временем выполнения. Значение с unknown остаётся unknown настолько, насколько требует его выражение. Избыточные преобразования map → list → map теряют связь со стабильными ключами и усложняют понимание плана.</p>
+<h2>Output — опубликованная граница</h2>
+<pre><code>output "contract" {
+  description = "Версионируемый учебный договор для потребителя; не SSH-секреты."
+  value = {
+    schema_version = 1
+    services = {
+      for name, s in terraform_data.service : name => {
+        resource_id = s.id
+        port        = s.output.port
+      }
+    }
+  }
+}</code></pre>
+<p>Root outputs попадают в state и читаются <code>terraform output</code>; child outputs нужны вызывающему модулю. Выходное имя и тип — публичный интерфейс. Смена port на listen_port ломает потребителя даже при отсутствии замены VM. Избегайте output целого resource object «на всякий случай»: он связывает потребителя со схемой provider и может включить чувствительные данные. <code>terraform output -json</code> удобен автоматизации, но раскрывает значения sensitive outputs; права на stdout/артефакт должны быть соответствующими.</p>
+<h2>Где условие останавливает действие</h2>
+<p>Variable validation проверяет вход, <code>precondition</code> — условие до соответствующей операции, <code>postcondition</code> — условие по полученному результату. Они могут обнаружить несоответствие и остановить дальнейшие зависимые действия, но не откатят уже созданные объекты. <code>check</code> предназначен для проверки предположений и выдаёт предупреждения при невыполненном утверждении в обычных операциях; он не заменяет блокирующую precondition для обязательного требования. При unknown часть условий может быть отложена до apply. Всегда называйте момент, в который условие получает все данные.</p>
+<p>Для теста интерфейса достаточно входов: граница/вне границы, null/пропуск, пустая map, повтор порта, unknown-значение из ресурса. <code>terraform test</code> может выполнять реальные apply и требует изоляции; mock provider проверяет определённую логику модуля, не фактическое API. В практикуме реальные CLI-проверки работают только с terraform_data и собственными файлами.</p>
+<p>Источники 01.11.2026: <a href="https://developer.hashicorp.com/terraform/language/values/variables">input variables и precedence</a>, <a href="https://developer.hashicorp.com/terraform/language/values/locals">locals</a>, <a href="https://developer.hashicorp.com/terraform/language/values/outputs">outputs</a>, <a href="https://developer.hashicorp.com/terraform/language/expressions/custom-conditions">условия</a>, <a href="https://developer.hashicorp.com/terraform/language/checks">check</a>.</p>

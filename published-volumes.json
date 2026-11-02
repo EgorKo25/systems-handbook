@@ -95,6 +95,36 @@
       "slug": "vault",
       "title": "Vault",
       "build": "managed"
+    },
+    {
+      "slug": "grafana",
+      "title": "Grafana",
+      "build": "managed"
+    },
+    {
+      "slug": "artifactory",
+      "title": "JFrog Artifactory",
+      "build": "managed"
+    },
+    {
+      "slug": "argocd",
+      "title": "Argo CD",
+      "build": "managed"
+    },
+    {
+      "slug": "terraform",
+      "title": "Terraform",
+      "build": "managed"
+    },
+    {
+      "slug": "ansible",
+      "title": "Ansible",
+      "build": "managed"
+    },
+    {
+      "slug": "prometheus",
+      "title": "Prometheus",
+      "build": "managed"
     }
   ],
   "reading_order": [
@@ -111,11 +141,17 @@
     "mongodb",
     "sonarqube",
     "nexus",
+    "artifactory",
     "jenkins",
     "gitlab",
+    "terraform",
+    "ansible",
     "vault",
+    "prometheus",
+    "grafana",
     "kubernetes",
     "helm",
+    "argocd",
     "practicum"
   ]
 }

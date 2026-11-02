@@ -1,0 +1,26 @@
+{
+  "version": "3.5.6",
+  "platform": "linux-amd64",
+  "files": [
+    {
+      "name": "argocd-linux-amd64",
+      "url": "https://github.com/argoproj/argo-cd/releases/download/v3.5.6/argocd-linux-amd64",
+      "sha256": "db9d17b70593d3f86a4dcf08d9ebbb85a42e995426ac5f928b737260656102d3"
+    },
+    {
+      "name": "helm-v4.2.1-linux-amd64.tar.gz",
+      "url": "https://get.helm.sh/helm-v4.2.1-linux-amd64.tar.gz",
+      "sha256": "479dca836e5b45e8bd222400c5591b0e3a647378f03ff96597180db97c17fdae"
+    },
+    {
+      "name": "kustomize_v5.8.1_linux_amd64.tar.gz",
+      "url": "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v5.8.1/kustomize_v5.8.1_linux_amd64.tar.gz",
+      "sha256": "029a7f0f4e1932c52a0476cf02a0fd855c0bb85694b82c338fc648dcb53a819d"
+    },
+    {
+      "name": "install.yaml",
+      "url": "https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.6/manifests/install.yaml",
+      "sha256": "846c644bc81ce5557dd9048757a9c7353378f25c5eb811c77d32a9e907823599"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+---
+- name: Exercise a single custom module call
+  hosts: counter_a
+  gather_facts: false
+  tasks:
+    - name: Converge or reject a selected fixture file
+      counter_config:
+        path: '{{ module_test_path }}'
+        config: '{{ module_test_config }}'
+        mode: '{{ module_test_mode | default("0640") }}'
+      register: module_result
+    - name: Verify changed contract
+      ansible.builtin.assert:
+        that: module_result.changed == module_expected_changed

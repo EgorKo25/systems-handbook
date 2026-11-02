@@ -1,0 +1,642 @@
+[
+  {
+    "url": "https://api.github.com/repos/jfrog/jfrog-cli/releases/tags/v2.129.0",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-01-install"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://api.github.com/repos/oras-project/oras/releases/tags/v1.3.6",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "installation/release verification"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.gitlab.com/ci/jobs/job_rules/",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-12-ci"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.gitlab.com/ci/variables/",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-12-ci"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.jfrog.com/administration/docs/access-tokens",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-11-permissions"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.jfrog.com/administration/docs/audit-trail-log",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-11-permissions"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.jfrog.com/administration/docs/cleanup-policies",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-13-maintenance"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.jfrog.com/administration/docs/permissions",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-09-promotion",
+      "artifactory-11-permissions",
+      "artifactory-17-lab"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.jfrog.com/administration/docs/regular-maintenance-operations",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-13-maintenance"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.jfrog.com/artifactory/docs/additional-docker-information",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-10-oci"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.jfrog.com/artifactory/docs/artifactory-query-language",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-13-maintenance"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.jfrog.com/artifactory/docs/build-integration",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "00-route",
+      "artifactory-08-cli",
+      "artifactory-09-promotion",
+      "artifactory-12-ci",
+      "artifactory-17-lab"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.jfrog.com/artifactory/docs/federated-repositories",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-15-topology"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.jfrog.com/artifactory/docs/go-modules",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-03-addresses",
+      "artifactory-05-resolution",
+      "artifactory-06-go-protocol",
+      "artifactory-17-lab"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.jfrog.com/artifactory/docs/jf-go",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-06-go-protocol",
+      "artifactory-07-go-client",
+      "artifactory-08-cli"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.jfrog.com/artifactory/docs/local-repositories",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-05-resolution"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.jfrog.com/artifactory/docs/migration-overview-and-decision-guide",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-15-topology"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.jfrog.com/artifactory/docs/oci-repositories",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-03-addresses",
+      "artifactory-10-oci"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.jfrog.com/artifactory/docs/remote-repositories",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-05-resolution"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.jfrog.com/artifactory/docs/repository-replication",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-15-topology"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.jfrog.com/artifactory/docs/repository-support-for-package-clients",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "installation/release verification"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.jfrog.com/artifactory/docs/virtual-repositories",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-05-resolution"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.jfrog.com/artifactory/reference/deployartifactbychecksum",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-04-storage"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.jfrog.com/installation/docs/artifactory-network-ports",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-02-runtime"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.jfrog.com/installation/docs/artifactory-system-requirements-and-platform-support",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "installation/release verification"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.jfrog.com/installation/docs/artifactory-system-yaml",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "installation/release verification"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.jfrog.com/installation/docs/backups",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-14-recovery",
+      "artifactory-17-lab"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.jfrog.com/installation/docs/checksum-based-storage",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "00-route",
+      "artifactory-04-storage"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.jfrog.com/installation/docs/checksum-based-storage-implementation",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-04-storage",
+      "artifactory-16-measurement"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.jfrog.com/installation/docs/configure-artifactory-to-use-postgresql",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-02-runtime"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.jfrog.com/installation/docs/create-the-artifactory-postgresql-database",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-01-install"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.jfrog.com/installation/docs/feature-comparison-matrix-for-self-mangaged-jpds",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "00-route",
+      "artifactory-01-install",
+      "artifactory-11-permissions",
+      "artifactory-13-maintenance"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.jfrog.com/installation/docs/general-system-requirements",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "installation/release verification"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.jfrog.com/installation/docs/hardware-sizing-matrix",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-01-install",
+      "artifactory-16-measurement"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.jfrog.com/installation/docs/high-availability",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-15-topology"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.jfrog.com/installation/docs/http-settings",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-03-addresses"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.jfrog.com/installation/docs/install-artifactory-linux-archive",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-01-install"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.jfrog.com/installation/docs/key-facts-for-ai-models",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-02-runtime"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.jfrog.com/installation/docs/license-matrix-pro-x-enterprise-x-enterprise",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-11-permissions"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.jfrog.com/installation/docs/postgresql-for-artifactory",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "installation/release verification"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.jfrog.com/installation/docs/sha-256-support",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-04-storage"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.jfrog.com/installation/docs/system-yaml-configuration-file",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-02-runtime"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.jfrog.com/installation/docs/upgrade",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-14-recovery",
+      "artifactory-15-topology"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.jfrog.com/integrations/docs/jf-config-add",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-08-cli"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.jfrog.com/integrations/docs/jf-config-show",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-08-cli"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.jfrog.com/integrations/docs/jfrog-cli",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-09-promotion",
+      "artifactory-16-measurement"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.jfrog.com/integrations/docs/jfrog-cli-environment-variables",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-08-cli",
+      "artifactory-12-ci"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.jfrog.com/releases/docs/artifactory-end-of-life",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-01-install"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.jfrog.com/releases/docs/jfrog-security-advisories",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-01-install"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.openssl.org/3.0/man1/openssl-req/",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-03-addresses"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.openssl.org/3.0/man1/openssl-verification-options/",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-03-addresses"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://docs.openssl.org/3.0/man1/openssl-x509/",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-03-addresses"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://github.com/golang/go/blob/go1.27.3/src/cmd/go/internal/auth/auth.go",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-07-go-client"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://github.com/jfrog/jfrog-cli/tree/v2.129.0",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-08-cli"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://github.com/opencontainers/distribution-spec/blob/v1.1.1/spec.md",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-10-oci"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://github.com/opencontainers/image-spec/blob/v1.1.1/image-layout.md",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-10-oci"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://github.com/oras-project/oras/releases/download/v1.3.6/oras_1.3.6_checksums.txt",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-01-install",
+      "artifactory-10-oci",
+      "artifactory-98-sources"
+    ],
+    "kind": "official published artifact metadata/checksums",
+    "boundary": "HTTP metadata/checksum retrieved; Artifactory server archive not downloaded or executed; client SHA checked independently"
+  },
+  {
+    "url": "https://github.com/oras-project/oras/releases/tag/v1.3.6",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-10-oci"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://go.dev/ref/mod",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-06-go-protocol",
+      "artifactory-07-go-client"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://pkg.go.dev/cmd/go",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-07-go-client",
+      "artifactory-09-promotion"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://releases.jfrog.io/artifactory/api/storage/artifactory-pro/org/artifactory/pro/jfrog-artifactory-pro/7.161.20/jfrog-artifactory-pro-7.161.20-linux.tar.gz",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-01-install",
+      "artifactory-10-oci",
+      "artifactory-98-sources"
+    ],
+    "kind": "official published artifact metadata/checksums",
+    "boundary": "HTTP metadata/checksum retrieved; Artifactory server archive not downloaded or executed; client SHA checked independently"
+  },
+  {
+    "url": "https://releases.jfrog.io/artifactory/api/storage/jfrog-cli/v2-jf/2.129.0/jfrog-cli-linux-amd64/jf",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "installation/release verification"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://www.jenkins.io/doc/pipeline/steps/credentials-binding/",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-12-ci"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://www.postgresql.org/docs/16/app-pg-dumpall.html",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-14-recovery"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://www.postgresql.org/docs/16/app-pgdump.html",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-14-recovery"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://www.postgresql.org/docs/16/app-pgrestore.html",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-14-recovery"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://www.postgresql.org/docs/16/monitoring-stats.html",
+    "checked_on": "2026-11-01",
+    "chapters": [
+      "artifactory-16-measurement"
+    ],
+    "kind": "official primary documentation/source/release metadata",
+    "boundary": "documentation/source inspection; not execution of server recipe"
+  },
+  {
+    "url": "https://github.com/golang/go/blob/go1.27.3/src/cmd/vendor/golang.org/x/mod/sumdb/dirhash/hash.go",
+    "checked_on": "2026-11-02",
+    "chapters": [
+      "artifactory-06-go-protocol"
+    ],
+    "kind": "pinned primary source; selected local source read",
+    "boundary": "Hash1/HashZip algorithm inspected; own Python RAM calculation over pinned fixtures, no Go/server execution"
+  }
+]

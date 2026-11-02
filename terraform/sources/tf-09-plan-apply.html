@@ -1,0 +1,87 @@
+<header><h1>Refresh, plan и apply: решение и его исполнение</h1><p>Plan сравнивает конфигурацию с наблюдением и прежней памятью. Сохранённый plan — чувствительный исполняемый вход, связанный с конкретным состоянием.</p></header>
+<h2>Три представления объекта</h2>
+<p>Configuration описывает желаемое. Prior state хранит предыдущее известное соответствие адреса и объекта. Refresh, обновление наблюдения, просит provider прочитать фактический объект и уточняет известные атрибуты. Plan использует эти данные и правила provider, чтобы предложить create/update/delete/replacement/no-op. Если объекта нет, Read может сообщить исчезновение, и plan предложит создать его заново. Если API недоступно, ошибка чтения не означает, что объект удалён.</p>
+<p>Обычный plan по умолчанию читает управляемые объекты перед сравнением. Сокращение refresh меняет качество наблюдения; это отдельный компромисс, а не бесплатное ускорение. <code>-refresh=false</code> использует прежнее знание и способен пропустить внешний drift. Новая в 1.17 возможность <code>-minimal-refresh</code> имеет собственную область и не используется как основание проверки отсутствия drift в этом томе. Две команды с разными режимами наблюдения сравнивают как разные эксперименты.</p>
+<h2>Сохранённое решение</h2>
+<pre><code>terraform plan -out=review.tfplan
+terraform show review.tfplan
+terraform show -json review.tfplan &gt; review.json
+terraform apply review.tfplan</code></pre>
+<p><code>-out</code> пишет непрозрачный файл, не просто красивый текст. Он содержит конфигурацию, значения и данные, нужные для выполнения, включая sensitive. Человекочитаемый вывод может скрывать секрет; JSON и бинарный файл требуют защищённого хранения. Plan file не универсальный переносимый формат между версиями CLI. Проверьте точную версию, lock file, backend, рабочее окружение и происхождение файла. Не исполняйте plan, присланный недоверенной стороной: сохранённый план может включать вредный provider/provisioner вход.</p>
+<p>Apply без имени файла сначала строит новый план и обычно запрашивает подтверждение. Apply с именем выполняет сохранённое решение; дополнительное <code>-auto-approve</code> для него не является новым review. Если state изменился после создания плана, CLI отказывает как stale. В лаборатории один apply меняет gate_revision, после чего прежний saved plan действительно отклоняется. Повторите plan и review, не обходите проверку serial.</p>
+<h3>Прочитать одно действие в JSON-плане</h3>
+<p>В сохранённом плане ищите элемент <code>resource_changes</code> по точному <code>address</code>. Для изменения input.port 8080→8180 при прежнем build у нашего terraform_data ожидается <code>change.actions = ["update"]</code>; при изменении triggers_replace b1→b2 — <code>["delete","create"]</code> без create_before_destroy. В <code>before</code> находятся прежние значения, в <code>after</code> — известная часть предполагаемого результата. Объект <code>after_unknown</code> отмечает неизвестные поля: null в after без проверки этого объекта нельзя автоматически читать как намеренное удаление значения.</p>
+<p>Отрицательный случай: plan успешно записан, затем другой apply изменил state. Совпадение имени файла review.tfplan с согласованным именем не делает план актуальным. Нужен отказ stale и новое решение. А неизменность state не является вечной блокировкой внешнего API между plan и apply; сторонний оператор всё ещё может изменить объект. <a href="https://developer.hashicorp.com/terraform/internals/json-format">Поля представления плана</a>.</p>
+<h2>Не транзакция всех ресурсов</h2>
+<p>Apply проходит готовые операции графа. Provider получает согласованное прежнее известное состояние, planned values и config; после фактических действий возвращает новое состояние или диагностику. Успех api и ошибка worker возможны в одном запуске. Core сохраняет известные выполненные изменения, а завершение с кодом 1 не превращает их в несуществующие. Нет общего rollback, который гарантированно удалит все новые ресурсы и восстановит прежние данные внешних систем. Даже удаление созданной VM не отменяет внешнюю отправку сообщения или миграцию БД.</p>
+<p>В нашем опыте gate зависит от сервисов, поэтому намеренная ошибка gate наступает после изменения service. Затем state содержит build b2, а gate после неуспешного provisioner создания помечен tainted, «требует замены». Исправление причины и новый apply используют тот же state. Tainted — не признак, что вся конфигурация потеряна. Сначала читайте фактический план следующего запуска, особенно proposed replacement.</p>
+<p>Возьмём api из сохранённого foundation. Сначала он содержит port=8080/build=b1. Затем меняем порт и отдельно метку build. Четыре листа ниже показывают разные данные: вход, решение, записанные атрибуты и байты побочного файла. A1/A2/W1/W2/G1/G2/G3 — условные подписи ID, не реальные UUID для import. Времена не моделируются.</p>
+<style>
+.tf-ledger,.tf-drift{--tf-ink:var(--reader-text,var(--text,#171717));--tf-paper:var(--reader-paper,var(--paper,#fff));--tf-soft:var(--reader-soft,var(--soft,#f4f4f4));--tf-accent:var(--reader-accent,var(--accent,#303030));color:var(--tf-ink);background:var(--tf-paper);border:2px solid var(--tf-ink);padding:1rem;margin:1.5rem 0;min-width:0;overflow-wrap:anywhere}
+.tf-ledger *,.tf-drift *{box-sizing:border-box}
+.tf-ledger h3,.tf-drift h3{margin:.25rem 0 .75rem}
+.tf-ledger pre,.tf-drift pre{font-size:1em;white-space:pre-wrap;overflow-wrap:anywhere;background:var(--tf-soft);color:var(--tf-ink);padding:.65rem;margin:.3rem 0}
+.tf-ledger .tf-sheets{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;list-style:decimal;padding-left:1.5rem}
+.tf-ledger .tf-sheets>li{min-width:0;padding:.5rem;border-top:3px double var(--tf-ink)}
+.tf-ledger dl{margin:0}.tf-ledger dt{font-weight:700;margin-top:.6rem}
+.tf-ledger dd{margin:0}.tf-ledger .tf-different{border-left:5px double var(--tf-ink);padding-left:.65rem}
+.tf-ledger figcaption,.tf-drift figcaption{border-top:1px solid var(--tf-ink);padding-top:.75rem;margin-top:1rem}
+.tf-ledger summary{min-height:44px;display:list-item;padding:.75rem .25rem;cursor:pointer}
+.tf-ledger summary:focus-visible{outline:3px solid var(--tf-accent);outline-offset:3px}
+.tf-drift dl{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:.5rem;margin:.5rem 0}
+.tf-drift dt,.tf-drift dd{margin:0;padding:.5rem;border-bottom:1px solid var(--tf-ink);min-width:0}
+@media(max-width:600px){.tf-ledger .tf-sheets{grid-template-columns:minmax(0,1fr)}.tf-drift dl{display:block}.tf-drift dt{font-weight:700;border:0}.tf-drift dd{padding-top:0}}
+@media print{.tf-ledger,.tf-drift{--tf-ink:#000;--tf-paper:#fff;--tf-soft:#fff;--tf-accent:#000;color:#000!important;background:#fff!important}.tf-ledger *,.tf-drift *{color:#000!important;box-shadow:none!important;text-shadow:none!important}.tf-ledger pre,.tf-drift pre{color:#000!important;background:#fff!important}.tf-ledger .tf-sheets{display:block}.tf-ledger .tf-sheets>li{break-inside:avoid}.tf-ledger details>summary{display:none}.tf-ledger details>.tf-full-trace{display:block!important}.tf-ledger a,.tf-drift a{color:#000!important}}
+</style>
+<span id="tf-partial-apply"></span>
+<figure class="tf-ledger" id="tf-state-file-ledger" aria-labelledby="tf-ledger-title">
+<h3 id="tf-ledger-title">Один api: план, память и файл расходятся по разным причинам</h3>
+<ol class="tf-sheets">
+<li><h4>Первый apply завершён</h4><dl><dt>Вход services.api</dt><dd><pre>{"port":8080,"build":"b1"}</pre></dd><dt>Следующий план</dt><dd><pre>terraform_data.service["api"]: ["no-op"]</pre></dd><dt>State: значения api и gate</dt><dd><pre>api: id=A1, output.port=8080,
+     output.build=b1
+worker: id=W1, build=b1
+gate: id=G1, успех</pre></dd><dt>rendered-api.json — точные байты writer</dt><dd><pre>{"build": "b1", "port": 8080}</pre>После закрывающей скобки один LF, байт 0a.</dd></dl></li>
+<li><h4>Port изменён; update применён</h4><dl><dt>Новый вход services.api</dt><dd><pre>{"port":8180,"build":"b1"}</pre></dd><dt>Исполненное решение</dt><dd><pre>terraform_data.service["api"]: ["update"]
+8080 → 8180; id остаётся A1</pre></dd><dt>State после update</dt><dd><pre>api: id=A1, output.port=8180,
+     output.build=b1
+worker: id=W1, build=b1
+gate: id=G1, успех</pre></dd><dt>Файл остался прежним</dt><dd class="tf-different"><pre>{"build": "b1", "port": 8080}</pre>LF=0a. Создания не было: writer не запускался.</dd></dl></li>
+<li><h4>Build b2 применён; gate отказал</h4><dl><dt>Входы того же стенда</dt><dd><pre>api: port=8180, build=b2
+worker: port=8081, build=b2
+gate_revision=fail-run
+fail_gate=true</pre></dd><dt>Решение и результат</dt><dd><pre>api/worker: ["delete","create"]
+gate.py: код 7
+Terraform apply: код 1</pre></dd><dt>Сохранённые resource state</dt><dd><pre>api: id=A2, output.port=8180,
+     output.build=b2
+worker: id=W2, build=b2
+gate: id=G2, tainted</pre></dd><dt>Writer создания api уже завершён</dt><dd><pre>{"build": "b2", "port": 8180}</pre>LF=0a. Поздний отказ gate не вернул A1 и b1.</dd></dl></li>
+<li><h4>Причина исправлена; новый план применён</h4><dl><dt>Изменён только управляющий вход</dt><dd><pre>fail_gate=false
+gate_revision=fail-run</pre></dd><dt>Новый план по существующему state</dt><dd><pre>api/worker: ["no-op"]
+gate: replacement tainted</pre></dd><dt>После успеха</dt><dd><pre>api: id=A2, port=8180, build=b2
+worker: id=W2, build=b2
+gate: id=G3, успех
+следующий полный plan: пуст</pre></dd><dt>Файл api не переписывался этим исправлением</dt><dd><pre>{"build": "b2", "port": 8180}</pre>LF=0a.</dd></dl></li>
+</ol>
+<p>Конфигурацию меняет автор, план вычисляют Core и provider, state записывает CLI/backend. Только creation provisioner пишет rendered-файл. Встроенный terraform_data не читает его для drift. Внешнего сервера, VM и открытого порта в этом опыте нет. Gate зависит от обоих service; порядок api/worker не задан. Child receipt может завершаться в ином порядке: после отказа отдельно проверяют resource state, а не считают корневой output полным журналом промежуточных успехов.</p>
+<details><summary>Полная текстовая последовательность шести состояний</summary><div class="tf-full-trace"><ol>
+<li>До изменения: config 8080/b1, api A1 8080/b1, файл 8080/b1, gate G1 успех.</li>
+<li>Автор меняет config на 8180/b1. План api ["update"]; до apply state A1 8080/b1 и файл 8080/b1 не изменены.</li>
+<li>Update завершён: state A1 8180/b1, файл 8080/b1; следующая проверка файла видит несовпадение.</li>
+<li>Автор задаёт b2 обоим сервисам, новую gate_revision и fail_gate=true. План api/worker ["delete","create"]; до apply остаются прежние identities и файлы.</li>
+<li>Выбранный допустимый ход: оба service завершены как A2/W2 b2, их writer выполнены, затем gate G2 отказал и tainted. Terraform вернул 1; новые service сохранены.</li>
+<li>fail_gate=false при той же revision; новый план заменяет tainted gate. A2/W2 сохраняются, gate G3 успех; полный следующий план пуст.</li>
+</ol></div></details>
+<p>Самопроверка: почему пустой plan после шага с port=8180 не исправляет файл 8080? Ответ: Read этого ресурса не наблюдает файл, а update не повторяет creation provisioner. Почему код 1 не разрешает повторить подготовку с пустым state? Уже выполненные A2/W2 существуют в той же lineage; их потеря изменила бы предмет опыта.</p>
+<figcaption>Модель конкретного foundation для CLI 1.17.1. ID условны; байты JSON выведены из json.dumps(sort_keys=True) + LF. Исторические native-наблюдения — labs/check-results.json. Новая модель вычисляется отдельно в labs/mechanism_model.py; она не выдаётся за новый запуск Terraform.</figcaption>
+</figure>
+<h2>Флаги, меняющие смысл</h2>
+<pre><code>terraform plan
+terraform plan -refresh=false
+terraform plan -refresh-only -out=observe.tfplan
+terraform apply observe.tfplan
+terraform plan -replace='terraform_data.service["api"]' -out=replace.tfplan</code></pre>
+<p>Первый и второй вызовы различаются наблюдением. Refresh-only планирует обновление state/outputs по текущим объектам, не обычное приведение удалённых объектов к config; apply такого плана принимает наблюдение в память. Это осмысленный выбор после согласованного внешнего изменения, но не исправление drift. <code>-replace</code> явно просит заменить адрес в обычном планировании и показывает действия до исполнения; это предпочтительнее слепого изменения внутреннего state, когда объект действительно надо пересоздать.</p>
+<p><code>-target</code> ограничивает план частью графа и её зависимостями; он предназначен для особых ситуаций, например восстановления, а не ежедневного обхода ошибок модели. После него нужен полный plan: outputs и независимые ресурсы могли остаться несогласованными. <code>-destroy</code> меняет намерение на удаление управляемых объектов; учебный destroy допускается только в помеченном собственном стенде после явного решения завершить упражнение.</p>
+<h2>Критерии review</h2>
+<p>Перед apply проверьте адреса, actions, before/after ключевых атрибутов, причины replacement, unknown, изменение outputs и уничтожение данных. Число «1 to destroy» не говорит, какие данные исчезнут. Запишите команду, commit конфигурации, CLI/provider versions, backend/workspace и согласование saved plan. Затем после apply подтвердите внешнюю готовность отдельно: она зависит от того, что действительно создавал provider.</p>
+<p>Источники 01.11.2026: <a href="https://developer.hashicorp.com/terraform/cli/commands/plan">plan modes и flags</a>, <a href="https://developer.hashicorp.com/terraform/cli/commands/apply">apply</a>, <a href="https://developer.hashicorp.com/terraform/internals/json-format">JSON format</a>, <a href="https://github.com/hashicorp/terraform/blob/v1.17.1/CHANGELOG.md">новые флаги 1.17</a>.</p>

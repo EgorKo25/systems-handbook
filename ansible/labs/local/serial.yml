@@ -1,0 +1,14 @@
+---
+- name: Check run_once per serial batch on separate local aliases
+  hosts: counters
+  gather_facts: false
+  serial: 1
+  strategy: linear
+  tasks:
+    - name: Once means once in this batch
+      ansible.builtin.set_fact:
+        counter_batch_owner: '{{ inventory_hostname }}'
+      run_once: true
+    - name: Each one-host batch has its own owner
+      ansible.builtin.assert:
+        that: counter_batch_owner == inventory_hostname

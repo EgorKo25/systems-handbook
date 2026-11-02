@@ -1,0 +1,27 @@
+<header><h1>Сбор: цели, обнаружение, переименование и исчезновение</h1><p>Разделяем выбор сетевой цели до запроса и преобразование полученных образцов перед записью.</p></header>
+<h2>Одна попытка опроса</h2>
+<p>Target, цель сбора, — конкретный endpoint с набором меток и настройками. Job объединяет цели с общим способом сбора, instance обычно идентифицирует адрес. Scrape manager поддерживает расписание, инициирует HTTP GET, ожидает ответ не дольше timeout, проверяет протокол и разбирает samples. В успешной попытке появляются метрики цели и служебные ряды <code>up</code>, <code>scrape_duration_seconds</code>, <code>scrape_samples_scraped</code>, <code>scrape_samples_post_metric_relabeling</code>. <code>up=1</code> означает успешный сбор endpoint, а не правильность business-функции приложения.</p>
+<p>В стенде interval=15s, timeout=5s. Timeout не может превышать interval. Уменьшение interval до 5s повышает временное разрешение и число samples примерно втрое при прежнем наборе рядов; оно также втрое чаще запускает collector в приложении. Увеличение timeout с 1s до 5s помогает пережить известную задержку, но дольше занимает сетевые ресурсы и позже обнаруживает отказ. Сравнивают два запуска под одинаковой нагрузкой по duration, CPU exporter, числу ошибок и bytes, а не лишь исчезновению красного значка.</p>
+<h2>Discovery и target relabeling</h2>
+<p>Service discovery, обнаружение служб, производит список кандидатов с метаданными. Статический список проще для одной VM; <code>file_sd_configs</code> позволяет другому локальному процессу атомарно публиковать JSON (JavaScript Object Notation, формат структурированных объектов/массивов) с адресами. Discovery не проверяет, что endpoint отвечает и что сертификат верен. Встроенные метки <code>__address__</code>, <code>__scheme__</code>, <code>__metrics_path__</code> определяют HTTP-запрос. <code>__meta_...</code> доступны на стадии обнаружения, но без копирования в обычную label не сохранятся в рядах.</p>
+<pre><code>scrape_configs:
+  - job_name: personal-nodes
+    file_sd_configs:
+      - files: [targets/nodes.json]
+    relabel_configs:
+      - source_labels: [environment]
+        regex: lab
+        action: keep
+      - source_labels: [__address__]
+        target_label: instance
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: node_network_receive_drop_total
+        action: drop</code></pre>
+<p><code>relabel_configs</code> выполняются до scrape и могут исключить цель целиком. Здесь остаются только targets с environment=lab; regex в relabeling закреплён на границах. <code>metric_relabel_configs</code> работают над разобранными samples перед ingestion: приведённое удаление одной семьи не экономит сеть и работу exporter, зато уменьшает запись. Это лишь демонстрация различия стадий; удалять drop counter в реальном стенде без обоснования не нужно. Автоматически сгенерированный <code>up</code> не подвергается metric relabeling. Не удаляйте различающие labels так, чтобы два samples с разными смыслами столкнулись в одной идентичности.</p>
+<p>JSON для file discovery содержит, например, <code>[{"targets":["node-a.lab.example:9100"],"labels":{"environment":"lab"}}]</code>. Это условный адрес собственной VM. Генератор пишет временный файл в том же filesystem и переименовывает его; читатель не должен видеть полунаписанный JSON. Для подключения машины отдельно выбирают и проверяют node_exporter, его версию, права, collectors и сетевой доступ. Открывать exporter в Интернет ради сбора личной машины не требуется: используйте личную сеть и аутентифицированный защищённый канал. Подробный рецепт подключения даёт <a href="https://prometheus.io/docs/guides/node-exporter/">официальное руководство</a>.</p>
+<h2>Ошибки, stale и отсутствие цели</h2>
+<p>Если известный target не отвечает, <code>up=0</code>; прежние значения прикладных рядов не становятся нулями. Staleness, устаревание серии, означает прекращение её участия в instant selectors после специального stale marker. При неуспешном scrape прежние серии этого target помечаются устаревшими. Если успешный endpoint перестал возвращать отдельную серию, она также завершается. Если target исчез из discovery, отдельный механизм откладывает stale markers примерно на два интервала; это даёт возможность цели вернуться, и точную задержку нельзя принимать за SLA.</p>
+<p>Перезапуск в этот промежуток и источники с явными timestamps имеют дополнительные условия; fallback lookback всё равно ограничивает поиск старых samples. Поэтому алерт <code>up == 0</code> не обнаруживает навсегда удалённую из discovery цель: ряд up исчезает. Для ожидаемого фиксированного job нужен, например, <code>absent_over_time(up{job="go-lab"}[2m])</code>, а для изменяемого набора машин — отдельный inventory expected targets. Сравнение «сколько ожидали» и «сколько наблюдаем» требует внешнего знания, которое невозможно вывести из пустого списка.</p>
+<h2>Приёмка изменения</h2>
+<p>Сначала <code>promtool check config</code>, затем reload и проверка <code>prometheus_config_last_reload_successful</code> и Targets API <code>/api/v1/targets</code>. Сохраните снимок labels до/после relabeling, последний scrape error и число samples. Изменение instance создаёт новые ряды; старые не переименовываются задним числом. Весь основной цикл конфигурации 3.13 описан в <a href="https://prometheus.io/docs/prometheus/3.13/configuration/configuration/">versioned reference</a>.</p>

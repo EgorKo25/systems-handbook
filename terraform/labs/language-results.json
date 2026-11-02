@@ -1,0 +1,17 @@
+{
+  "cli": "1.17.1",
+  "external_providers": false,
+  "count": 10,
+  "tests": [
+    "unknown for_each key refuses first plan",
+    "known key with unknown value plans and converges",
+    "mutual references rejected as dependency cycle",
+    "semantic validation rejects out-of-range and fractional ports",
+    "sensitive redacts display but preserves ordinary state and JSON output value",
+    "removed destroy=false forgets association",
+    "restoring old HCL after removed proposes create, not implicit association recovery",
+    "built-in terraform_data import block restores ID association; config restores input",
+    "ignore_changes input.port suppresses correction and preserves old state field",
+    "count index shift changes remaining positions; for_each stable keys preserve worker"
+  ]
+}

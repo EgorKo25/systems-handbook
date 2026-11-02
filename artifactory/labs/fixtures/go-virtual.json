@@ -1,0 +1,6 @@
+{
+  "rclass": "virtual",
+  "packageType": "go",
+  "repositories": ["go-local", "go-public"],
+  "defaultDeploymentRepo": "go-local"
+}

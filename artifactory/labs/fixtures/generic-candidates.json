@@ -1,0 +1,5 @@
+{
+  "rclass": "local",
+  "packageType": "generic",
+  "description": "receipt candidate binaries and manifest; separate from Go source proxy"
+}

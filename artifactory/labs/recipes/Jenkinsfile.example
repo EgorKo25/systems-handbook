@@ -1,0 +1,38 @@
+// UNEXECUTED. Prepared private agent, Credentials Binding, own protected job.
+pipeline {
+  agent { label 'receipt-prepared-linux' }
+  options { disableConcurrentBuilds() }
+  stages {
+    stage('Test and candidate') {
+      steps {
+        withCredentials([usernamePassword(credentialsId: 'receipt-publisher', usernameVariable: 'JF_USER', passwordVariable: 'JF_TOKEN'), file(credentialsId: 'receipt-public-ca', variable: 'JF_CA_FILE')]) {
+          sh '''
+            set -eu
+            set +x
+            umask 077
+            : "${JF_BIN:?verified CLI}" "${GO_BIN:?verified Go}" "${JF_URL:?own HTTPS platform}"
+            export PATH="$(dirname "$GO_BIN"):$PATH"
+            export JFROG_CLI_HOME_DIR="$WORKSPACE/.private-jf"
+            export JFROG_CLI_TEMP_DIR="$WORKSPACE/.private-jf-tmp"
+            export JFROG_CLI_REPORT_USAGE=false JFROG_CLI_AVOID_NEW_VERSION_WARNING=true
+            export GOENV=off GOWORK=off GOTOOLCHAIN=local
+            export GOPRIVATE=example.invalid GONOPROXY=none GONOSUMDB=example.invalid
+            mkdir -p dist "$JFROG_CLI_HOME_DIR/security/certs"
+            cp "$JF_CA_FILE" "$JFROG_CLI_HOME_DIR/security/certs/lab.crt"
+            export SSL_CERT_FILE="$JF_CA_FILE"
+            printf '%s' "$JF_TOKEN" | "$JF_BIN" config add ci --url="$JF_URL" --user="$JF_USER" --access-token-stdin --interactive=false
+            "$JF_BIN" go-config --server-id-resolve=ci --repo-resolve=go-virtual --server-id-deploy=ci --repo-deploy=go-local
+            export GOOS=linux GOARCH=amd64 CGO_ENABLED=0
+            "$JF_BIN" go test ./... --no-fallback
+            "$JF_BIN" go build -trimpath -ldflags='-X main.version=1.0.0' -o dist/receipt-linux-amd64 ./cmd/receipt --no-fallback --build-name=receipt --build-number="$BUILD_NUMBER"
+            "$JF_BIN" rt upload dist/receipt-linux-amd64 "generic-candidates/receipt/1.0.0/$BUILD_NUMBER/" --flat=true --server-id=ci --fail-no-op=true --build-name=receipt --build-number="$BUILD_NUMBER"
+            "$JF_BIN" rt build-publish receipt "$BUILD_NUMBER" --server-id=ci
+          '''
+        }
+      }
+    }
+  }
+  post {
+    always { sh 'test -n "$WORKSPACE" && rm -rf -- "$WORKSPACE/.private-jf" "$WORKSPACE/.private-jf-tmp"' }
+  }
+}

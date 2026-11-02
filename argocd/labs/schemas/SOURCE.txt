@@ -1,0 +1,6 @@
+Extracted unchanged openAPIV3Schema for v1alpha1 from official Argo CD v3.5.6:
+https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.6/manifests/install.yaml
+Apache License 2.0; see ../LICENSES/Argo-CD-LICENSE.txt.
+These are upstream data, not an independently invented validation schema.
+Python jsonschema verifies a useful structural subset. Kubernetes structural
+schema pruning/admission/RBAC/defaulting/CEL and controller semantics are separate.

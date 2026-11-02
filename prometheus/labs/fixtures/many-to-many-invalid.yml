@@ -1,0 +1,17 @@
+# Deliberately invalid arithmetic join. The runner expects a nonzero exit code.
+rule_files: []
+evaluation_interval: 1m
+tests:
+  - name: expected_duplicate_one_side_error
+    interval: 1m
+    input_series:
+      - series: 'left_value{key="a",code="200"}'
+        values: '2'
+      - series: 'right_info{key="a",team="blue"}'
+        values: '1'
+      - series: 'right_info{key="a",team="green"}'
+        values: '1'
+    promql_expr_test:
+      - expr: 'left_value * on(key) group_left(team) right_info'
+        eval_time: 0m
+        exp_samples: []

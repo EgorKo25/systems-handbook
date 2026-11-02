@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ledger-gitops
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: ledger-gitops
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

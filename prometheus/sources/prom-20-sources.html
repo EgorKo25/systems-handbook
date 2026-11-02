@@ -1,0 +1,38 @@
+<header><h1>Первичные источники и границы проверенной редакции</h1><p>Опора материала — официальная документация и исходники выбранных версий. Авторские сценарии и числовые наборы не скопированы из курса.</p></header>
+<h2>Версия и дата</h2>
+<p>Материал сверен 1 ноября 2026 года. Основной исполняемый профиль: Prometheus/promtool 3.13.5, client_golang 1.23.2. Реальная проверка Go выполнена toolchain1.27.3 linux/amd64. <code>go.mod</code> задаёт минимальный язык 1.23 и закреплённый модуль; это не требование автоматически скачать toolchain при офлайне. Бинарники тестового профиля загружены из официальных release/download endpoints в приватный временный каталог, суммы сравнены с опубликованными официальными SHA-256. В исходники книги они не включены.</p>
+<p><a href="https://prometheus.io/docs/introduction/release-cycle/">Release cycle/LTS</a> подтверждает выбор ветки 3.13 на эту дату; <a href="https://github.com/prometheus/prometheus/releases/tag/v3.13.5">release3.13.5</a> фиксирует patch. Страницы <code>/3.13/</code> относятся к minor ветке, а точную реализацию важных механизмов фиксируют ссылки на tagv3.13.5. Страницы без версии могут обновляться; их факты в книге привязаны к указанной дате и проверяются заново при следующей редакции.</p>
+<h2>Модель, сбор и клиент</h2>
+<ul>
+<li><a href="https://prometheus.io/docs/concepts/data_model/">Data model</a>: идентичность series, labels, timestamps.</li>
+<li><a href="https://prometheus.io/docs/concepts/metric_types/">Metric types</a>: договор counter/gauge/summary/histogram.</li>
+<li><a href="https://prometheus.io/docs/instrumenting/exposition_formats/">Exposition formats</a> и <a href="https://prometheus.io/docs/instrumenting/content_negotiation/">content negotiation</a>: HTTP-представление и согласование протокола.</li>
+<li><a href="https://prometheus.io/docs/prometheus/3.13/configuration/configuration/">Configuration3.13</a>: scrape/discovery/relabeling, timeout, native ingestion defaults.</li>
+<li><a href="https://prometheus.io/docs/guides/file-sd/">File discovery</a> и <a href="https://prometheus.io/docs/guides/node-exporter/">node_exporter</a>: расширение личного стенда.</li>
+<li><a href="https://github.com/prometheus/client_golang/tree/v1.23.2">client_golangv1.23.2</a>, <a href="https://github.com/prometheus/client_golang/blob/v1.23.2/prometheus/counter.go">counter implementation</a>, <a href="https://github.com/prometheus/client_golang/blob/v1.23.2/prometheus/histogram.go">histogram options</a>, <a href="https://github.com/prometheus/client_golang/blob/v1.23.2/prometheus/registry.go">registry</a>: конкурентные обновления, descriptors и стоимость.</li>
+<li><a href="https://prometheus.io/docs/practices/instrumentation/">Instrumentation</a> и <a href="https://prometheus.io/docs/practices/naming/">naming</a>: единицы и полезный контракт.</li>
+</ul>
+<h2>PromQL и правила</h2>
+<ul>
+<li><a href="https://prometheus.io/docs/prometheus/3.13/querying/basics/">Basics3.13</a>: types, selectors, time, lookback, offsets, subqueries.</li>
+<li><a href="https://prometheus.io/docs/prometheus/3.13/querying/operators/">Operators3.13</a>: aggregation, bool, matching, sets и histogram restrictions.</li>
+<li><a href="https://prometheus.io/docs/prometheus/3.13/querying/functions/">Functions3.13</a>: функции и annotations. Это справка; авторские выводы результатов находятся в книге и fixtures.</li>
+<li><a href="https://github.com/prometheus/prometheus/blob/v3.13.5/promql/functions.go">functions.go v3.13.5</a>: default extrapolatedRate и поправки краёв окна.</li>
+<li><a href="https://github.com/prometheus/prometheus/blob/v3.13.5/promql/quantile.go">quantile.go v3.13.5</a>: histogram interpolation.</li>
+<li><a href="https://prometheus.io/docs/specs/native_histograms/">Native histograms specification</a> и <a href="https://prometheus.io/docs/practices/histograms/">histograms/summaries</a>: schemas, совместимость и ошибки квантилей.</li>
+<li><a href="https://prometheus.io/docs/prometheus/3.13/configuration/recording_rules/">Recording rules</a>, <a href="https://prometheus.io/docs/prometheus/3.13/configuration/alerting_rules/">alerting rules</a>, <a href="https://prometheus.io/docs/prometheus/3.13/configuration/unit_testing_rules/">unit tests</a>: evaluation, for/keep_firing_for, timestamped fixtures.</li>
+<li><a href="https://prometheus.io/docs/prometheus/3.13/querying/api/">HTTP API3.13</a>: instant/range, health/status, snapshot и ошибки/warnings.</li>
+</ul>
+<h2>Хранение и эксплуатация</h2>
+<ul>
+<li><a href="https://prometheus.io/docs/prometheus/3.13/storage/">Storage3.13</a>, <a href="https://github.com/prometheus/prometheus/tree/v3.13.5/tsdb/docs/format">TSDB formatsv3.13.5</a>: blocks/index/chunks и локальная граница.</li>
+<li><a href="https://github.com/prometheus/prometheus/blob/v3.13.5/tsdb/head_append.go">head_append.go</a>, <a href="https://github.com/prometheus/prometheus/blob/v3.13.5/tsdb/head.go">head.go</a>, <a href="https://github.com/prometheus/prometheus/blob/v3.13.5/tsdb/wlog/wlog.go">wlog.go</a>: создание series, Commit, checkpoint/replay и flush/fsync.</li>
+<li><a href="https://prometheus.io/docs/prometheus/3.13/command-line/prometheus/">Server CLI</a> и <a href="https://prometheus.io/docs/prometheus/3.13/command-line/promtool/">promtool CLI</a>: карточки дополнительно сверены с реальным <code>--help</code> binaries3.13.5.</li>
+<li><a href="https://prometheus.io/docs/prometheus/3.13/migration/">Migration3.x</a>: особенности обновления и совместимости.</li>
+<li><a href="https://prometheus.io/docs/practices/remote_write/">Remote write tuning</a>, <a href="https://prometheus.io/docs/specs/prw/remote_write_spec/">remote write1.0</a>, <a href="https://prometheus.io/docs/specs/prw/remote_write_spec_2_0/">remote write2.0</a>, <a href="https://prometheus.io/docs/prometheus/3.13/querying/remote_read_api/">remote read</a>: границы сетевого хранения.</li>
+<li><a href="https://prometheus.io/docs/operating/security/">Security model</a>, <a href="https://prometheus.io/docs/alerting/latest/overview/">Alertmanager contract</a>, <a href="https://prometheus.io/docs/guides/opentelemetry/">OpenTelemetry integration</a>: права и соседние системы.</li>
+</ul>
+<h2>Что доказано исполнением, а что осталось рецептом</h2>
+<p><code>ПРОВЕРКИ.txt</code> содержит фактические команды и результаты с разделением static QA, native PromQL evaluation, Go race/benchmarks, loopback HTTP/TSDB test и неисполненных VM-рецептов. Числа в учебных таблицах заданы автором; где они сравниваются с движком, это явно указано. Пошаговые схемы — фиксированные объясняющие состояния, не эмулятор Prometheus. В книге нет браузерного интерпретатора произвольного PromQL: реальные fixtures полезнее второго неполного движка.</p>
+<p>Дополнение 2 ноября: встроенные временные графики используют неизменённый fixture, а новые арифметические проверки являются моделями. Историческая native-приёмка 1 ноября относится к прежнему snapshot; ожидание Go shutdown и расширенный restore-рецепт после reader-pass ещё не исполнялись нативно. Настройки mobile/themes/print проверяются по исходному коду; фактический браузерный результат этим не подтверждён.</p>
+<p>Не выполнены развёртывание systemd на хосте, подключение личных VM/exporters, отказ питания, многосуточный compaction/retention stress, HA/dedup, внешний remote receiver, Alertmanager delivery и native histogram transport от live Go-сервиса. Они описаны как отдельные контролируемые опыты и не объявляются подтверждёнными одним локальным тестом. Ограничения не отменяют проверенный основной путь измерения, записи, запроса и восстановления.</p>

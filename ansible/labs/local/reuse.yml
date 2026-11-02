@@ -1,0 +1,18 @@
+---
+- name: Compare static and dynamic gates
+  hosts: counters
+  gather_facts: false
+  tasks:
+    - name: Import and copy the gate to each child
+      ansible.builtin.import_tasks: static_steps.yml
+      when: static_gate is not defined
+    - name: Include after testing the gate once
+      ansible.builtin.include_tasks: dynamic_steps.yml
+      when: dynamic_gate is not defined
+    - name: Verify the resulting branches
+      ansible.builtin.assert:
+        that:
+          - static_gate
+          - static_second is not defined
+          - dynamic_gate
+          - dynamic_second

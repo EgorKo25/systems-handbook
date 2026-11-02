@@ -1,0 +1,234 @@
+---
+- name: Roll out the saved personal VM counter
+  hosts: counters
+  gather_facts: false
+  serial: 1
+  strategy: linear
+  any_errors_fatal: true
+  become: true
+  pre_tasks:
+    - name: Require the operator selected personal SSH VMs
+      delegate_to: localhost
+      become: false
+      ansible.builtin.assert:
+        that:
+          - counter_personal_vm | default(false) | bool
+          - hostvars[inventory_hostname].ansible_connection | default('ssh') != 'local'
+    - name: Verify controller artifact bytes before any managed-system write
+      ansible.builtin.stat:
+        path: '{{ counter_artifact }}'
+        follow: false
+        checksum_algorithm: sha256
+      delegate_to: localhost
+      become: false
+      register: counter_source_artifact
+    - name: Require a regular controller artifact matching the trusted manifest
+      delegate_to: localhost
+      become: false
+      ansible.builtin.assert:
+        that:
+          - counter_source_artifact.stat.exists
+          - counter_source_artifact.stat.isreg | default(false)
+          - counter_source_artifact.stat.checksum | default('') == counter_sha256
+    - name: Gather target facts only after controller preflight
+      ansible.builtin.setup:
+    - name: Remember previous link without following it
+      ansible.builtin.stat:
+        path: /opt/counter/current
+        follow: false
+      register: counter_old_link
+    - name: Refuse an unexpected current path type
+      ansible.builtin.assert:
+        that:
+          - not counter_old_link.stat.exists or counter_old_link.stat.islnk
+          - not counter_old_link.stat.exists or counter_old_link.stat.lnk_source.startswith('/opt/counter/releases/')
+    - name: Inspect previous configuration
+      ansible.builtin.stat:
+        path: /etc/counter/config.json
+        follow: false
+      register: counter_old_config_stat
+    - name: Refuse an unexpected previous configuration type
+      ansible.builtin.assert:
+        that: not counter_old_config_stat.stat.exists or counter_old_config_stat.stat.isreg
+    - name: Keep the non-secret previous configuration for this attempt
+      ansible.builtin.slurp:
+        src: /etc/counter/config.json
+      register: counter_old_config
+      when: counter_old_config_stat.stat.exists
+    - name: Record previous live version before touching the saved release
+      ansible.builtin.uri:
+        url: http://127.0.0.1:8080/version
+        return_content: true
+        timeout: 2
+      register: counter_before_version
+      changed_when: false
+      when: counter_old_link.stat.exists
+    - name: Record previous live data before touching the saved release
+      ansible.builtin.uri:
+        url: http://127.0.0.1:8080/counter
+        return_content: true
+        timeout: 2
+      register: counter_before_data
+      changed_when: false
+      when: counter_old_link.stat.exists
+  roles:
+    - gosvc
+  tasks:
+    - name: Install and verify the new release before activation
+      block:
+        - name: Inspect a possibly existing immutable release
+          ansible.builtin.stat:
+            path: '{{ counter_root }}/releases/{{ counter_release }}/counter'
+            checksum_algorithm: sha256
+            follow: false
+          register: counter_existing_release
+        - name: Refuse reuse of a release name for different or unexpected bytes
+          ansible.builtin.assert:
+            that:
+              - not counter_existing_release.stat.exists or counter_existing_release.stat.isreg
+              - not counter_existing_release.stat.exists or counter_existing_release.stat.checksum == counter_sha256
+        - name: Copy the fixed binary from controller
+          ansible.builtin.copy:
+            src: '{{ counter_artifact }}'
+            dest: '{{ counter_root }}/releases/{{ counter_release }}/counter'
+            owner: root
+            group: root
+            mode: '0755'
+          when: not counter_existing_release.stat.exists
+        - name: Restore metadata without rewriting existing trusted artifact bytes
+          ansible.builtin.file:
+            path: '{{ counter_root }}/releases/{{ counter_release }}/counter'
+            state: file
+            owner: root
+            group: root
+            mode: '0755'
+        - name: Read the target artifact SHA-256
+          ansible.builtin.stat:
+            path: '{{ counter_root }}/releases/{{ counter_release }}/counter'
+            checksum_algorithm: sha256
+          register: counter_staged
+        - name: Require the trusted expected artifact bytes
+          ansible.builtin.assert:
+            that: counter_staged.stat.checksum == counter_sha256
+        - name: Require the compiled version
+          ansible.builtin.command:
+            argv: ['{{ counter_root }}/releases/{{ counter_release }}/counter', '--version']
+          register: counter_compiled
+          changed_when: false
+          failed_when: counter_compiled.rc != 0 or counter_compiled.stdout | trim != counter_release
+        - name: Render validated config and stable unit
+          ansible.builtin.include_role:
+            name: gosvc
+            tasks_from: configure
+        - name: Point current at the staged release
+          ansible.builtin.file:
+            src: '{{ counter_root }}/releases/{{ counter_release }}'
+            dest: '{{ counter_root }}/current'
+            state: link
+          notify: Restart counter
+        - name: Apply pending unit and process changes
+          ansible.builtin.meta: flush_handlers
+        - name: Ensure process is running even without a pending change
+          ansible.builtin.systemd_service:
+            name: counter
+            state: started
+            enabled: true
+        - name: Explicit recovery restart when chosen after an interrupted attempt
+          ansible.builtin.systemd_service:
+            name: counter
+            state: restarted
+          when: counter_force_restart | bool
+        - name: Require the running expected version from target loopback
+          ansible.builtin.uri:
+            url: http://127.0.0.1:8080/version
+            return_content: true
+            timeout: 2
+          register: counter_live
+          until: counter_live.status == 200 and counter_live.content | trim == counter_release
+          retries: 10
+          delay: 1
+          changed_when: false
+        - name: Read persistent application state without increasing it
+          ansible.builtin.uri:
+            url: http://127.0.0.1:8080/counter
+            return_content: true
+            timeout: 2
+          register: counter_data_probe
+          changed_when: false
+        - name: Require a readable non-negative saved value
+          ansible.builtin.assert:
+            that:
+              - counter_data_probe.json.count is integer
+              - counter_data_probe.json.count >= 0
+              - not counter_old_link.stat.exists or counter_data_probe.json.count >= counter_before_data.json.count
+      rescue:
+        - name: Restore the previous configuration if one existed
+          ansible.builtin.copy:
+            content: '{{ counter_old_config.content | b64decode }}'
+            dest: /etc/counter/config.json
+            owner: root
+            group: counter
+            mode: '0640'
+          when: counter_old_config_stat.stat.exists
+        - name: Remove only a newly created configuration on failed first install
+          ansible.builtin.file:
+            path: /etc/counter/config.json
+            state: absent
+          when: not counter_old_config_stat.stat.exists
+        - name: Restore the previous release link
+          ansible.builtin.file:
+            src: '{{ counter_old_link.stat.lnk_source }}'
+            dest: /opt/counter/current
+            state: link
+          when: counter_old_link.stat.exists
+        - name: Remove current on failed first install
+          ansible.builtin.file:
+            path: /opt/counter/current
+            state: absent
+          when: not counter_old_link.stat.exists
+        - name: Check whether a unit exists before first-install cleanup
+          ansible.builtin.stat:
+            path: /etc/systemd/system/counter.service
+          register: counter_rescue_unit
+        - name: Reapply the old running version or stop failed first install
+          ansible.builtin.systemd_service:
+            name: counter
+            daemon_reload: true
+            state: '{{ "restarted" if counter_old_link.stat.exists else "stopped" }}'
+          when: counter_rescue_unit.stat.exists
+        - name: Verify the restored service is reachable when an old release existed
+          ansible.builtin.uri:
+            url: http://127.0.0.1:8080/healthz
+            timeout: 2
+          register: counter_restored
+          until: counter_restored.status == 200
+          retries: 10
+          delay: 1
+          changed_when: false
+          when: counter_old_link.stat.exists
+        - name: Verify the restored process version matches the preflight observation
+          ansible.builtin.uri:
+            url: http://127.0.0.1:8080/version
+            return_content: true
+            timeout: 2
+          register: counter_restored_version
+          until: counter_restored_version.status == 200 and counter_restored_version.content | trim == counter_before_version.content | trim
+          retries: 10
+          delay: 1
+          changed_when: false
+          when: counter_old_link.stat.exists
+        - name: Read restored persistent application state
+          ansible.builtin.uri:
+            url: http://127.0.0.1:8080/counter
+            return_content: true
+            timeout: 2
+          register: counter_restored_data
+          changed_when: false
+          when: counter_old_link.stat.exists
+        - name: Require restored count not less than the preflight observation
+          ansible.builtin.assert:
+            that: counter_restored_data.json.count >= counter_before_data.json.count
+          when: counter_old_link.stat.exists
+        - name: Stop the entire rollout after this failed attempt
+          ansible.builtin.fail:
+            msg: 'Release rejected; restoration was attempted and the rollout remains failed. Inspect state before retry.'

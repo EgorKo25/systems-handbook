@@ -1,0 +1,76 @@
+<header><h1>PromQL III: rate, increase, irate и reset с расчётом</h1><p>Получаем числа вручную на одной временной шкале и проверяем именно семантику движка, включая экстраполяцию.</p></header>
+<h2>Один counter и наблюдаемый сброс</h2>
+<p>Счётчик в этом учебном примере считает завершённые запросы: значения измеряются в requests, время — в секундах от t=0 начала fixture, скорость — в requests/s. Это заданные входы <code>labs/fixtures/promql.yml</code>, не live capture. Полный набор меток выбранного ряда — <code>{__name__="c_total",instance="a"}</code>. В том же файле есть <code>instance="b"</code>, поэтому во всех одиночных расчётах ниже нужен matcher <code>{instance="a"}</code>; без него результат содержал бы два элемента. Следующая глава намеренно объединит оба ряда.</p>
+<table><thead><tr><th>t, s</th><th>0</th><th>60</th><th>120</th><th>180</th><th>240</th><th>300</th></tr></thead><tbody><tr><td><code>c_total{instance="a"}</code></td><td>0</td><td>60</td><td>120</td><td>20</td><td>80</td><td>140</td></tr></tbody></table>
+<p>В T=300 выражение <code>c_total{instance="a"}[5m]</code> содержит t60..t300. Падение 120→20 — наблюдаемый reset. Для counter движок считает, что после 120 счётчик начал новую жизнь от нуля и успел достичь 20. Скорректированный прирост по видимым точкам: (120−60)+20+(80−20)+(140−80)=200. Эквивалентно last−first +120 =140−60+120=200. Интервал между первым и последним sample — 240s, не ширина окна 300s.</p>
+<p><code>resets(c_total{instance="a"}[5m])</code> даёт 1, <code>irate(c_total{instance="a"}[5m])</code> использует только последнюю пару и даёт (140−80)/60=1 request/s. <code>irate</code> не усредняет все пять минут: окно только ограничивает поиск последних двух samples. Если reset был в последней паре, скорректированный прирост равен последнему значению, поскольку значение перед сбросом не переносится в новую жизнь. Невидимый reset, после которого counter успел вырасти выше старого значения, по двум точкам обнаружить нельзя.</p>
+<h2>Обычная экстраполяция rate</h2>
+<p>Для default <code>rate</code> Prometheus 3.13.5 сначала получает corrected increase и span между samples. Затем оценивает расстояния от первого/последнего sample до границ окна. Средний шаг в нашем случае 240/(5−1)=60s. Порог близости — 1.1×60=66s. Слева от первого sample до границы 60s, справа 0s: оба расстояния достаточно близки, и интервал экстраполируется с 240 до 300s. Для counter действует дополнительное ограничение: не экстраполировать назад до отрицательного накопленного значения. Здесь оценённое время до нуля 240×60/200=72s, что больше нужных 60s, поэтому ограничения нет.</p>
+<p>Итак, <code>increase(c_total{instance="a"}[5m])</code> =200×300/240=<strong>250 requests</strong>, <code>rate(c_total{instance="a"}[5m])</code> =250/300=<strong>5/6 ≈0.833333 requests/s</strong>. Значение increase может быть дробным, хотя исходные events целые: оно является оценкой на всё окно. <code>rate</code> и <code>increase</code> отличаются единицами и масштабом W секунд, а не обработкой resets. Простое (last−first)/W дало бы 80/300≈0.2667 и проигнорировало бы и reset, и неполное покрытие.</p>
+<style>
+.prom-timecut{margin:1.5rem 0;padding:1rem;border:2px solid var(--text);border-radius:.35rem;background:var(--paper);color:var(--text)}
+.prom-timecut figcaption{font-weight:700;font-size:1.08rem;margin-bottom:.7rem}
+.prom-timecut .ptc-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1rem;align-items:start}
+.prom-timecut .ptc-plot{margin:0;min-width:0}
+.prom-timecut svg{display:block;width:100%;height:auto;max-width:24rem;margin-inline:auto;background:var(--paper);color:var(--text)}
+.prom-timecut svg text{font:14px var(--sans,sans-serif);fill:currentColor}
+.prom-timecut svg .ptc-axis{stroke:currentColor;stroke-width:1.5;fill:none}
+.prom-timecut svg .ptc-guide{stroke:var(--muted);stroke-width:1.5;stroke-dasharray:4 4;fill:none}
+.prom-timecut svg .ptc-point{fill:var(--paper);stroke:var(--accent);stroke-width:2.5}
+.prom-timecut svg .ptc-solid{fill:var(--accent);stroke:var(--accent)}
+.prom-timecut .ptc-key{margin:.5rem 0;font-size:1rem}
+.prom-timecut table{width:100%;border-collapse:collapse;font-size:1rem}
+.prom-timecut th,.prom-timecut td{padding:.45rem .3rem;border-bottom:1px solid var(--muted);vertical-align:top;overflow-wrap:anywhere}
+.prom-timecut th{text-align:left}
+.prom-timecut .table-wrap{overflow:visible;min-width:0}
+.prom-timecut .table-wrap table{min-width:0}
+.prom-timecut th,.prom-timecut td{min-width:0;white-space:normal}
+.prom-timecut .ptc-answer{padding:.6rem;border-left:3px solid var(--accent);background:var(--soft)}
+@media(max-width:42rem){.prom-timecut{padding:.65rem}.prom-timecut .ptc-layout{grid-template-columns:minmax(0,1fr)}.prom-timecut svg text{font-size:17px}}
+@media print{.prom-timecut{--paper:#fff;--text:#000;--muted:#333;--accent:#000;--soft:#fff;color:#000;background:#fff;border-color:#000;break-inside:auto}.prom-timecut svg{color:#000;background:#fff}.prom-timecut .ptc-layout{grid-template-columns:minmax(0,1fr)}.prom-timecut .ptc-answer{background:#fff;color:#000}.prom-timecut code{background:transparent;color:inherit}}
+</style>
+<figure id="prom-counter-window-cut" class="prom-timecut" aria-labelledby="ptc-c-caption">
+<figcaption id="ptc-c-caption">Окно выбирает точки; reset и экстраполяция меняют расчёт, а не хранимые значения</figcaption>
+<div class="ptc-layout"><div class="ptc-plot"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 316" role="img" aria-labelledby="ptc-c-title ptc-c-desc">
+<title id="ptc-c-title">Измерения counter a и окно (0,300] секунд</title>
+<desc id="ptc-c-desc">Шесть исходных точек: (0,0),(60,60),(120,120),(180,20),(240,80),(300,140). Точка t=0 исключена. Падение между 120 и 180 показывает наблюдаемый сброс, его точное время неизвестно. Пять включённых точек покрывают 240 секунд; ещё 60 секунд до левого края оценивает алгоритм, это не дополнительный sample.</desc>
+<path class="ptc-axis" d="M40 28V196H292"/>
+<text x="3" y="22">запросы</text><text x="17" y="200">0</text>
+<path class="ptc-guide" d="M40 136H280M40 76H280M40 56H280"/>
+<text x="12" y="141">60</text><text x="5" y="81">120</text><text x="5" y="61">140</text>
+<path class="ptc-guide" d="M40 196L88 136L136 76L184 176L232 116L280 56"/>
+<circle class="ptc-point" cx="40" cy="196" r="5"/>
+<circle class="ptc-point ptc-solid" cx="88" cy="136" r="4"/>
+<circle class="ptc-point ptc-solid" cx="136" cy="76" r="4"/>
+<circle class="ptc-point ptc-solid" cx="184" cy="176" r="4"/>
+<circle class="ptc-point ptc-solid" cx="232" cy="116" r="4"/>
+<circle class="ptc-point ptc-solid" cx="280" cy="56" r="4"/>
+<text x="181" y="164">20</text><text x="229" y="104">80</text>
+<text x="35" y="218">0</text><text x="78" y="218">60</text><text x="122" y="218">120</text><text x="170" y="218">180</text><text x="218" y="218">240</text><text x="266" y="218">300</text>
+<text x="267" y="238">t, с</text>
+<path class="ptc-axis" d="M88 252H280M88 247V257M280 247V257"/>
+<text x="95" y="275">между точками: 240 с</text>
+<path class="ptc-guide" d="M40 294H88"/>
+<path class="ptc-axis" d="M40 289V299M88 289V299"/>
+<text x="100" y="301">оценка края: 60 с</text>
+</svg>
+<p class="ptc-key">Пустой кружок t=0 — реальный заданный sample, исключённый окном; остальные кружки включены. Пунктир соединяет измерения только для чтения: между scrapes дополнительных точек нет. Падение замечено между 120 и 180 с; точный момент сброса неизвестен. Нижняя пунктирная полоса — оценённая длительность края, не продолжение измеренной линии.</p></div>
+<div><table><caption>Текстовая и печатная альтернатива: T=300 с, W=300 с</caption><thead><tr><th>Шаг</th><th>Проверяемые числа</th></tr></thead><tbody>
+<tr><td>1. Выбрать (0,300]</td><td>t=60,120,180,240,300; значения 60,120,20,80,140 requests. t=0 не участвует.</td></tr>
+<tr><td>2. Исправить reset</td><td>Приросты 60 + 20 + 60 + 60 = 200 requests. Член 20 учитывает новую жизнь counter после падения, не raw-разность −100.</td></tr>
+<tr><td>3. Оценить края</td><td>span=240 с; средний шаг=60 с; порог=66 с. Слева 60&lt;66 с, справа 0. Время до нуля=72 с не ограничивает нужные 60 с.</td></tr>
+<tr><td>4. Пересчитать на окно</td><td>increase=200×(240+60)/240=250 requests; rate=250/300=5/6 requests/s. Исходные samples остаются прежними.</td></tr>
+<tr><td>Изменить окно на 30 с</td><td>(270,300] содержит только t=300. Для <code>rate(c_total{instance="a"}[30s])</code> двух точек нет: результат пуст, не 0.</td></tr>
+</tbody></table></div></div>
+<p class="ptc-answer"><strong>Самопроверка.</strong> Почему 250 больше наблюдённого прироста 200 и почему это не точный журнал 250 запросов? Включённые точки покрывают 240 с, а алгоритм оценивает ещё 60 с до края окна. Он умножает прирост на 300/240. Измеренных событий в этом пробеле нет; результат зависит от предположения экстраполяции. При окне 30 с вычисление, напротив, не выдаёт оценку из единственного sample.</p>
+<div class="ptc-sparse"><p><strong>Изменённый вход: пробелы вместо нулей.</strong> Соседний fixture имеет полный label set <code>{__name__="sparse_total"}</code>, значения в requests и ту же минутную сетку от t=0. Символ <code>_</code> означает отсутствие sample, не измеренный 0; причина отсутствия этим входом не задана.</p>
+<table><caption>Шкала разреженного входа, секунды</caption><thead><tr><th>t=0</th><th>t=60</th><th>t=120</th><th>t=180</th></tr></thead><tbody><tr><td>_</td><td>_</td><td>60</td><td>120</td></tr></tbody></table>
+<p>На T=180 окно (0,180] включает только две числовые точки. Пробел до первой точки равен 120 с и превышает порог 66 с. Вместо заполнения пробела нулями или полного продления на 120 с алгоритм добавляет 30 с: increase=60×(60+30)/60=90 requests. Следующий раздел разбирает эту границу отдельно.</p></div>
+</figure>
+<p>Рисунок относится к обычному float-пути <code>extrapolatedRate</code> версии 3.13.5 и ровно этим входам: без start timestamps, anchored/smoothed и native histogram samples. Следующие два входа меняют именно расстояния до края и нулевую границу, поэтому универсально растягивать любой разрыв до полного окна нельзя.</p>
+<h2>Почему огромную дыру не растягивают до бесконечности</h2>
+<p>В другом counter <code>sparse_total</code> на T=180s в окне 3m имеются только t120=60 и t180=120. Span60s, средний шаг 60s. Слева дырка 120s превышает 66s: вместо всей дыры движок добавляет половину среднего шага 30s. Ограничение нулём даёт допустимые 60s и не уменьшает 30. Экстраполированный интервал 90s, increase=60×90/60=<strong>90</strong>, rate=90/180=<strong>0.5/s</strong>. Это предположение алгоритма о наблюдаемом крае, а не доказанные события за две отсутствующие минуты.</p>
+<p>Третий counter <code>zero_total</code>: t60=0,t120=60,t180=120. Для окна 3m начальная экстраполяция 60s отсечена временем до нуля 0s; increase=120, rate=2/3/s. Значение 0 у первого sample — сильная дополнительная граница для counter. Эти три cases записаны в <code>fixtures/promql.yml</code> и вычисляются настоящим <code>promtool test rules</code>. Локальная Python-проверка формул отдельно обозначена моделью и не используется как доказательство поведения всего PromQL.</p>
+<h2>Какой сигнал выбрать</h2>
+<p><code>rate</code> даёт сглаженную оценку для recording/alert rules; <code>irate</code> сильнее реагирует на последнюю пару и scrape jitter, поэтому способен сбрасывать <code>for</code> на кратком провале. Окно 30s при минутных samples даёт меньше двух точек и пустой result, а не нулевую скорость. <code>increase</code> удобен для приблизительного числа событий за окно; для точного биллинга он не подходит. <code>delta</code> применим к gauge и не исправляет counter resets; <code>changes</code> считает изменения значений, а не события.</p>
+<p>Длительность rate окна и interval сбора выбирают вместе. Редкий счётчик с одним событием в час даст длительные нули и краткие ненулевые оценки; это свойство наблюдения. Уменьшение interval повышает стоимость, но не делает редкие события частыми. Семантика исходного кода видна в <a href="https://github.com/prometheus/prometheus/blob/v3.13.5/promql/functions.go">extrapolatedRate в v3.13.5</a>; дополнительные модификаторы будущих версий нельзя молча переносить в эти формулы.</p>

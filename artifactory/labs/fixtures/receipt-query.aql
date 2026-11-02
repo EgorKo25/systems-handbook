@@ -1,0 +1,4 @@
+items.find({"repo":"generic-candidates","path":{"$match":"receipt/*"},"type":"file"})
+.include("repo","path","name","size","actual_sha1","actual_sha256","created","modified")
+.sort({"$asc":["repo","path","name"]})
+.limit(100)

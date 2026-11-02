@@ -1,0 +1,52 @@
+<header><h1>JFrog CLI: профиль, конфигурация проекта и описание сборки</h1><p>Локальная запись сведений, реальная передача байтов и публикация build-info — отдельные действия.</p></header>
+<h2 id="artifactory-08-cli-section-1">Подготовить только свой клиентский каталог</h2>
+<p>CLI2.129.0 установлен и проверен в <a href="#artifactory-01-install">главе об установке</a>. JF_BIN и GO_BIN теперь указывают на ваши проверенные файлы. Для краткости определим функцию текущей оболочки <code>jf() { "$JF_BIN" "$@"; }</code>; она передаёт отдельные аргументы без повторного разбора пробелов. Wrapper, обёртка, — такой промежуточный вызов другой программы. Для jf go также нужен go в PATH дочернего процесса: <code>export PATH="$(dirname "$GO_BIN"):$PATH"</code> меняет только текущую оболочку, не глобальную установку.</p>
+<pre><code>export LAB_WORK="$HOME/artifactory-handbook/work"
+umask 077
+mkdir -p "$LAB_WORK/private/jfrog/security/certs" "$LAB_WORK/private/cli-tmp"
+export JFROG_CLI_HOME_DIR="$LAB_WORK/private/jfrog"
+export JFROG_CLI_TEMP_DIR="$LAB_WORK/private/cli-tmp"
+export JFROG_CLI_REPORT_USAGE=false
+export JFROG_CLI_AVOID_NEW_VERSION_WARNING=true
+# Поместите доверенный публичный ca.crt из главы03 в security/certs/.
+jf --version</code></pre>
+<p>Первая переменная выбирает хранилище профилей CLI вместо общего ~/.jfrog. Вторая сохраняет промежуточные описания сборки в постоянной защищённой области work: единственная копия не теряется при очистке системного /tmp. Usage reporting и проверка новой версии отключены в этом локальном учебном опыте поддержанными переменными клиента; это не обход серверной лицензии. Никакие плагины и перехват обычных go-команд не устанавливаются.</p>
+<p>Семейство <code>jf config</code> управляет сохранёнными клиентскими профилями. Когда опыт закончен, <code>jf config remove lab-publisher</code> удалит именно этот локальный профиль с подтверждением; серверный токен отзывается отдельно. Пока практикум продолжается, профиль сохраняйте.</p>
+<h2 id="artifactory-08-cli-section-2">Секрет приходит через stdin</h2>
+<p>В Linux Bash обычный издатель вводит заранее выданный scoped token в закрытом терминале. Read -s подавляет отображение, -r не обрабатывает backslash. Стандартный ввод, stdin, передаёт строку клиенту, а не помещает её в список аргументов процесса. Set -x и запись терминала на этом шаге выключены. Сам CLI хранит секрет в выбранной конфигурации; закрытые права и политика резервирования всё равно нужны. Masking при show не делает весь файл безопасным для публикации.</p>
+<pre><code>(
+set -euo pipefail
+set +x
+read -r -s -p 'Токен receipt-publisher: ' LAB_TOKEN
+test -n "$LAB_TOKEN"
+printf '\n'
+printf '%s' "$LAB_TOKEN" | jf config add lab-publisher \
+  --url=https://aft.lab.example --user=receipt-publisher \
+  --access-token-stdin --interactive=false
+unset LAB_TOKEN
+jf config show lab-publisher
+jf rt ping --server-id=lab-publisher
+)</code></pre>
+<p>Добавление профиля с access token может завершиться без сетевой приёмки; успешный config add означает сохранение, не успешную проверку прав. Ping — отдельный сетевой запрос. Повтор имени профиля требует осмысленного edit/overwrite; не выбирайте --overwrite автоматически. Config show маскирует чувствительные поля, но config export создаёт переносимый материал с доступом: его нельзя класть в артефакты CI. Удаление профиля локально не отзывает токен.</p>
+<h2 id="artifactory-08-cli-section-3">Не все флаги глобальны</h2>
+<p>У команды есть грамматика, а не набор слов для перестановки. В выбранной версии --server-id принадлежит rt ping/upload/download/build-publish и другим соответствующим операциям. Он не является глобальным флагом jf или пространства rt: <code>jf --server-id=lab-publisher rt ping</code> и <code>jf rt --server-id=lab-publisher ping</code> реально отклонены локальной проверкой. У go-config два собственных server-id для resolve/deploy. У root go-publish нет автоматического наследования всех флагов rt. Короткие имена gp/goc и rt bp проверяются как конкретные альтернативные имена команды (aliases), не как произвольные сокращения.</p>
+<p>Jf rt curl — отдельный посредник для Artifactory API. Он добавляет сохранённую базу и аутентификацию, а оставшиеся параметры передаёт настоящему curl. Поэтому /api/system/ping используется относительно /artifactory, а не дублирует полный префикс. Например <code>jf rt curl /api/system/ping --server-id=lab-publisher --fail --silent --show-error</code>. Native curl должен быть установлен. -X и --data-binary меняют метод/тело, а не права. Передавать -- после которой другой инструмент иначе трактует argv следует только с проверенной грамматикой; справочник не объявляет все флаги всех уровней взаимозаменяемыми.</p>
+<h2 id="artifactory-08-cli-section-4">Опубликовать исходный модуль прежде сборки потребителя</h2>
+<p>В собственной копии labs/module/checkdigit, где уже есть go.mod, сначала выполняйте обычный go test с выбранным toolchain, затем настройку и публикацию. Go local/virtual и нужные права уже созданы. Здесь --repo-resolve — источник зависимостей, --repo-deploy — цель записи. Конфигурация создаётся в .jfrog/projects/go.yaml проекта; она хранит имена репозиториев и ссылки на profile, а не должна содержать токен.</p>
+<pre><code>(
+set -euo pipefail
+cd "$HOME/artifactory-handbook/labs/module/checkdigit"
+"$GO_BIN" test ./...
+jf go-config --server-id-resolve=lab-publisher --repo-resolve=go-virtual \
+  --server-id-deploy=lab-publisher --repo-deploy=go-local
+jf go-publish v1.0.0 --build-name=receipt-source --build-number=1
+)</code></pre>
+<p>Root go-publish принимает версию после настройки проекта; пример старой формы с дополнительным repo positional argument сюда не переносится. Дождитесь успешного кода и найдите точный модуль на сервере; при частичном отказе не объявляйте версию опубликованной и не запускайте потребителя. Повторное изменение исходников под v1.0.0 запрещено договором выпуска. Для следующего кода выберите новую версию, сохраните исходную.</p>
+<h2 id="artifactory-08-cli-section-5">Сборка и накопление build-info</h2>
+<p>Теперь в копии service создайте конфигурацию resolver и выполните <code>jf go build -trimpath -o "$LAB_WORK/release/receipt-linux-amd64" ./cmd/receipt --no-fallback --build-name=receipt --build-number=1</code>, заранее создав каталог release. Задайте GOOS=linux/GOARCH=amd64 и согласованные GONOPROXY/GONOSUMDB из предыдущей главы; для версии программы добавьте проверенный Go -ldflags с main.version=1.0.0, как в главе выпуска. --no-fallback не даёт wrapper уйти к VCS при отсутствии пакета. Это серверный рецепт; автор выполнил отдельный обычный Go build, не выдал его за такую сборку через живой Artifactory.</p>
+<p>Build-info — описание сборки в JSON: имя и номер запуска, модули, произведённые артефакты и потреблённые зависимости с контрольными суммами, дополнительные сведения по выбранной сборке. CLI сначала накапливает части локально; build-publish отправляет их серверу. Upload бинарника с теми же build-name/number добавит выход, но ещё не опубликует общий JSON. Номер запуска не обязан быть числом арифметики, однако обязан однозначно отличать реальные выполнения.</p>
+<p>Настоящая безопасная локальная проверка создаёт собственный input.txt, выполняет <code>jf rt build-add-dependencies</code> и <code>jf rt build-publish receipt 1 --dry-run</code> с недоступным серверным адресом. CLI2.129.0 выдал зависимость с ожидаемой SHA1 и не отправлял описание на Artifactory. Alias rt bp дал тот же смысл. Это подтверждает формат локального накопления и предварительного просмотра, не доступ к build repository. Build-info не является криптографически подписанным свидетельством сам по себе: право загрузить JSON и доверие к сборочному агенту остаются частью происхождения.</p>
+<h2 id="artifactory-08-cli-build-record-fields">Какие поля связывают описание с файлом</h2>
+<p>В build-info <code>name</code> и <code>number</code> выбирают выполнение; <code>modules</code> группирует его части, <code>dependencies</code> описывает входы, <code>artifacts</code> — выходы. Идентификатор модуля описания сборки не обязан совпадать с Go module path. Сохранённый локальный опыт добавил файл input.txt как dependency и получил его SHA1 <code>4effa56cbbf7a1a67b39fac2e6db3425e2bc1fa1</code>. Это сумма входных байтов, а не номер commit или хеш готового receipt.</p>
+<p>При публикации через штатный CLI выходы получают связанные сведения; для ручного REST-пути документация отдельно требует item properties <code>build.name</code> и <code>build.number</code>. Property — свойство логического объекта с ключом и значением. Оно не записывается в исполняемые байты: Annotate может изменить свойство без изменения SHA256 файла. Поэтому проверяют отдельно JSON сборки, свойства нужного пути и фактическую сумму файла. Совпавший номер без совпавшего состава не завершает приёмку. <a href="https://docs.jfrog.com/artifactory/docs/build-integration">Описание связи build-info и item properties</a> также объясняет случай No path found.</p>
+<h2 id="artifactory-08-cli-section-6">Первичные источники и версия</h2><p>Проверено 1 ноября 2026: <a href="https://docs.jfrog.com/integrations/docs/jf-config-add">config add</a>, <a href="https://docs.jfrog.com/integrations/docs/jf-config-show">show</a>, <a href="https://docs.jfrog.com/integrations/docs/jfrog-cli-environment-variables">переменные среды</a>, <a href="https://docs.jfrog.com/artifactory/docs/jf-go">Go wrapper/publish</a>, <a href="https://docs.jfrog.com/artifactory/docs/build-integration">локальное накопление и dry-run</a>, <a href="https://github.com/jfrog/jfrog-cli/tree/v2.129.0">CLI2.129.0 source</a>. Выбранные флаги сверены с настоящим --help.</p>

@@ -1,0 +1,60 @@
+<header><h1>Drift и import: наблюдать, принять или вернуть управление</h1><p>Drift — расхождение фактического объекта с ожидаемой конфигурацией/сохранённым знанием. Возможность его обнаружения ограничена Read-логикой provider и видимыми ему полями.</p></header>
+<h2>Разобрать расхождение на три решения</h2>
+<p>Представьте VM с size small в config и medium в API после ручного изменения. Сначала обычный plan читает текущее значение и предлагает возврат к small, если provider поддерживает это действие. Команда должна решить: вернуть config; изменить config на medium и принять намерение; либо сознательно передать поле другой системе через договор владения. <code>ignore_changes</code> — третий инженерный выбор с ценой невидимого для correction drift, а не универсальный способ получить зелёный plan.</p>
+<p>Refresh-only план предлагает обновить state/outputs без обычного приведения объекта к config. Он полезен, когда согласованное внешнее изменение уже выполнено и нужно зафиксировать наблюдение. Но если config остаётся small, следующий обычный plan по-прежнему может предложить вернуть small. Принятие наблюдения и изменение желаемого — разные события.</p>
+<h3>Четыре записи одного условного внешнего объекта</h3>
+<p>В следующем примере provider умеет читать и менять size без замены. Объект X17 уже существует, а оператор снаружи сменил small на medium. Значения условны; это разбор решений по правилам plan, не выполненный вызов API и не существующий тип ресурса нашей лаборатории.</p>
+<style>
+.tf-drift{color:var(--reader-text,var(--text,#171717));background:var(--reader-paper,var(--paper,#fff));border:2px solid currentColor;padding:1rem;margin:1.5rem 0;min-width:0;overflow-wrap:anywhere}
+.tf-drift dl{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:.5rem}.tf-drift dt,.tf-drift dd{padding:.5rem;margin:0;border-bottom:1px solid currentColor;min-width:0}.tf-drift dt{font-weight:700}.tf-drift pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:1em;background:var(--reader-soft,var(--soft,#f4f4f4));color:inherit;padding:.5rem}
+.tf-drift figcaption{border-top:1px solid currentColor;padding-top:.7rem}
+@media(max-width:600px){.tf-drift dl{display:block}.tf-drift dt{border:0}.tf-drift dd{padding-top:0}}
+@media print{.tf-drift{color:#000!important;background:#fff!important}.tf-drift *{color:#000!important;background:#fff!important}}
+</style>
+<figure class="tf-drift" id="tf-drift-four-records" aria-labelledby="tf-drift-title">
+<h3 id="tf-drift-title">Адрес тот же, наблюдение изменилось</h3>
+<dl>
+<dt>Конфигурация автора</dt><dd><pre>address = example_instance.api
+desired.size = small</pre></dd>
+<dt>Прежний state в backend</dt><dd><pre>address → X17
+last-known.size = small</pre></dd>
+<dt>Фактический объект перед plan</dt><dd><pre>API identity = X17
+observed.size = medium</pre>Изменил внешний оператор, не Terraform.</dd>
+<dt>Обычный план после Read</dt><dd><pre>identity = X17
+before.size = medium
+after.size = small
+actions = ["update"]</pre>Пока это решение: API всё ещё medium. При успешном apply этой схемы provider вернёт small и state сохранит результат.</dd>
+</dl>
+<p>Альтернативный случай начинается с тех же первых трёх записей. Refresh-only apply принимает medium в state, оставляет конфигурацию small и API medium. Следующий обычный plan снова предлагает medium→small. Чтобы medium стало желаемым, автор отдельно меняет конфигурацию и проверяет полный план. Принятие наблюдения само по себе не редактирует HCL.</p>
+<p>Самопроверка: если Read вернул отказ доступа, можно ли заменить строку API на «объект отсутствует» и планировать create? Нет: ошибка наблюдения не подтверждает удаление X17. И если у другого provider изменение size требует replacement, показанный ["update"] к нему неприменим.</p>
+<figcaption>Текстовая альтернатива заключена в самих четырёх записях и сравнении после них. Условие — единственный объект X17, единственный state, provider с update size на месте. <a href="https://developer.hashicorp.com/terraform/cli/commands/plan">Обычный и refresh-only план</a>.</figcaption>
+</figure>
+<h2>Файл, которого provider не знает</h2>
+<pre><code>python3 -c 'from pathlib import Path; Path("rendered-api.json").write_text("changed outside Terraform\n")'
+terraform plan -detailed-exitcode
+terraform plan -replace='terraform_data.service["api"]' -out=repair.tfplan
+terraform apply repair.tfplan</code></pre>
+<p>Команды выполняются только внутри помеченного стенда. Первый plan остаётся пустым в реально проверенном сценарии: Read terraform_data исследует свой input/output в state, а не сторонний файл. Replacement заново запускает writer и возвращает файл как creation effect. Это намеренно неудобный механизм: он меняет resource ID и может потребовать изменения зависимых записей. Нельзя рекламировать такое упражнение как пример полноценного управления файлами. Реальный тип файла должен иметь schema и Read, которые сравнивают нужные байты; его отдельная совместимость проверяется как у любого внешнего provider.</p>
+<h2>Import не создаёт прошлое</h2>
+<p>Import связывает существующий внешний объект с управляемым адресом. Он не переносит все зависимости, не доказывает пригодность конфигурации и не восстанавливает содержимое дисков. Поддержка import и формат идентификатора определяются resource/provider. После import план может предложить update или replacement, если HCL не описывает фактическую конфигурацию. Такой diff надо исследовать до apply.</p>
+<pre><code># Форма декларативного import, ID здесь символический.
+import {
+  to = example_instance.api
+  id = "provider-specific-object-id"
+}
+resource "example_instance" "api" {
+  # Требуются настоящий provider, его schema и совместимые аргументы.
+}</code></pre>
+<p>Это статическая схема интерфейса, тип example_instance не существует в лаборатории. Подготовьте карту: address → provider/source/version → account/region → фактическая identity → проверяемые атрибуты. Затем обычный plan показывает import вместе с последующими изменениями. Конфигурационные import blocks хранят намерение в review; imperative <code>terraform import ADDRESS ID</code> сразу меняет state при подходящем provider, не заменяя полный lifecycle review.</p>
+<p>Отдельный реальный fixture <code>labs/fixtures/address</code> выполняет removed с destroy=false, затем возвращает прежний HCL и получает plan на create. После этого import block связывает <code>terraform_data.owned</code> с сохранённым ID, а конфигурация возвращает input. У встроенного ресурса import восстанавливает минимальную association по ID, не извлекает прежние данные из внешней системы. Это проверено CLI 1.17.1 и согласуется с <a href="https://github.com/hashicorp/terraform/blob/v1.17.1/internal/builtin/providers/terraform/resource_data.go">importDataStore в исходниках</a>; оно не подтверждает импорт VM или обнаружение потерянного облачного объекта.</p>
+<h2>Import, moved и removed отвечают разным вопросам</h2>
+<table><thead><tr><th>Действие</th><th>До</th><th>После</th></tr></thead><tbody>
+<tr><td>import</td><td>Объект существует, association здесь отсутствует</td><td>Известная identity присоединена к адресу</td></tr>
+<tr><td>moved</td><td>Association есть по старому адресу</td><td>Тот же управляемый объект по новому адресу</td></tr>
+<tr><td>removed destroy=false</td><td>Association есть и объект управляется</td><td>Объект оставлен, association забыта</td></tr>
+<tr><td>destroy</td><td>Association и управляемый объект существуют</td><td>Provider выполняет удаление; при успехе association убирается</td></tr>
+</tbody></table>
+<p>Смена Git-ветки после applied moved не записывает обратный moved. Возврат требует явного соответствия текущего и желаемого адреса. После removed возврат чаще требует import по фактической identity, а не простой отмены строки. Если поле ресурса по внешнему API immutable, новый конфиг может запланировать replacement даже после правильного import; связь с правильным объектом ещё не делает желаемое изменение безвредным.</p>
+<h2>Data source и пределы наблюдения</h2>
+<p>Data source, источник данных, читает сведения без управления его созданием и удалением. Если его аргументы неизвестны или связано изменяемое условие, чтение откладывается до apply и потребитель получает unknown в плане. Внешний API может возвращать неполную/с отложенной согласованностью картину; фильтр по неуникальному имени может выбрать не тот объект или дать отказ. Для критичного договора предпочитайте стабильный идентификатор и проверяйте account/region, а не совпадение display name.</p>
+<p>Источники 01.11.2026: <a href="https://developer.hashicorp.com/terraform/language/import">import</a>, <a href="https://developer.hashicorp.com/terraform/cli/commands/import">CLI import</a>, <a href="https://developer.hashicorp.com/terraform/language/data-sources">data sources</a>, <a href="https://developer.hashicorp.com/terraform/language/block/removed">removed</a>, <a href="https://developer.hashicorp.com/terraform/cli/commands/plan">refresh-only</a>.</p>

@@ -1,0 +1,59 @@
+<header><h1>Продолжаемый практикум: один Application, несколько состояний</h1><p>Рабочая копия, ревизии, данные и доказательства сохраняются между заданиями.</p></header>
+
+<h2 id="argocd-17-lab-section-1">Постоянная карта стенда</h2>
+<p>Начальный личный Kubernetes уже существует; его Kubernetes-контекст — handbook-admin для VM либо kind-handbook для kind. LAB_KUBECONFIG указывает собственный файл, LAB_CONTEXT выбран явно. Argo устанавливается в argocd, приложение — в gitops-lab, Application — ledger-gitops, проект — ledger. Ресурсы lab и helm-lab соседних упражнений не меняются. Внешний Git-репозиторий и права публикации предоставляет читатель в своей рабочей копии.</p>
+<p>Полный исполнимый маршрут находится в <a href="labs/README.txt">README</a>; здесь связаны задания и наблюдаемые результаты. Если предыдущий шаг не завершён, зависимые шаги не запускаются. Установочные сценарии сами повторяют необходимые проверки и останавливаются при отказе. Нельзя заменять эту границу устной рекомендацией «сначала всё проверьте» и затем вставлять apply после проигнорированной ошибки.</p>
+<h2 id="argocd-17-lab-section-2">Задание 1: доказать локальные входы</h2>
+<p>По главе поставки один раз создайте постоянный LAB_ROOT/work и bundle. Подготовьте приватное окружение Python по README; оно содержит PyYAML для чтения YAML и jsonschema для структурной проверки. Экспортируйте ARGOCD_BIN, HELM_BIN, KUSTOMIZE_BIN, при наличии GO_BIN и выполните check.py. Ни одна проверка этого сценария не устанавливает Argo или Kubernetes. Временный kubeconfig пуст, локальные политики не обращаются к серверу.</p>
+<pre><code>"$LAB_ROOT/venv/bin/python" "$LAB_ROOT/work/check.py"</code></pre>
+<p>Сохраните results.json как локальное доказательство, различая настоящие CLI-вызовы и подставной клиент теста Bash. Отдельно прочитайте созданные desired-local.yaml и Helm-пример: последний имеет только один ConfigMap и не является полным альтернативным приложением. Структурно допустимый Application с неверным URL остаётся неработающим; схема не выполняет сетевую приёмку.</p>
+<h2 id="argocd-17-lab-section-3">Задание 2: поднять собственный контур</h2>
+<p>Выполните preflight.sh и install.sh в выбранном личном контексте. Первый проверяет доступ, второй повторяет проверку, сверяет bundle, проверяет владельца namespaces и применяет закреплённый комплект. Затем отдельно держите loopback port-forward и выполните first-login.sh с проверкой сертификата и сменой начального пароля. Запишите версии клиента/сервера, готовые компоненты и выбранные contexts без токенов. Ошибка TLS не решается привычным --insecure.</p>
+<h2 id="argocd-17-lab-deepening-1">Если образ ещё не получен в предыдущем томе</h2>
+<p>Этот необязательный путь нужен только владельцу личной Linux/amd64 VM с уже установленными Go 1.27.3, C-инструментарием для race detector и Docker Engine. Установку этих средств выполняют по томам Go и Docker до упражнения. GO_BIN — абсолютный путь проверенного Go; LAB_DOCKER_CONTEXT — заранее проверенный Docker-контекст своего движка. Рецепт не устанавливает Docker и не выбирает случайный текущий движок. При готовом ledger-api:0.1.0 из Kubernetes этот блок пропускают и используют прежний артефакт.</p>
+<p>Самостоятельная сборка получает отдельный тег ledger-api:argocd-local-1, чтобы не переписать 0.1.0 другими байтами. Каталог сборки новый, а исходники work/service сохраняются. Скобки изолируют Bash-процесс: при первом отказе сборка и публикация следующего шага прекращаются.</p>
+<pre><code>(
+  set -euo pipefail
+  : "${LAB_ROOT:?}" "${GO_BIN:?}" "${LAB_DOCKER_CONTEXT:?}"
+  test -x "$GO_BIN"
+  test "$("$GO_BIN" version)" = 'go version go1.27.3 linux/amd64'
+  docker --context "$LAB_DOCKER_CONTEXT" version &gt;/dev/null
+  if docker --context "$LAB_DOCKER_CONTEXT" image inspect ledger-api:argocd-local-1 &gt;/dev/null 2&gt;&amp;1; then
+    echo 'Image already exists; preserve it and inspect its identity.' &gt;&amp;2
+    exit 1
+  fi
+  cd "$LAB_ROOT/work/service"
+  test ! -e "$LAB_ROOT/artifacts/argocd-local-1"
+  test ! -L "$LAB_ROOT/artifacts/argocd-local-1"
+  mkdir -p "$LAB_ROOT/artifacts"
+  mkdir "$LAB_ROOT/artifacts/argocd-local-1"
+  export GOENV=off GOTOOLCHAIN=local GOWORK=off GOFLAGS= GOPROXY=off
+  export GOOS=linux GOARCH=amd64 GOAMD64=v1 GOEXPERIMENT=
+  CGO_ENABLED=1 "$GO_BIN" test -race -count=1 ./...
+  CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GOAMD64=v1 "$GO_BIN" build \
+    -mod=readonly -trimpath -buildvcs=false \
+    -o "$LAB_ROOT/artifacts/argocd-local-1/ledger-api" .
+  cp Dockerfile "$LAB_ROOT/artifacts/argocd-local-1/Dockerfile"
+  docker --context "$LAB_DOCKER_CONTEXT" build --platform linux/amd64 \
+    --tag ledger-api:argocd-local-1 "$LAB_ROOT/artifacts/argocd-local-1"
+  docker --context "$LAB_DOCKER_CONTEXT" image inspect ledger-api:argocd-local-1
+)</code></pre>
+<p>Race detector проверяет исполняемые пути тестов; итоговый бинарник собирается отдельно с CGO_ENABLED=0. -mod=readonly запрещает незаметное изменение модульных файлов, -trimpath убирает пути рабочей копии из записанных позиций, -buildvcs=false отключает автоматическую запись VCS-метаданных. Dockerfile копирует бинарник в scratch и запускает UID/GID 65532; компилятор внутрь образа не попадает. Успешный build ещё не загрузил образ на узлы Kubernetes. При отказе сохраняются созданный каталог и журналы; для нового опыта согласованно выбирают новый суффикс каталога и тега, а не сбрасывают весь стенд.</p>
+<p>Для этого варианта в своём overlays/lab/kustomization.yaml добавьте преобразование images с name=ledger-api и newTag=argocd-local-1. Отрендерьте дерево и проверьте точное image в Deployment до C1. Существующие MESSAGE, namespace и ссылки ConfigMap сохраняются. Если используете kind, загрузите этот новый тег в тот же кластер handbook средствами его уже настроенного движка; VM-профиль требует доставки на нужные узлы или в собственный доступный реестр. Запишите image ID/digest и платформу. Блок дан как рецепт; редактор не собирал и не запускал этот вариант.</p>
+
+<h2 id="argocd-17-lab-section-4">Задание 3: опубликовать именно своё дерево</h2>
+<p>Содержимое work/gitops становится деревом собственного конфигурационного репозитория: каталог apps находится в его корне. Не публикуйте private, bundle, клиентскую конфигурацию и результаты с секретами. Читатель создаёт коммит C1 и проверяет, что он доступен repo-server; книга не выполняет Git commit/push. Если требуется заново собирать ledger-api:0.1.0, используйте неизменённый service и тот же контракт MESSAGE/JSON.message. Другие байты получают новую версию и явную правку image.</p>
+<p>Задайте LAB_REPO_URL и полный LAB_COMMIT=C1. Configure.py через Python выбранного окружения создаёт bootstrap-initial с собственным URL и строковой ревизией. Прочитайте project.yaml и application.yaml; убедитесь в одном разрешённом назначении и automated.enabled=false. First-app.sh создаёт проект перед приложением и останавливается на ошибке. До sync изучите <code>argocd app get</code>, <code>argocd app manifests</code> и <code>argocd app diff</code>. Их результаты получает настоящий сервер, в отличие от предыдущего локального Kustomize.</p>
+<h2 id="argocd-17-lab-section-5">Задание 4: первая ручная поставка</h2>
+<p>После отсутствия ошибок источника выполните <code>argocd app sync</code> без prune и дождитесь <code>argocd app wait</code> с --sync --health. Проверьте Deployment, готовые endpoints Service и HTTP /api/hello через отдельный loopback port-forward приложения. JSON должен содержать service=ledger-api и message=Hello from GitOps lab. Проверка HTTP доказывает путь до процесса, а не только принятый YAML.</p>
+<pre><code>kubectl --kubeconfig "$LAB_KUBECONFIG" --context "$LAB_CONTEXT" \
+  -n gitops-lab port-forward --address 127.0.0.1 service/ledger-gitops 18080:80</code></pre>
+<p>В другом терминале <code>curl --fail http://127.0.0.1:18080/api/hello</code>. Порт 18080 отличается от 8080 процесса и 80 Service: локальное перенаправление устанавливает связь между ними. Ctrl+C завершает только этот канал. При отсутствии образа исправляют доставку артефакта в выбранный кластер, а не переименовывают службу и не включают prune.</p>
+<h2 id="argocd-17-lab-section-6">Задание 5: следующая конфигурация без сброса</h2>
+<p>В той же рабочей копии измените только строку MESSAGE в overlays/lab/kustomization.yaml, локально отрендерите и опубликуйте C2. Сохраните C1 и цель Application. При закреплённом C1 новый коммит не должен неожиданно примениться; отдельно измените targetRevision на C2 в собственном управляющем файле либо командой <code>argocd app set</code> с --revision. Получите различие, синхронизируйте и снова проверьте JSON.message.</p>
+<p>Хеш ConfigMap и ссылка шаблона Pod изменятся. Старые ConfigMap без prune остаются: перечислите их и определите, какие ещё нужны прежним Pod. Только после этого отдельно рассмотрите --prune. Сохранение исправного старого Pod во время RollingUpdate не означает, что новые Pod уже готовы; оцените обе группы.</p>
+<h2 id="argocd-17-lab-section-7">Задание 6: отказ, объяснение и исправление</h2>
+<p>В то же дерево добавьте fixtures/not-ready.patch.yaml через patches Kustomize, опубликуйте C3 и переведите прежний Application на C3. MESSAGE от C2 сохраняется. Новый путь /missing-readyz даёт 404, поэтому операция не должна успешно пройти условие здоровья. Запишите sync status, health, operationState, Deployment conditions и доступность старого HTTP отдельно. Верните корректный путь новым коммитом C4, сохранив остальную конфигурацию; не удаляйте namespace и не переустанавливайте Argo.</p>
+<p>Лишь после этого включают необязательную автоматизацию или отдельный fleet. Для fleet подготовьте configure.py --fleet в новом bootstrap-fleet, создайте два собственных namespace с такой же проверкой владельца и просмотрите другой проект/назначения. Первоначальный ledger-gitops не переносится. Удаление необязательного набора сначала разбирают по ownerReferences/finalizers, затем выполняют осознанно, сохраняя данные.</p>
+
+<h2 id="argocd-17-lab-section-8">Источники и версия</h2><p>Проверено 1 ноября 2026. Argo CD 3.5.6. <a href="https://github.com/argoproj/argo-cd/blob/v3.5.6/docs/user-guide/commands/argocd_admin_settings_rbac_can.md">Локальные команды и политика</a>, <a href="https://github.com/argoproj/argo-cd/blob/v3.5.6/docs/user-guide/sync-options.md">Синхронизация</a>, <a href="https://github.com/argoproj/argo-cd/blob/v3.5.6/docs/operator-manual/applicationset/Application-Deletion.md">ApplicationSet удаление</a>.</p>

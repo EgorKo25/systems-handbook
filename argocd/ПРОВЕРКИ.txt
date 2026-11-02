@@ -1,0 +1,136 @@
+ARGO CD · ПРОТОКОЛ ПРОВЕРОК
+Срез 1 ноября 2026. Протокол отличает наблюдение автора от рецепта читателя.
+
+РЕАЛЬНЫЕ ВХОДЫ
+Argo CD Linux amd64 v3.5.6+c2b1e30, официальный release20.10.2026.
+SHA CLI db9d17b70593d3f86a4dcf08d9ebbb85a42e995426ac5f928b737260656102d3.
+Сверены cli_checksums.txt и официальный asset digest GitHub.
+Helm4.2.1+gd591a19, Kustomize5.8.1 — именно версии hack/tool-versions.sh
+закреплённого tag Argo3.5.6. Архивные SHA и URL — labs/bundle-lock.json.
+Install.yaml закреплён, SHA846c644bc81ce5557dd9048757a9c7353378f25c5eb811c77d32a9e907823599;
+разобран как59 объектов, обнаружены3 ссылки образов Argo/Dex/Redis.
+Ни один контейнерный образ не скачивался и не исполнялся.
+Python3.12.3, PyYAML6.0.1, jsonschema4.10.3, Go1.27.3.
+Личные абсолютные пути, бинарники и приватные HOME сюда не включены.
+
+РЕАЛЬНЫЕ ЛОКАЛЬНЫЕ ПРОВЕРКИ
+labs/check.py — повторяемый набор с явными ARGOCD_BIN/HELM_BIN/KUSTOMIZE_BIN.
+HOME,client config,kubeconfig,Helm cache/data/config изолированы временным
+каталогом. Рабочий kubeconfig/current-context пользователя не читается и
+не меняется. ARGOCD_AUTH_TOKEN/ARGOCD_SERVER исключены.
+
+1. Фактические версии всех трёх нативных инструментов.
+2. CLI admin settings rbac validate: собственные CSV и ConfigMap допустимы,
+   ошибочный CSV отвергнут. Файловой ветке требуется создание REST-client
+   configuration; использован существующий пустой kubeconfig, фиктивные
+   локальный endpoint/token. HTTP-ловушка подтверждает0 запросов.
+3. CLI can:reader get Yes/0,reader sync No/1,releaser sync Yes/0,
+   explicit delete deny,другой проект и другое приложение No/1.
+4. Псевдоним ресурса app, путь с пробелами, операнд --reader после --,
+   фактическое локальное затенение --server даже перед admin/settings.
+    Дополнительно нативно отвергнуты --timeout180s/--timeout-1 (uint),
+    корневой --context у app get; app diff --local без server отказал
+    с server address unspecified до подключения. Это НЕ server-side diff.
+5. Настоящий Kustomize5.8.1:3 объекта, namespace,selector,8080,env MESSAGE,
+   хеш ConfigMap и ссылка в Pod. Повтор даёт те же байты.
+6. В ТОЙ ЖЕ временной рабочей копии MESSAGE меняется, хеш и Pod template
+   меняются,selector сохраняется. Затем readiness становится неправильной,
+   а MESSAGE предыдущего задания сохраняется. Никакого reset.
+7. git diff --no-index ожидаемо даёт различие/код1; это текстовый diff,
+   НЕ нормализация Argo. Git commit/push не выполнялись.
+8. Неизменённые upstream CRD openAPIV3Schema проверены через Draft7Validator:
+   положительные Application/AppProject/ApplicationSet, отрицательные типы
+   targetRevision/sourceRepos/goTemplate. Это структурное подмножество:
+   НЕ Kubernetes admission/defaulting/CEL/RBAC/реальная генерация AppSet.
+9. Проект ограничивает namespace/виды; первый Application manual,без
+   ресурсного финализатора,FailOnSharedResource=true. Fleet отдельно,
+   его база без жёсткого namespace,дочерние назначения не пересекаются.
+10. Настоящий Helm4.2.1 lint --strict/template малого отдельного чарта;
+    bool вместо message отвергается схемой. Это НЕ обычный Helm release
+    и НЕ полный альтернативный источник рабочего Application.
+11. Configure.py создаёт проверяемые bootstrap-файлы,отказывается молча
+    перезаписывать каталог,сохраняет полный строковой commit. --fleet
+    сохраняет Go-template destination и отдельный исходный путь.
+12. Test_guards.py:29 явно подставных отказов клиентов + bash -n.
+    Ошибка preflight/bundle/namespace create/server dry-run/apply/CRD ready/
+    Deployment ready/controller ready/cert/login/restore quarantine
+    прекращает зависимый процесс. Этот тест НЕ доказывает настоящий API,
+    TLS,установку или работоспособность кластера. Fake clients никогда
+    не интерпретируются как успешный сервер. Подстановка PATH только
+    в окружении дочернего тестового процесса,не система.
+    Test_snippets.py также передаёт все исполнимые HTML-блоки в bash -n,
+    НЕ выполняя их. Фрагменты YAML/CSV исключены из shell-проверки.
+    Самостоятельный test_snippets отказывает без всех20 ожидаемых HTML,
+    при пустой главе или нуле исполнимых блоков;PASS:0 невозможен.
+13. С заранее проверенным BUNDLE_FIXTURE_DIR test_bundle.py повторно
+    хеширует4 настоящих файла,отвергает tampered/missing/nonempty,
+    распаковывает именованные файлы реальных архивов в temp,проверяет
+    версии и отказ повторной перезаписи runtime. Скачивания в этом тесте нет.
+14. Go test -race -count=1:контракт HTTP,конкурентность,готовность,
+    graceful drain удерживаемого активного запроса. Только ephemeral
+    loopback listener; постоянная служба на host не создаётся.
+15.10 локальных Kustomize build:число документов/байты/медиана/min/max
+    в labs/results.json. Это время локального процесса,НЕ repo-server,
+    НЕ API,НЕ SLA,НЕ нагрузочная/HA приёмка.
+
+КОЛИЧЕСТВЕННЫЙ РЕЗУЛЬТАТ
+Итоговые версии,группы PASS,наблюдённые запросы и время — labs/results.json.
+Протокол не дублирует миллисекунды как постоянную характеристику машины.
+Полный source-checkout:23 группы,mode=source-checkout,skipped пустой.
+Portable reading-export и отдельная копия labs:22 группы при тех жеGO/BUNDLE,
+mode=reading-export;HTML syntax явно SKIPPED с причиной отсутствия sources/,
+без PASS и без включения в groups. Нативные проверки сохраняются. Присутствующий,
+но неполный sources/ является ошибкой,а не читательским пропуском.
+Оба профиля реально повторены автором:23 PASS в исходной книге и22 PASS
+в отдельной временной копии только labs без sources,один явный SKIPPED.
+В обоих0 API. Это проверка состава отдельной labs-копии;сам production
+prepare_site автор не запускал,его результат принимает интегратор.
+Если GO_BIN/BUNDLE_FIXTURE_DIR не заданы при повторе, соответствующие группы
+не отмечаются исполненными. Авторский полный прогон включает обе.
+
+НЕЗАВИСИМАЯ СВЕРКА
+Координатор отдельно подтвердил official SHA CLI и actual version/help.
+Объявленные39 команд и формы flags/aliases проверены настоящим --help;
+новые формы --exit-code/--server-side-generate проверяются тем же способом.
+Это приёмка справки,не исполнение изменяющих операций. Production parser
+читателя проверяет интегратор,его алгоритм автором не копируется и shared
+файлы этим томом не меняются. Рендер/браузерная приёмка выполняются
+интегратором из изолированной копии,а не каноническим общим build автором.
+
+ИСТОЧНИКИ
+Ссылки HTML закреплены на GitHub blob/v3.5.6,пути подтверждены деревом tag.
+Прямой сайт readthedocs из авторского окружения возвращал403/сетевые отказы;
+он НЕ считается прочитанным там,где чтение было заблокировано. Использованы
+первичные исходные docs/*.md и code tag,реальная справка CLI. Извлечённые
+CRD-схемы сопровождаются исходным Apache2 LICENSE и SOURCE.txt. Корневой
+upstream NOTICE в этом tag отсутствует; собственная атрибуция отдельна.
+
+ЧТО НЕ ИСПОЛНЕНО
+Установка Argo/кластерных служб,создание реального Application/AppSet,
+repo-server в контейнере,проверка API Kubernetes1.36.6/1.36.4,server-side diff,
+sync и sync --dry-run,health,waves/hooks,prune/delete,rollback,export/import,
+изолированный restore/карантин настоящих Pod,HA,шардирование,air-gap установка,
+внешние notifications,cosign/SLSA,нагрузочное испытание кластера.
+Для них даны рецепты/условия/критерии,не выдуманный успешный вывод.
+Никаких host services,sudo,чужих kubeconfig/context/кластеров,облака,
+внешних сообщений,Git commit/push или shared build не выполнялось.
+
+SOURCE-РЕДАКЦИЯ · 2 ноября 2026 (БЕЗ НОВОГО NATIVE-ПРОГОНА)
+Исходная база: master de224e1c3fb7498f24eda0364f99aeb7d0e3f450084c90cb144848190329e984;
+75 публичных файлов Argo CD. Extra __pycache__ исключён, не читался/не переносился.
+Проверены точные замены в памяти, AST изменённых Python, HTML/XML 3 inline SVG,
+уникальность ID, сохранение прежних scene/section anchors, ссылки и справки.
+Bash -n через stdin: 25 HTML-блоков и 6 scripts; 3 YAML/CSV не исполнялись.
+Модели пауз 5+10+20=35 s, 5+20+30=55 s и очереди (8−5)×60=180 задач,
+180/5=36 s — арифметика, не benchmark Argo. Метрики сверены с labs/results.json:
+median 58.1 ms, min 56.91 ms, max 60.36 ms, 10 runs, 3 objects, 1771 bytes.
+Исходная попытка RAM-проверки большим heredoc отклонена read-only: Bash
+потребовал TEMP. Она ничего не проверила. Успешные проверки передавали Python
+через -c, Bash -n получал stdin; файлы/TEMP/pycache не создавались.
+Ненативны: две новые справки cert add-tls/add-ssh и самостоятельный build-рецепт.
+Чтение generated help страниц через web не удалось (Cache miss); новые формы
+флагов поэтому не добавлялись и не объявлялись проверенными. Имеющиеся
+109 форм относятся к прежнему набору. Сохранённые 23 группы/results и
+39/109/2 help — исторические, не повторены после этой редакции.
+Не запускались Go/Helm/Argo CLI/containers/servers/Kubernetes/native/recovery/render.
+Shared parser не изменялся.

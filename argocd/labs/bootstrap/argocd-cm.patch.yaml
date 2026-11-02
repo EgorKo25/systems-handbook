@@ -1,0 +1,4 @@
+data:
+  application.resourceTrackingMethod: annotation
+  timeout.reconciliation: 120s
+  timeout.reconciliation.jitter: 60s

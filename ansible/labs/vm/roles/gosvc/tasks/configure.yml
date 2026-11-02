@@ -1,0 +1,19 @@
+- name: Validate and install candidate configuration
+  ansible.builtin.template:
+    src: config.json.j2
+    dest: '{{ counter_config_dir }}/config.json'
+    owner: root
+    group: counter
+    mode: '0640'
+    validate: '{{ counter_root }}/releases/{{ counter_release }}/counter --check-config %s'
+  notify: Restart counter
+- name: Install the stable systemd unit
+  ansible.builtin.template:
+    src: counter.service.j2
+    dest: /etc/systemd/system/counter.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - Reload counter unit
+    - Restart counter

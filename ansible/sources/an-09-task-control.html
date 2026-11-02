@@ -1,0 +1,64 @@
+<header><h1>Условия, циклы и границы обработки ошибки</h1><p>Порядок задач выражает причинность. Условие пропуска, критерий отказа и повторный опрос должны описывать смысл операции, а не нужный цвет вывода.</p></header>
+<h2>When и типизированные условия</h2>
+<pre><code>- name: Install only on declared operating system family
+  ansible.builtin.assert:
+    that:
+      - ansible_facts['os_family'] == 'Debian'
+      - counter_enabled is boolean
+
+- name: Explain selected branch
+  ansible.builtin.debug:
+    msg: 'Counter is enabled'
+  when: counter_enabled</code></pre>
+<p><code>when</code> вычисляется для каждого host и при loop для каждого item. Список условий означает логическое AND; для OR пишут явное выражение <code>a or b</code>. Непустая строка <code>'false'</code> не должна служить boolean-флагом. Если строковый интерфейс неизбежен, допускаемые значения проверяют и нормализуют явно, затем используют boolean. Слишком широкий <code>default(false)</code> способен скрыть опечатку обязательного имени. В core 2.21.5 строгие проверки условий помогают обнаруживать такие ошибки.</p>
+<h2>Цикл — последовательность вызовов, не batch API</h2>
+<pre><code>- name: Create release directories
+  ansible.builtin.file:
+    path: '{{ counter_root }}/{{ counter_dir }}'
+    state: directory
+    mode: '0750'
+  loop:
+    - data
+    - releases
+  loop_control:
+    loop_var: counter_dir
+    label: '{{ counter_dir }}'</code></pre>
+<p>Каждая итерация может отдельно соединяться/исполнять модуль и возвращать результат. Если модуль принимает список пакетов, один вызов со списком обычно лучше N отдельных вызовов менеджера пакетов; это также избегает лишних блокировок. <code>label</code> уменьшает видимый шум, но не является защитой секрета. Для секрета нужны no_log, защита конечного файла и проверка прочих каналов.</p>
+<h2>Changed_when и failed_when</h2>
+<pre><code>- name: Validate installed binary
+  ansible.builtin.command:
+    argv: ['/opt/counter/current/counter', '--version']
+  register: counter_version
+  changed_when: false
+  failed_when: counter_version.rc != 0 or
+               counter_version.stdout | trim != counter_expected_version</code></pre>
+<p>Проверочная команда не изменяет ресурс по нашему контракту, поэтому false у changed_when обоснован. Это не универсальная наклейка на опасный shell. Команда может вернуть rc=0 и неправильную версию; failed_when связывает технический код с требованием. Список нескольких failed_when — AND, поэтому два независимых вида отказа объединяют через OR одной строкой. Правило <code>failed_when: false</code> без последующего assert превращает реальный отказ в зелёную запись.</p>
+<h2>Повторять наблюдение, а не повреждение</h2>
+<pre><code>- name: Wait for expected version on its own VM
+  ansible.builtin.uri:
+    url: http://127.0.0.1:8080/version
+    return_content: true
+    timeout: 2
+  register: counter_probe
+  until: counter_probe.status == 200 and
+         counter_probe.content | trim == counter_expected_version
+  retries: 10
+  delay: 1
+  changed_when: false</code></pre>
+<p><code>until</code> повторяет задачу до истинного условия или исчерпания попыток; <code>retries</code>/<code>delay</code> задают предел и паузу. Здесь повторяется безопасное чтение. Повтор команды «прибавить значение» без idempotency key может повторить изменение, если ответ потерялся. <code>timeout</code> HTTP-запроса — не полный deadline play. Регистрируют фактическую длительность и число попыток. Доступный socket ещё не доказывает ожидаемую версию и сохранность данных.</p>
+<p>Для закреплённого <a href="https://github.com/ansible/ansible/blob/v2.21.5/lib/ansible/executor/task_executor.py#L462-L550">TaskExecutor 2.21.5</a> <code>retries: 10</code> допускает исходный вызов и ещё десять повторов: не более 11 исполнений с десятью паузами по 1 секунде. Условный ответ 503, затем 200 со старой версией, затем 200 с ожидаемой завершит задачу на третьем исполнении. Если каждое чтение в отдельной модели занимает ровно 2 секунды, этот путь занимает 2+1+2+1+2=8 секунд; это расчёт, не сетевой замер. Параметр uri timeout не ограничивает весь путь задачи вместе с SSH, обработкой и паузами, поэтому 11×2+10×1=32 секунды также не универсальный deadline. Считайте исполнения по журналу: служебное поле attempts при исчерпании в этой версии не заменяет независимый счётчик вызовов.</p>
+<h2>Block, rescue и always</h2>
+<p><code>block</code> объединяет задачи и наследуемые keywords; <code>rescue</code> выполняется при обычном failed в блоке; <code>always</code> — завершающий участок при нормальной обработке этого блока. Unreachable, синтаксическая ошибка или внезапное завершение controller не являются обычным failed, для которого обещается rescue/always. Это не <code>finally</code> распределённой транзакции. Если rescue успешно завершился, Ansible может продолжить play; критический выпуск после возврата явно завершают <code>fail</code>, чтобы следующий batch не пошёл как успешный.</p>
+<pre><code>- block:
+    - name: Deliberate rejection in file fixture
+      ansible.builtin.fail:
+        msg: 'Rejected candidate, old state is retained'
+  rescue:
+    - name: Record observed rejection
+      ansible.builtin.set_fact:
+        counter_rejected: true
+  always:
+    - name: Verify branch was observed
+      ansible.builtin.assert:
+        that: counter_rejected | default(false)</code></pre>
+<p>Этот тестовый образец намеренно принимает ошибку как проверяемую ветку и ничего не восстанавливает автоматически. В реальном выпуске rescue сначала определяет, что успело измениться, затем возвращает прежний symlink/config и проверяет процесс. <code>ignore_errors</code> продолжает после failed, но не лечит причину; <code>ignore_unreachable</code> относится к другой границе. Применяют их только если следующий шаг сознательно разбирает результат. Для общего стопа есть any_errors_fatal, а допустимый процент отказа оценивают с учётом batch и строгого условия превышения. Официальная модель: <a href="https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_error_handling.html">error handling</a>, 01.11.2026.</p>

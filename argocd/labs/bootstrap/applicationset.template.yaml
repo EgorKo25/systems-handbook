@@ -1,0 +1,33 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: ledger-fleet
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: [missingkey=error]
+  generators:
+    - list:
+        elements:
+          - environment: practice
+            namespace: gitops-fleet-practice
+          - environment: review
+            namespace: gitops-fleet-review
+  template:
+    metadata:
+      name: 'ledger-{{ .environment }}'
+    spec:
+      project: ledger-fleet
+      source:
+        repoURL: https://git.example.invalid/reader/ledger-config.git
+        targetRevision: "1111111111111111111111111111111111111111"
+        path: apps/ledger/base
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{ .namespace }}'
+      syncPolicy:
+        automated:
+          enabled: false
+  syncPolicy:
+    applicationsSync: create-update
+    preserveResourcesOnDeletion: true

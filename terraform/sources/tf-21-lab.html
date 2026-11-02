@@ -1,0 +1,118 @@
+<header><h1>Продолжаемый практикум: ошибка остаётся наблюдаемой</h1><p>Десять упражнений используют один собственный state. Ничего не сбрасывается после неуспеха; контрольные точки и возврат выполняются явно.</p></header>
+<h2>1. Продолжить свою область или впервые создать её</h2>
+<p>Если вы прошли главу 2, продолжайте именно её TF_LAB_ROOT: восстановите сохранённые три переменные, перейдите в каталог и проверьте state list/output. Следующий блок подготовки предназначен только для первого старта: не выполняйте его поверх пройденных глав и не заменяйте им существующую область. Оба постоянных пути сохранены в паспорте из главы 2; контрольная точка лежит отдельно от рабочей области. Для другого компьютера переносите собственную проверенную копию и тот же совместимый CLI.</p>
+<p>Начните из каталога тома <code>terraform/</code>, где находится labs. Переменная tools сохраняет абсолютный путь к его сценариям; после перехода в стенд она остаётся действительной. В новом shell задайте её заново по фактическому пути своей копии. Не используйте путь чужого состояния. Сам каталог foundation до prepare не создавайте: prepare обязан отвергнуть уже существующую область.</p>
+<pre><code>TF_LAB_TOOLS="$PWD/labs"
+umask 077
+mkdir -p "$HOME/terraform-learning/stands" "$HOME/terraform-learning/snapshots"
+TF_LAB_ROOT="$HOME/terraform-learning/stands/foundation"
+TF_LAB_SNAPSHOT="$HOME/terraform-learning/snapshots/foundation-checkpoint-1"
+if python3 "$TF_LAB_TOOLS/lab.py" prepare "$TF_LAB_ROOT"; then
+  cd "$TF_LAB_ROOT" &amp;&amp;
+  terraform init -input=false &amp;&amp;
+  terraform validate &amp;&amp;
+  terraform plan -out=first.tfplan &amp;&amp;
+  terraform show first.tfplan &amp;&amp;
+  terraform apply first.tfplan &amp;&amp;
+  terraform state list &amp;&amp;
+  terraform output -json contract &amp;&amp;
+  terraform plan -detailed-exitcode
+else
+  printf '%s\n' 'Подготовка отказала; дальнейшие Terraform-команды не выполнены.' >&2
+fi</code></pre>
+<p>План первой конфигурации создаёт пять terraform_data instances: два service, два record в receipt, один gate. Последующий detailed plan должен вернуть 0. Сохраните вывод IDs в защищённой заметке. Если вы получили другую конфигурацию/число адресов, найдите причину до продолжения. Здесь нет работающего Go-сервера: port является данными.</p>
+<h2>2. Явно сохранить контрольную точку</h2>
+<pre><code>python3 "$TF_LAB_TOOLS/lab.py" snapshot "$TF_LAB_ROOT" "$TF_LAB_SNAPSHOT"</code></pre>
+<p>Если подходящая исходная контрольная точка уже создана в главе восстановления, проверьте её происхождение и используйте её без повторного snapshot. Существующий файл не перезаписывают; для другой точки выбирают новое имя TF_LAB_SNAPSHOT в постоянном snapshots/. Все Terraform-команды остановлены. Snapshot включает исходники, state и rendered-файлы; cache/providers и saved plans не переносятся. Существующая копия не перезаписывается. Это snapshot целого local-only упражнения, не backup облака. После этого дальше работаем в прежнем TF_LAB_ROOT.</p>
+<h2>3. Наблюдать слепую зону</h2>
+<pre><code>python3 -c 'from pathlib import Path; Path("rendered-api.json").write_text("outside change\n")'
+terraform plan -detailed-exitcode
+terraform plan -replace='terraform_data.service["api"]' -out=repair.tfplan
+terraform show repair.tfplan
+terraform apply repair.tfplan</code></pre>
+<p>Ожидаем пустой первый plan несмотря на изменённые байты: файл не является управляемым объектом с собственным Read. Replacement создаёт новый ID api и запускает writer. Это намеренный дорогой способ исправления учебного эффекта. Сравните worker ID: независимый service не должен быть заменён только из-за repair api. Если effect writer падает, исправьте причину в той же области.</p>
+<h2>4. Изменить input без replacement</h2>
+<pre><code>python3 - &lt;&lt;'PYDATA'
+import json
+from pathlib import Path
+services = {"api": {"port": 8180, "build": "b1"},
+            "worker": {"port": 8081, "build": "b1"}}
+Path("case.auto.tfvars.json").write_text(json.dumps({"services": services}) + "\n")
+PYDATA
+terraform plan -out=input.tfplan
+terraform apply input.tfplan
+terraform output -json contract
+cat rendered-api.json</code></pre>
+<p>ID api остаётся, output port стал 8180, а файл writer остался с предыдущим port 8080. Provisioner выполнялся при создании, обычный update его не повторяет. Сопоставьте три наблюдения: config, state output, файл. Не пытайтесь добиться их равенства удалением state.</p>
+<h3>Сравнить state и файл отдельным читателем</h3>
+<p>Утилита observe.py читает уже построенное JSON-представление state из stdin и rendered-файлы своего помеченного каталога. Она не запускает Terraform, не обращается к provider и ничего не записывает. В Bash:</p>
+<pre><code>set -o pipefail
+terraform show -json | python3 "$TF_LAB_TOOLS/observe.py" --root "$TF_LAB_ROOT"</code></pre>
+<p>После стандартного шага 4 строка api должна содержать state.port=8180, receipt.port=8080 и receipt_matches=false; ID сравните со своей заметкой до update. Worker остаётся совпадающим. Это осмысленное расхождение, а не потеря состояния. При отсутствии файла receipt=null и совпадение false; ошибочный JSON файла даёт отказ чтения. После замены b2 writer снова запишет текущее значение, но после partial apply сначала смотрят фактические resource state: корневой output не обязан уже содержать все промежуточные результаты.</p>
+<p>Для отдельной проверки вычислений без CLI и без записи запустите <code>python3 -B "$TF_LAB_TOOLS/mechanism_model.py"</code>. Это фиксированная учебная модель с условными ID, не замена настоящим проверкам check.py и не интерпретатор HCL. Не передавайте её условные ID в import/state-команды.</p>
+<h2>5. Перенести адрес</h2>
+<p>В main.tf переименуйте resource block service в node и все ссылки <code>terraform_data.service</code> в <code>terraform_data.node</code>; затем добавьте отдельный moved, у которого from остаётся старым адресом:</p>
+<pre><code>moved {
+  from = terraform_data.service
+  to   = terraform_data.node
+}</code></pre>
+<pre><code>terraform plan -out=move.tfplan
+terraform show move.tfplan
+terraform apply move.tfplan
+terraform state list
+terraform output -json contract</code></pre>
+<p>Проверяйте сохранение обоих ID. Не создавайте два разных resource blocks со старыми и новыми именами одновременно. Moved применяется как migration, а не как «создать ещё одну копию». С этого упражнения адреса в командах замены оканчиваются на node. Возврат Git-текста без обратной migration не возвращает applied association.</p>
+<h2>6. Получить настоящий lock conflict</h2>
+<p>В первом терминале того же стенда выполните bounded hold. Он создаёт/заменяет только gate:</p>
+<pre><code>terraform apply -auto-approve -var=gate_revision=lock-run -var=hold_seconds=10</code></pre>
+<p>Во втором терминале задайте тот же TF_LAB_ROOT, перейдите в него и пока первый run работает выполните:</p>
+<pre><code>cd "$TF_LAB_ROOT"
+terraform plan -lock-timeout=1s</code></pre>
+<p>Ожидается отказ из-за занятого state, не повод ставить lock=false. Дождитесь окончания первого, повторите обычный plan; переопределение через CLI gate_revision не было сохранено в tfvars, поэтому возможно предлагаемое возвращение к default g1. Либо осознанно примите его, либо запишите выбранную revision в файл. Автоматический check согласует входы перед следующим шагом.</p>
+<h2>7. Увидеть stale saved plan</h2>
+<pre><code>terraform plan -var=gate_revision=saved-intent -out=stale.tfplan
+terraform apply -auto-approve -var=gate_revision=intervening
+terraform apply stale.tfplan</code></pre>
+<p>Последний apply должен отказать как устаревший: state между plan и apply изменён. Не обходите это force/редактированием serial. Сделайте новый plan по текущему намерению. Saved plan не разрешение игнорировать изменения команды.</p>
+<h2>8. Частичный apply и продолжение</h2>
+<p>В существующем case.auto.tfvars.json измените build обоих services на b2 и добавьте два поля верхнего уровня. JSON использует двоеточие между именем и значением; запись с HCL-знаком равенства здесь неверна. После стандартного шага 4 весь файл выглядит так (если вы сами меняли порты, сохраните свои значения):</p>
+<pre><code>{
+  "services": {
+    "api": {"port": 8180, "build": "b2"},
+    "worker": {"port": 8081, "build": "b2"}
+  },
+  "gate_revision": "fail-run",
+  "fail_gate": true
+}</code></pre>
+<p>Не создавайте второй auto.tfvars с конфликтующими входами: исправьте прежний файл, предварительно сохранив его копию под именем, которое не оканчивается на .tfvars/.auto.tfvars.json. Затем:</p>
+<pre><code>terraform plan -out=partial.tfplan
+terraform apply partial.tfplan
+terraform state show 'terraform_data.node["api"]'
+terraform state show terraform_data.gate</code></pre>
+<p>Это намеренный отказ gate с кодом скрипта 7 и общим кодом Terraform 1. Предшествующие services уже заменены; gate tainted. Исправьте только fail_gate на false, затем новый plan, review и apply. Следующий detailed plan должен стать пустым. Reset, новый каталог или удаление .terraform.tfstate здесь уничтожили бы предмет опыта.</p>
+<h2>9. Проверить запрещённый короткий путь и выполнить явный возврат</h2>
+<pre><code>terraform state push "$TF_LAB_SNAPSHOT/terraform.tfstate"</code></pre>
+<p>После этих изменений старый serial меньше текущего, push должен отказать. Скопируйте сообщение в заметку, не добавляйте force. Для local-only учебного rollback остановите все команды и вызовите предусмотренный полный restore:</p>
+<pre><code>if python3 "$TF_LAB_TOOLS/lab.py" restore "$TF_LAB_ROOT" "$TF_LAB_SNAPSHOT"; then
+  cd "$TF_LAB_ROOT" &amp;&amp;
+  terraform init -input=false &amp;&amp;
+  terraform plan -detailed-exitcode
+else
+  printf '%s\n' 'Restore отказал; дальнейшие Terraform-команды не выполнены.' >&2
+fi</code></pre>
+<p>После успешного restore вернулись source/state/files точки 1, поэтому блок снова service, builds b1. Прежняя развитая область сохранена в *.before-restore. Если копия уже существует, manager откажет, чтобы вы сначала разобрались с предыдущим возвратом. Для удалённых объектов этот способ не предназначен.</p>
+<h2>10. Снять лабораторию и проверить отдельно</h2>
+<pre><code>terraform plan -destroy -out=own-cleanup.tfplan
+terraform show own-cleanup.tfplan
+terraform apply own-cleanup.tfplan
+terraform state list</code></pre>
+<p>Проверьте marker, каталог и адреса до cleanup. Terraform_data не владеет rendered-файлами через Read/Delete, поэтому файлы могут остаться. Их хранение/удаление — явное решение владельца учебной области после исследования. Для повторения авторских тестов из каталога тома запустите <code>python3 labs/check.py --terraform terraform</code>: тест сам создаёт отдельную область, проходит цепочку и убирает её, не продолжая и не уничтожая вашу.</p>
+<h2>Матрица отказов</h2>
+<table><thead><tr><th>Наблюдение</th><th>Граница</th><th>Следующий безопасный шаг</th></tr></thead><tbody>
+<tr><td>Invalid for_each argument</td><td>Неизвестные ключи графа</td><td>Сделать ключи частью config, оставить ID в values.</td></tr>
+<tr><td>Checksum mismatch</td><td>Установка зависимости</td><td>Проверить package source/hash, не удалять lock вслепую.</td></tr>
+<tr><td>Error acquiring state lock</td><td>Конкурирующая операция</td><td>Найти владельца и дождаться/согласовать; не обходить lock.</td></tr>
+<tr><td>Saved plan is stale</td><td>Состояние изменилось</td><td>Новый plan и review.</td></tr>
+<tr><td>Plan пуст, файл неправильный</td><td>Файл вне provider Read</td><td>Исправить ответственность за управление, а не доверять зелёному status.</td></tr>
+<tr><td>Apply failed, IDs поменялись</td><td>Частичное выполнение</td><td>Сохранить state, исследовать фактические результаты, продолжить.</td></tr>
+</tbody></table>

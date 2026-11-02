@@ -1,0 +1,110 @@
+ПОВТОРНАЯ SOURCE-ONLY ВЫЧИТКА, 2 ноября 2026
+
+Прочитаны все62 исходных файла в CONFIG-порядке + принятый63-й
+preflight_check.py,оба прежних документационных follow-up и ан16
+с уже принятой иллюстрацией/уточнением newline. Новое чтение не приписывает
+себе предыдущие нативные результаты ниже.
+
+В своём проходе:21 RAM-проба actual main counter_config,без I/O;
+статические проверки полного кандидата и численных моделей; replay
+строгих дельт. Строки LF/CRLF/CR различены от исходных bytes.
+Новый pure_review_check.py можно прочесть и выполнить python3 -B:
+он читает исходник и выполняет только main AST с RAM-заглушками.
+Это не доказательство удалённого исполнения,атомарности rename или power loss.
+Нативные lab/stage/preflight/Go тесты требуют временных файлов либо sockets:
+в read-only проходе они прочитаны,но не запускались. Общая сборка,
+привилегии,службы,публикация и браузер не использовались.
+Точная матрица/хеши/пределы доступны в manifest ANSIBLE_FINAL_V1.
+
+--- ИСТОРИЧЕСКИЙ ЖУРНАЛ 01.11.2026 ---
+
+ANSIBLE — ЖУРНАЛ ПРОВЕРОК, 1 ноября 2026
+
+Реальное локальное исполнение
+- Подготовлен только временный isolated Python runtime; системные пакеты/SSH/
+  сеть/службы хоста не менялись. ansible-core 2.21.5, Python 3.12.14; все module targets — local connection.
+- tests/lab_check.py: PASS. Шесть playbooks syntax-check, ровно два local
+  alias, первый apply и повтор changed=0, сохранение count=41, check/diff
+  без изменения bytes/mtime, явный forward 0.2 и rollback config 0.1 с теми же
+  данными. Отдельно проверены task/play/extra precedence, frozen set_fact,
+  import/include gate, run_once в serial=1 batch, rescued failure/always.
+- Авторский counter_config: создание/повтор, mode drift, check без записи,
+  malformed JSON и symlink отвергаются без перезаписи исходного состояния.
+- Vault: encrypt/view roundtrip с временным plaintext/password; plaintext
+  не печатается в вывод проверки. Не использованы внешние credentials.
+- tests/stage_check.py: PASS на извлечённых из VMsite настоящих stage-задачах,
+  local connection, только собственный /tmp. Owner/group адаптированы к
+  UID/GID тестирующего пользователя, control flow/copy guard/SHA неизменны.
+  Повреждённый source отвергнут до записи; source меняется ПОСЛЕ preflight —
+  existing valid target bytes всё равно сохранены (copy skipped); новый wrong
+  SHA отвергнут до target creation; valid новый release принят; mode drift
+  исправлен без изменения existing bytes. Не запускались роль bootstrap/unit.
+- Go-сервис: gofmt, go test ./..., go vet ./..., build -trimpath с
+  -X main.version=0.1.0, запуск --version (0.1.0) — PASS, Go 1.27.3 linux/amd 64.
+  HTTP handlers тестируются httptest без открытого listening port. Проверены
+  конкурентные 20 POST, сохранение/reopen count, malformed data/config,
+  unknown fields и отсутствие изменения данных при validate.
+
+Статика
+- tests/cli_check.py: 16 native карточек /44 буквальные формы флагов найдены
+  в --help соответствующих parser/subcommands core 2.21.5. Это проверка
+  существования флагов, не исполнение всех изменяющих команд.
+- VM site.yml --syntax-check с inventory/hosts.example.yml: PASS, без SSH,
+  sudo, gather_facts или действий. ansible-doc -M local/library counter_config:
+  PASS, options/attributes/examples/return читаются настоящим CLI.
+- tests/source_check.py проверяет CONFIG/главы/anchors/относительные ссылки,
+  glossary/command schema, DIAGRAMS edges/states/markers, Python syntax,
+  YAML parse 15 файлов. Финальные счётчики находятся в READY.txt. Полный
+  isolated reader QA выполняется отдельно координатором, wrapper не запускался.
+- tests/vm_source_check.py: PASS статических регрессий: controller SHA в
+  pre_tasks до roles; copy только отсутствующего release; отдельный file для
+  metadata; unit guard для first-install rescue; проверки old version/count.
+- Первичные источники: PyPI core 2.21.5 и официальные docs/исходник v 2.21.5,
+  дата 01.11.2026. Официальный wheel SHA-256 сопоставлен; все 801 установленных
+  файлов ansible/ совпали с байтами этого wheel. Dependency-lock ограничен
+  CPython 3.12/Linux x 86_64; все 9 хешей wheels проверены по PyPI metadata.
+- Реально создано второе isolated окружение и установлены 9 wheels с
+  --no-index --find-links <private-wheelhouse> --require-hashes: PASS,
+  ansible --version = core 2.21.5. Физическая сеть не отключалась, namespace
+  или firewall хоста не менялись. Это проверка локального источника pip,
+  не полноценное испытание VM без сети.
+
+Модели, не исполнение
+- 4 пошаговые DIAGRAMS показывают fixed task/variables/handlers+serial/
+  interrupted-release scenarios. Стрелки не являются live trace SSH.
+- Числовая оценка 20 hosts×10 tasks×0.2 s/5 workers=8 s — условная нижняя модель,
+  не benchmark. Нет универсальных порогов CPU/RAM/latency/forks.
+
+Рецепты, не исполнение
+- Multi-VM SSH/trust/sudo/Python discovery/systemd, настоящий release между
+  двумя ОС, restart/reboot/host loss/partial network failure, restore snapshot
+  и performance по сети не запускались. local aliases не доказывают эти свойства.
+- VM recipe ограничен личными Debian-family/systemd VM, fixed paths и
+  loopback:8080, одним writer/controller. Два data_file независимы, не кластер.
+- Molecule/ansible-lint/ansible-test внешних collections не запускались.
+- Module не испытан на NFS, hostile races, disk-full, power loss, ACL/xattrs;
+  его atomically replaced file не является распределённой транзакцией.
+
+Повторяемые команды (с уже подготовленным isolated Ansible bin)
+  python3 tests/source_check.py
+  python3 tests/cli_check.py --ansible-bin /ПУТЬ/К/ИЗОЛИРОВАННОМУ/bin
+  python3 tests/lab_check.py --ansible-bin /ПУТЬ/К/ИЗОЛИРОВАННОМУ/bin
+  python3 tests/vm_source_check.py
+  python3 tests/stage_check.py --ansible-bin /ПУТЬ/К/ИЗОЛИРОВАННОМУ/bin
+Скрипты сами ничего не устанавливают. lab_check пишет только в собственный
+/tmp/ansible-book-check-*, удаляет свой корень по завершении; --keep сохраняет
+его для разбора. Сохраняемый reader lab — другой корень, reset не выполняется.
+
+Редакторская проверка 01.11.2026 после независимого integration review:
+- Сервис: go test -race ./... — PASS. Два новых loopback HTTP-теста
+  подтверждают ожидание активного POST/сохранение count и явную ошибку
+  по истечении grace deadline; main использует проверенный путь shutdown.
+  Сигналы ОС, systemd и power loss этими тестами не моделируются.
+- tests/preflight_check.py с подготовленным ansible-core2.21.5 — PASS.
+  Неправильный controller SHA и local target отвергнуты до setup/SSH.
+  Fake SSH не вызывался; сеть, sudo, службы и VM не использовались.
+- source_check и vm_source_check — PASS. Неявный gather_facts выключен;
+  явный setup находится после controller-only проверки выбора и manifest.
+- Изолированный labs/local комплект повторён lab_check.py — PASS:
+  повтор без изменений, check/diff без записи байтов/mtime, сохранение данных,
+  precedence/import/include/serial/rescue, модульные guards и Vault.

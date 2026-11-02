@@ -1,0 +1,24 @@
+<header><h1>PromQL VII: распределения, квантили и ограничения buckets</h1><p>От cumulative counters выводим долю и квантиль; не принимаем интерполяцию за точные индивидуальные задержки.</p></header>
+<h2>Доля быстрее порога и среднее</h2>
+<pre><code>sum by(job)(rate(lab_request_duration_seconds_bucket{le="0.3"}[5m]))
+/
+sum by(job)(rate(lab_request_duration_seconds_count[5m]))</code></pre>
+<p>Числитель имеет observations/s, знаменатель те же observations/s, результат — безразмерная доля завершений ≤0.3s. Граница должна действительно существовать в histogram. Отбор <code>le="0.3"</code> по labels не интерполирует отсутствующий bucket. Доля относится к измеренным завершённым работам: отменённые и незавершённые операции входят только согласно договору instrumentation. Если сервис считает только успешные ответы в histogram, такой latency SLI не описывает все requests.</p>
+<p>Для среднего <code>sum(rate(_sum[5m])) / sum(rate(_count[5m]))</code> имеет seconds/s / observations/s = seconds/observation. Это среднее, не p50/p99. При count=0 получается NaN. Если sum включает отрицательные наблюдения, она перестаёт быть monotonic counter и этот способ требует пересмотра; в нашем latency-примере все длительности неотрицательны.</p>
+<h2>Квантиль руками на четырёх наблюдениях</h2>
+<p>В прошлом примере cumulative buckets 0.1→2,0.3→3,1→4,+Inf→4, count4. Для φ=0.75 ранг φN=3. Он попадает в bucket(0.1,0.3], где cumulative count растёт 2→3. При линейной интерполяции 0.1+(0.3−0.1)×(3−2)/(3−2)=<strong>0.3s</strong>. Для φ=0.9 ранг 3.6 попадает в(0.3,1]:0.3+0.7×(3.6−3)/(4−3)=<strong>0.72s</strong>. Это результат алгоритма; реальные четыре значения были 0.04,0.08,0.24,0.7s. Histogram уже не знает точное место внутри bucket.</p>
+<pre><code>histogram_quantile(0.99,
+  sum by(job,le)(rate(lab_request_duration_seconds_bucket[5m]))
+)</code></pre>
+<p>Сначала rate каждого bucket counter, затем sum с сохранением <code>le</code>, затем quantile. Удалить le до вычисления — потерять границы. Сумма по instances допустима для совместимых classic bucket layouts; если границы различаются, отдельные cumulative sums могут описывать неполное объединение. Унифицируйте instrumentation. Averaging p99 экземпляров не создаёт общий p99. Когда ранг попадает в +Inf bucket, функция возвращает верхнюю границу предпоследнего bucket; это ещё одна причина выбрать конечные границы по реальному диапазону.</p>
+<p>φ&lt;0 даёт −Inf, φ&gt;1 даёт +Inf, а отсутствие наблюдений приводит к NaN. Classic input должен иметь +Inf и достаточно buckets. Неубывание cumulative counts может нарушиться из-за ошибочных данных или floating-point погрешности; движок использует коррекции и annotations. Проверяйте warnings/infos и источник, а не воспринимайте исправление монотонности как подтверждение правильности исходных buckets.</p>
+<h2>Native функции и отдельные sample types</h2>
+<pre><code>histogram_quantile(0.99, sum by(job)(rate(native_duration_seconds[5m])))
+histogram_count(rate(native_duration_seconds[5m]))
+histogram_sum(rate(native_duration_seconds[5m]))
+histogram_avg(rate(native_duration_seconds[5m]))
+histogram_fraction(0, 0.3, rate(native_duration_seconds[5m]))</code></pre>
+<p>Здесь native histogram целиком содержится в sample, label le не нужна. <code>histogram_count</code> извлекает count, <code>histogram_sum</code> — sum, <code>histogram_avg</code> — отношение; float samples эти функции игнорируют. <code>histogram_fraction</code> оценивает долю в заданном интервале, точность зависит от расположения границ. Для экспоненциальных buckets native quantile использует экспоненциальную интерполяцию, для custom buckets — линейную; zero bucket имеет собственные условия. Нельзя объяснять оба представления одной безусловной формулой classic.</p>
+<p>В native fixture schema 0 offset 0 buckets[1,3] соответствует одному наблюдению в(0.5,1] и трём в(1,2], count4, sum5. Поэтому histogram_count=4, histogram_sum=5, histogram_avg=1.25 — выводится без предположения о распределении внутри корзин. Это реальный тест структурированного sample promtool; базовый live Go-стенд по-прежнему экспортирует classic. Для native rate движок анализирует сбросы count/buckets/schema; несовместимые layouts или переход float↔histogram могут исключить ряд с annotation. Обязательно проверяйте результат миграционного окна.</p>
+<h2>Малая выборка и цена точности</h2>
+<p>Четыре observations не позволяют устойчиво оценить редкий p99. Интерполяция 0.72 не создаёт дополнительные события; изменение одного запроса резко изменит вывод. Рядом с quantile держат count/rate traffic, состояние сбора и ширину окна. Увеличение окна добавляет наблюдения, но скрывает быстрые изменения; добавление classic buckets уменьшает ошибку в единицах значения около порога, но увеличивает series. Native resolution меняет относительную точность и стоимость buckets. Выбор делается по SLO и измеренному распределению, а не правилу «чем больше buckets, тем лучше».</p>

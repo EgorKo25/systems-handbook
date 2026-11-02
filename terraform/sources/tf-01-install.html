@@ -1,0 +1,52 @@
+<header><h1>Получить CLI и доказать, какие байты будут исполняться</h1><p>Выбор версии, ОС и архитектуры предшествует распаковке. Для первого опыта достаточно пользовательского каталога в личной Linux VM; системная служба Terraform не требуется.</p></header>
+<h2>Выбор версии — инженерный вход</h2>
+<p>Начните с <a href="https://developer.hashicorp.com/terraform/install">официальной страницы установки</a>, затем откройте каталог конкретного выпуска и его release notes. Выберите стабильную версию, совместимую с существующим state, провайдерами и правилами команды. В этой редакции базовый CLI зафиксирован на <code>1.17.1</code>; это воспроизводимый вход, а не обещание, что будущий последний выпуск подходит любому проекту. Номер CLI, версия языка provider protocol, версия provider и версия модуля — разные величины. <code>required_version</code> проверяет CLI; provider не обновляется от одного нового бинарника.</p>
+<p>На Linux <code>uname -m</code> помогает определить архитектуру: x86_64 соответствует linux_amd64, aarch64 — linux_arm64. Архив Windows содержит <code>terraform.exe</code>; Linux-бинарник не запускается обычной командой Windows. Контейнер переносит часть среды, но не меняет полномочия API-учётных данных. В рецепте ниже нужны Bash, curl, GnuPG, awk, unzip и sha256sum в личной VM. Полный отпечаток ожидаемого основного ключа уже сверён для этого выпуска; перед другим выпуском его получают по доверенному независимому каналу до запуска сценария. Установка пакетов ОС здесь не выполняется.</p>
+<h2>Загрузка и цепочка проверки</h2>
+<pre><code>tf_verified_install() {
+  bash &lt;&lt;'TF_INSTALL'
+set -euo pipefail
+TF_RELEASE=1.17.1
+TF_PACKAGE=terraform_${TF_RELEASE}_linux_amd64.zip
+TF_PRIMARY=C874011F0AB405110D02105534365D9472D7468F
+mkdir -p "$HOME/terraform-learning/download" "$HOME/terraform-learning/bin"
+cd "$HOME/terraform-learning/download"
+curl --fail --location --output "$TF_PACKAGE" \
+  "https://releases.hashicorp.com/terraform/$TF_RELEASE/$TF_PACKAGE"
+curl --fail --location --remote-name \
+  "https://releases.hashicorp.com/terraform/$TF_RELEASE/terraform_${TF_RELEASE}_SHA256SUMS"
+curl --fail --location --remote-name \
+  "https://releases.hashicorp.com/terraform/$TF_RELEASE/terraform_${TF_RELEASE}_SHA256SUMS.sig"
+curl --fail --location --output hashicorp.asc \
+  https://www.hashicorp.com/.well-known/pgp-key.txt
+mkdir -m 700 gpg
+gpg --homedir "$PWD/gpg" --import hashicorp.asc
+gpg --homedir "$PWD/gpg" --fingerprint
+status=$(gpg --homedir "$PWD/gpg" --status-fd 1 --verify \
+  "terraform_${TF_RELEASE}_SHA256SUMS.sig" "terraform_${TF_RELEASE}_SHA256SUMS")
+printf '%s\n' "$status" | awk -v primary="$TF_PRIMARY" \
+  '$1 == "[GNUPG:]" &amp;&amp; $2 == "VALIDSIG" &amp;&amp; $NF == primary { ok=1 }
+   END { exit !ok }'
+awk -v package="$TF_PACKAGE" \
+  '$2 == package || $2 == "*" package { print; n++ }
+   END { if (n != 1) exit 1 }' \
+  "terraform_${TF_RELEASE}_SHA256SUMS" | sha256sum --check -
+unzip "$TF_PACKAGE" terraform -d "$HOME/terraform-learning/bin"
+TF_INSTALL
+}
+if tf_verified_install; then
+  export PATH="$HOME/terraform-learning/bin:$PATH"
+  command -v terraform
+  terraform version
+  terraform version -json
+else
+  printf '%s\n' 'Установка остановлена: CLI не запускается.' &gt;&amp;2
+fi</code></pre>
+<p><code>--fail</code> превращает HTTP-ошибку в неуспешный код, <code>--location</code> разрешает перенаправления, <code>--output</code> задаёт локальное имя; без него ZIP попадёт в stdout. Подпись проверяет файл ожидаемых сумм, а сумма связывает выбранный архив с этим файлом. Случайная сумма с того же недоверенного носителя не доказывает происхождение. Отпечаток ключа сверяют с официальным материалом по независимому доверенному каналу; не назначают доверие только ради исчезновения предупреждения GPG.</p>
+<p>Для реально проверенного выпуска основной fingerprint: <code>C874 011F 0AB4 0511 0D02 1055 3436 5D94 72D7 468F</code>. Подпись сделана подключом <code>374E C75B 4859 1360 4A83 1CC7 C820 C6D5 CD27 AB87</code>. Сроки и ключи могут меняться; перед другим выпуском перечитайте <a href="https://developer.hashicorp.com/well-architected-framework/verify-hashicorp-binary">официальную проверку бинарников</a>. Сообщение Good signature при неизвестном локальном доверии означает криптографически верную подпись данным ключом; вопрос принадлежности ключа решается отдельно. Несовпадение суммы — остановка, не повод распаковать другой файл наугад.</p>
+<h2>Распаковка и приёмка</h2>
+<p>Переход к распаковке находится внутри проверяемого сценария. Внешняя оболочка добавляет каталог в PATH и запускает CLI только после его успеха. Новый процесс Bash включает остановку при ошибке и проверку конвейеров; отказ GPG, неподходящий основной ключ, отсутствие единственной строки суммы выбранного ZIP или несовпадение суммы не достигают unzip. Существующий каталог gpg здесь вызывает отказ: для повторения сначала исследуйте прежние файлы, затем выберите отдельный собственный каталог загрузки.</p>
+<p>Сравните обычный и JSON-вывод: первый удобен человеку, второй представляет сведения о версии как JSON для программы. Проверяйте именно <code>terraform_version</code> и <code>platform</code>, не фиксированный порядок строк. <code>command -v</code> помогает обнаружить прежний binary раньше в PATH. Ошибка Exec format error указывает на несовместимый формат/архитектуру, Permission denied — на права исполнения либо ограничения монтирования. Права на бинарник не дают прав на чужую инфраструктуру.</p>
+<h2>Что появится в ОС и что взять офлайн</h2>
+<p>Terraform CLI — конечный процесс на время команды; обычный local backend не требует постоянного демона или открытого серверного порта. Внешние providers могут запускаться дочерними процессами и обращаться по сети к registry/API. Пользовательский CLI-конфиг находится в <code>~/.terraformrc</code> на Unix, в Windows — <code>%APPDATA%/terraform.rc</code>; переменная <code>TF_CLI_CONFIG_FILE</code> выбирает другой файл. Не переносите туда реальные токены для публичной демонстрации. Для лаборатории достаточно бинарника, исходников и Python; нет внешнего provider-пакета. Для другой конфигурации офлайн нужны также модули, платформенные пакеты providers, lock file, CLI-конфиг mirror и доверенный материал проверки. Один ZIP Terraform их не содержит.</p>
+<p>Контрольные вопросы приёмки: известны источник и сумма; запускается нужная версия; собственный каталог доступен для записи; <code>terraform init</code> и <code>terraform validate</code> проходят на первом примере. Отсутствие связи с cloud не ошибка этого фундамента: VM мы пока не создавали.</p>

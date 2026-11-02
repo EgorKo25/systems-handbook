@@ -1,0 +1,43 @@
+<header><h1>Count, for_each и dynamic: число объектов и форма блока</h1><p>Повторение в конфигурации может создавать адреса ресурсов, преобразовывать значения или генерировать вложенные блоки. Эти три действия нельзя смешивать.</p></header>
+<h2>Count делает адресом индекс</h2>
+<pre><code>resource "terraform_data" "slot" {
+  count = length(var.names)
+  input = var.names[count.index]
+}</code></pre>
+<p>Если names = ["api", "worker", "batch"], адреса оканчиваются на [0], [1], [2]. Удаление первого имени смещает значения двух остальных индексов. Terraform сопоставляет существующие объекты по адресу, поэтому изменение списка может выглядеть как изменение нескольких экземпляров вместо простого удаления api. Конкретные update/replacement зависят от схемы ресурса. Count подходит, когда индекс действительно часть модели, либо для нуля/одного необязательного объекта с пониманием адреса <code>[0]</code>.</p>
+<p>Сравните <code>count = var.enabled ? 1 : 0</code> и <code>for_each = var.enabled ? {main = true} : {}</code>. В первом случае потребитель обращается к списку, во втором — к map с ключом main. Оба варианта меняют наличие объекта; это не просто скрытие строки вывода. Если enabled неизвестен до apply, Terraform может не суметь определить набор экземпляров.</p>
+<h3>Что именно меняется после удаления api</h3>
+<p>Fixture collection начинается с <code>["api", "worker", "batch"]</code>. У terraform_data.indexed сохранены [0]→api, [1]→worker, [2]→batch. При входе <code>["worker", "batch"]</code> план этой схемы содержит update [0] api→worker, update [1] worker→batch и delete [2]. Их идентичности не следуют за именем сервиса: сохраняются индексы. У параллельного keyed с for_each = toset(var.names) исчезает только ["api"]; ["worker"] и ["batch"] получают no-op. Именно эти actions проверяет сохранённый check_language.py. Если вместо input менялся бы атрибут с требованием замены, цена сдвига была бы другой.</p>
+<h2>For_each делает адресом ключ</h2>
+<pre><code>resource "terraform_data" "service" {
+  for_each = var.services
+  input    = { port = each.value.port, build = each.value.build }
+}</code></pre>
+<p>С map имена api и worker стабильны независимо от порядка текста. Удаление worker удаляет соответствующий экземпляр, изменение api.port сохраняет адрес api. Но переименование ключа api → edge без moved — удаление старого и создание нового адреса, даже если значение совпало. Имена выбирают по долговременной предметной идентичности, не по IP, случайному UUID или текущей позиции в файле.</p>
+<p>For_each принимает map или set(string); список строк не преобразуется в set автоматически. Используйте <code>toset</code> только если потеря повторений и порядка соответствует задаче. Для set <code>each.key</code> и <code>each.value</code> совпадают. Для map значения могут оставаться неизвестными, если ключи определены. Чувствительные значения как полный for_each недопустимы, когда через них раскрылись бы ключи/идентичности. Отделите публичные ключи от закрытых данных; снятие sensitivity не должно раскрыть секретные имена.</p>
+<h2>Связать наборы без лишних барьеров</h2>
+<pre><code>module "receipt" {
+  source = "./modules/receipt"
+  values = {
+    for name, s in terraform_data.service : name => {
+      id = s.id
+      port = s.output.port
+      build = s.output.build
+    }
+  }
+}</code></pre>
+<p>Это один экземпляр модуля, внутри которого два экземпляра record. Альтернатива — <code>module "receipt" { for_each = var.services ... }</code>: тогда адрес включает <code>module.receipt["api"]</code>. В обоих случаях делайте graph из устойчивых имен и передавайте ID в содержимом. Ссылка на конкретный service связывает данные; общий depends_on на весь модуль способен задержать и те записи, которые фактически не используют изменяемый ресурс.</p>
+<h2>Dynamic генерирует вложенную конфигурацию</h2>
+<p>Dynamic block не создаёт самостоятельного resource address. Он раскрывает повторяющиеся вложенные блоки, предусмотренные схемой конкретного provider, например правила rule в гипотетическом ресурсе firewall. Блок ниже — только форма языка; для выполнения нужен реальный тип с такой схемой.</p>
+<pre><code>dynamic "rule" {
+  for_each = var.rules
+  iterator = item
+  content {
+    port   = item.value.port
+    source = item.value.source
+  }
+}</code></pre>
+<p><code>iterator</code> переименовывает локальное имя для читаемости вложенных циклов. Нельзя сгенерировать через dynamic произвольный resource, module или мета-блок lifecycle: Terraform должен понимать некоторые части до вычисления обычных expressions. Если аргумент схемы ожидает list(object), передайте for-выражение как значение, а не придумывайте nested block. Разница argument/block определяется provider schema.</p>
+<h2>Проверяем цену формы графа</h2>
+<p>Сначала выпишите ожидаемые адреса двух вариантов на бумаге, затем посмотрите <code>terraform state list</code> и JSON-план после удаления первого элемента. Измеряйте не только строку «N to change», но какие action адреса получили. Для реального облака каждый лишний replacement имеет длительность, квоты и потенциальную недоступность. В terraform_data это дешёвый опыт, в VM — изменение рабочего объекта. Миграцию count → for_each проводят через явные moved с известным соответствием старого индекса новому ключу, а не через надежду, что Terraform распознает одинаковое имя.</p>
+<p>Источники 01.11.2026: <a href="https://developer.hashicorp.com/terraform/language/meta-arguments/count">count</a>, <a href="https://developer.hashicorp.com/terraform/language/meta-arguments/for_each">for_each</a>, <a href="https://developer.hashicorp.com/terraform/language/expressions/dynamic-blocks">dynamic</a>. Схема firewall здесь не объявляется настоящим provider.</p>

@@ -1,0 +1,6 @@
+- name: Set static gate inside imported tasks
+  ansible.builtin.set_fact:
+    static_gate: true
+- name: This imported task rechecks the gate and is skipped
+  ansible.builtin.set_fact:
+    static_second: true

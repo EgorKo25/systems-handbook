@@ -1,0 +1,11 @@
+all:
+  children:
+    counters:
+      hosts:
+        counter_a:
+          ansible_host: 192.0.2.11
+        counter_b:
+          ansible_host: 192.0.2.12
+      vars:
+        ansible_user: deploy
+        ansible_python_interpreter: /usr/bin/python3

@@ -1,0 +1,165 @@
+GRAFANA 13.3.0 OSS · OPTIONAL PACKAGE/TLS · ТОЛЬКО ЛИЧНАЯ UBUNTU24.04 VM
+Рецепт НЕ исполнялся автором. Главный исполняемый путь книги — standalone
+без root. Здесь новая собственная VM без ранее установленного Grafana и без
+старой DB; для действующего экземпляра сначала backup/restore, не этот init.
+
+A. Получение package на staging машине.
+
+(
+  set -euo pipefail
+  curl -fL -o grafana13.3.0.deb https://dl.grafana.com/grafana/release/13.3.0/grafana_13.3.0_40412481033_linux_amd64.deb
+  printf '%s  grafana13.3.0.deb\n' 458cb47824fda2c1e93c51e5d9c4893543f7fe24c58c2f5cb9c7a91d7360070f | sha256sum -c -
+  dpkg-deb --info grafana13.3.0.deb
+  dpkg-deb --contents grafana13.3.0.deb
+)
+
+Подготовить Ubuntu dependencies adduser/libfontconfig1/musl и их транзитивные
+.deb на чистом клоне той же Ubuntu/архитектуры; download-only на уже настроенной
+машине может пропустить установленные зависимости. Сохранить package metadata,
+официальный SHA/source record, полный release/plugin набор и лицензии.
+Cold offline install на таком же clean clone — доказательство полноты, не
+просто успешное копирование .deb на флэшку. Здесь этот опыт не выполнялся.
+
+B. Внутри НОВОЙ личной VM, root действия явно отделены.
+Этот Bash-блок повторно проверяет пакет до любых sudo/dpkg. При неверной
+сумме либо отказе установки следующая команда блока не выполняется.
+Не продолжать отдельные этапы после ненулевого кода предыдущего.
+До установки блокируем автоматический запуск с default listener:
+
+(
+  set -euo pipefail
+  printf '%s  grafana13.3.0.deb\n' 458cb47824fda2c1e93c51e5d9c4893543f7fe24c58c2f5cb9c7a91d7360070f | sha256sum -c -
+  sudo systemctl mask grafana-server.service
+  sudo apt-get update
+  sudo apt-get install -y adduser libfontconfig1 musl openssl
+  sudo dpkg -i grafana13.3.0.deb
+  dpkg-query -W grafana
+)
+
+Если dpkg/dependency check отказал, не продолжать запуск. Для offline режима
+apt не должен молча искать upstream: установить заранее проверенный local
+набор зависимостей через apt-get --no-download install ./debs/*.deb.
+Пакет создаёт пользователя grafana и paths:
+/usr/share/grafana — release/assets
+/etc/grafana/grafana.ini — config
+/var/lib/grafana — data, default grafana.db/plugins
+/var/log/grafana — logs
+/etc/grafana/provisioning — managed files
+Unit фактического пакета проверять, не выдумывать ExecStart по имени binary.
+
+C. До первого запуска подготовить секреты и loopback config.
+Команды не применимы поверх существующей DB/keys. Пароли не публиковать.
+
+sudo install -d -m 0750 -o root -g grafana /etc/grafana/handbook-private
+# Generate in a private staging directory with umask077, then install files
+# root:grafana0640; do not print their contents in logs or public evidence.
+umask 077
+openssl rand -base64 32 > initial-admin-password
+openssl rand -base64 48 > secret-key
+sudo install -m 0640 -o root -g grafana initial-admin-password /etc/grafana/handbook-private/admin-password
+sudo install -m 0640 -o root -g grafana secret-key /etc/grafana/handbook-private/secret-key
+
+Создать свой grafana.ini (перед заменой сохранить исходный package config):
+
+[paths]
+data = /var/lib/grafana
+logs = /var/log/grafana
+plugins = /var/lib/grafana/plugins
+provisioning = /etc/grafana/provisioning
+[server]
+protocol = http
+http_addr = 127.0.0.1
+http_port = 3000
+root_url = http://127.0.0.1:3000/
+[security]
+admin_user = labadmin
+admin_password = $__file{/etc/grafana/handbook-private/admin-password}
+secret_key = $__file{/etc/grafana/handbook-private/secret-key}
+[users]
+allow_sign_up = false
+[auth.anonymous]
+enabled = false
+[analytics]
+reporting_enabled = false
+check_for_updates = false
+check_for_plugin_updates = false
+[plugins]
+preinstall_disabled = true
+preinstall_auto_update = false
+[unified_alerting]
+enabled = false
+[smtp]
+enabled = false
+
+Установить этот уже проверенный файл с root:grafana0640:
+(
+  set -euo pipefail
+  sudo install -m 0640 -o root -g grafana grafana.ini /etc/grafana/grafana.ini
+  sudo systemctl unmask grafana-server.service
+  sudo systemctl cat grafana-server.service
+  sudo systemctl enable --now grafana-server.service
+  sudo systemctl status grafana-server.service --no-pager
+  sudo journalctl -u grafana-server.service --since '-5 min'
+  curl -fsS http://127.0.0.1:3000/api/health
+)
+
+Проверить version13.3.0/databaseok, только loopback listener, login, restart
+и сохранение DB. UI password change меняет DB; admin_password config не
+сбрасывает существующего пользователя. DB/secret-key сохранять согласованно.
+Provider paths для package профиля отличаются от standalone: не копировать
+INI с недоступным домашним private path. Создать читабельные service-account
+пути для JSON и указать их в dashboard provider. Не переносить закрытый ключ
+в публичный каталог книги ради удобства.
+
+D. Optional прямой HTTPS на loopback, без reverse proxy.
+На личной административной машине создать CA/leaf; private files mode0600.
+
+umask 077
+mkdir -p grafana-pki
+cd grafana-pki
+openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:3072 -out ca.key
+openssl req -x509 -new -key ca.key -sha256 -days 365 -subj '/CN=handbook-grafana-ca' -addext 'basicConstraints=critical,CA:TRUE' -addext 'keyUsage=critical,keyCertSign,cRLSign' -out ca.crt
+openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:3072 -out server.key
+openssl req -new -key server.key -subj '/CN=grafana.lab.internal' -out server.csr
+
+В server.ext записать:
+basicConstraints=critical,CA:FALSE
+keyUsage=critical,digitalSignature,keyEncipherment
+extendedKeyUsage=serverAuth
+subjectAltName=DNS:grafana.lab.internal
+
+openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -sha256 -days 90 -extfile server.ext -out server.crt
+openssl verify -CAfile ca.crt -purpose sslserver server.crt
+openssl x509 -in server.crt -noout -dates -ext subjectAltName
+sudo install -m 0640 -o root -g grafana server.key /etc/grafana/handbook-private/server.key
+sudo install -m 0644 -o root -g grafana server.crt /etc/grafana/handbook-private/server.crt
+
+В своей /etc/grafana/grafana.ini изменить только нужные поля:
+[server]
+protocol = https
+http_addr = 127.0.0.1
+http_port = 3000
+domain = grafana.lab.internal
+root_url = https://grafana.lab.internal:3000/
+cert_file = /etc/grafana/handbook-private/server.crt
+cert_key = /etc/grafana/handbook-private/server.key
+[security]
+cookie_secure = true
+# Existing admin_password/secret_key fields retain their exact values/providers.
+
+sudo systemctl restart grafana-server.service
+curl --fail-with-body --cacert ca.crt --resolve grafana.lab.internal:3000:127.0.0.1 https://grafana.lab.internal:3000/api/health
+
+--resolve делает контролируемую DNS-подстановку только этого curl вызова,
+--cacert задаёт доверенную public CA; hostname проверяется по SAN. --insecure
+не применяется. Для browser нужен подготовленный DNS/tunnel и доверие к CA
+в личной среде, не автоматическое изменение рабочего trust store.
+Проверить expiry/renewal до90days, health/login и новый URL/cookie. HTTPS
+browser→Grafana не шифрует отдельно Grafana→Prometheus: это другая настройка.
+
+E. Backup/upgrade.
+Перед обслуживанием stop собственного service, дождаться exit, сохранить
+consistent DB и key/config/provisioning/plugin files. Restore только на отдельную
+цель с alerting/SMTP/external access выключенными. Старый binary не гарантирует
+чтение DB после migrations новой версии. Снимок VM и backup Prometheus data
+имеют отдельные границы. Не удалять источник после одного successful health.

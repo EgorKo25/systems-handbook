@@ -1,0 +1,88 @@
+PROMETHEUS / PROMQL — READY ДЛЯ РЕВЬЮ И ИНТЕГРАЦИИ
+Каталог: prometheus/
+Предварительный номер XV; окончательный назначает интегратор.
+Дата: 1 ноября 2026.
+
+Состав
+- volume_config.py: CONFIG, 22 главы, 3 внутренние книги и сквозной практикум.
+- sources/: 21 авторский HTML-исходник (словарь генерируется отдельно),
+  reference.py: 93 термина и10 команд по штатной схеме,
+  diagrams.py: 2 автономные пошаговые модели/9 шагов;
+  главы 08/09: 2 встроенных графика времени с таблицами-альтернативами.
+- labs/: config/rules, systemd unit как VM-рецепт, README.txt,
+  Go-сервис на client_golang1.23.2 с go.mod/go.sum, race/bench tests,
+  timestamped положительные и намеренно отрицательный PromQL fixtures,
+  check.py для native CLI/loopback/TSDB приёмки.
+- tests/: static schema/content check и явно ограниченная math-модель.
+- build.py: штатный integration wrapper; НЕ запускался.
+- ПРОВЕРКИ.txt: версии, checksum, точные выполненные проверки и границы.
+
+Содержательная линия
+Выбор/скачивание/проверка/установка, процессы/права/порты/data,
+scrape/discovery/relabeling/time/staleness, реальный путь Append/ref/postings
+→ WAL/Commit/head/chunks → blocks/index/query/checkpoint/replay;
+Go/runtime/process и конкурентная instrumentation;
+counter/gauge/summary/classic/native histograms;
+7 глав PromQL с ручным расчётом и реальными fixtures;
+rules/for/keep_firing_for, SLI/SLO/burn rate;
+расчёт cardinality/retention и измерения узких мест;
+snapshot/restore/upgrade, HA и remote storage contracts;
+один сохраняемый prom-lab с явными fault/rollback действиями.
+
+Версии и источники
+Prometheus/promtool3.13.5 linux/amd64: официальный release, checksum совпал.
+Go1.27.3: официальный go.dev/dl JSON/archive, checksum совпал.
+client_golangv1.23.2: закреплённый go.mod/go.sum.
+Документация3.13 и tagv3.13.5; источник/дата/границы в prom-20-sources.
+Особенно сверены native ingestion defaults, rate extrapolation,
+for/keep_firing_for, Append/WAL/Commit/replay и отсутствие fsync каждого sample.
+
+Результаты исходной приёмки 1 ноября 2026 (до новых дельт)
+Static PASS того snapshot: 22 главы,93 термина,10cards,4diagrams/17steps.
+Math MODEL PASS (не engine).
+Native promtool: 5 групп SUCCESS, ожидаемый many-to-many отказ PASS.
+CLI flags:10cards полностью сверены --help.
+Go: race PASS, build PASS, оба benchmark реально выполнены.
+Live: Go200/500→metrics lint→scrape/up→sample→WAL restart→snapshot
+→отдельное restore-data с query прежнего значения: LIVE PASS, exit0.
+Полная безопасная команда повторения и обстоятельства в ПРОВЕРКИ.txt.
+
+Действия интегратора
+1. Проверить исходники, содержательную связность и ПРОВЕРКИ.txt.
+2. Выполнить изолированный общий render/reader QA в /tmp, включая схемы,
+   поиск10 команд/flags, мобильный/темы и cross-volume navigation.
+3. После review явно включить prometheus в published-volumes.json:
+   наличие каталога/volume_config.py само по себе НЕ разрешает публикацию.
+4. Назначить окончательный номер/полку/маршруты, затем штатный
+   python3 scripts/build_library.py и экспорт scripts/prepare_site.py.
+5. Commit/push/Pages делает основной чат по отдельному решению.
+   Обе Git личности только EgorKo25 <77259232+EgorKo25@users.noreply.github.com>.
+
+Неисполненное и границы
+Никаких служб хоста или чужих сетей не менялось. VM/systemd/node_exporter,
+длительное storage stress, авария питания, live native transport,
+HA/dedup/remote receiver/Alertmanager delivery не исполнялись.
+Grafana/Alertmanager/OTel/Loki здесь интеграционные контракты;
+соседние каталоги не создавались. Нет JS эмулятора PromQL.
+Не обрабатываются промышленный multi-tenant remote storage, query frontend,
+все экспериментальные PromQL функции и полный byte-level TSDB формат.
+Том не обещает транзакционный event log или гарантии точного биллинга.
+
+
+Дополнение 2 ноября 2026: полный reader-pass / source-only candidate
+База всех 41 содержательного файла: Git 347d611d4c069ed0dfb333818f4dd788332ed075,
+принятый промежуточный editorial: c4ff1529838908b371e1b465f1fcd4f80cb717e5.
+Порядок чтения: CONFIG route → 01..20 → весь reference.py (93 термина,
+10 карточек) → все 4 исходные модели → labs/config/Go/fixtures/runner/tests.
+__pycache__/pyc не входят в исходники. Все 41 входа прочитаны; код runner
+прочитан, но его live/tempfile/main не выполнялся в этом read-only проходе.
+Два generic time/rate графа заменены точными inline SVG/HTML в 08/09;
+TSDB и histogram модели остаются. Входы fixtures не изменены.
+Новые вычисления — ограниченные pure модели; это не исполнение PromQL.
+Новый Go shutdown-wait и новый restore-рецепт требуют повторной native
+приёмки. Результаты 1 ноября выше/ниже относятся к прежнему snapshot.
+Browser320/390, восемь тем, клавиатура и print НЕ ПРОВЕРЕНЫ браузером.
+В source заданы scoped CSS, theme vars, мобильная колонка, монохромный
+print reset, SVG title/desc и полные текстовые таблицы. Нет JS/CDN/fetch.
+Файлы canonical/registry/reader не изменялись; диск/сервер/службы/сеть
+не использовались для экспериментов. Только чтение и вычисления в памяти.

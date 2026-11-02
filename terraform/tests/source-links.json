@@ -1,0 +1,381 @@
+{
+  "checked": "2026-11-01",
+  "basis": "Link reachability, not a claim of runtime API validation",
+  "sources": [
+    {
+      "url": "https://developer.hashicorp.com/terraform/cli/commands",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/cli/commands"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/cli/commands/apply",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/cli/commands/apply"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/cli/commands/force-unlock",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/cli/commands/force-unlock"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/cli/commands/graph",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/cli/commands/graph"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/cli/commands/import",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/cli/commands/import"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/cli/commands/init",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/cli/commands/init"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/cli/commands/plan",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/cli/commands/plan"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/cli/commands/providers/lock",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/cli/commands/providers/lock"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/cli/commands/providers/mirror",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/cli/commands/providers/mirror"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/cli/commands/state/mv",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/cli/commands/state/mv"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/cli/commands/state/push",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/cli/commands/state/push"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/cli/commands/state/replace-provider",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/cli/commands/state/replace-provider"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/cli/commands/validate",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/cli/commands/validate"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/cli/config/config-file",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/cli/config/config-file"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/cli/state/recover",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/cli/state/recover"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/cli/state/resource-addressing",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/cli/state/resource-addressing"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/install",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/install"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/internals/debugging",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/internals/debugging"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/internals/graph",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/internals/graph"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/internals/json-format",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/internals/json-format"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/language",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/language"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/language/backend/local",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/language/backend/local"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/language/backend/remote",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/language/backend/remote"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/language/backend/s3",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/language/backend/s3"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/language/block/module",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/language/block/module"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/language/block/removed",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/language/block/removed"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/language/checks",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/language/validate"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/language/data-sources",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/language/data-sources"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/language/expressions/conditionals",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/language/expressions/conditionals"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/language/expressions/custom-conditions",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/language/validate"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/language/expressions/dynamic-blocks",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/language/expressions/dynamic-blocks"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/language/expressions/for",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/language/expressions/for"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/language/expressions/references",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/language/expressions/references"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/language/expressions/type-constraints",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/language/expressions/type-constraints"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/language/expressions/types",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/language/expressions/types"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/language/expressions/version-constraints",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/language/expressions/version-constraints"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/language/files/dependency-lock",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/language/files/dependency-lock"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/language/functions/try",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/language/functions/try"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/language/import",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/language/import"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/language/manage-sensitive-data",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/language/manage-sensitive-data"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/language/meta-arguments/count",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/language/meta-arguments/count"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/language/meta-arguments/depends_on",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/language/meta-arguments/depends_on"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/language/meta-arguments/for_each",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/language/meta-arguments/for_each"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/language/meta-arguments/lifecycle",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/language/meta-arguments/lifecycle"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/language/modules/develop",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/language/modules/develop"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/language/modules/develop/composition",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/language/modules/develop/composition"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/language/modules/develop/providers",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/language/modules/develop/providers"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/language/modules/develop/refactoring",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/language/modules/develop/refactoring"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/language/modules/sources",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/language/modules/configuration"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/language/providers/configuration",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/language/block/provider"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/language/providers/requirements",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/language/providers/requirements"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/language/resources/terraform-data",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/language/resources/terraform-data"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/language/state/locking",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/language/state/locking"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/language/state/purpose",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/language/state/purpose"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/language/state/remote-state-data",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/language/state/remote-state-data"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/language/syntax/configuration",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/language/syntax/configuration"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/language/upgrade-guides",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/language/upgrade-guides"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/language/values/locals",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/language/values/locals"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/language/values/outputs",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/language/values/outputs"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/language/values/variables",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/language/values/variables"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/plugin/framework/provider-servers",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/plugin/framework/provider-servers"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/plugin/framework/resources/identity",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/plugin/framework/resources/identity"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/plugin/framework/resources/write-only-arguments",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/plugin/framework/resources/write-only-arguments"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/plugin/terraform-plugin-protocol",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/terraform/plugin/terraform-plugin-protocol"
+    },
+    {
+      "url": "https://developer.hashicorp.com/well-architected-framework/verify-hashicorp-binary",
+      "status": 200,
+      "resolved": "https://developer.hashicorp.com/well-architected-framework/verify-hashicorp-binary"
+    },
+    {
+      "url": "https://github.com/dmacvicar/terraform-provider-libvirt/blob/v0.9.9/docs/index.md",
+      "status": 200,
+      "resolved": "https://github.com/dmacvicar/terraform-provider-libvirt/blob/v0.9.9/docs/index.md"
+    },
+    {
+      "url": "https://github.com/dmacvicar/terraform-provider-libvirt/blob/v0.9.9/docs/resources/domain.md",
+      "status": 200,
+      "resolved": "https://github.com/dmacvicar/terraform-provider-libvirt/blob/v0.9.9/docs/resources/domain.md"
+    },
+    {
+      "url": "https://github.com/dmacvicar/terraform-provider-libvirt/releases/tag/v0.9.9",
+      "status": 200,
+      "resolved": "https://github.com/dmacvicar/terraform-provider-libvirt/releases/tag/v0.9.9"
+    },
+    {
+      "url": "https://github.com/hashicorp/terraform/blob/v1.17.1/CHANGELOG.md",
+      "status": 200,
+      "resolved": "https://github.com/hashicorp/terraform/blob/v1.17.1/CHANGELOG.md"
+    },
+    {
+      "url": "https://github.com/hashicorp/terraform/blob/v1.17.1/internal/builtin/providers/terraform/resource_data.go",
+      "status": 200,
+      "resolved": "https://github.com/hashicorp/terraform/blob/v1.17.1/internal/builtin/providers/terraform/resource_data.go"
+    },
+    {
+      "url": "https://github.com/hashicorp/terraform/tree/v1.17.1/docs/plugin-protocol",
+      "status": 200,
+      "resolved": "https://github.com/hashicorp/terraform/tree/v1.17.1/docs/plugin-protocol"
+    },
+    {
+      "url": "https://github.com/hashicorp/terraform/tree/v1.17.1/internal/builtin/providers/terraform",
+      "status": 200,
+      "resolved": "https://github.com/hashicorp/terraform/tree/v1.17.1/internal/builtin/providers/terraform"
+    },
+    {
+      "url": "https://libvirt.org/uri.html",
+      "status": 200,
+      "resolved": "https://libvirt.org/uri.html"
+    },
+    {
+      "url": "https://releases.hashicorp.com/terraform/1.17.1/",
+      "status": 200,
+      "resolved": "https://releases.hashicorp.com/terraform/1.17.1/"
+    },
+    {
+      "url": "https://www.hashicorp.com/.well-known/pgp-key.txt",
+      "status": 200,
+      "resolved": "https://www.hashicorp.com/.well-known/pgp-key.txt"
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+<header><h1>YAML: дерево данных прежде исполнения</h1><p>Отступ, кавычки и тип влияют на аргументы модуля. Синтаксически правильный документ ещё не является правильным playbook.</p></header>
+<h2>Три слоя чтения</h2>
+<p>YAML — язык записи данных. Parser превращает текст в scalars, sequences и mappings: отдельные значения, упорядоченные списки и отображения ключ→значение. Ansible затем интерпретирует структуру как plays/tasks, а Jinja вычисляет выражения внутри допустимых значений. Ни YAML, ни строка с <code>state: started</code> сами не запускают службу. При ошибке полезно установить слой: недопустимый отступ, неизвестный keyword задачи или неправильный аргумент уже найденного модуля.</p>
+<pre><code>---
+- name: Prepare persistent counters
+  hosts: counters
+  gather_facts: false
+  vars:
+    counter_port: 8080
+    counter_enabled: true
+    counter_features:
+      - health
+      - persistence
+    counter_limits:
+      queue: 32
+  tasks:
+    - name: Check typed inputs
+      ansible.builtin.assert:
+        that:
+          - counter_port is integer
+          - counter_enabled is boolean
+          - counter_features is sequence and counter_features is not string and counter_features is not mapping
+          - counter_limits is mapping</code></pre>
+<p>Верхний <code>-</code> создаёт список plays, следующий уровень — mapping одного play. <code>tasks</code> содержит список задач, а <code>that</code> — список Jinja-условий. Табуляцию для отступов не используют. Отступом можно непреднамеренно перенести <code>vars</code> с play на task: документ останется грамматичным, но область значений изменится. В одной задаче должен быть один вызов action; <code>notify</code> и <code>when</code> — keywords, а не параметры модуля.</p>
+<h2>Значение не равно его написанию</h2>
+<p><code>8080</code> — integer, <code>'8080'</code> — строка, <code>true</code> — boolean, <code>null</code> — явное пустое значение. Отсутствующий ключ отличается от ключа с null; <code>default</code> без второго аргумента реагирует на undefined, а не на любой пустой вид. Для переносимости пишут <code>true/false</code>, а не неоднозначные <code>yes/on</code>, избегают неявных дат и ведущих нулей. Режим файла задают строкой <code>'0640'</code>: иначе YAML может передать integer, а модуль интерпретирует его как числовую маску с неожиданным основанием. Передача через <code>-e enabled=false</code> даёт строку в key=value-формате; файл YAML/JSON или JSON-строка сохраняет boolean.</p>
+<p>Ключи mapping должны быть уникальны. Повтор <code>vars</code> или <code>mode</code> способен привести к предупреждению и потере первого значения; наличие warning следует считать дефектом входа. Порядок tasks значим. Порядок ключей параметров не является планом исполнения модуля. YAML anchor/alias сокращает повтор данных, но не создаёт role, вызов функции или зависимость задач. Merge-ключ YAML не заменяет осмысленное слияние переменных разных уровней Ansible.</p>
+<p>Проверка <code>is sequence</code> сама по себе слишком широка для списка возможностей: строка также является последовательностью. Поэтому выше исключены string и mapping. У числа порта важен такой же порядок: сначала подтвердить integer, затем проверить <code>1 &lt;= counter_port &lt;= 65535</code>, и лишь после этого передавать значение приложению. Строка <code>'eighty'</code> не должна молча превращаться фильтром <code>int</code> в 0. Ошибка входа должна оставить прежний config, а исправление — заменить неверное значение в том же сохранённом файле переменных, не создать новый стенд.</p>
+<h2>Кавычки и блоки</h2>
+<pre><code>vars:
+  config_path: '{{ counter_root }}/config.json'
+  windows_example: 'C:\data\counter'
+  literal_help: |
+    Первая строка.
+    Вторая строка.
+  folded_help: &gt;-
+    Этот длинный текст
+    сворачивается в строку.</code></pre>
+<p>Значение, начинающееся с <code>{{</code>, заключают в кавычки, чтобы YAML не принял его за flow mapping. Одинарные кавычки удобны для буквального backslash; двойные включают YAML escape-последовательности. Внутренняя одинарная кавычка удваивается. <code>|</code> сохраняет переносы, <code>&gt;</code> обычно сворачивает их в пробелы, <code>-</code> после индикатора убирает завершающий перевод строки. Для конфигурации сервиса лишний newline может быть безразличен, для checksum — это другой байт. Двоеточие с пробелом и <code>#</code> в plain scalar имеют синтаксический смысл, поэтому сообщения и URL с неоднозначными символами лучше явно цитировать.</p>
+<h2>Команда проходит ещё один язык</h2>
+<pre><code>- name: Validate candidate without shell expansion
+  ansible.builtin.command:
+    argv:
+      - /opt/counter/current/counter
+      - --check-config
+      - '{{ candidate_path }}'
+  changed_when: false</code></pre>
+<p><code>argv</code> передаёт массив аргументов, не просит оболочку разбирать пробелы и метасимволы. Это снижает риск инъекции и ошибок quoting. Но command в современных core может разворачивать переменные окружения в аргументах; если требуется буквальный <code>$NAME</code>, проверяют параметр <code>expand_argument_vars</code> конкретной версии и отключают разворачивание. Shell нужен, когда действительно требуется pipeline/redirect; тогда надо учитывать уже три синтаксиса: YAML, Jinja и удалённую shell. Экранирование одного слоя не защищает остальные.</p>
+<p><code>ansible-playbook --syntax-check</code> проверяет доступную структуру и статические зависимости, но не каждое runtime-значение. В начале роли проверяют типы/диапазоны через assert или role argument_specs. Для поля порта разумно требовать integer, 1–65535 и выбранную политику bind; преобразование любой строки в integer не заменяет валидации входа. Ошибка должна назвать неверный вход до изменения файлов. Основы формата: <a href="https://docs.ansible.com/projects/ansible/latest/reference_appendices/YAMLSyntax.html">официальная YAML reference</a>; поведение параметров уточняют через <code>ansible-doc</code> установленного 2.21.5.</p>

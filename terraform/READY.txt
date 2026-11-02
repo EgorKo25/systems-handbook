@@ -1,0 +1,81 @@
+READY — готовые исходники самостоятельного тома Terraform
+Дата исходных native-проверок: 1 ноября 2026; source candidate: 2 ноября 2026.
+Предварительный номер XIV; окончательный номер интегратора.
+Область: только terraform/; общие файлы/соседние тома не редактировались.
+
+Состав
+- volume_config.py: CONFIG, 24 главы со словарём, 4 внутренние книги.
+- sources/: 23 HTML главы после полного перечитывания, маршрут и сохранённая практика.
+- sources/reference.py: 89 терминов, 25 карточек CLI, 38 флагов.
+- sources/diagrams.py: 4 модели reader, 24 шага. Lifecycle сравнивает два
+  явно раздельных случая; непроверенная готовность не объявляется успешной.
+- В главах9/15: 2 встроенных предметных HTML-рисунка с текстом и локальным CSS:
+  config/plan/state/байты receipt и четыре записи внешнего drift. Без CDN/JS.
+- labs/observe.py: read-only сравнение state view и собственных файлов.
+- labs/mechanism_model.py + tests/check_mechanisms.py: чистая фиксированная
+  модель/проверки, без Terraform, сетевых вызовов и записи.
+- labs/foundation/: реальный built-in terraform_data стенд с 2 services,
+  child receipt module, gate и ограниченными local-file provisioners.
+- labs/lab.py: prepare только нового каталога; явные snapshot/restore,
+  marker/checksums; прежняя область сохраняется отдельно.
+- labs/check.py и check_language.py: сохранённые15+10 native-проверок исходной
+  редакции. Они прочитаны, но в source-only редакции2ноября не запускались.
+- labs/fixtures/: unknown/cycle/validation/sensitive/address/ignore/collection.
+- labs/benchmark.py и результаты: 10/100 экземпляров, 5 планов, ограничения серии.
+- labs/adapters/libvirt/: рецепт provider 0.9.9 с успешными schema/validate, lock file,
+  безопасный check_schema.py и чёткая граница отсутствия VM/API исполнения.
+- tests/: read-only metadata QA, проверка CLI-help и primary links evidence.
+- build.py: обычный wrapper для интегратора. Во время работы НЕ запускался.
+- ПРОВЕРКИ.txt: команды, результаты, модели, неисполненные рецепты.
+
+Проверенная база и результаты
+Terraform 1.17.1 linux_amd64: release archive SHA-256 и GPG signature проверены.
+Источник: https://releases.hashicorp.com/terraform/1.17.1/
+Сумма: 4638628058e71a55212b1c563712eac03b902128f40740f3dc8174df12135061
+Release notes: https://github.com/hashicorp/terraform/blob/v1.17.1/CHANGELOG.md
+Точные fingerprints/условия доверия — в ПРОВЕРКИ.txt.
+Provider libvirt 0.9.9: community upstream docs/schema проверены, init/validate/
+schema=0, повтор через local mirror=0. Реальных операций libvirt не было.
+Primary docs проверены 01.11.2026, ссылки рядом с текстом и в tf-22-sources.
+
+Повтор из корня репозитория при подготовленном 1.17.1 в PATH
+PYTHONDONTWRITEBYTECODE=1 python3 terraform/tests/check_sources.py
+python3 terraform/tests/check_cli_help.py --terraform terraform
+python3 terraform/labs/check.py --terraform terraform
+python3 terraform/labs/check_language.py --terraform terraform
+python3 terraform/labs/benchmark.py --terraform terraform --counts 10,100 --repeats 5
+python3 terraform/labs/adapters/libvirt/check_schema.py --terraform terraform --mirror /YOUR/PRIVATE/provider-mirror
+Последняя команда: только init/schema/validate, НЕ plan/apply/libvirt connect.
+Вся apply/destroy практика только в собственных TemporaryDirectory;
+продолжаемый state читателя не выбирается автоматическими проверками.
+
+Что требуется интегратору
+1. Review исходников/границ и повтор безопасных тестов.
+2. Явно добавить terraform в published-volumes.json после review;
+   volume_config.py сам по себе не разрешает публикацию. При необходимости
+   согласовать номер, направление/полку и command_modules reference.
+3. Изолированный render/reader-check и мобильные темы/карточки/схемы.
+4. Общая сборка только штатным scripts/build_library.py после регистрации;
+   export только scripts/prepare_site.py, общие stats/checksums — интегратор.
+5. Проверить включение labs/source artifacts в допустимый offline export.
+Ни index, ни library-stats, ни scripts/tests общей библиотеки, ни allowlist,
+ни workflows/SHA256SUMS, ни чужие generated-файлы автор не менял.
+Никаких commit/push/Pages. Личности любых будущих коммитов только
+EgorKo25 <77259232+EgorKo25@users.noreply.github.com> с обеих сторон.
+
+Содержательные ограничения
+Фундамент глубоко проверяет язык, граф, state и файловые эффекты, но
+terraform_data не имеет внешнего API, не создаёт VM и не наблюдает rendered-
+файлы. Документируется этот предел и цена использования provisioners.
+VM-адаптер привязан к 0.9.9 и прошёл schema/validate, но не boot/SSH/Go readiness.
+Remote backend, реальный drift API, quotas, provider retry, remote recovery
+и upgrade/downgrade остаются проверяемыми рецептами для личной инфраструктуры.
+Ephemeral/write-only разобраны с версиями и ограничениями; нет обещания,
+что sensitive шифрует state или что write-only исключает все downstream copies.
+Новая null-диагностика foundation прошла статическую проверку; повтор init/validate/
+check.py/fmt новым кандидатом НЕ выполнен. HTML phone320/390,8тем,печать и
+доставка новых .py в offline export требуют приёмки интегратора.
+Источник/aliases/identity/lifecycle имеют конкретные разборы; это не каталог
+всех providers, всех service-specific APIs или промышленная HA-платформа.
+Измерения локальны, CPU/RAM/disk/API не выдаются измеренными без наблюдений.
+Схемы — модели; HTML reader browser QA выполняет интегратор в temp-копии.

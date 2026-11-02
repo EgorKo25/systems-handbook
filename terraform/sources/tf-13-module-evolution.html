@@ -1,0 +1,33 @@
+<header><h1>Sources, версии и миграция адресов модуля</h1><p>Обновление кода модуля и перенос уже управляемых экземпляров — связанные, но разные задачи. История migration становится частью совместимости.</p></header>
+<h2>Откуда пришёл код</h2>
+<p><code>source = "./modules/receipt"</code> использует каталог рядом с вызывающим модулем и версионируется вместе с ним. Registry module source имеет форму namespace/name/provider и может иметь <code>version</code> constraint. Git source с ref фиксирует revision; branch и tag могут двигаться по политике сервера, полный commit даёт более точный идентификатор кода. Путь subdirectory и query ref имеют свой синтаксис, который проверяют по официальным module sources, а не копируют из произвольного URL.</p>
+<pre><code>module "network" {
+  source  = "example/network/platform"
+  version = "~> 2.4.0"
+}
+# Пример формы Git source; адрес .invalid намеренно не выполняется.
+module "service" {
+  source = "git::https://git.example.invalid/team/infra.git//modules/service?ref=FULL_COMMIT"
+}</code></pre>
+<p><code>version</code> предназначен для registry modules, не заменяет Git ref. <code>.terraform.lock.hcl</code> фиксирует providers, а не окончательный content hash всех удалённых modules. Поэтому проверка повторяемости включает точную версию/commit модуля и происхождение исходников отдельно. Init -upgrade может выбрать новый подходящий module release и provider selection по constraints. Сравнивайте изменения кода, plan и state schema; не называйте это «только обновить кэш».</p>
+<h2>Переименование блока без разрушения объекта</h2>
+<pre><code># После переименования resource service в node:
+moved {
+  from = terraform_data.service
+  to   = terraform_data.node
+}</code></pre>
+<p>Блок сообщает соответствие старых и новых адресов. В нашем реальном тесте оба for_each экземпляра сохранили ID, план показал перенос, apply записал новые addresses. Если просто переименовать resource в HCL, Terraform обычно увидит отсутствие старой декларации и новую декларацию — destroy/create. Moved нужен, когда это тот же объект по новой структуре, а не когда вы хотите новый экземпляр с иным lifecycle.</p>
+<p>Для count → for_each сопоставляют каждый instance: from = terraform_data.slot[0], to = terraform_data.node["api"]. Для переноса внутрь child from root address указывает to = module.service.terraform_data.node["api"]. Адреса зависят от фактического исходного состояния; выдуманное соответствие может присвоить одному логическому имени чужой объект. Сначала state list/show и карта ID, затем migration. Кавычки shell вокруг CLI-адреса сохраняют квадратные скобки и кавычки ключа.</p>
+<h3>Проверяем карту адресов, а не похожий текст</h3>
+<p>Пусть state до переноса знает <code>terraform_data.slot[0] → ID-A</code> и <code>terraform_data.slot[1] → ID-W</code>; ID-A и ID-W здесь условные подписи прежних идентичностей. После двух moved ожидаем <code>terraform_data.node["api"] → ID-A</code> и <code>terraform_data.node["worker"] → ID-W</code>, без create/delete. Если перепутать назначения, план может сохранить оба ID, но присвоить api бывший worker. Поэтому проверки «число объектов равно двум» и «оба ID сохранились» недостаточно: сравнивают пары имя→ID до и после. Если целевой адрес уже занят другой identity, перенос не следует считать слиянием объектов; сначала исследуют конфликт и строят однозначную карту.</p>
+<h2>История переходов нужна пропускающим версии</h2>
+<p>Если v1 имел a, v2 — b, v3 — c, цепочка moved a→b и b→c позволяет обновиться с более старой версии при поддерживаемом сценарии. Удаление старой migration — потенциально несовместимое изменение, даже если все разработчики уже видят только c в своих локальных тестах. Храните пояснение, зачем перенос сделан, и проверяйте upgrade по старому state fixture без внешних объектов. Не публикуйте реальные state с секретами ради тестов.</p>
+<h2>Removed и отказ от управления</h2>
+<pre><code>removed {
+  from = terraform_data.retired
+  lifecycle { destroy = false }
+}</code></pre>
+<p>Removed block делает намерение удаления из управления reviewable в plan. <code>destroy = false</code> оставляет внешний объект, забывая его association; без корректной политики destroy поведение будет иным. Не путайте это с удалением ресурса в API. После применения Git checkout старого HCL не восстанавливает утраченную association: старый адрес отсутствует в state, и следующий plan может предложить создать новый объект. Для возврата нужен import/move/восстановление по известной identity и проверенному плану.</p>
+<h2>State mv как аварийный инструмент</h2>
+<p><code>terraform state mv</code> сразу меняет память, а не публикует совместимую migration в коде. Он полезен для согласованной разовой операции с lock и backup, когда командный процесс это разрешает. Но другие участники должны получить соответствующий HCL одновременно. Иначе новый plan на старом commit может вернуть противоположное намерение. Конфигурационный moved предпочтителен для распространяемого обновления модуля, потому что сохраняет переход в review и повторном запуске.</p>
+<p>Источники 01.11.2026: <a href="https://developer.hashicorp.com/terraform/language/modules/sources">module sources</a>, <a href="https://developer.hashicorp.com/terraform/language/modules/develop/refactoring">moved/refactoring</a>, <a href="https://developer.hashicorp.com/terraform/language/block/removed">removed</a>, <a href="https://developer.hashicorp.com/terraform/cli/commands/state/mv">state mv</a>.</p>

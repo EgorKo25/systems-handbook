@@ -1,0 +1,8 @@
+{
+  "description": "Authored samples, not collected production measurements. Times are seconds relative to zero.",
+  "gauge": [[0,2],[15,3],[30,null],[45,0],[60,4]],
+  "counter": [[0,0],[15,15],[30,30],[45,5],[60,20]],
+  "histogram": {"observations_seconds":[0.04,0.08,0.24,0.7],"bounds":[0.1,0.3,1.0],"cumulative_counts":[2,3,4],"count":4},
+  "range": {"start":0,"end":3600,"step_seconds":15,"max_data_points":240},
+  "alert": {"evaluation_seconds":15,"pending_seconds":30,"keep_firing_seconds":30,"values":[[0,0.2],[15,0.8],[30,0.9],[45,0.9],[60,0.2],[75,0.2],[90,0.2]],"threshold":0.7}
+}

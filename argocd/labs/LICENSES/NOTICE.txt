@@ -1,0 +1,5 @@
+The three schemas in ../schemas/ are derived from the Argo CD v3.5.6 install
+manifest, copyright the Argo Project Authors, Apache-2.0. The upstream tag does
+not contain a root NOTICE file. Source link and extraction scope are recorded.
+The handbook prose, manifests, policy and test code are original examples.
+No downloaded binary/runtime/private certificate/token is included here.

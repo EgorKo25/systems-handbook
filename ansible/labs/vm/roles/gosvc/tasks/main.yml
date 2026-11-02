@@ -1,0 +1,44 @@
+- name: Validate the deliberately narrow Linux VM contract
+  ansible.builtin.assert:
+    that:
+      - ansible_facts['os_family'] == 'Debian'
+      - ansible_facts['service_mgr'] == 'systemd'
+      - counter_root == '/opt/counter'
+      - counter_data_dir == '/var/lib/counter'
+      - counter_config_dir == '/etc/counter'
+      - counter_listen == '127.0.0.1:8080'
+      - counter_release is match('^[0-9]+\.[0-9]+\.[0-9]+$')
+      - counter_sha256 is match('^[a-f0-9]{64}$')
+      - counter_artifact is string
+      - counter_artifact.startswith('/')
+- name: Create unprivileged runtime account
+  ansible.builtin.user:
+    name: counter
+    system: true
+    shell: /usr/sbin/nologin
+    create_home: false
+- name: Create root owned release structure
+  ansible.builtin.file:
+    path: '{{ item }}'
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  loop:
+    - '{{ counter_root }}'
+    - '{{ counter_root }}/releases'
+    - '{{ counter_root }}/releases/{{ counter_release }}'
+- name: Create private configuration directory
+  ansible.builtin.file:
+    path: '{{ counter_config_dir }}'
+    state: directory
+    owner: root
+    group: counter
+    mode: '0750'
+- name: Keep persistent data separate from releases
+  ansible.builtin.file:
+    path: '{{ counter_data_dir }}'
+    state: directory
+    owner: counter
+    group: counter
+    mode: '0750'

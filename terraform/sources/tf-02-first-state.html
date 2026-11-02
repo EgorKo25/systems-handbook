@@ -1,0 +1,52 @@
+<header><h1>Первый apply: пять объектов в памяти Terraform и два локальных файла</h1><p>Реальный локальный пример показывает config, plan, state и побочный эффект по отдельности. Имена api и worker сохраняются во всём практикуме.</p></header>
+<h2 id="tf-02-first-state-config-reading">Как прочитать конфигурацию до первого запуска</h2>
+<p>Файлы <code>.tf</code> написаны на HCL — языке описания конфигурации. Блок <code>resource "terraform_data" "service" { ... }</code> объявляет ресурс типа terraform_data с локальным именем service; строки внутри задают его аргументы. Это описание желаемого состояния, а не последовательность shell-команд. <code>variable "services"</code> объявляет вход, а <code>var.services</code> читает его значение. Здесь это соответствие имён api/worker их портам и меткам сборки. <code>for_each</code> создаёт отдельный экземпляр для каждого ключа; <code>each.value</code> означает значение текущего элемента. Поэтому два имени дают два адреса, которые можно наблюдать независимо.</p>
+<p>Модуль — каталог связанных файлов конфигурации с объявленными входами и выходами. Корневой модуль — каталог, из которого запускают Terraform; блок <code>module</code> подключает дочерний. Выход <code>output</code> публикует вычисленное значение для читателя или другого модуля. В полном примере дочерний receipt хранит две записи, а отдельный gate служит контрольной точкой намеренного отказа. Они тоже ресурсы, поэтому в первом state будет пять адресов. Их назначение подробнее разберём после наблюдения первого запуска; ни один из этих объектов не является виртуальной машиной.</p>
+<h2 id="tf-02-first-state-section-1">Подготовить один стенд</h2>
+<p>Начните из каталога тома <code>terraform/</code>, где находится <code>labs/</code>. Используйте копию каталога <code>labs/</code> из тома. <code>python3</code> нужен только для собственных локальных сценариев; встроенный provider Terraform не скачивается. Выберите новый постоянный путь в собственном домашнем каталоге. Далее <code>TF_LAB_ROOT</code> всегда указывает на этот же каталог; не меняйте его при каждом шаге.</p>
+<pre><code>TF_LAB_TOOLS="$PWD/labs"
+umask 077
+mkdir -p "$HOME/terraform-learning/stands" "$HOME/terraform-learning/snapshots"
+TF_LAB_ROOT="$HOME/terraform-learning/stands/foundation"
+TF_LAB_SNAPSHOT="$HOME/terraform-learning/snapshots/foundation-checkpoint-1"
+printf 'tools=%s\nroot=%s\nsnapshot=%s\n' "$TF_LAB_TOOLS" "$TF_LAB_ROOT" "$TF_LAB_SNAPSHOT"
+if python3 "$TF_LAB_TOOLS/lab.py" prepare "$TF_LAB_ROOT"; then
+  cd "$TF_LAB_ROOT" &amp;&amp;
+  terraform init -input=false &amp;&amp;
+  terraform fmt -check -recursive &amp;&amp;
+  terraform validate &amp;&amp;
+  terraform plan -out=first.tfplan &amp;&amp;
+  terraform show first.tfplan &amp;&amp;
+  terraform apply first.tfplan &amp;&amp;
+  terraform state list &amp;&amp;
+  terraform output -json contract &amp;&amp;
+  terraform plan -detailed-exitcode
+else
+  printf '%s\n' 'Подготовка отказала; дальнейшие Terraform-команды не выполнены.' >&2
+fi</code></pre>
+<p>Сохраните три напечатанных абсолютных пути в собственной заметке. В новом терминале присвойте переменным эти же значения, затем перейдите в TF_LAB_ROOT; повторный mktemp создал бы другой стенд. Рабочая область и контрольная точка находятся в постоянных каталогах, вне /tmp. Подготовка создаёт только отсутствующий foundation; заранее создавать сам этот каталог не нужно. Сохраните также путь и версию CLI, тип backend local и наличие маркера: это паспорт именно вашего стенда. Резерв на том же диске переживает очистку /tmp, но не отказ диска; собственную проверенную копию переносите отдельно. <code>prepare</code> создаёт только новый каталог и файл-маркер. Повторный prepare завершается отказом, сохраняя предыдущую работу. Для продолжения перейдите в прежний каталог. <code>init</code> готовит backend и локальный модуль <code>modules/receipt</code>. <code>fmt -check</code> проверяет оформление, ничего не исправляя; <code>validate</code> проверяет структуру и согласование типов. Plan без apply не создаёт учебные resource instances. Apply сохранённого файла выполняет уже выбранные действия без обычного вопроса подтверждения; просмотр файла перед этим существенен.</p>
+<h2 id="tf-02-first-state-section-2">Минимальная механика</h2>
+<pre><code>resource "terraform_data" "service" {
+  for_each         = var.services
+  input            = each.value
+  triggers_replace = each.value.build
+}
+output "ids" {
+  value = { for k, s in terraform_data.service : k => s.id }
+}</code></pre>
+<p>Это сокращённый фрагмент, полный пример находится в labs. Для <code>api</code> и <code>worker</code> образуются два адреса <code>terraform_data.service["api"]</code> и <code>terraform_data.service["worker"]</code>. Input содержит порт и метку сборки. Встроенный terraform_data присваивает ID и сохраняет input как output. Локальный модуль создаёт ещё две записи контракта, gate — пятую контрольную запись. Поэтому число адресов больше двух. Никакой сокет 8080 не открывается: число port пока только значение в state.</p>
+<p>Provisioner полного примера получает JSON через environment и вызывает <code>write_receipt.py</code>. Скрипт проверяет маркер и имя, затем записывает <code>rendered-api.json</code> и <code>rendered-worker.json</code> только в корне стенда. Этот одноразовый эффект позволяет наблюдать байты файлов, но terraform_data не умеет читать эти файлы как состояние ресурса. Изменение файла вручную не обязано дать plan с изменениями. Это ограничение используется в упражнении, а не скрывается.</p>
+<h2 id="tf-02-first-state-section-3">Карта файлов</h2>
+<table><thead><tr><th>Объект</th><th>Кто пишет</th><th>Зачем и как хранить</th></tr></thead><tbody>
+<tr><td>main.tf, modules/receipt/main.tf</td><td>Автор</td><td>Декларации, интерфейс, зависимости; версионируются.</td></tr>
+<tr><td>*.tfvars, *.auto.tfvars.json</td><td>Автор/автоматизация</td><td>Значения входов; секретные варианты не публикуют.</td></tr>
+<tr><td>.terraform/</td><td>init</td><td>Инициализация backend, индекс модулей, внешние пакеты providers при наличии; не общий переносимый state.</td></tr>
+<tr><td>.terraform.lock.hcl</td><td>init/providers lock</td><td>Выбор внешних providers и допустимые checksums; при одном built-in provider может отсутствовать.</td></tr>
+<tr><td>terraform.tfstate и backup</td><td>CLI/backend</td><td>Текущая и резервная память local backend; чувствительны, не добавляются в Git.</td></tr>
+<tr><td>*.tfplan</td><td>plan -out</td><td>Сохранённый план с конфигурацией и данными; требует контроля доступа.</td></tr>
+<tr><td>rendered-*.json</td><td>Учебный provisioner</td><td>Локальный эффект создания; существование файла не доказывает его актуальность.</td></tr>
+</tbody></table>
+<h2 id="tf-02-first-state-section-4">Коды завершения и первое расхождение</h2>
+<p>У обычного <code>terraform plan</code> код 0 может означать успешный план с изменениями. У <code>terraform plan -detailed-exitcode</code> код 0 означает отсутствие изменений, 2 — успешный непустой diff, 1 — ошибку. В shell с <code>set -e</code> значение 2 требует явной обработки; нельзя назвать его провалом provider. Первый запуск в пустом state даёт непустой plan; после apply следующий план должен стать пустым. Это реально проверяется тестом. Точный UUID и длительность заранее не фиксируются.</p>
+<p>Если validate не видит локальный модуль, проверьте, скопирован ли весь foundation, и выполнен ли init. Если writer сообщил отсутствие маркера, исследуйте текущий каталог, не удаляйте проверку безопасности. При аварии сохраните конфиг, команду, stderr и state; следующий apply продолжает известное состояние. Отдельная глава объясняет, что делать после частичного выполнения.</p>
+<p>Источники, проверка 01.11.2026, CLI 1.17.1: <a href="https://developer.hashicorp.com/terraform/language/resources/terraform-data">terraform_data</a>, <a href="https://developer.hashicorp.com/terraform/cli/commands/init">init</a>, <a href="https://developer.hashicorp.com/terraform/cli/commands/validate">validate</a>.</p>

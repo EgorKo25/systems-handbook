@@ -1,0 +1,25 @@
+{
+  "version": "1.17.1",
+  "platform": "linux_amd64",
+  "tests": [
+    "1.17.1 / fmt / init / validate without external provider",
+    "saved plan applied; next plan has exit 0",
+    "unmanaged provisioner file drift is invisible to terraform_data Read",
+    "explicit replacement reruns one-shot receipt writer",
+    "input update keeps identity; creation provisioner does not rerun",
+    "moved block preserves IDs across block address rename",
+    "saved plan refused after intervening state change",
+    "concurrent plan refused while local apply owns state lock",
+    "partial apply preserves changed services and taints failed creation",
+    "repair continues same state and converges without reset",
+    "state push refuses lower serial; no force bypass",
+    "explicit full stopped-lab snapshot restore; previous data preserved",
+    "lifecycle changes replacement action order in real plan JSON",
+    "prevent_destroy refuses replacement while declaration remains",
+    "destroy affects only the isolated continuing test state"
+  ],
+  "count": 15,
+  "external_providers": false,
+  "cloud_or_vm_created": false,
+  "network_required_after_cli_download": false
+}

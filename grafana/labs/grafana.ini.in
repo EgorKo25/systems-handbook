@@ -1,0 +1,40 @@
+# Expand @LAB_ROOT@ and @PORT@ using labctl.py; do not edit distribution defaults.ini.
+[paths]
+data = @LAB_ROOT@/data
+logs = @LAB_ROOT@/logs
+plugins = @LAB_ROOT@/plugins
+provisioning = @LAB_ROOT@/provisioning
+[server]
+protocol = http
+http_addr = 127.0.0.1
+http_port = @PORT@
+domain = localhost
+root_url = http://127.0.0.1:@PORT@/
+[database]
+type = sqlite3
+path = grafana.db
+[security]
+admin_user = labadmin
+admin_password = $__file{@LAB_ROOT@/private/admin-password}
+secret_key = $__file{@LAB_ROOT@/private/secret-key}
+cookie_samesite = lax
+[users]
+allow_sign_up = false
+[auth.anonymous]
+enabled = false
+[auth.basic]
+enabled = true
+[analytics]
+reporting_enabled = false
+check_for_updates = false
+check_for_plugin_updates = false
+[plugins]
+preinstall_disabled = true
+preinstall_auto_update = false
+[unified_alerting]
+enabled = false
+[smtp]
+enabled = false
+[log]
+mode = console
+level = warn

@@ -1,0 +1,11 @@
+{
+  "cli": "1.17.1",
+  "provider": "dmacvicar/libvirt 0.9.9",
+  "API_operations_executed": false,
+  "offline_mirror": true,
+  "docs_example_correction": "boot_devices is list(object({dev=string})), not list(string); verified against schema",
+  "init -backend=false -input=false -lockfile=readonly": 0,
+  "validate": 0,
+  "providers schema -json": 0,
+  "schema_version": 0
+}

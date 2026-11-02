@@ -1,0 +1,81 @@
+ANSIBLE — SOURCE-ONLY КАНДИДАТ ПОВТОРНОЙ ВЫЧИТКИ, 2 ноября 2026
+
+Эта редакция восстановлена от immutable Git tree
+347d611d4c069ed0dfb333818f4dd788332ed075 (62 исходных файла).
+В памяти сохранены принятые editorial-acceptance + doc-followup и
+EDITORS-COMBINED-SOURCES-v3 с независимыми RETURN/href поправками.
+Далее уточнены путь исполнения/типов/register/retry, контекст команд,
+разделение учебных стендов и измерение параллельности. Предметный разрез
+двух временных файлов встроен в главу16; новая временная схема файлов,
+очереди и процессов A/B встроена в главу10 вместо одной общей модели.
+В DIAGRAMS остаются3 прежних модели; их данные сохранены точно.
+Пакет содержит64 файла: новые preflight_check.py из принятой редакции
+и pure_review_check.py этого прохода; служебный __pycache__ исключён.
+
+Новые собственные проверки:21 RAM-ветвь реального main учебного модуля
+со всеми файловыми операциями на заглушках; компиляция Python и статический
+разбор HTML/YAML/ссылок/моделей; точные forward/reverse replay и SHA.
+Нативные Ansible/Go/SSH/VM/build/browser здесь не запускались.
+Фактическая атомарность ФС,390px/320px/8тем/печать не подтверждены браузером.
+Новые схемы автономны,без CDN/fetch; текстовая альтернатива встроена.
+Canonical/registry/reader/публикация не менялись. Прежние PASS ниже —
+исторический журнал прежних авторов/рецензентов,не новые запуски.
+Полный before/after manifest и source delta находятся в автономном
+handoff ANSIBLE_FINAL_V1; перенос выполняет только координатор.
+
+--- ИСХОДНЫЙ READY 01.11.2026 (исторические размеры/счётчики) ---
+
+ANSIBLE — ГОТОВЫЕ ИСХОДНИКИ, 1 ноября 2026
+
+Состав: volume_config.py (предварительный XIII), build.py по соглашению,
+23 HTML-источника (маршрут+22 главы), 24 главы читателя с генерируемым словарём,
+5 внутренних книг. По source_check: 13572 слова в HTML-источниках (без
+генерируемого словаря/текстов схем), 96 терминов, 16 native CLI-карточек,
+44 формы флагов, 4 пошаговые схемы/24 шага. Local/VM/Go labs, platform-specific
+hash-lock 9 Python wheels, 5 проверочных скриптов, ПРОВЕРКИ.txt.
+Источники готовы к интеграционному review; область ansible/ зафиксирована.
+
+Главы используют уникальный prefix an-, кроме 00-route/99-glossary.
+Только ansible/ принадлежит этому изменению. Общие scripts/tests/index,
+published-volumes.json, library-stats, workflow, SHA-256 SUMS и экспорт не менялись.
+Wrapper build.py и общая сборка не запускались. Commit/push/Pages не выполнялись.
+
+Версия и источники: core 2.21.5 (official PyPI wheel, SHA-256 проверен),
+controller Python 3.12–3.14/target 3.9–3.14 по официальной matrix 01.11.2026.
+Внешних collection dependencies нет. URLs/дата/границы latest сохранены
+в sources/an-22-sources.html. Go-сервис требует Go>=1.24 по go.mod,
+реальные unit/vet/build выполнены Go 1.27.3. Native флаги сверены с CLI help.
+
+Реальные local результаты и неисполненные VM/network сценарии различены в
+ПРОВЕРКИ.txt. Local tests доказали convergence/сохранение data/check non-write/
+variables/reuse/serial/failure/custom-module/Vault. Отдельный stage_check
+выполняет извлечённые реальные stage-задачи с local connection и временными
+файлами; metadata адаптированы к текущему UID/GID. Все 5 кейсов PASS, включая
+повреждённый source и mutation после preflight: existing release не переписан.
+Независимый повтор координатора также PASS; P 1 существующего release закрыт.
+Source/CLI/VM static checks и VM syntax-check PASS. Реальный pip no-index
+install 9 hash-locked wheels во второе временное окружение PASS; физическую
+сеть не отключали. Controller test Python 3.12.14. Go проверяет
+persistence/concurrency/validation. SSH/sudo/systemd/multi-VM не исполнялись.
+
+Ограничения: один writer/controller; учебный модуль не поддерживает owner/ACL/
+xattrs/hostile parent races и directory fsync после rename. VM recipe —
+Debian-family/systemd/fixed paths/loopback:8080; другие ОС/архитектуры требуют
+своей приёмки. Формат данных 0.1/0.2 одинаковый, migration/универсальный data
+rollback не реализованы. В комплекте нет секретов, private inventory и binaries.
+
+Интегратору: проверить исходники/labs и финальный isolated reader render,
+уточнить окончательный номер; только после review явно добавить ansible в
+published-volumes.json. Сам volume_config.py не даёт права публикации.
+После явной регистрации выполнить обычный общий build/check/export по AGENTS.md.
+Не переносить временные runtimes/wheelhouse/test logs или private VM inventory.
+
+Безопасный повтор из ansible/ при подготовленном runtime:
+  python3 tests/source_check.py
+  python3 tests/cli_check.py --ansible-bin /ПУТЬ/К/ИЗОЛИРОВАННОМУ/bin
+  python3 tests/lab_check.py --ansible-bin /ПУТЬ/К/ИЗОЛИРОВАННОМУ/bin
+  python3 tests/vm_source_check.py
+  python3 tests/stage_check.py --ansible-bin /ПУТЬ/К/ИЗОЛИРОВАННОМУ/bin
+source_check/vm_source_check/stage_check используют PyYAML из test runtime;
+source_check без PyYAML явно пропускает только дополнительный YAML parse.
+Полный reader render выполняет координатор в private isolated копии.

@@ -1,0 +1,338 @@
+{
+  "version": "13.3.0 OSS",
+  "checks": [
+    {
+      "check": "native health reports version13.3.0",
+      "result": "PASS"
+    },
+    {
+      "check": "file-provisioned dashboard UID and folder UID",
+      "result": "PASS"
+    },
+    {
+      "check": "datasource UID stable and secure data redacted",
+      "result": "PASS"
+    },
+    {
+      "check": "native builtin Prometheus plugin returns data frame from mock API",
+      "result": "PASS"
+    },
+    {
+      "check": "second interval produces native frame from same authored table",
+      "result": "PASS"
+    },
+    {
+      "check": "backend used query_range and decrypted fixture header",
+      "result": "PASS"
+    },
+    {
+      "check": "create API-only datasource outside provisioning",
+      "result": "PASS"
+    },
+    {
+      "check": "API-only datasource initially authenticates to strict mock",
+      "result": "PASS"
+    },
+    {
+      "check": "legacy API creates separate owned dashboard",
+      "result": "PASS"
+    },
+    {
+      "check": "file provisioning rejects UI/API overwrite",
+      "result": "PASS"
+    },
+    {
+      "check": "create isolated local viewer",
+      "result": "PASS"
+    },
+    {
+      "check": "new user has Viewer basic role",
+      "result": "PASS"
+    },
+    {
+      "check": "OSS Viewer can query datasource",
+      "result": "PASS"
+    },
+    {
+      "check": "OSS Viewer cannot save dashboard",
+      "result": "PASS"
+    },
+    {
+      "check": "new dashboard APIs v1 and v1beta1 both return200",
+      "result": "PASS"
+    },
+    {
+      "check": "datasource fixture value not plaintext in secure_json_data",
+      "result": "PASS"
+    },
+    {
+      "check": "dashboard persists after same-data-dir restart",
+      "result": "PASS"
+    },
+    {
+      "check": "provisioned UID persists after restart",
+      "result": "PASS"
+    },
+    {
+      "check": "API-only secret decrypts after restart and strict mock sees new header",
+      "result": "PASS"
+    },
+    {
+      "check": "persistent init refuses reset",
+      "result": "PASS"
+    },
+    {
+      "check": "isolated consistent SQLite copy restores dashboard UID",
+      "result": "PASS"
+    },
+    {
+      "check": "isolated restore decrypts API-only secret with preserved key",
+      "result": "PASS"
+    },
+    {
+      "check": "isolated restore did not change original DB bytes",
+      "result": "PASS"
+    },
+    {
+      "check": "server-local config flags accepted including path with spaces",
+      "result": "PASS"
+    },
+    {
+      "check": "server-local flag at global scope rejected",
+      "result": "PASS"
+    }
+  ],
+  "mock_boundary": "Prometheus HTTP responses are authored; no PromQL evaluation or real scrape. Native Grafana/plugin/API/SQLite actually executed. No browser render, TLS, shared-DB HA or alert delivery tested. Isolated stopped-SQLite copy/keys restore is tested.",
+  "mock_requests": [
+    {
+      "path": "/api/v1/query_range",
+      "body": "end=1700000025&query=lab_inflight_requests%7Bjob%3D%22go-lab%22%7D&start=1699999995&step=15",
+      "has_fixture_header": true
+    },
+    {
+      "path": "/api/v1/query_range",
+      "body": "end=1700000010&query=lab_inflight_requests%7Bjob%3D%22go-lab%22%7D&start=1699999980&step=30",
+      "has_fixture_header": true
+    },
+    {
+      "path": "/api/v1/query_range",
+      "body": "end=1700000025&query=lab_inflight_requests%7Bjob%3D%22go-lab%22%7D&start=1699999995&step=15",
+      "has_fixture_header": true
+    },
+    {
+      "path": "/api/v1/query_range",
+      "body": "end=1700000025&query=lab_inflight_requests%7Bjob%3D%22go-lab%22%7D&start=1699999995&step=15",
+      "has_fixture_header": true
+    },
+    {
+      "path": "/api/v1/query_range",
+      "body": "end=1700000025&query=lab_inflight_requests%7Bjob%3D%22go-lab%22%7D&start=1699999995&step=15",
+      "has_fixture_header": true
+    },
+    {
+      "path": "/api/v1/query_range",
+      "body": "end=1700000025&query=lab_inflight_requests%7Bjob%3D%22go-lab%22%7D&start=1699999995&step=15",
+      "has_fixture_header": true
+    }
+  ],
+  "query_traces": [
+    {
+      "intervalMs": 15000,
+      "request": {
+        "from": "1700000000000",
+        "to": "1700000030000",
+        "queries": [
+          {
+            "refId": "A",
+            "expr": "lab_inflight_requests{job=\"go-lab\"}",
+            "range": true,
+            "instant": false,
+            "format": "time_series",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "prom-local"
+            },
+            "intervalMs": 15000,
+            "maxDataPoints": 120
+          }
+        ]
+      },
+      "upstream": {
+        "path": "/api/v1/query_range",
+        "body": "end=1700000025&query=lab_inflight_requests%7Bjob%3D%22go-lab%22%7D&start=1699999995&step=15",
+        "has_fixture_header": true
+      },
+      "response": {
+        "results": {
+          "A": {
+            "status": 200,
+            "frames": [
+              {
+                "schema": {
+                  "refId": "A",
+                  "meta": {
+                    "type": "timeseries-multi",
+                    "typeVersion": [
+                      0,
+                      1
+                    ],
+                    "custom": {
+                      "calculatedMinStep": 15000,
+                      "resultType": "matrix"
+                    },
+                    "executedQueryString": "Expr: lab_inflight_requests{job=\"go-lab\"}\nStep: 15s"
+                  },
+                  "fields": [
+                    {
+                      "name": "Time",
+                      "type": "time",
+                      "typeInfo": {
+                        "frame": "time.Time"
+                      },
+                      "config": {
+                        "interval": 15000
+                      }
+                    },
+                    {
+                      "name": "lab_inflight_requests",
+                      "type": "number",
+                      "typeInfo": {
+                        "frame": "float64"
+                      },
+                      "labels": {
+                        "__name__": "lab_inflight_requests",
+                        "instance": "127.0.0.1:18080",
+                        "job": "go-lab"
+                      },
+                      "config": {
+                        "displayNameFromDS": "lab_inflight_requests{instance=\"127.0.0.1:18080\", job=\"go-lab\"}"
+                      }
+                    }
+                  ]
+                },
+                "data": {
+                  "values": [
+                    [
+                      1699999995000,
+                      1700000010000,
+                      1700000025000
+                    ],
+                    [
+                      1,
+                      2,
+                      3
+                    ]
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "intervalMs": 30000,
+      "request": {
+        "from": "1700000000000",
+        "to": "1700000030000",
+        "queries": [
+          {
+            "refId": "A",
+            "expr": "lab_inflight_requests{job=\"go-lab\"}",
+            "range": true,
+            "instant": false,
+            "format": "time_series",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "prom-local"
+            },
+            "intervalMs": 30000,
+            "maxDataPoints": 120
+          }
+        ]
+      },
+      "upstream": {
+        "path": "/api/v1/query_range",
+        "body": "end=1700000010&query=lab_inflight_requests%7Bjob%3D%22go-lab%22%7D&start=1699999980&step=30",
+        "has_fixture_header": true
+      },
+      "response": {
+        "results": {
+          "A": {
+            "status": 200,
+            "frames": [
+              {
+                "schema": {
+                  "refId": "A",
+                  "meta": {
+                    "type": "timeseries-multi",
+                    "typeVersion": [
+                      0,
+                      1
+                    ],
+                    "custom": {
+                      "calculatedMinStep": 30000,
+                      "resultType": "matrix"
+                    },
+                    "executedQueryString": "Expr: lab_inflight_requests{job=\"go-lab\"}\nStep: 30s"
+                  },
+                  "fields": [
+                    {
+                      "name": "Time",
+                      "type": "time",
+                      "typeInfo": {
+                        "frame": "time.Time"
+                      },
+                      "config": {
+                        "interval": 30000
+                      }
+                    },
+                    {
+                      "name": "lab_inflight_requests",
+                      "type": "number",
+                      "typeInfo": {
+                        "frame": "float64"
+                      },
+                      "labels": {
+                        "__name__": "lab_inflight_requests",
+                        "instance": "127.0.0.1:18080",
+                        "job": "go-lab"
+                      },
+                      "config": {
+                        "displayNameFromDS": "lab_inflight_requests{instance=\"127.0.0.1:18080\", job=\"go-lab\"}"
+                      }
+                    }
+                  ]
+                },
+                "data": {
+                  "values": [
+                    [
+                      1699999980000,
+                      1700000010000
+                    ],
+                    [
+                      0,
+                      2
+                    ]
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "measurements": {
+    "startup_seconds": [
+      3.272,
+      1.504,
+      1.503
+    ],
+    "platform": "Linux x86_64",
+    "health20_median_ms": 0.207,
+    "health20_max_ms": 0.355,
+    "own_process_rss_kib": 295688,
+    "stopped_sqlite_bytes": 1601536
+  }
+}

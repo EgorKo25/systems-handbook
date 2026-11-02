@@ -58,7 +58,7 @@
   {
     "slug": "jenkins",
     "title": "Jenkins: от установки и плагинов до устройства и эксплуатации Pipeline",
-    "volume": "XIV",
+    "volume": "XV",
     "words": 30240,
     "chapters": 16,
     "terms": 88
@@ -66,7 +66,7 @@
   {
     "slug": "gitlab",
     "title": "GitLab: платформа, исполнение CI и эксплуатация",
-    "volume": "XV",
+    "volume": "XVI",
     "words": 24553,
     "chapters": 18,
     "terms": 167
@@ -74,7 +74,7 @@
   {
     "slug": "practicum",
     "title": "Практикум: от своей сети до эксплуатации продукта",
-    "volume": "XIX",
+    "volume": "XXV",
     "words": 39953,
     "chapters": 26,
     "terms": 38
@@ -122,7 +122,7 @@
   {
     "slug": "kubernetes",
     "title": "Kubernetes: от API до процесса, пакета и восстановления",
-    "volume": "XVII",
+    "volume": "XXII",
     "words": 26298,
     "chapters": 26,
     "terms": 130
@@ -130,7 +130,7 @@
   {
     "slug": "helm",
     "title": "Helm: типы, шаблоны, пакеты и жизненный цикл релиза",
-    "volume": "XVIII",
+    "volume": "XXIII",
     "words": 18365,
     "chapters": 21,
     "terms": 97
@@ -146,9 +146,57 @@
   {
     "slug": "vault",
     "title": "HashiCorp Vault: от доверенной поставки до отзыва и восстановления",
-    "volume": "XVI",
+    "volume": "XIX",
     "words": 15982,
     "chapters": 19,
     "terms": 56
+  },
+  {
+    "slug": "grafana",
+    "title": "Grafana: от вопроса к данным, графику и проверяемому сигналу",
+    "volume": "XXI",
+    "words": 16848,
+    "chapters": 22,
+    "terms": 85
+  },
+  {
+    "slug": "artifactory",
+    "title": "Artifactory: от поставки до прослеживаемого выпуска Go",
+    "volume": "XIV",
+    "words": 20146,
+    "chapters": 20,
+    "terms": 82
+  },
+  {
+    "slug": "argocd",
+    "title": "Argo CD: GitOps, согласование состояния и эксплуатация",
+    "volume": "XXIV",
+    "words": 18956,
+    "chapters": 21,
+    "terms": 97
+  },
+  {
+    "slug": "terraform",
+    "title": "Terraform: язык, граф исполнения и сохранённое состояние",
+    "volume": "XVII",
+    "words": 20434,
+    "chapters": 24,
+    "terms": 89
+  },
+  {
+    "slug": "ansible",
+    "title": "Ansible: от SSH и одной задачи до управляемого выпуска Go",
+    "volume": "XVIII",
+    "words": 20633,
+    "chapters": 24,
+    "terms": 96
+  },
+  {
+    "slug": "prometheus",
+    "title": "Prometheus и PromQL: измерение, вычисление и хранение",
+    "volume": "XX",
+    "words": 17255,
+    "chapters": 22,
+    "terms": 93
   }
 ]

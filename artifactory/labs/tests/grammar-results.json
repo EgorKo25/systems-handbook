@@ -1,0 +1,249 @@
+{
+  "date": "2026-11-01",
+  "scope": "actual pinned help, selected aliases and native no-server upload dry-run; not Artifactory",
+  "commands": [
+    {
+      "name": "jf",
+      "selected_flag_forms": [
+        "-v",
+        "--version",
+        "-h",
+        "--help"
+      ],
+      "aliases_help_accepted": []
+    },
+    {
+      "name": "jf config",
+      "selected_flag_forms": [],
+      "aliases_help_accepted": [
+        "jf c"
+      ]
+    },
+    {
+      "name": "jf config add",
+      "selected_flag_forms": [
+        "--url",
+        "--user",
+        "--access-token-stdin",
+        "--interactive",
+        "--overwrite"
+      ],
+      "aliases_help_accepted": [
+        "jf c add"
+      ]
+    },
+    {
+      "name": "jf config show",
+      "selected_flag_forms": [
+        "--format"
+      ],
+      "aliases_help_accepted": [
+        "jf c show"
+      ]
+    },
+    {
+      "name": "jf config remove",
+      "selected_flag_forms": [
+        "--quiet"
+      ],
+      "aliases_help_accepted": [
+        "jf config rm",
+        "jf c rm",
+        "jf c remove"
+      ]
+    },
+    {
+      "name": "jf rt",
+      "selected_flag_forms": [],
+      "aliases_help_accepted": []
+    },
+    {
+      "name": "jf rt ping",
+      "selected_flag_forms": [
+        "--server-id"
+      ],
+      "aliases_help_accepted": [
+        "jf rt p"
+      ]
+    },
+    {
+      "name": "jf rt curl",
+      "selected_flag_forms": [
+        "--server-id",
+        "-X",
+        "--request",
+        "-H",
+        "--header",
+        "--data-binary",
+        "--fail",
+        "--silent",
+        "--show-error"
+      ],
+      "aliases_help_accepted": [
+        "jf rt cl"
+      ]
+    },
+    {
+      "name": "jf go-config",
+      "selected_flag_forms": [
+        "--repo-resolve",
+        "--repo-deploy",
+        "--server-id-resolve",
+        "--server-id-deploy"
+      ],
+      "aliases_help_accepted": [
+        "jf goc"
+      ]
+    },
+    {
+      "name": "jf go",
+      "selected_flag_forms": [
+        "--no-fallback",
+        "--build-name",
+        "--build-number"
+      ],
+      "aliases_help_accepted": []
+    },
+    {
+      "name": "jf go-publish",
+      "selected_flag_forms": [
+        "--exclusions",
+        "--detailed-summary",
+        "--build-name",
+        "--build-number"
+      ],
+      "aliases_help_accepted": [
+        "jf gp"
+      ]
+    },
+    {
+      "name": "jf rt upload",
+      "selected_flag_forms": [
+        "--server-id",
+        "--flat",
+        "--fail-no-op",
+        "--dry-run",
+        "--detailed-summary",
+        "--threads",
+        "--build-name",
+        "--build-number"
+      ],
+      "aliases_help_accepted": [
+        "jf rt u"
+      ]
+    },
+    {
+      "name": "jf rt download",
+      "selected_flag_forms": [
+        "--server-id",
+        "--flat",
+        "--fail-no-op",
+        "--threads"
+      ],
+      "aliases_help_accepted": [
+        "jf rt dl"
+      ]
+    },
+    {
+      "name": "jf rt build-add-dependencies",
+      "selected_flag_forms": [
+        "--dry-run",
+        "--module"
+      ],
+      "aliases_help_accepted": [
+        "jf rt bad"
+      ]
+    },
+    {
+      "name": "jf rt build-publish",
+      "selected_flag_forms": [
+        "--server-id",
+        "--dry-run",
+        "--collect-env",
+        "--env-include",
+        "--overwrite"
+      ],
+      "aliases_help_accepted": [
+        "jf rt bp"
+      ]
+    },
+    {
+      "name": "jf rt build-promote",
+      "selected_flag_forms": [
+        "--server-id",
+        "--copy",
+        "--include-dependencies",
+        "--source-repo",
+        "--status",
+        "--comment",
+        "--fail-fast",
+        "--dry-run"
+      ],
+      "aliases_help_accepted": [
+        "jf rt bpr"
+      ]
+    },
+    {
+      "name": "oras version",
+      "selected_flag_forms": [],
+      "aliases_help_accepted": []
+    },
+    {
+      "name": "oras login",
+      "selected_flag_forms": [
+        "-u",
+        "--username",
+        "--password-stdin",
+        "--ca-file",
+        "--registry-config"
+      ],
+      "aliases_help_accepted": []
+    },
+    {
+      "name": "oras push",
+      "selected_flag_forms": [
+        "--oci-layout",
+        "--artifact-type",
+        "-a",
+        "--annotation",
+        "--ca-file",
+        "--registry-config"
+      ],
+      "aliases_help_accepted": []
+    },
+    {
+      "name": "oras pull",
+      "selected_flag_forms": [
+        "--oci-layout",
+        "-o",
+        "--output",
+        "--ca-file",
+        "--registry-config"
+      ],
+      "aliases_help_accepted": []
+    },
+    {
+      "name": "oras manifest fetch",
+      "selected_flag_forms": [
+        "--oci-layout",
+        "--descriptor",
+        "--ca-file",
+        "--registry-config"
+      ],
+      "aliases_help_accepted": []
+    }
+  ],
+  "dry_run": {
+    "same_input": "one authored file under input/tree",
+    "flat_true_exit": 0,
+    "flat_false_exit": 0,
+    "flat_true_target": "generic-candidates/test/item.txt",
+    "flat_false_target": "generic-candidates/test/input/tree/item.txt",
+    "literal_absent_exit": 1,
+    "empty_glob_with_fail_no_op_exit": 2,
+    "destination": "explicitly unreachable loopback port; no server acceptance"
+  },
+  "bad_server_id_placement_rejected": 2,
+  "commands_passed": 21,
+  "selected_flag_forms_checked": 79
+}

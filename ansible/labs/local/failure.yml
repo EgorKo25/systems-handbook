@@ -1,0 +1,17 @@
+---
+- name: Observe an intentionally rescued failure
+  hosts: counters
+  gather_facts: false
+  tasks:
+    - block:
+        - name: Reject a candidate without altering saved data
+          ansible.builtin.fail:
+            msg: 'fixture rejection'
+      rescue:
+        - name: Record handled branch
+          ansible.builtin.set_fact:
+            counter_rejected: true
+      always:
+        - name: Confirm rescue result
+          ansible.builtin.assert:
+            that: counter_rejected | default(false)

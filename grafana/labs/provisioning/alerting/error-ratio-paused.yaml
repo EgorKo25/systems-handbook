@@ -1,0 +1,52 @@
+# Optional, paused. NOT copied by labctl init; activate only in a separate reviewed phase.
+apiVersion: 1
+groups:
+- orgId: 1
+  name: handbook-evaluation
+  folder: Handbook Go
+  interval: 20s
+  rules:
+  - uid: go-error-ratio
+    title: Go error ratio above five percent
+    condition: C
+    for: 30s
+    keepFiringFor: 30s
+    noDataState: NoData
+    execErrState: Error
+    isPaused: true
+    labels:
+      service: go-lab
+      severity: warning
+    annotations:
+      summary: Error ratio is high; inspect traffic and observation count
+    data:
+    - refId: A
+      datasourceUid: prom-local
+      relativeTimeRange: {from: 120, to: 0}
+      model:
+        refId: A
+        expr: 'sum by (instance) (rate(lab_requests_total{job="go-lab",code=~"5.."}[2m])) / sum by (instance) (rate(lab_requests_total{job="go-lab"}[2m]))'
+        instant: true
+        range: false
+        intervalMs: 15000
+        maxDataPoints: 20
+    - refId: B
+      datasourceUid: __expr__
+      relativeTimeRange: {from: 0, to: 0}
+      model:
+        refId: B
+        type: reduce
+        expression: A
+        reducer: last
+    - refId: C
+      datasourceUid: __expr__
+      relativeTimeRange: {from: 0, to: 0}
+      model:
+        refId: C
+        type: threshold
+        expression: B
+        conditions:
+        - evaluator: {params: [0.05], type: gt}
+          operator: {type: and}
+          query: {params: [C]}
+          reducer: {type: last}

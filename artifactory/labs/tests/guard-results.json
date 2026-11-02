@@ -1,0 +1,47 @@
+{
+  "scope": "native Bash/sha256sum with own failed-download stubs; no real download/install",
+  "checks": [
+    {
+      "script": "get-cli.sh",
+      "failure": "http-failure",
+      "passed": true,
+      "exit": 22
+    },
+    {
+      "script": "get-cli.sh",
+      "failure": "bad-hash",
+      "passed": true,
+      "exit": 1
+    },
+    {
+      "script": "get-server.sh",
+      "failure": "http-failure",
+      "passed": true,
+      "exit": 22
+    },
+    {
+      "script": "get-server.sh",
+      "failure": "bad-hash",
+      "passed": true,
+      "exit": 1
+    },
+    {
+      "script": "get-oras.sh",
+      "failure": "http-failure",
+      "passed": true,
+      "exit": 22
+    },
+    {
+      "script": "get-oras.sh",
+      "failure": "bad-hash",
+      "passed": true,
+      "exit": 1
+    },
+    {
+      "script": "extract-vm.sh",
+      "failure": "bad-hash-before-sudo-or-tar",
+      "passed": true,
+      "exit": 1
+    }
+  ]
+}

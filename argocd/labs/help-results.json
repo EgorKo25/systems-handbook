@@ -1,0 +1,9 @@
+{
+  "date": "2026-11-01",
+  "version": "argocd: v3.5.6+c2b1e30",
+  "commands": 39,
+  "flag_forms": 109,
+  "aliases": 2,
+  "status": "PASS",
+  "scope": "declared spellings in native help only; no operation/API; production reader grammar is a separate coordinator audit"
+}

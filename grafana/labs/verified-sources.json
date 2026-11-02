@@ -1,0 +1,410 @@
+[
+  {
+    "url": "https://github.com/grafana/grafana/blob/v13.3.0/conf/defaults.ini",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://github.com/grafana/grafana/blob/v13.3.0/conf/defaults.ini",
+    "bytes": 760525,
+    "sha256": "002d8fc098229ec652bc2a32b896cda1342dee024a4747375e4adb0bd8b0de97"
+  },
+  {
+    "url": "https://github.com/grafana/grafana/blob/v13.3.0/docs/sources/alerting/configure-notifications/inhibition-rules.md",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://github.com/grafana/grafana/blob/v13.3.0/docs/sources/alerting/configure-notifications/inhibition-rules.md",
+    "bytes": 250782,
+    "sha256": "91aad5c4627fb1c2d20649ac8bb81ca9d0328e20e213cd8480b25618bbf8cde1"
+  },
+  {
+    "url": "https://github.com/grafana/grafana/blob/v13.3.0/docs/sources/alerting/fundamentals/alert-rule-evaluation/nodata-and-error-states.md",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://github.com/grafana/grafana/blob/v13.3.0/docs/sources/alerting/fundamentals/alert-rule-evaluation/nodata-and-error-states.md",
+    "bytes": 261144,
+    "sha256": "1fe63768580f4a42bcfff0d2203f5f09c3ec5cd80eb12a2a400020d40fd45bd5"
+  },
+  {
+    "url": "https://github.com/grafana/grafana/blob/v13.3.0/docs/sources/setup-grafana/configure-grafana/_index.md",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://github.com/grafana/grafana/blob/v13.3.0/docs/sources/setup-grafana/configure-grafana/_index.md",
+    "bytes": 718470,
+    "sha256": "81522bcba016d5480119446f17cd673a2468d1bb03d0ceaddde4c7812f7ccfaa"
+  },
+  {
+    "url": "https://github.com/grafana/grafana/blob/v13.3.0/pkg/services/auth/authimpl/auth_token.go",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://github.com/grafana/grafana/blob/v13.3.0/pkg/services/auth/authimpl/auth_token.go",
+    "bytes": 757356,
+    "sha256": "518ea6d71169b6df4cf731d155d25eb66332f5231f770743f7d8ddf2ffe423c6"
+  },
+  {
+    "url": "https://github.com/grafana/grafana/blob/v13.3.0/pkg/services/ngalert/api/tooling/definitions/provisioning_alert_rules.go",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://github.com/grafana/grafana/blob/v13.3.0/pkg/services/ngalert/api/tooling/definitions/provisioning_alert_rules.go",
+    "bytes": 439283,
+    "sha256": "e984ddd66de036b9c34dfc297ad2073ae449c6ba88c8cd6ae0a36b74896bb04e"
+  },
+  {
+    "url": "https://grafana.com/developers/plugin-tools/key-concepts/data-frames",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://grafana.com/developers/plugin-tools/key-concepts/data-frames",
+    "bytes": 81317,
+    "sha256": "7ce50ab77bff454ee8b0a7af197e02988aef1561e99f9e5548aae6b09a6397b3"
+  },
+  {
+    "url": "https://grafana.com/docs/grafana/latest/administration/back-up-grafana/",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://grafana.com/docs/grafana/latest/administration/back-up-grafana/",
+    "bytes": 329264,
+    "sha256": "42f974b4fc00e4e6e204372a41d8d1541e96109dbc8ee40623cca382e83372a5"
+  },
+  {
+    "url": "https://grafana.com/docs/grafana/latest/administration/data-source-management/",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://grafana.com/docs/grafana/latest/administration/data-source-management/",
+    "bytes": 348237,
+    "sha256": "f5709a50a6ebfe9f7253ad22ca1d93f116d176a0cf76797c67748bc825e294fc"
+  },
+  {
+    "url": "https://grafana.com/docs/grafana/latest/administration/plugin-management/",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://grafana.com/docs/grafana/latest/administration/plugin-management/",
+    "bytes": 334615,
+    "sha256": "580a2001242569a8069a3e903e8eff21ac098d38fe480a338679fca7fe149a56"
+  },
+  {
+    "url": "https://grafana.com/docs/grafana/latest/administration/plugin-management/plugin-sign/",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://grafana.com/docs/grafana/latest/administration/plugin-management/plugin-sign/",
+    "bytes": 331398,
+    "sha256": "e51a1d01b2fa2b6689bdcb0d8b25616370132a7b8e158cdcf7658cb5e1dfbfd0"
+  },
+  {
+    "url": "https://grafana.com/docs/grafana/latest/administration/provisioning/",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://grafana.com/docs/grafana/latest/administration/provisioning/",
+    "bytes": 378429,
+    "sha256": "2b521db3fe0dc5e24d24cf5328f2126364379cc821e57263c2e21d457db4d7fc"
+  },
+  {
+    "url": "https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/",
+    "bytes": 339640,
+    "sha256": "d7a626c0812d5e4f27cf7a47cb1ee116f2fe7db3c221896a917fc8ea263e0344"
+  },
+  {
+    "url": "https://grafana.com/docs/grafana/latest/administration/service-accounts/",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://grafana.com/docs/grafana/latest/administration/service-accounts/",
+    "bytes": 346121,
+    "sha256": "6e8545529974defbecb00f0b392dc9a89658cf1698a3e8eb1e824f839734e119"
+  },
+  {
+    "url": "https://grafana.com/docs/grafana/latest/alerting/best-practices/missing-data/",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://grafana.com/docs/grafana/latest/alerting/guides/missing-data/",
+    "bytes": 347761,
+    "sha256": "d0091b818991a608c4155666546beb00181d31c24e0c2d4eb5ed267af663f2ef"
+  },
+  {
+    "url": "https://grafana.com/docs/grafana/latest/alerting/configure-notifications/",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://grafana.com/docs/grafana/latest/alerting/configure-notifications/",
+    "bytes": 331652,
+    "sha256": "11410205e8a75b3a47cb5ed22852bf72a526f35c9da26897ba9d085c92746c6f"
+  },
+  {
+    "url": "https://grafana.com/docs/grafana/latest/alerting/configure-notifications/create-silence/",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://grafana.com/docs/grafana/latest/alerting/configure-notifications/create-silence/",
+    "bytes": 339737,
+    "sha256": "d1a16320b3e7c82aaebc0fefc31c71158492b0bb173cc5424539d564d2d50137"
+  },
+  {
+    "url": "https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rule-evaluation/",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rule-evaluation/",
+    "bytes": 337401,
+    "sha256": "117df52bf1627e754917929d9e3afd59d88440a14a32fdb8c8efbe5513ef78fd"
+  },
+  {
+    "url": "https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/file-provisioning/",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/file-provisioning/",
+    "bytes": 385839,
+    "sha256": "6449f1320c3709cf58d96c69ce0cd57115c78a9b4e2b594becc05c0591b88344"
+  },
+  {
+    "url": "https://grafana.com/docs/grafana/latest/cli/",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://grafana.com/docs/grafana/latest/administration/cli/",
+    "bytes": 349589,
+    "sha256": "c5c93d6e76fc8378fc20acf8ad85a03d9ca2867467910adf1c41cf410dae01b5"
+  },
+  {
+    "url": "https://grafana.com/docs/grafana/latest/datasources/",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://grafana.com/docs/grafana/latest/datasources/",
+    "bytes": 344067,
+    "sha256": "a3ca52d4b7f9d41fe1d4b3d78d86c6db137dfe4d984b22ccd783798f90dd71da"
+  },
+  {
+    "url": "https://grafana.com/docs/grafana/latest/datasources/prometheus/query-editor/",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://grafana.com/docs/grafana/latest/datasources/prometheus/query-editor/",
+    "bytes": 359596,
+    "sha256": "d868c6046a3648b93cb95c9312c6f88b10f541907ecae1eaf33fbcc19d8afbc1"
+  },
+  {
+    "url": "https://grafana.com/docs/grafana/latest/datasources/prometheus/template-variables/",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://grafana.com/docs/grafana/latest/datasources/prometheus/template-variables/",
+    "bytes": 345626,
+    "sha256": "91ba5477bd88abc6ea643ef4c29d7f590d0b068d09a6adf6840e4594184dca14"
+  },
+  {
+    "url": "https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/data_source/",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/data_source/",
+    "bytes": 367645,
+    "sha256": "73a54bbbb554b4e1a0eb52ac9c69bf7351929925b2fb2279eea817fadf6ac46f"
+  },
+  {
+    "url": "https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/datasource_permissions/",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/datasource_permissions/",
+    "bytes": 348051,
+    "sha256": "24054d19406541c6946cf065e0cd23edd68040ae119662a144b92f559c20336a"
+  },
+  {
+    "url": "https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/dashboard/",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/dashboard/",
+    "bytes": 365029,
+    "sha256": "714135475e486ce9db8e565e4bb4a3d5906e806cd767e964d74ac5fb61ac034f"
+  },
+  {
+    "url": "https://grafana.com/docs/grafana/latest/introduction/grafana-enterprise/",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://grafana.com/docs/grafana/latest/introduction/grafana-enterprise/",
+    "bytes": 333903,
+    "sha256": "2dd1c8aaec5daf89d0a7dbaf6ae0d4c1537d4ab53347e6d60f4f8e8b623952ac"
+  },
+  {
+    "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/configure-standard-options/",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://grafana.com/docs/grafana/latest/visualizations/panels-visualizations/configure-standard-options/",
+    "bytes": 341006,
+    "sha256": "ac4cd76aa963705820e5206ec185cf7a5ad162606d30739abcf44858abf84177"
+  },
+  {
+    "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/panel-inspector/",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://grafana.com/docs/grafana/latest/visualizations/panels-visualizations/panel-inspector/",
+    "bytes": 330918,
+    "sha256": "5c6e738588f670fb847d18ae591d78425e5ba784641ab597edab658de33b3ca9"
+  },
+  {
+    "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://grafana.com/docs/grafana/latest/visualizations/panels-visualizations/query-transform-data/",
+    "bytes": 380705,
+    "sha256": "823739b859ba8b75a2927ba40a6a7228058337dc42e683c7e249c852c0e3c26c"
+  },
+  {
+    "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://grafana.com/docs/grafana/latest/visualizations/panels-visualizations/query-transform-data/transform-data/",
+    "bytes": 468606,
+    "sha256": "b2207c911183f154b62a4a048cf533344f4fdb9beb47155cba10b7cf5ecf94ca"
+  },
+  {
+    "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://grafana.com/docs/grafana/latest/visualizations/panels-visualizations/visualizations/",
+    "bytes": 343852,
+    "sha256": "aca194bdda99303c23fbf1b020a14d9ad1ab5e5a0b4933b533a834d72b6dc0d4"
+  },
+  {
+    "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/time-series/",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://grafana.com/docs/grafana/latest/visualizations/panels-visualizations/visualizations/time-series/",
+    "bytes": 381101,
+    "sha256": "616bd7c09df02e2977cc50be128d2aee27e9b3215b2e1a25ca58936d78d4fbcc"
+  },
+  {
+    "url": "https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/",
+    "bytes": 571944,
+    "sha256": "c59dc5966cc927d591000408ac989a06edfa9e2ba4e8a536a504c4dce0f1fc7a"
+  },
+  {
+    "url": "https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/",
+    "bytes": 330416,
+    "sha256": "f52b2f16b8e84c84aaf2a42e26ce3fa0d3a1d050bf84f485fedc907756a838e1"
+  },
+  {
+    "url": "https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-database-encryption/",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-database-encryption/",
+    "bytes": 335015,
+    "sha256": "8df06cab8552ad55fe2e6f3b7831769c3910252952e736c49f56a971b4b7715c"
+  },
+  {
+    "url": "https://grafana.com/docs/grafana/latest/setup-grafana/installation/debian/",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://grafana.com/docs/grafana/latest/setup-grafana/installation/debian/",
+    "bytes": 344065,
+    "sha256": "eba8e5fe59c6c2f76de9b64fdd0e892f3d9ad542d75960c7f3c3084e781061d3"
+  },
+  {
+    "url": "https://grafana.com/docs/grafana/latest/setup-grafana/set-up-for-high-availability/",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://grafana.com/docs/grafana/latest/setup-grafana/set-up-for-high-availability/",
+    "bytes": 329822,
+    "sha256": "87bedf9f7c5faaee3b67640d01d8be9581776f767f4c4b5061569ab81c1bf5fe"
+  },
+  {
+    "url": "https://grafana.com/docs/grafana/latest/troubleshooting/",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://grafana.com/docs/grafana/latest/troubleshooting/",
+    "bytes": 330810,
+    "sha256": "3f7b00cd4adba00dfea31d05bb44d9c24c4aea0223b8d4e00ac4347076f98d8e"
+  },
+  {
+    "url": "https://grafana.com/docs/grafana/latest/upgrade-guide/",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://grafana.com/docs/grafana/latest/upgrade-guide/",
+    "bytes": 324628,
+    "sha256": "866f610b63c9d742da4dcabe71f0027a28ca18b5942b3969a8c28cc54ec78ef8"
+  },
+  {
+    "url": "https://grafana.com/docs/grafana/latest/visualizations/dashboards/variables/",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://grafana.com/docs/grafana/latest/visualizations/dashboards/variables/",
+    "bytes": 341133,
+    "sha256": "ec0b80e05071afae13670ae1bff356754508aa2b309c94623bc1e209cb088133"
+  },
+  {
+    "url": "https://grafana.com/grafana/download/13.3.0?edition=oss",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://grafana.com/grafana/download/13.3.0?edition=oss",
+    "bytes": 967614,
+    "sha256": "281f6d5c817f6e2996d39d3088d37395a2c9ff66607ea883e7b0bce20fb5cbf3"
+  },
+  {
+    "url": "https://prometheus.io/docs/prometheus/3.13/querying/functions/",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://prometheus.io/docs/prometheus/3.13/querying/functions/",
+    "bytes": 416817,
+    "sha256": "b01e95141aa36f0c8fc61f7279bf39d55718acb834f0134108229556ddbfbbfe"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/grafana/grafana/v13.3.0/LICENSE",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://raw.githubusercontent.com/grafana/grafana/v13.3.0/LICENSE",
+    "bytes": 34523,
+    "sha256": "0d96a4ff68ad6d4b6f1f30f713b18d5184912ba8dd389f86aa7710db079abcb0"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/grafana/grafana/v13.3.0/conf/defaults.ini",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://raw.githubusercontent.com/grafana/grafana/v13.3.0/conf/defaults.ini",
+    "bytes": 118496,
+    "sha256": "7ec9bca2f8508b90f286a771d71a18ce14f555a1720e7b9319a60a9e27f1c853"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/grafana/grafana/v13.3.0/docs/sources/alerting/configure-notifications/inhibition-rules.md",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://raw.githubusercontent.com/grafana/grafana/v13.3.0/docs/sources/alerting/configure-notifications/inhibition-rules.md",
+    "bytes": 7814,
+    "sha256": "5700fd40dfd040779810462448e3501a0b7052a914c7e267e474b4430f49204a"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/grafana/grafana/v13.3.0/docs/sources/alerting/fundamentals/alert-rule-evaluation/nodata-and-error-states.md",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://raw.githubusercontent.com/grafana/grafana/v13.3.0/docs/sources/alerting/fundamentals/alert-rule-evaluation/nodata-and-error-states.md",
+    "bytes": 10502,
+    "sha256": "0279c534c46ef62eedd2ee1dd8757574fb0b8f21c991f85b34c5a53e7b572fe2"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/grafana/grafana/v13.3.0/docs/sources/setup-grafana/configure-grafana/_index.md",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://raw.githubusercontent.com/grafana/grafana/v13.3.0/docs/sources/setup-grafana/configure-grafana/_index.md",
+    "bytes": 144492,
+    "sha256": "e2b8a3a68b541389d866c123cf5b851cb67a804cc2c0e4c9913a00d8a9b61b8c"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/grafana/grafana/v13.3.0/pkg/services/auth/authimpl/auth_token.go",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://raw.githubusercontent.com/grafana/grafana/v13.3.0/pkg/services/auth/authimpl/auth_token.go",
+    "bytes": 26271,
+    "sha256": "8aaff9cb8dcd7f395d7eee452c977b5db2b4a6e0043d1d1942268526a6a7fb89"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/grafana/grafana/v13.3.0/pkg/services/ngalert/api/tooling/definitions/provisioning_alert_rules.go",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://raw.githubusercontent.com/grafana/grafana/v13.3.0/pkg/services/ngalert/api/tooling/definitions/provisioning_alert_rules.go",
+    "bytes": 14266,
+    "sha256": "b31e300255365a00cc697e6dcecce3461bd29caf7a2c7917cc020b66a6541e28"
+  },
+  {
+    "url": "https://grafana.com/docs/grafana/latest/visualizations/dashboards/build-dashboards/annotate-visualizations/",
+    "checked": "2026-11-01",
+    "status": 200,
+    "final_url": "https://grafana.com/docs/grafana/latest/visualizations/dashboards/build-dashboards/annotate-visualizations/",
+    "bytes": 358446,
+    "sha256": "24ff85ab65f3fe9acf358efc1a6f4704123109fbcfe904a639b4caedaea79c60"
+  }
+]

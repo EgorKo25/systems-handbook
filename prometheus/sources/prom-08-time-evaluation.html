@@ -1,0 +1,68 @@
+<header><h1>PromQL II: T, окно, step и lookback</h1><p>Рисунок на графике зависит от времени вычисления, а не только от хранящихся чисел.</p></header>
+<h2>Ручная временная шкала</h2>
+<p>Пусть gauge <code>g</code> имеет samples (0s,10), (60s,20), (120s,30), затем сбор остановился. При instant query на T=90s selector <code>g</code> выбирает последний доступный sample в прошлом: 20 при времени записи 60s. Результат выражения относится к T=90, а <code>timestamp(g)</code> возвращает 60. При T=120 окно <code>g[2m]</code> включает (60,20) и (120,30), но <strong>не (0,10)</strong>: range selector имеет левую открытую и правую закрытую границу, (T−W,T]. Значение <code>avg_over_time(g[2m])</code> равно 25, каждый sample имеет одинаковый вес, даже если расстояния между ними были бы неодинаковыми.</p>
+<p>Lookback delta — допустимая глубина поиска последнего sample для instant selector, в базовой конфигурации 5m. Это не ширина <code>rate</code> и не scrape interval. Если stale marker появился в t=180, selector на T=181 не возвращается к sample t=120, хотя тот ещё помещается в 5m. Без stale marker старый sample может выбираться до истечения lookback. Долгая дырка и marker — разные причины отсутствия, и обе надо учитывать при диагностике.</p>
+<p>Ниже — ровно вход <code>g</code> из <code>labs/fixtures/promql.yml</code>, а не запись с работающего сервера. Полный набор меток — только <code>{__name__="g"}</code>: меток job и instance здесь нет. Начало fixture — t=0; это относительные секунды, не Unix timestamp. Единица значений g в этом учебном входе не задана; числа нельзя называть миллисекундами или запросами. В t=180 задан именно stale marker, а не ноль и не ещё одно измерение.</p>
+<style>
+.prom-timecut{margin:1.5rem 0;padding:1rem;border:2px solid var(--text);border-radius:.35rem;background:var(--paper);color:var(--text)}
+.prom-timecut figcaption{font-weight:700;font-size:1.08rem;margin-bottom:.7rem}
+.prom-timecut .ptc-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1rem;align-items:start}
+.prom-timecut .ptc-plot{margin:0;min-width:0}
+.prom-timecut svg{display:block;width:100%;height:auto;max-width:24rem;margin-inline:auto;background:var(--paper);color:var(--text)}
+.prom-timecut svg text{font:14px var(--sans,sans-serif);fill:currentColor}
+.prom-timecut svg .ptc-axis{stroke:currentColor;stroke-width:1.5;fill:none}
+.prom-timecut svg .ptc-guide{stroke:var(--muted);stroke-width:1.5;stroke-dasharray:4 4;fill:none}
+.prom-timecut svg .ptc-point{fill:var(--paper);stroke:var(--accent);stroke-width:2.5}
+.prom-timecut svg .ptc-solid{fill:var(--accent);stroke:var(--accent)}
+.prom-timecut .ptc-key{margin:.5rem 0;font-size:1rem}
+.prom-timecut table{width:100%;border-collapse:collapse;font-size:1rem}
+.prom-timecut th,.prom-timecut td{padding:.45rem .3rem;border-bottom:1px solid var(--muted);vertical-align:top;overflow-wrap:anywhere}
+.prom-timecut th{text-align:left}
+.prom-timecut .table-wrap{overflow:visible;min-width:0}
+.prom-timecut .table-wrap table{min-width:0}
+.prom-timecut th,.prom-timecut td{min-width:0;white-space:normal}
+.prom-timecut .ptc-answer{padding:.6rem;border-left:3px solid var(--accent);background:var(--soft)}
+@media(max-width:42rem){.prom-timecut{padding:.65rem}.prom-timecut .ptc-layout{grid-template-columns:minmax(0,1fr)}.prom-timecut svg text{font-size:17px}}
+@media print{.prom-timecut{--paper:#fff;--text:#000;--muted:#333;--accent:#000;--soft:#fff;color:#000;background:#fff;border-color:#000;break-inside:auto}.prom-timecut svg{color:#000;background:#fff}.prom-timecut .ptc-layout{grid-template-columns:minmax(0,1fr)}.prom-timecut .ptc-answer{background:#fff;color:#000}.prom-timecut code{background:transparent;color:inherit}}
+</style>
+<figure id="prom-g-sample-time-cut" class="prom-timecut" aria-labelledby="ptc-g-caption">
+<figcaption id="ptc-g-caption">Измеренное время, время вычисления и открытый край окна</figcaption>
+<div class="ptc-layout"><div class="ptc-plot"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 286" role="img" aria-labelledby="ptc-g-title ptc-g-desc">
+<title id="ptc-g-title">Три измерения g, затем stale; времена в секундах</title>
+<desc id="ptc-g-desc">Точки (0,10), (60,20), (120,30). В 180 записан stale marker, числовой точки нет. В 90 выборка берёт точку 60. Полоса (0,120] исключает ноль и включает 60 и 120.</desc>
+<path class="ptc-axis" d="M32 28V170H294"/>
+<text x="8" y="23">g</text><text x="21" y="174">0</text>
+<path class="ptc-guide" d="M32 130H287M32 90H287M32 50H287"/>
+<text x="6" y="135">10</text><text x="6" y="95">20</text><text x="6" y="55">30</text>
+<circle class="ptc-point ptc-solid" cx="32" cy="130" r="4"/>
+<circle class="ptc-point ptc-solid" cx="104" cy="90" r="4"/>
+<circle class="ptc-point ptc-solid" cx="176" cy="50" r="4"/>
+<path class="ptc-guide" d="M104 90H140V170M248 30V170"/>
+<text x="150" y="112">T=90</text><text x="205" y="24">stale</text>
+<text x="28" y="215">0</text><text x="93" y="215">60</text><text x="162" y="215">120</text><text x="234" y="215">180</text><text x="265" y="235">t, с</text>
+<path class="ptc-axis" d="M32 253H176"/>
+<circle class="ptc-point" cx="32" cy="253" r="5"/><circle class="ptc-point ptc-solid" cx="176" cy="253" r="5"/>
+<text x="49" y="279">окно (0,120], W=120 с</text>
+</svg>
+<p class="ptc-key">Кружок в графике — обычный sample. Вертикальный пунктир под надписью stale отмечает время marker; числовой точки в t=180 нет. Пунктир от t=60 к T=90 показывает выбор прежней точки, а не новое измерение. В нижней полосе пустой кружок исключает левую границу, закрашенный включает правую.</p></div>
+<div><table><caption>Текстовая и печатная альтернатива графику</caption><thead><tr><th>Время / операция</th><th>Данные и результат</th></tr></thead><tbody>
+<tr><td>t=0, 60, 120 с</td><td>g=10, 20, 30 соответственно; между ними samples не заданы.</td></tr>
+<tr><td>t=180 с</td><td>stale, не g=0. Для отсутствующего обычного sample fixture использует другой символ: <code>_</code>.</td></tr>
+<tr><td>T=90 с: <code>g</code></td><td>Значение 20, выбранное из t=60. <code>timestamp(g)=60</code>, время результата instant query — 90.</td></tr>
+<tr><td>T=120 с: <code>g[2m]</code></td><td>(0,120]: только t=60 и 120. Среднее (20+30)/2=25; t=0 исключён.</td></tr>
+<tr><td>T=180 с: <code>g</code></td><td>Элемента нет: marker запрещает возвращаться к 30 через lookback.</td></tr>
+<tr><td>T=180 с: <code>count_over_time(g[3m])</code></td><td>(0,180]: два обычных samples, 20 и 30. Marker не увеличивает count.</td></tr>
+</tbody></table></div></div>
+<p class="ptc-answer"><strong>Самопроверка.</strong> Что вернёт <code>g</code> на T=150 с, и что изменит marker на T=180? На 150 ещё выбирается 30 из t=120. На 180 элемента уже нет; это не 0 и не доказательство удаления прежних samples из TSDB. Поэтому count по окну может оставаться положительным после исчезновения instant series.</p>
+</figure>
+<p>Две операции над тем же хранилищем ответили на разные вопросы: instant selector — какое значение допустимо выбрать сейчас, range function — какие обычные samples попали в заданный интервал. Следующий <code>query_range</code> лишь повторяет вычисление на сетке T; он не заполняет пропуски сбором новых измерений.</p>
+<h2>Instant query и range query</h2>
+<pre><code>curl --get --data-urlencode 'query=rate(lab_requests_total[5m])' --data-urlencode 'time=2026-11-01T12:00:00Z' http://127.0.0.1:9090/api/v1/query
+curl --get --data-urlencode 'query=rate(lab_requests_total[5m])' --data-urlencode 'start=2026-11-01T12:00:00Z' --data-urlencode 'end=2026-11-01T12:10:00Z' --data-urlencode 'step=30s' http://127.0.0.1:9090/api/v1/query_range</code></pre>
+<p>Адрес <code>query</code> вычисляет выражение один раз на time; <code>query_range</code> — на сетке start, start+step, … ≤end. Окно 5m двигается с каждым T. <code>step=30s</code> не заставляет scraper собирать каждые 30s, не усредняет автоматически соседние samples и не обещает независимость соседних точек rate. Здесь окна сильно перекрываются. Для 10m и step 30s получается 21 момент вычисления, включая обе границы, если они точно выровнены.</p>
+<p>При step 15s и том же диапазоне — 41 вычисление. Сравните два ответа одного выражения, а не два разных окна: более густая сетка может повторять один и тот же gauge sample. Интерфейс способен сам менять step по ширине экрана. Поэтому воспроизводимый разбор записывает query, start/end/step, lookback, версию и состояние данных. Никакая плавная линия между точками не доказывает измерение каждого промежуточного момента.</p>
+<h2>Staleness не является числом NaN для арифметики</h2>
+<p>Специальный stale marker завершает видимость series для instant selection. Это внутренний сигнал, а не обычное измеренное NaN, которое можно сравнивать или складывать как пользовательский sample. Range functions обходятся с устаревшими маркерами иначе, чем instant selector: ранее записанные обычные samples внутри окна остаются полезны. Например, <code>count_over_time(g[5m])</code> может дать положительное число уже после исчезновения <code>g</code> из instant vector. Это означает «были образцы в последние пять минут», а не «цель сейчас исправна».</p>
+<p>Fixtures используют <code>_</code> для отсутствующего sample и <code>stale</code> для marker. В сценарии <code>g</code>: 10,20,30,stale с интервалом 1m на T=3m instant <code>g</code> пуст, но <code>count_over_time(g[3m])</code> равно 2: t0 исключён левой границей, t1 и t2 включены. Такая маленькая проверка отделяет смысл времени от ощущения «там же недавно была линия».</p>
+<h2>Цена окна</h2>
+<p>Пять минут при 15s interval дают около двадцати samples на ряд, но граничный подсчёт зависит от выравнивания T. Для rate нужно минимум два пригодных samples. Окно ровно в один interval ненадёжно из-за открытой левой границы и jitter; увеличенное окно устойчивее к пропускам, но сглаживает краткие изменения. Выбирайте окно по частоте событий, числу наблюдений и требуемой реакции, затем проверяйте на перезапусках и задержках, а не подставляйте магическое универсальное число.</p>

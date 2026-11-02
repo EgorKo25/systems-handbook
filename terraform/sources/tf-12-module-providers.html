@@ -1,0 +1,42 @@
+<header><h1>Providers в модуле: requirement, configuration и alias</h1><p>Адрес пакета provider, имя локальной зависимости и именованный набор настроек — три разных идентичности. Alias не устанавливает второй бинарник provider.</p></header>
+<h2>Договор child module</h2>
+<p>Каждый модуль объявляет собственный required_providers, включая точный source address. Совпадение короткого имени не доказывает совпадение package identity: два namespace могут иметь разные providers с похожим именем. Ограничения всех потребителей должны иметь пересечение. Root обычно выбирает политику допустимых обновлений и настройки подключения; child объявляет минимальные совместимые требования и нужные configuration aliases.</p>
+<pre><code># В дочернем модуле, пример интерфейса AWS без запуска.
+terraform {
+  required_providers {
+    aws = {
+      source = "hashicorp/aws"
+      configuration_aliases = [aws.replica]
+    }
+  }
+}
+# Обычные ресурсы child используют aws.
+# Ресурс replica явно выбирает provider = aws.replica.</code></pre>
+<p><code>configuration_aliases</code> сообщает, какие именованные конфигурации child ожидает от вызывающего модуля. Этот список не создаёт credentials, регион, соединение или provider instance с готовыми полномочиями. Для внешнего provider отдельный required_providers в child нужен и тогда, когда настройки передаются из root. Это часть интерфейса, не дублирование секретов.</p>
+<h2>Вызывающий root связывает имена</h2>
+<pre><code>terraform {
+  required_providers {
+    aws = { source = "hashicorp/aws", version = "~> 6.0" }
+  }
+}
+provider "aws" { region = "eu-central-1" }
+provider "aws" {
+  alias  = "backup"
+  region = "eu-west-1"
+}
+module "storage" {
+  source = "./modules/storage"
+  providers = {
+    aws         = aws
+    aws.replica = aws.backup
+  }
+}</code></pre>
+<p>Слева в map — имена, ожидаемые child; справа — root configurations. <code>aws.replica</code> внутри child связан с <code>aws.backup</code> снаружи; одинакового имени alias не требуется. Обе используют установленный пакет hashicorp/aws одной выбранной версии. Provider configurations не обычные значения HCL: нельзя передать credentials объектом в var и считать его ссылкой на provider. Provider meta-argument требует предусмотренной формы ссылки.</p>
+<p>Default configurations могут наследоваться обычным путём; alias автоматически не наследуется как нужный child alias. При явной providers map делайте все требуемые связи видимыми и проверяйте <code>terraform providers</code> и validate. Если в root существуют только aliased configurations, Terraform может иметь подразумеваемую пустую конфигурацию по умолчанию; ресурс без provider reference способен получить недостающие настройки. Поэтому отсутствие явной связи проверяют до apply, не по неожиданному региону объекта после него.</p>
+<h2>Почему credentials живут снаружи</h2>
+<p>Reusable child не должен обычно содержать собственные provider blocks. Такой legacy-стиль усложняет удаление: state хранит сведения о конфигурации provider, нужной для работы с объектами, а удаление вызова может убрать её раньше destroy. Кроме того, модули с собственными provider configurations имеют ограничения сочетания с count/for_each/depends_on. Настраивайте подключения на границе корневого модуля и передавайте aliases, оставляя настройки существовать до завершения операций над объектами.</p>
+<p>Provider credentials берутся по официальной цепочке конкретного provider: окружение, workload identity, файлы профилей и прочие поддерживаемые источники. У каждого свои приоритеты и срок действия; не выдумывайте универсальный <code>token</code> argument. Намерение «вторая учётная запись» должно быть подтверждено чтением фактической identity до создания ресурса, например provider-specific data source или безопасной read-only командой API. Alias backup сам не доказывает, кому принадлежат полномочия.</p>
+<h2>Миграция alias и package</h2>
+<p>Переименование configuration alias, смена provider source и перенос ресурса в другой аккаунт — разные операции. <code>state replace-provider</code> меняет association с source address provider и не означает физическую миграцию VM в другое облако. Прежде чем удалять старую configuration, изучите state references и полный plan. Для cross-account объекта часто нужен новый объект/перенос данных и явная смена управления; присвоение нового региона не перемещает диски без стоимости.</p>
+<p>Примеры AWS на этой странице — статический разбор интерфейса. Лаборатория 1.17.1 не скачивает aws, не выполняет его schema и не создаёт облачные ресурсы. Проверку адаптера проводите отдельно по главе о VM-контракте.</p>
+<p>Источники 01.11.2026: <a href="https://developer.hashicorp.com/terraform/language/modules/develop/providers">providers within modules</a>, <a href="https://developer.hashicorp.com/terraform/language/providers/configuration">provider configuration</a>, <a href="https://developer.hashicorp.com/terraform/cli/commands/state/replace-provider">replace-provider</a>.</p>

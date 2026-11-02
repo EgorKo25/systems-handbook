@@ -1,0 +1,38 @@
+<header><h1>Facts, register и set_fact: наблюдение и память</h1><p>Результат задачи и факт об ОС различаются происхождением и сроком достоверности. Кэш ускоряет чтение, но сохраняет вчерашнюю картину.</p></header>
+<h2>Сбор facts</h2>
+<p>Facts — собранные сведения о target: ОС, интерфейсах, памяти и других поддерживаемых свойствах. По умолчанию play часто начинается с <code>Gathering Facts</code>, вызова setup. Это удалённая работа: Python, чтение ОС и передача JSON. <code>ansible_facts['distribution']</code> описывает наблюдённую систему, но не означает автоматически совместимость любого пакета. Назначение интерфейса по «первому адресу» хрупко при нескольких сетях. В роли проверяют конкретные требования, а в inventory задают адрес нужного соединения.</p>
+<pre><code>- name: Observe only required operating system facts
+  ansible.builtin.setup:
+    gather_subset:
+      - '!all'
+      - '!min'
+      - distribution
+    filter:
+      - ansible_distribution*</code></pre>
+<p><code>gather_subset</code> выбирает группы реально собираемых данных. <code>filter</code> ограничивает возвращаемые keys и не гарантирует столь же сильного уменьшения стоимости самого сбора. Если facts не нужны, ставят <code>gather_facts: false</code>, а не скрывают строку вывода обработчика событий. Для сравнения замеряют тот же inventory без сборки, с обычной сборкой и с subset; отделяют холодный SSH от времени setup.</p>
+<h2>Register хранит ответ, а не текст терминала</h2>
+<pre><code>- name: Inspect existing config
+  ansible.builtin.stat:
+    path: '{{ counter_root }}/config.json'
+    checksum_algorithm: sha256
+  register: counter_before
+
+- name: Assert expected type
+  ansible.builtin.assert:
+    that:
+      - not counter_before.stat.exists or counter_before.stat.isreg</code></pre>
+<p><code>register</code> связывает полный результат задачи с host. У stat это mapping со stat, у command есть rc/stdout/stderr, у loop появляется <code>results</code> — список отдельных результатов. Поле <code>stdout</code> не универсально. Неуспешная или skipped задача тоже может оставить результат с соответствующим признаком; прежде доступа к полям учитывают ветку. Проверки <code>result is failed</code>, <code>is skipped</code>, <code>is changed</code> читают состояние результата, а не наличие произвольного ключа.</p>
+<p>В loop успешная итерация не отменяет неуспешную соседнюю. Для именования используют <code>loop_control.loop_var</code>, чтобы вложенная роль не перетёрла <code>item</code>. Результат цикла исследуют по каждому item; общий changed станет true, если изменился хотя бы один элемент. Уведомление handler от loop также основано на общем changed, поэтому перезапуск может быть нужен хотя бы из-за одного файла.</p>
+<h3 id="an-register-skipped">Переменная есть, а измерения нет</h3>
+<p>В VM-рецепте <code>counter_old_config</code> заполняется задачей slurp только при существующем старом файле. На первой установке задача пропущена: register может существовать с <code>skipped: true</code>, но не содержит ожидаемого <code>content</code>. Поэтому rescue читает <code>counter_old_config.content</code> только под тем же условием <code>counter_old_config_stat.stat.exists</code>. Проверка одного <code>counter_old_config is defined</code> не доказывает, что файл был прочитан. Так же при loop содержимое лежит в отдельных <code>results</code>; нельзя брать один общий stdout и считать его ответом всех узлов.</p>
+<p>Факт ОС и HTTP-ответ тоже имеют разное время: setup наблюдал архитектуру до выпуска, register от <code>/version</code> наблюдает процесс после перезапуска. Обновление файла facts не переписывает прежний register. Для решения «можно переходить к B» нужен новый ответ A после flush, а не сохранённое до выпуска число. Если ответа нет, состояние неизвестно; оно не становится нулевой версией или пустым счётчиком.</p>
+<h2>Set_fact фиксирует вычисление</h2>
+<p><code>set_fact</code> создаёт связанную с host переменную в момент задачи. Она подходит для снимка старой версии перед изменением, нормализованного списка или результата выбора. Не стоит заменять ею все vars: вычисление становится событием, и зависимость от порядка скрывается. <code>cacheable: true</code> одновременно создаёт высокоприоритетную host-переменную текущего запуска и более низкоприоритетную копию в <code>ansible_facts</code>, пригодную для настроенного fact cache. На следующем запуске остаётся только кэшируемая семантика, поэтому приоритет может измениться. <code>meta: clear_facts</code> удаляет facts/кэшируемую копию, но не обязательно высокоприоритетную host-копию текущего set_fact.</p>
+<pre><code>- name: Remember chosen release for later plays
+  ansible.builtin.set_fact:
+    counter_observed_release: '{{ version_probe.stdout | trim }}'
+    cacheable: false</code></pre>
+<p>Это runtime-память запуска, не новая запись в inventory и не журнал развёртывания. При падении controller позднее значение не восстановится волшебно. Для операционного решения сохраняют отдельный release manifest и наблюдённое состояние цели; при повторе заново опрашивают текущий symlink и ответ процесса.</p>
+<h2>Fact cache и ложная свежесть</h2>
+<p>По умолчанию memory cache живёт только в текущем запуске. Дисковый plugin, например jsonfile, требует явных путей, прав и срока. Кэш может содержать адреса, данные файлов и результаты custom facts; он не должен быть общедоступным. TTL, time to live, срок пригодности, ограничивает возраст записи, но не гарантирует соответствие ОС после изменения. Host с тем же inventory-именем после пересоздания может получить старые факты. Версию/идентичность машины учитывают при очистке и повторном сборе.</p>
+<p>Кэш полезен для просмотра сведений других узлов, но не заменяет синхронизацию выпуска. Перед критическим решением — например, выбирать нужный бинарник по архитектуре — получают свежий факт либо передают проверенный контракт платформы. На схеме и в локальном тестовом образце facts выключены, чтобы не собирать сведения хоста пользователя. Сверено 01.11.2026: <a href="https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/set_fact_module.html">set_fact</a> и <a href="https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_vars_facts.html">facts/cache</a>; при обновлении проверяют и cache plugin, а не только имя переменной.</p>

@@ -1,0 +1,32 @@
+{
+  "date": "2026-11-01",
+  "scope": "native OpenSSL in temporary HOME; static bash -n only for VM scripts",
+  "checks": [
+    {
+      "name": "exact chapter03 CA/sign/SAN block succeeds; wrong hostname fails; private key has no group/other access",
+      "passed": true
+    },
+    {
+      "name": "static Bash syntax: backup-vm.sh",
+      "passed": true
+    },
+    {
+      "name": "static Bash syntax: extract-vm.sh",
+      "passed": true
+    },
+    {
+      "name": "static Bash syntax: get-cli.sh",
+      "passed": true
+    },
+    {
+      "name": "static Bash syntax: get-oras.sh",
+      "passed": true
+    },
+    {
+      "name": "static Bash syntax: get-server.sh",
+      "passed": true
+    }
+  ],
+  "openssl_version": "OpenSSL 3.0.13 30 Jan 2024 (Library: OpenSSL 3.0.13 30 Jan 2024)",
+  "checks_passed": 6
+}

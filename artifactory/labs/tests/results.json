@@ -1,0 +1,111 @@
+{
+  "date": "2026-11-01",
+  "scope": "native Go + native CLI; own protocol fixture and storage model; NOT Artifactory",
+  "checks": [
+    {
+      "name": "pinned CLI version and real Go",
+      "passed": true
+    },
+    {
+      "name": "own dependency source tests",
+      "passed": true
+    },
+    {
+      "name": "uppercase escape preserves slashes and major suffix",
+      "passed": true
+    },
+    {
+      "name": "real Go cold fetch, repeated warm build without new requests, executable output",
+      "passed": true,
+      "tidy_requests": 2,
+      "first_build_extra_requests": 1,
+      "http_requests": 3
+    },
+    {
+      "name": "new module cache requires actual protocol fetch",
+      "passed": true
+    },
+    {
+      "name": "cold cache cannot resolve with GOPROXY off",
+      "passed": true,
+      "exit": 1
+    },
+    {
+      "name": "real jf rt ping and curl against explicit loopback MOCK, not Artifactory",
+      "passed": true
+    },
+    {
+      "name": "server-id is local, rejected before rt and before ping",
+      "passed": true
+    },
+    {
+      "name": "native go-config persists repository IDs, not token",
+      "passed": true
+    },
+    {
+      "name": "native build-info collection and dry-run + bp alias; state under chosen directory",
+      "passed": true,
+      "dependency_sha1": "4effa56cbbf7a1a67b39fac2e6db3425e2bc1fa1"
+    },
+    {
+      "name": "native Go netrc prefix without the nondefault port does not match pinned client URL",
+      "passed": true
+    },
+    {
+      "name": "native Go HTTPS + scoped CA + netrc credentials",
+      "passed": true,
+      "authored_dummy_credentials_only": true
+    },
+    {
+      "name": "without netrc authentication clean HTTPS client fails 401",
+      "passed": true
+    },
+    {
+      "name": "manifest rejects empty, missing metadata, duplicate names and malformed size/hash",
+      "passed": true
+    },
+    {
+      "name": "manifest rejects symlink and changed bytes; does not claim origin trust",
+      "passed": true
+    },
+    {
+      "name": "MODEL: two paths one blob; deleting one reference cannot reclaim live bytes",
+      "passed": true,
+      "stats": {
+        "references": 2,
+        "logical_bytes": 42,
+        "blob_files": 1,
+        "physical_bytes": 21
+      }
+    },
+    {
+      "name": "MODEL: paired restore reads bytes; missing filestore is rejected",
+      "passed": true
+    },
+    {
+      "name": "MODEL: last reference removal makes blob collectable",
+      "passed": true
+    }
+  ],
+  "go_version": "go version go1.27.3 linux/amd64",
+  "cli_version": "jf version 2.129.0",
+  "measurement": {
+    "scope": "CLI process startup only; not server throughput/cache efficiency",
+    "runs": 7,
+    "unit": "ms",
+    "median": 30.27,
+    "minimum": 29.793,
+    "maximum": 31.337
+  },
+  "checks_passed": 18,
+  "not_executed": [
+    "Artifactory installation/license",
+    "real Router/Access/PostgreSQL/filestore",
+    "Go publish to real server",
+    "OCI push/pull",
+    "build-info publish/promotion to real server",
+    "RBAC/revocation",
+    "coherent Artifactory backup/restore",
+    "HA/replication/federation"
+  ]
+}

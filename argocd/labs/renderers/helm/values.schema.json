@@ -1,0 +1,20 @@
+{
+  "type": "object",
+  "required": [
+    "message",
+    "replicas",
+    "image"
+  ],
+  "properties": {
+    "message": {
+      "type": "string"
+    },
+    "replicas": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "image": {
+      "type": "string"
+    }
+  }
+}

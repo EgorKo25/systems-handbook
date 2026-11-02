@@ -1,0 +1,11 @@
+automated:
+  enabled: true
+  prune: false
+  selfHeal: true
+  allowEmpty: false
+retry:
+  limit: 3
+  backoff:
+    duration: 5s
+    factor: 2
+    maxDuration: 30s

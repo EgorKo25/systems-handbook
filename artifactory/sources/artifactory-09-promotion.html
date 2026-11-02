@@ -1,0 +1,74 @@
+<header><h1>Из кандидата в выпуск: сохранить те же байты и связи</h1><p>Проверенный бинарник, описание сборки и отметка одобрения не подменяют друг друга.</p></header>
+<h2 id="artifactory-09-promotion-section-1">Сначала фиксированный кандидат</h2>
+<p>Go исходный модуль v1.0.0 уже опубликован и получен по утверждённому маршруту. Издатель в своей сохранённой копии service выполняет тесты, затем собирает целевой Linux amd64 файл. Программа не должна запускаться на случайной другой ОС только потому, что называется receipt. -trimpath уменьшает зависимость путей сборки от места checkout; -ldflags передаёт параметр линкеру, здесь значение package main.version. Выбор этих флагов не обещает универсальной воспроизводимости разных toolchain и окружений.</p>
+<pre><code>(
+set -euo pipefail
+mkdir -p "$LAB_WORK/release"
+cd "$HOME/artifactory-handbook/labs/service"
+export GOOS=linux GOARCH=amd64 CGO_ENABLED=0
+jf go test ./... --no-fallback --build-name=receipt --build-number=1
+jf go build -trimpath -ldflags='-X main.version=1.0.0' \
+  -o "$LAB_WORK/release/receipt-linux-amd64" ./cmd/receipt \
+  --no-fallback --build-name=receipt --build-number=1
+"$GO_BIN" version -m "$LAB_WORK/release/receipt-linux-amd64"
+sha256sum "$LAB_WORK/release/receipt-linux-amd64"
+)</code></pre>
+<p>Операции выполняются в shell с подготовленным PATH, resolver, CA и private exceptions предыдущих глав. Если любой тест или build неуспешен, upload не выполняется. Здесь test направлен на весь свой проект; наш минимум имеет проверенный модуль зависимости и отдельную проверку результата CLI в local suite. Go version -m извлекает встроенные сведения о сборке; отсутствие нужной записи надо исследовать, а не дописывать в журнал вручную. Для допустимого нативного Linux amd64 клиента запуск <code>receipt-linux-amd64 AB</code> должен дать orderAB,digit1,version1.0.0. Это не криптографическая проверка программы, только наблюдаемый контракт примера.</p>
+<h2 id="artifactory-09-promotion-section-2">Manifest — согласованное описание набора</h2>
+<p>Manifest, манифест выпуска, здесь авторский JSON с версией программы, строкой toolchain и непустым списком basename/size/SHA256. Он не является стандартом JFrog build-info или OCI manifest. Команда <code>python3 release_manifest.py</code> выбирает одну из операций create/verify; скрипт <a href="labs/release_manifest.py">release_manifest.py</a> принимает ровно эти правила. Basename — одно имя файла без перехода в каталог. Проверка отклоняет пустой список, повторные имена, неверные типы размера, неверный формат хеша, symlink и выход из каталога. Она не защищает от другого процесса, меняющего файлы между проверкой и запуском: пакет должен быть закрыт от посторонних писателей.</p>
+<pre><code>(
+set -euo pipefail
+cd "$HOME/artifactory-handbook/labs"
+python3 release_manifest.py create --version 1.0.0 \
+  --toolchain 'go1.27.3 linux/amd64' \
+  --file "$LAB_WORK/release/receipt-linux-amd64" \
+  --output "$LAB_WORK/release/manifest.json"
+python3 release_manifest.py verify --manifest "$LAB_WORK/release/manifest.json" \
+  --directory "$LAB_WORK/release"
+)</code></pre>
+<p>Подставьте фактически использованный toolchain; строка примера не доказывает его применение. Сохраните доверенную сумму самого manifest либо подпишите его своим принятым процессом. Если злоумышленник может заменить и файл, и manifest, совпадение их сумм не подтверждает происхождение. Provenance — утверждение о происхождении сборки: кто её выполнил, из каких входов и в какой среде. Доверие к этому утверждению зависит от защищённого процесса и проверяемой стороны подписи, не от красивого поля sourceCommit.</p>
+<h2 id="artifactory-09-promotion-section-3">Загрузка и build-publish</h2>
+<p>Из labs издатель загружает ровно два названных файла. --flat=true сохраняет basename вместо дерева абсолютного пути клиента. --fail-no-op=true превращает отсутствие подходящих файлов в заметный отказ; код 2 при пустом результате нельзя принять за успешную публикацию. Wildcard шире утверждённого списка здесь не нужен.</p>
+<pre><code>(
+set -euo pipefail
+jf rt upload "$LAB_WORK/release/receipt-linux-amd64" \
+  generic-candidates/receipt/1.0.0/ --server-id=lab-publisher \
+  --flat=true --fail-no-op=true --build-name=receipt --build-number=1
+jf rt upload "$LAB_WORK/release/manifest.json" \
+  generic-candidates/receipt/1.0.0/ --server-id=lab-publisher \
+  --flat=true --fail-no-op=true --build-name=receipt --build-number=1
+jf rt build-publish receipt 1 --server-id=lab-publisher --dry-run
+)</code></pre>
+<p>Сначала прочитайте предварительный JSON в частном месте: он может содержать чувствительные входы. Автоматическое --collect-env не включено. Если требуется CI metadata, собирайте явно разрешённые поля, а не всё окружение с надеждой на универсальный blacklist. Проверяйте, что uploaded artifacts связаны с опубликованным build по свойствам/суммам; вручную загруженный произвольный JSON без item properties способен показать No path found. Build-info может изменяться уполномоченным субъектом; сам формат не является неизменяемым подписанным журналом.</p>
+<p>Только после прочтения и принятия предварительного JSON отдельно отправьте описание: <code>jf rt build-publish receipt 1 --server-id=lab-publisher</code>. Если просмотр показал неверный состав или секрет, этот следующий шаг запрещён до исправления причины.</p>
+<p>Нативный опыт CLI2.129.0 сравнил один файл input/tree/item.txt при --dry-run и --detailed-summary. При --flat=true target заканчивается generic-candidates/test/item.txt, при --flat=false — generic-candidates/test/input/tree/item.txt. Это наблюдение плана без доступного сервера, не его фактической записи. Пустой glob missing* с --fail-no-op=true дал код 2; явно названный отсутствующий файл дал код 1 как ошибку пути. Оба результата останавливают наш выпуск, но их причины различаются. Поле sha256 в таком предварительном списке пусто: не принимайте его за уже вычисленную контрольную сумму.</p>
+<h2 id="artifactory-09-promotion-section-4">Принимающий копирует, не пересобирает</h2>
+<p>Для отдельной личности receipt-promoter заведите отдельный профиль по тому же защищённому процессу, не заменяя профиль издателя. После проверки кандидата и его manifest принимающий выполняет ниже. Эта операция требует коммерческого build promotion. --copy=true сохраняет исходник; умолчание выбранной CLI — перенос. --include-dependencies=false не тащит зависимости исходного Go-модуля в Generic. --source-repo ограничивает действие собственными кандидатами. Номер build1 и версия 1.0.0 различаются, потому что первый идентифицирует выполнение, вторая — выпуск программы.</p>
+<pre><code>jf rt build-promote receipt 1 generic-releases --server-id=lab-promoter \
+  --source-repo=generic-candidates --copy=true --include-dependencies=false \
+  --status=Released --comment='Личный учебный выпуск принят' --fail-fast=true</code></pre>
+<p>Fail-fast прекращает обработку после ошибки, но не обещает транзакционный откат уже скопированных объектов. Сохраните ответ, проверьте каждый ожидаемый целевой файл и совпадение хеша. При частичном результате не повторяйте всё под новым build номером и не ставьте Released вручную ради зелёного статуса. Сначала установите фактический набор и выберите контролируемый повтор либо компенсацию. Запись статуса — отметка процесса, не доказательство, что файл невозможно заменить администратору.</p>
+<h2 id="artifactory-09-promotion-retry-after-lost-response">Продолжить после потерянного ответа</h2>
+<table><thead><tr><th>Что прервалось</th><th>Что выяснить перед повтором</th><th>Как продолжить</th></tr></thead><tbody>
+<tr><td>Upload не вернул ответ</td><td>Существует ли точный candidate path, совпадают ли size и SHA256</td><td>Подтверждённые те же байты не пересобирать и не заменять; отсутствующий объект передать заново после проверки причины</td></tr>
+<tr><td>Build-publish оборвался</td><td>Есть ли receipt/1 на сервере и тот ли у него состав</td><td>Сопоставить серверное описание с сохранёнными локальными частями; не смешивать части нового запуска с номером 1</td></tr>
+<tr><td>Copy завершился частично</td><td>Какие из двух точных путей releases присутствуют и с какими суммами</td><td>Сохранить полный кандидат; после исправления причины выбрать поддержанный повтор с проверкой прав, затем принять весь набор</td></tr>
+</tbody></table>
+<p>Признак «приёмка завершена» относится ко всему утверждённому набору. Изменяемое свойство stage=approved и статус Released полезны для поиска и организации процесса, но субъект с Annotate способен менять их отдельно от файла. Если повтор требует overwrite существующего release, сначала выясните расхождение: выдача дополнительного права ради прохождения команды способна скрыть замену принятого выпуска. Отсутствие ответа само по себе не означает ни откат, ни отсутствие записи.</p>
+<h2 id="artifactory-09-promotion-section-5">Новая принимающая машина</h2>
+<p>В новом пустом каталоге receiving читатель скачивает два объекта из generic-releases своим профилем только для чтения через rt download --flat=true --fail-no-op=true. Профиль и токен не берутся из архива издателя. Затем verify проверяет полученный набор относительно отдельно принятого manifest, а допустимая машина выполняет тест результата. Исполнимый блок для нового клиента, где lab-reader создан отдельно и LAB_WORK указывает его собственную рабочую область:
+</p>
+<pre><code>(
+set -euo pipefail
+test ! -e "$LAB_WORK/receiving"
+mkdir -p "$LAB_WORK/receiving"
+jf rt download generic-releases/receipt/1.0.0/receipt-linux-amd64 \
+  "$LAB_WORK/receiving/" --server-id=lab-reader --flat=true --fail-no-op=true
+jf rt download generic-releases/receipt/1.0.0/manifest.json \
+  "$LAB_WORK/receiving/" --server-id=lab-reader --flat=true --fail-no-op=true
+cd "$HOME/artifactory-handbook/labs"
+python3 release_manifest.py verify --manifest "$LAB_WORK/receiving/manifest.json" \
+  --directory "$LAB_WORK/receiving"
+)</code></pre>
+<p>До verify сверяйте manifest с его независимо принятым хешем или подписью. Скачивание кандидата из локального release/ вместо сервера не является этой приёмкой. Автор не выполнял загрузку, публикацию build-info, продвижение или получение в настоящем Artifactory; локальные проверки проверяют инструменты и контракты файла, не серверный процесс выпуска.</p>
+<h2 id="artifactory-09-promotion-section-6">Первичные источники и версия</h2><p>Проверено 1 ноября 2026: <a href="https://docs.jfrog.com/artifactory/docs/build-integration">связи и promotion</a>, <a href="https://docs.jfrog.com/integrations/docs/jfrog-cli">checksum transfer</a>, <a href="https://docs.jfrog.com/administration/docs/permissions">права overwrite/builds</a>, <a href="https://pkg.go.dev/cmd/go#hdr-Print_Go_version">встроенные сведения Go</a>. Грамматика флагов — справка настоящего CLI2.129.0, модель целостности — оригинальный собственный код.</p>

@@ -1,0 +1,6 @@
+counter_root: /opt/counter
+counter_data_dir: /var/lib/counter
+counter_config_dir: /etc/counter
+counter_listen: '127.0.0.1:8080'
+counter_message: 'Persistent personal VM counter'
+counter_force_restart: false

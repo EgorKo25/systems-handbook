@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ledger-gitops
+  namespace: argocd
+spec:
+  project: ledger
+  source:
+    repoURL: https://git.example.invalid/reader/ledger-config.git
+    targetRevision: "1111111111111111111111111111111111111111"
+    path: apps/ledger/overlays/lab
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: gitops-lab
+  syncPolicy:
+    automated:
+      enabled: false
+      prune: false
+      selfHeal: false
+      allowEmpty: false
+    syncOptions:
+      - FailOnSharedResource=true
+  revisionHistoryLimit: 10

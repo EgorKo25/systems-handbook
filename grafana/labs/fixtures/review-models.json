@@ -1,0 +1,186 @@
+{
+  "description": "Авторские арифметические модели для двух рисунков и табличного соединения; не Grafana, не PromQL и не браузерный transformer.",
+  "grid": {
+    "from_ms": "1700000000000",
+    "to_ms": "1700000030000",
+    "table": [
+      [
+        1699999980,
+        0
+      ],
+      [
+        1699999995,
+        1
+      ],
+      [
+        1700000010,
+        2
+      ],
+      [
+        1700000025,
+        3
+      ]
+    ],
+    "steps_seconds": [
+      15,
+      30
+    ],
+    "expected": [
+      {
+        "step": 15,
+        "start": 1699999995,
+        "end": 1700000025,
+        "values": [
+          [
+            1699999995,
+            1
+          ],
+          [
+            1700000010,
+            2
+          ],
+          [
+            1700000025,
+            3
+          ]
+        ]
+      },
+      {
+        "step": 30,
+        "start": 1699999980,
+        "end": 1700000010,
+        "values": [
+          [
+            1699999980,
+            0
+          ],
+          [
+            1700000010,
+            2
+          ]
+        ]
+      }
+    ]
+  },
+  "join": {
+    "A": [
+      [
+        "a",
+        60,
+        10
+      ],
+      [
+        "b",
+        60,
+        20
+      ]
+    ],
+    "B": [
+      [
+        "a",
+        60,
+        0.1
+      ],
+      [
+        "c",
+        60,
+        0.2
+      ]
+    ],
+    "expected_inner": [
+      [
+        "a",
+        10,
+        0.1
+      ]
+    ],
+    "expected_outer": [
+      [
+        "a",
+        10,
+        0.1
+      ],
+      [
+        "b",
+        20,
+        null
+      ],
+      [
+        "c",
+        null,
+        0.2
+      ]
+    ]
+  },
+  "alert": {
+    "evaluation_seconds": 20,
+    "pending_seconds": 30,
+    "keep_firing_seconds": 30,
+    "threshold": 0.05,
+    "values": [
+      [
+        0,
+        0.02
+      ],
+      [
+        20,
+        0.08
+      ],
+      [
+        40,
+        0.09
+      ],
+      [
+        60,
+        0.09
+      ],
+      [
+        80,
+        0.02
+      ],
+      [
+        100,
+        0.02
+      ],
+      [
+        120,
+        0.02
+      ]
+    ],
+    "expected": [
+      [
+        0,
+        "Normal"
+      ],
+      [
+        20,
+        "Pending"
+      ],
+      [
+        40,
+        "Pending"
+      ],
+      [
+        60,
+        "Alerting"
+      ],
+      [
+        80,
+        "Recovering"
+      ],
+      [
+        100,
+        "Recovering"
+      ],
+      [
+        120,
+        "Normal"
+      ]
+    ]
+  },
+  "limits": [
+    "Grid uses whole-second endpoints and the exact authored mock table; no lookback, staleness, interpolation, rate or generic Grafana step selection.",
+    "Join assumes one row per instance at one shared time. Duplicate keys or different times are rejected; this is not the browser join implementation.",
+    "Alert has one fixed label set, finite numeric inputs, regular successful evaluations, no errors, NoData, missing-series, HA, retries or delivery."
+  ]
+}

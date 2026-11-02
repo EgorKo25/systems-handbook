@@ -1,0 +1,6 @@
+- name: Set dynamic gate inside included tasks
+  ansible.builtin.set_fact:
+    dynamic_gate: true
+- name: The included body proceeds after entry was accepted
+  ansible.builtin.set_fact:
+    dynamic_second: true

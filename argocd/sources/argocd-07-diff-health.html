@@ -1,0 +1,67 @@
+<header><h1>Различие и готовность: два независимых вопроса</h1><p>Совпавшие документы могут описывать неработающий сервис, а здоровый сервис может отличаться от Git.</p></header>
+
+<h2 id="argocd-07-diff-health-section-1">Что сравнивается</h2>
+<p>Различие, diff, — результат сравнения желаемого и наблюдаемого представлений ресурса. Идентичность включает группу API, вид, пространство имён и имя. API-версия влияет на преобразования, но смена версии одного вида не обязана создавать новый логический ресурс. Наблюдаемые объекты поступают из кэша кластера; желаемые вычисляет repo-server. Сначала проверяют свежесть и происхождение обеих сторон, затем смысл различия.</p>
+<p>Простой текстовый diff видит порядок полей, форматирование и отсутствующее поле так же, как изменение значения. Argo нормализует документы и учитывает API-преобразования; механизм сравнения имеет собственные настройки. Поэтому git diff --no-index в labs доказывает изменение текста, но не повторяет алгоритм Argo. При добавлении серверного сравнения API может выполнить dry-run и изменяющие admission-компоненты: это уже запрос к кластеру, а не чистая функция от двух файлов.</p>
+<h2 id="argocd-07-diff-health-deepening-1">Три стратегии расчёта различия</h2>
+<p>Admission — обработка запроса Kubernetes API перед сохранением: проверяющий validating-webhook может отказать, изменяющий mutating-webhook — преобразовать документ. ResourceVersion — служебная версия живого API-объекта, не Git-коммит. Эти понятия понадобятся для серверного сравнения.</p>
+<p>Для стратегии Legacy нужны три входа: желаемый объект D, живой L и прежняя конфигурация A из аннотации last-applied-configuration. Третий вход помогает отличать поле, которое автор удалил из своего описания, от поля, которого он никогда не задавал. Отсутствие поля в D само по себе ещё не означает «удалить любое такое поле из L». Порядок YAML-ключей и серверные значения по умолчанию также мешают обычному текстовому сравнению.</p>
+<p>Structured-Merge Diff использует сведения о принадлежности полей; в документации 3.5.6 этот вариант заменяется Server-Side Diff из-за ограничений, в частности у CRD со значениями по умолчанию. Server-Side Diff получает прогноз живого объекта через пробный Server-Side Apply в API и сравнивает прогноз с L. Результат кэшируется; изменение ревизии, спецификации, resourceVersion или запрос refresh заставляет его пересчитать. Для ещё не существующего ресурса этот серверный путь не вызывается.</p>
+<p>Расчёт различия и применение разделены. ServerSideDiff=true настраивает сравнение; ServerSideApply=true выбирает способ изменяющей операции sync. Включение одного не означает выполнения другого. Проверяющие admission-webhooks могут обнаружить ошибку уже при серверном сравнении. Учёт изменений mutating-webhooks отдельно включается IncludeMutationWebhook=true. Эти правила закреплены в <a href="https://github.com/argoproj/argo-cd/blob/v3.5.6/docs/user-guide/diff-strategies.md">описании стратегий 3.5.6</a>.</p>
+<figure id="argocd-diff-health-axes" class="argo-subject-figure">
+<style>
+#argocd-diff-health-axes{margin:1.8rem 0;padding:.8rem;border:1px solid currentColor;border-radius:.5rem;background:var(--paper);color:var(--text);overflow-wrap:anywhere}
+#argocd-diff-health-axes svg{display:block;width:100%;height:auto;max-width:27rem;margin:.8rem auto;color:inherit}
+#argocd-diff-health-axes text{font:16px system-ui,sans-serif;fill:currentColor}
+#argocd-diff-health-axes path,#argocd-diff-health-axes line,#argocd-diff-health-axes rect,#argocd-diff-health-axes circle{stroke:currentColor;fill:none;stroke-width:1.5}
+#argocd-diff-health-axes .argo-sheet-title{font-weight:700}
+#argocd-diff-health-axes p{font-size:1em;text-align:start}
+@media print{#argocd-diff-health-axes{--paper:#fff;--text:#000;background:#fff;color:#000;break-inside:avoid}#argocd-diff-health-axes svg{max-width:20rem}}
+</style>
+<figcaption><strong id="argocd-diff-health-axes-title">Три описания одного Deployment</strong></figcaption>
+<p>HPA, HorizontalPodAutoscaler, — контроллер Kubernetes, изменяющий число реплик по метрикам. Здесь его изменение показано отдельно от изменения образа автором Git.</p>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 660" role="img" aria-labelledby="argocd-diff-health-axes-svg-title argocd-diff-health-axes-desc">
+<title id="argocd-diff-health-axes-svg-title">Три описания одного Deployment</title><desc id="argocd-diff-health-axes-desc">Условные входы сравнения: Git D, прежняя last-applied A и живой Kubernetes L. Образ изменён автором, число реплик изменено HPA. Это не результат работающего Argo.</desc>
+<path d="M16 16H312L344 48V166H16Z M312 16V48H344"/>
+<text x="30" y="43" class="argo-sheet-title">D · желаемое, Git C2</text>
+<text x="30" y="75">spec.replicas: 2</text>
+<text x="30" y="106">image: ledger-api:0.2.0</text>
+<text x="30" y="143">Автор поменял образ</text>
+<path d="M16 188H312L344 220V338H16Z M312 188V220H344"/>
+<text x="30" y="215" class="argo-sheet-title">A · last-applied</text>
+<text x="30" y="247">spec.replicas: 2</text>
+<text x="30" y="278">image: ledger-api:0.1.0</text>
+<text x="30" y="315">Прежнее описание автора</text>
+<path d="M16 360H312L344 392V510H16Z M312 360V392H344"/>
+<text x="30" y="387" class="argo-sheet-title">L · живой объект API</text>
+<text x="30" y="419">spec.replicas: 3</text>
+<text x="30" y="450">image: ledger-api:0.1.0</text>
+<text x="30" y="487">Реплики изменил HPA</text>
+<line x1="30" y1="538" x2="330" y2="538"/>
+<text x="22" y="570">Образ: D ≠ A = L</text>
+<text x="22" y="602">Реплики: D = A ≠ L</text>
+<text x="22" y="634">Правила владения нужны отдельно</text>
+</svg>
+<p>Текстовая модель: в D и A две реплики, в L три; образ в D — условный 0.2.0, в A и L — 0.1.0. Одинаковая подсветка различия ещё не выбирает владельца replicas. Legacy использует D/L/A, серверное сравнение получает прогноз API, а sync применяет выбранный способ отдельно. Фигура не предсказывает универсальный patch или статус для любых настроек. Для HPA согласуйте управление полем по следующей главе о владении.</p>
+</figure>
+<h2 id="argocd-07-diff-health-section-2">Состояние синхронизации</h2>
+<p>Состояние синхронизации, sync status, отвечает на вопрос о соответствии управляемых ресурсов цели. Synced означает совпадение в рамках правил сравнения, OutOfSync — найденное различие, Unknown — сравнение не получено достоверно. Условие, condition, сообщает отдельную проблему: например, ComparisonError при ошибке генерации. Это не то же самое, что состояние запущенной операции operationState или фаза Pod. Неудачная операция может оставаться в истории после последующего восстановления готовности.</p>
+<h2 id="argocd-07-diff-health-section-3">Состояние здоровья</h2>
+<p>Health, оценка работоспособности ресурса, строится по правилам конкретного вида. Для Deployment учитываются наблюдённое поколение и состояние реплик; для Job — завершение. Healthy, Progressing, Degraded, Suspended, Missing и Unknown — разные результаты такой оценки. У произвольного CRD может не быть встроенного проверяющего правила; пользовательская Lua-проверка является кодом с отдельной ответственностью.</p>
+<table><thead><tr><th>Сравнение</th><th>Готовность</th><th>Причина и следующий вопрос</th></tr></thead><tbody><tr><td>Synced</td><td>Healthy</td><td>Документы совпали и правила готовности выполнены; проверить прикладной HTTP-ответ.</td></tr><tr><td>Synced</td><td>Degraded</td><td>Git сам описывает неисправное состояние либо процесс отказал; изучить Pod и события.</td></tr><tr><td>OutOfSync</td><td>Healthy</td><td>Старый работающий набор отличается от цели; оценить изменение перед sync.</td></tr><tr><td>Unknown</td><td>Unknown или последнее значение</td><td>Нет достоверного сравнения; проверить доступ и генерацию, не запускать удаление вслепую.</td></tr></tbody></table>
+<h2 id="argocd-07-diff-health-section-4">Как наблюдать без ложного успеха</h2>
+<pre><code>"$ARGOCD_BIN" --config "$LAB_ROOT/private/argocd-config" \
+  --argocd-context handbook app get ledger-gitops --refresh --output yaml
+"$ARGOCD_BIN" --config "$LAB_ROOT/private/argocd-config" \
+  --argocd-context handbook app diff ledger-gitops</code></pre>
+<p>Refresh запрашивает обновление сравнения; hard-refresh дополнительно инвалидирует кэш целевых манифестов. Ни один флаг не равен применению. Для app diff код 0 означает отсутствие различия, --diff-exit-code по умолчанию задаёт 1 при различиях. Общая ошибка соединения или вычисления — другой случай: сценарий должен различать результат, stderr и тип команды, а не считать любой ненулевой код безопасным «есть изменение». --exit-code=false отключает именно различие как ненулевой результат, не исправляет отказ API.</p>
+<p>App diff --local КАТАЛОГ подменяет локальную сторону сравнения и всё равно требует серверное приложение. --server-side-generate передаёт локальные файлы для серверной генерации; это отдельная передача файлов через API и требует доверия к серверу. Ни один из этих вариантов не исполнен автором на кластере. Встроенные автономные проверки книги вызывают сами рендереры.</p>
+<p>Реальный локальный отрицательный опыт изолировал HOME и --config, не задавал сервер и вызвал app diff с --local на существующем каталоге. CLI завершился с кодом1: Argo CD server address unspecified. Это проверка отсутствия автономного пути, а не выполненное сравнение с настоящим кластером; не переносите этот конкретный код на все другие общие ошибки.</p>
+<h2 id="argocd-07-diff-health-section-5">Игнорирование и владение полем</h2>
+<p>IgnoreDifferences исключает указанные пути JSON, выражения jq или поля, управляемые названными менеджерами, из сравнения. Это не автоматически исключение из применения. RespectIgnoreDifferences=true распространяет правило на подготовку синхронизации существующего ресурса; при первом создании исходного живого объекта нет. Слишком широкое игнорирование скрывает реальные изменения и требует письменной причины.</p>
+<p>Если HorizontalPodAutoscaler управляет количеством реплик, одновременно фиксировать spec.replicas в Git и постоянно возвращать его selfHeal означает конкуренцию. Выберите владельца поля, уберите лишнее управление или задайте точечное правило. Списки Kubernetes имеют собственную семантику объединения и нормализации; менять порядок вслепую по текстовому diff недостаточно. Управляемые поля managedFields — данные API о менеджерах, не список доверенных людей.</p>
+<h2 id="argocd-07-diff-health-section-6">Прикладной тест остаётся отдельным</h2>
+<p>Readiness /readyz проверяет способность данного Pod принимать трафик, Service требует подходящего селектора и адресов готовых Pod. HTTP /api/hello дополнительно подтверждает полный путь и MESSAGE нужной версии. Healthy не проверяет пользовательскую бизнес-операцию и не является резервной копией данных. В практикуме намеренно испорченный путь readiness позволяет увидеть, что принятый Deployment и доступный старый Service не означают успешную замену всех Pod.</p>
+
+<h2 id="argocd-07-diff-health-section-7">Команды и проверенные формы</h2><p>Открываемая справка этой главы: <code>argocd app get</code>, <code>argocd app diff</code>, <code>argocd app wait</code>. В карточках разобраны назначение, отдельные флаги, сочетания и предел доказательства. Полный путь в исполняемых блоках выбирает проверенную программу; каноническое имя здесь открывает ту же команду в справочнике.</p>
+<h2 id="argocd-07-diff-health-section-8">Источники и версия</h2><p>Проверено 1 ноября 2026. Argo CD 3.5.6. <a href="https://github.com/argoproj/argo-cd/blob/v3.5.6/docs/user-guide/diffing.md">Сравнение</a>, <a href="https://github.com/argoproj/argo-cd/blob/v3.5.6/docs/operator-manual/health.md">Оценка здоровья</a>, <a href="https://github.com/argoproj/argo-cd/blob/v3.5.6/docs/user-guide/sync-options.md">Sync options</a>, <a href="https://github.com/argoproj/argo-cd/blob/v3.5.6/docs/user-guide/commands/argocd_app_diff.md">App diff</a>.</p>

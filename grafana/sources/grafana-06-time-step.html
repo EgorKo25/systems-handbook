@@ -1,0 +1,63 @@
+<header><h1>Диапазон, мгновенный запрос, шаг и четыре разных интервала</h1><p>Время измерения, время вычисления, шаг графика и частота обновления не взаимозаменяемы.</p></header>
+<h2 id="grafana-06-time-step-section-1">Откуда берутся времена</h2>
+<p>У завершения /work есть реальное время события. Go меняет счётчик и гистограмму. Через интервал сбора 15s Prometheus получает состояние сборщиков и назначает время измерения по своим правилам. Момент вычисления запроса — время, на которое движок вычисляет выражение из сохранённых измерений. Время отрисовки — когда ответ стал картинкой браузера. Поэтому точка 12:00 может означать оценку на 12:00 по последним доступным данным, а не новый вызов Go ровно в эту секунду.</p>
+<p>Мгновенный запрос, instant query, вычисляет выражение один раз на заданный time. Это не обязательно сырые данные: histogram_quantile(rate(...[5m])) тоже вычисляется мгновенно на T. Запрос диапазона, range query, повторяет вычисление на сетке start,start+step,...≤end. Он представляет множество мгновенных вычислений, а не возвращение каждого исходного измерения. Для исходного селектора движок может повторять последнее допустимое значение между сборами, учитывая глубину поиска и устаревание; алгоритм разобран в <a href="../prometheus/index.html#prom-08-time-evaluation">томе Prometheus</a>.</p>
+<h2 id="grafana-06-time-step-section-2">Шаг, окно, сбор и обновление</h2>
+<p>step — расстояние между моментами вычисления возвращаемого диапазона. Окно в <code>rate(counter[1m])</code> задаёт историю для одного вычисления. scrape_interval — период входных измерений; refresh — как часто браузер посылает новый запрос. При сборе 15s, step5s, окне 1m и обновлении 30s оценки вычисляются чаще поступления наблюдений, а весь запрос обновляется раз 30s. Точность измерений от этого не утраивается.</p>
+<p>Max data points — целевой бюджет точек для подготовки запроса. При окне 3600s и бюджете 240 грубая оценка интервала 15s. Но включённая с обеих сторон сетка 0..3600 с шагом 15 имеет 241 точку. Модуль нормализует интервалы, учитывает минимумы и выравнивает границы. Одной формулой нельзя обещать точный HTTP-запрос всех версий. В фактическом проходе главы 05 диапазон 1700000000..1700000030 превратился при шаге 15 в 1699999995..1700000025, а при 30 — в 1699999980..1700000010.</p>
+<h2 id="grafana-06-time-step-review-1">Как выравнивание меняет именно этот ответ</h2>
+<p>Возьмём сохранённый диапазон 1700000000…1700000030s из предыдущей главы. При шаге 15s его начало делится как 113333333×15+5; выровненное начало равно 1699999995. Конец делится как 113333335×15+5 и становится 1700000025. При 30s остаток начала уже 20, поэтому получаем 1699999980; конец становится 1700000010. Это вычисления для фактически записанного запроса 13.3.0. Они не описывают любой режим времени или любой модуль Grafana.</p>
+<figure id="grafana-step-window">
+<h3 id="grafana-step-window-title">Шаг и окно: две сетки одной таблицы</h3>
+<style>
+#grafana-step-window{margin:1.5rem 0;color:var(--text,#202832)}
+#grafana-step-window svg{display:block;width:100%;height:auto;min-width:0;max-width:30rem;margin-inline:auto;color:inherit}
+#grafana-step-window .g-line{fill:none;stroke:currentColor;stroke-width:1.5}
+#grafana-step-window .g-label{font:16px system-ui,sans-serif;fill:currentColor}
+#grafana-step-window .g-small{font:14px system-ui,sans-serif;fill:currentColor}
+#grafana-step-window .g-mono{font:15px ui-monospace,monospace;fill:currentColor}
+#grafana-step-window .g-chosen{fill:currentColor;stroke:currentColor;stroke-width:2}
+#grafana-step-window .g-empty{fill:none;stroke:currentColor;stroke-width:1.5}
+#grafana-step-window .g-band{fill:currentColor;opacity:.12}
+#grafana-step-window figcaption{margin-top:.75rem}
+@media print{#grafana-step-window{color:#111;break-inside:auto}#grafana-step-window svg{max-width:18rem;break-inside:avoid}}
+</style>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 620" role="img" aria-labelledby="g-review-grid-title g-review-grid-desc">
+<title id="g-review-grid-title">Та же таблица при шагах 15 и 30 секунд</title>
+<desc id="g-review-grid-desc">Время отсчитано от T0=1699999980 секунд Unix. Исходная таблица имитатора: смещения 0,15,30,45 со значениями 0,1,2,3. Пользователь выбрал от плюс20 до плюс50 секунд. Модуль из сохранённого опыта выровнял границы при шаге15 до плюс15 и плюс45 и получил значения1,2,3; при шаге30 до плюс0 и плюс30 и получил0,2. Закрашенный круг означает взятую точку, пустой круг — пропущенную.</desc>
+<text class="g-label" x="24" y="26">Одна таблица, две сетки запроса</text>
+<text class="g-mono" x="24" y="54">T0 = 1699999980 s Unix</text>
+<text class="g-label" x="24" y="87">Выбор читателя: T0+20 … T0+50</text>
+<path class="g-band" d="M145 102H305V132H145Z"/>
+<path class="g-line" d="M145 102V132M305 102V132"/>
+<text class="g-small" x="151" y="123">исходный диапазон</text>
+<text class="g-label" x="24" y="160">Точки HTTP-имитатора</text>
+<path class="g-line" d="M38 198H326"/>
+<circle class="g-empty" cx="38" cy="198" r="5"/><circle class="g-empty" cx="118" cy="198" r="5"/><circle class="g-empty" cx="198" cy="198" r="5"/><circle class="g-empty" cx="278" cy="198" r="5"/>
+<text class="g-mono" x="31" y="184">0</text><text class="g-mono" x="111" y="184">1</text><text class="g-mono" x="191" y="184">2</text><text class="g-mono" x="271" y="184">3</text>
+<text class="g-small" x="26" y="225">+0s</text><text class="g-small" x="99" y="225">+15s</text><text class="g-small" x="179" y="225">+30s</text><text class="g-small" x="259" y="225">+45s</text>
+<text class="g-label" x="24" y="279">step=15s: от +15 до +45</text>
+<path class="g-line" d="M38 316H326"/>
+<path class="g-line" d="M118 301V331M278 301V331"/>
+<circle class="g-empty" cx="38" cy="316" r="5"/><circle class="g-chosen" cx="118" cy="316" r="5"/><circle class="g-chosen" cx="198" cy="316" r="5"/><circle class="g-chosen" cx="278" cy="316" r="5"/>
+<text class="g-mono" x="24" y="356">values = [1, 2, 3]</text>
+<text class="g-label" x="24" y="413">step=30s: от +0 до +30</text>
+<path class="g-line" d="M38 450H326"/>
+<path class="g-line" d="M38 435V465M198 435V465"/>
+<circle class="g-chosen" cx="38" cy="450" r="5"/><circle class="g-empty" cx="118" cy="450" r="5"/><circle class="g-chosen" cx="198" cy="450" r="5"/><circle class="g-empty" cx="278" cy="450" r="5"/>
+<text class="g-mono" x="24" y="490">values = [0, 2]</text>
+<text class="g-label" x="24" y="541">● взятая точка; ○ пропущенная</text>
+<text class="g-small" x="24" y="575">Ни среднее, ни максимум здесь</text>
+<text class="g-small" x="24" y="597">автоматически не вычислялись.</text>
+</svg>
+<figcaption>Разобраны точные запросы и исходная таблица из <code>verified-native.json</code>. T0+15=1699999995, T0+30=1700000010, T0+45=1700000025. Это проекция сохранённого опыта Grafana 13.3.0 и HTTP-имитатора; имитатор не исполнял PromQL и не искал последнее измерение между узлами.</figcaption>
+<p>Текстовая альтернатива: при 15s выбраны времена 1699999995, 1700000010, 1700000025 и значения 1,2,3. При 30s выбраны 1699999980, 1700000010 и значения 0,2. Изменение шага поменяло и узлы, и выровненные границы; исходные четыре пары остались прежними.</p>
+</figure>
+<p>У настоящего Prometheus сначала вычисляется выражение на выбранном T. Для простого мгновенного селектора движок ищет допустимое последнее измерение в пределах глубины поиска; у <code>rate(x[2m])</code> выбирается история для отдельного вычисления. Поэтому два соседних T могут использовать одни и те же измерения. В нашем HTTP-имитаторе этой логики нет: он отбирает только авторские пары на сетке. Чтобы исследовать настоящий пик, сначала определите его смысл: значение в момент T, максимум за период или частоту событий. После этого выбирайте выражение и разрешение.</p>
+<h2 id="grafana-06-time-step-section-3">Min interval и Min step</h2>
+<p>Min interval панели ограничивает вычисляемое разрешение и $__interval. Min step отдельного запроса Prometheus задаёт нижнюю границу шага и используется как значение интервала сбора для $__rate_interval, когда установлен. Настройка Scrape interval источника — знание Grafana о сборе; она не меняет prometheus.yml. Если источник собирается раз 15s, а Grafana считает 1s, автоматически выбранное окно может оказаться слишком коротким.</p>
+<p>Формула <code>$__rate_interval = max($__interval + scrape_interval, 4 * scrape_interval)</code> берёт scrape_interval из Min step запроса либо настройки источника. При $__interval15s и сборе 15s получаем max30s,60s=60s. При $__interval60s —75s. Это эвристика достаточного окна с перекрытием, а не гарантия четырёх фактически поступивших измерений при пропусках или новом ряде. Min interval панели не заменяет Min step в этой формуле. Фиксированное rate[5m] тоже обоснованно, если вопрос требует именно 5m.</p>
+<h2 id="grafana-06-time-step-section-4">Выравнивание и часовой пояс</h2>
+<p>Укрупнение шага может пропустить короткий пик между узлами сетки. Окно rate способно сгладить вспышку ещё до браузера. Нужный смысл задаёт выражение, например максимум за окно, а не надежда на пиксели. timezone=utc в нашем JSON определяет отображение времени. Unix epoch обозначает абсолютный момент: смена часового пояса браузера не перемещает событие в другую физическую секунду.</p>
+<p>now-1h удобно для текущего наблюдения, но повторное открытие через неделю покажет другие данные. Для расследования сохраняют абсолютные from/to, выражение, метки, идентичность источника и его срок хранения. Обновление раз 5s при сборе 15s обычно не даёт три новых независимых измерения, зато увеличивает обращения к API. Шаг, окно и обновление проверяют по точным запросам инспектора и цене выполнения.</p>
+<p class="source-note">Первичные источники, проверено 01.11.2026: <a href="https://grafana.com/docs/grafana/latest/datasources/prometheus/query-editor/">Редактор запросов Prometheus</a>, <a href="https://grafana.com/docs/grafana/latest/datasources/prometheus/template-variables/">Интервал rate</a>, <a href="https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/">Настройки запроса</a>.</p>
