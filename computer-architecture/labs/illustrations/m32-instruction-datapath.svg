@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="1190" viewBox="0 0 360 1190" role="img" aria-labelledby="m32-sw-title m32-sw-desc">
+<title id="m32-sw-title">Одна SW в М32: из x6 в четыре байта RAM</title>
+<desc id="m32-sw-desc">После LUI, LW и ADDI PC равен 0x100C, x5 содержит 0x00002000, x6 содержит 0x0000002B, то есть 43. Выборка читает 23 A0 62 20 и собирает слово 0x2062A023. S-формат выбирает x5 и x6, соединяет 0010000 и 00000 в знаковое смещение +512 и расширяет его до 0x00000200. ALU складывает базу и смещение: физический адрес 0x2200. Данные 0x0000002B идут из x6 отдельно от адреса. Проверка всей записи и выравнивания разрешает запись 2B 00 00 00 в RAM 0x2200…0x2203. Затем PC получает 0x1010; x5, x6 и вход 42 сохраняются. Стрелки обозначают логические передачи, пунктир — разрешение записи. Это не схема физических проводников, тактов или конвейера.</desc>
+<defs>
+ <marker id="value-arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0 7 3.5 0 7Z" fill="#25485b"/></marker>
+ <marker id="control-arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0 7 3.5 0 7Z" fill="#202b32"/></marker>
+ <style>
+ text{font-family:system-ui,sans-serif;font-size:16px;fill:#172e3c}
+ .heading{font-size:19px;font-weight:700}.title{font-size:21px;font-weight:750}
+ .mono{font-family:ui-monospace,monospace;font-size:16px}.small{font-size:14px}
+ .paper{fill:#fff;stroke:#526c7c;stroke-width:1.5}.soft{fill:#edf3f6}
+ .value{fill:none;stroke:#25485b;stroke-width:2.5;marker-end:url(#value-arrow)}
+ .control{fill:none;stroke:#202b32;stroke-width:2;stroke-dasharray:5 4;marker-end:url(#control-arrow)}
+ .rule{stroke:#c4d0d7;stroke-width:1}.port{fill:#fff;stroke:#25485b;stroke-width:1.5}
+ </style>
+</defs>
+<rect width="360" height="1190" rx="12" fill="#f6f8fa"/>
+<text x="20" y="30" class="title">SW: 43 → RAM[0x2200]</text>
+<text x="20" y="54">М32 · четвёртая инструкция</text>
+
+<!-- The RAM byte strip is address ordered; field positions below belong to the assembled word. -->
+<text x="20" y="85" class="heading">1. Выборка по адресу PC</text>
+<rect x="20" y="98" width="320" height="39" rx="5" class="paper"/>
+<text x="38" y="124" class="mono">PC = 0x0000100C</text>
+<path d="M180 138V154" class="value"/>
+<text x="198" y="151" class="small">адрес выборки</text>
+<rect x="20" y="159" width="320" height="55" class="paper"/>
+<path d="M100 159V214M180 159V214M260 159V214" class="rule"/>
+<text x="32" y="178" class="small">PA 100C</text><text x="112" y="178" class="small">100D</text><text x="192" y="178" class="small">100E</text><text x="272" y="178" class="small">100F</text>
+<text x="49" y="202" class="mono">23</text><text x="129" y="202" class="mono">A0</text><text x="209" y="202" class="mono">62</text><text x="289" y="202" class="mono">20</text>
+<text x="20" y="239" class="mono">little-endian → 0x2062A023</text>
+
+<!-- Each row gives a contiguous field. Together the six rows cover all 32 instruction bits. -->
+<text x="20" y="273" class="heading">2. Декодер: формат S</text>
+<text x="22" y="295" class="small">Биты</text><text x="100" y="295" class="small">Поле</text><text x="244" y="295" class="small">Двоичное</text>
+<rect x="20" y="302" width="320" height="153" rx="4" class="paper"/>
+<path d="M20 327H340M20 353H340M20 379H340M20 405H340M20 431H340M94 302V455M235 302V455" class="rule"/>
+<text x="26" y="321" class="mono">31…25</text><text x="101" y="321" class="mono">imm[11:5]</text><text x="244" y="321" class="mono">0010000</text>
+<text x="26" y="347" class="mono">24…20</text><text x="101" y="347" class="mono">rs2 → x6</text><text x="244" y="347" class="mono">00110</text>
+<text x="26" y="373" class="mono">19…15</text><text x="101" y="373" class="mono">rs1 → x5</text><text x="244" y="373" class="mono">00101</text>
+<text x="26" y="399" class="mono">14…12</text><text x="101" y="399" class="mono">funct3</text><text x="244" y="399" class="mono">010</text>
+<text x="26" y="425" class="mono">11…7</text><text x="101" y="425" class="mono">imm[4:0]</text><text x="244" y="425" class="mono">00000</text>
+<text x="26" y="451" class="mono">6…0</text><text x="101" y="451" class="mono">opcode</text><text x="244" y="451" class="mono">0100011</text>
+<text x="20" y="479" class="mono">imm12 = 001000000000₂</text>
+<text x="20" y="503">Знаковое расширение: +512</text>
+
+<!-- Register outlines differ from the ALU and byte array. Arrows carry labelled logical values. -->
+<text x="20" y="538" class="heading">3. Адрес и данные отдельно</text>
+<rect x="20" y="551" width="145" height="56" rx="8" class="paper"/>
+<rect x="195" y="551" width="145" height="56" rx="8" class="paper"/>
+<text x="32" y="573">Прежний x5</text><text x="32" y="596" class="mono">0x00002000</text>
+<text x="207" y="573">Прежний x6</text><text x="207" y="596" class="mono">0x0000002B</text>
+<path d="M92 608V647H75V680" class="value"/>
+<text x="22" y="635" class="small">A: база</text>
+<rect x="155" y="622" width="185" height="44" rx="4" class="soft"/>
+<text x="168" y="640" class="small">B: смещение, 32 бита</text>
+<text x="168" y="660" class="mono">0x00000200</text>
+<path d="M185 667V680" class="value"/>
+<path d="M340 579H348V832H295V889" class="value"/>
+<text x="272" y="744" class="small">данные</text><text x="272" y="765" class="small">из x6</text>
+<path d="M30 682H105L120 700L135 682H235L205 757H60Z" fill="#e5edf2" stroke="#526c7c" stroke-width="2"/>
+<text x="83" y="717" class="heading">ALU: +</text>
+<text x="61" y="742" class="mono">2000 + 0200</text>
+<path d="M130 759V778" class="value"/>
+<text x="30" y="800" class="mono">PA = 0x00002200</text>
+<rect x="20" y="813" width="220" height="51" rx="6" class="paper"/>
+<text x="31" y="834" class="mono">2200…2203 ≤ FFFF</text>
+<text x="31" y="856">Адрес кратен 4</text>
+<path d="M70 865V889" class="value"/>
+<path d="M190 865V889" class="control"/>
+<text x="83" y="882" class="small">адрес</text><text x="201" y="882" class="small">да</text>
+
+<!-- Address, payload and permission enter the same RAM operation via separate semantic paths. -->
+<rect x="20" y="891" width="320" height="153" rx="5" class="paper"/>
+<text x="32" y="916" class="heading">4. Запись четырёх байтов</text>
+<text x="34" y="940" class="small">PA (hex)</text><text x="152" y="940" class="small">До</text><text x="244" y="940" class="small">После</text>
+<path d="M20 947H340M20 971H340M20 995H340M20 1019H340M130 925V1044M223 925V1044" class="rule"/>
+<rect x="224" y="948" width="115" height="22" fill="#e4eee7"/>
+<text x="34" y="966" class="mono">2200</text><text x="152" y="966" class="mono">00</text><text x="251" y="966" class="mono">2B</text>
+<text x="34" y="990" class="mono">2201</text><text x="152" y="990" class="mono">00</text><text x="251" y="990" class="mono">00</text>
+<text x="34" y="1014" class="mono">2202</text><text x="152" y="1014" class="mono">00</text><text x="251" y="1014" class="mono">00</text>
+<text x="34" y="1038" class="mono">2203</text><text x="152" y="1038" class="mono">00</text><text x="251" y="1038" class="mono">00</text>
+<path d="M180 1045V1060" class="control"/>
+<text x="201" y="1058" class="small">успех</text>
+<rect x="20" y="1062" width="320" height="43" rx="5" class="paper"/>
+<text x="33" y="1090" class="mono">5. PC+4: 100C → 1010</text>
+<text x="20" y="1131">Сохранены x5, x6 и вход 42.</text>
+<text x="20" y="1154" class="small">Пунктир: логическое разрешение записи.</text>
+<text x="20" y="1177" class="small">Стрелки — связи значений, не такты.</text>
+</svg>

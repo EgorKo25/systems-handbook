@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="625" viewBox="0 0 400 625" role="img" aria-labelledby="title desc"><title id="title">SQ2: запись SQ[0] Read, 64 байта</title><desc id="desc">Смещения от начала SQE: CDW0 с opcode 02 и CID 0011h; NSID 1; CDW2/CDW3 и MPTR нулевые в профиле без PI/metadata; PRP1=2000h; PRP2=0; SLBA 7; NLB 0 означает 1 блок 512 B; дополнительные выбранные опции нулевые. Little-endian.</desc><defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#243c50" /></marker>
+<style>text{font:20px system-ui,sans-serif;fill:#172e40}.h{font-size:24px;font-weight:700}.b{font-weight:700}.m{font:20px ui-monospace,monospace}.small{font-size:19px}.edge{stroke:#385266;stroke-width:1.6;fill:none}.arrow{stroke:#243c50;stroke-width:2;fill:none;marker-end:url(#arrow)}.paper{fill:#fff}.sq{fill:#edf2f9}.cq{fill:#e8f1eb}.data{fill:#fff2d8}.ctl{fill:#f4eff8}.muted{fill:#3d5162}@media print{text{fill:#000}.sq,.cq,.data,.ctl,.paper{fill:#fff}.edge,.arrow{stroke:#000}}</style></defs>
+<rect width="400" height="625" fill="#fff" /><g transform="translate(0,-1382)"><text x="16" y="1414" class="h">SQ2 · SQ[0], 64 B</text>
+<text x="16" y="1443" class="small">Смещения hex от 6000h; little-endian</text>
+<rect x="16" y="1463" width="368" height="522" rx="0" class="sq edge" />
+<text x="28" y="1492" class="m">00..03  CDW0 = 00110002h</text>
+<text x="28" y="1519" class="small">02 00 11 00 → Read / CID 0011h</text>
+<path d="M28 1531L372 1531" class="edge" />
+<text x="28" y="1554" class="m">04..07  NSID = 1</text>
+<text x="28" y="1581" class="small">01 00 00 00</text>
+<path d="M28 1593L372 1593" class="edge" />
+<text x="28" y="1616" class="m">08..17  CDW2/3 = 0; MPTR = 0</text>
+<text x="28" y="1643" class="small">PI / metadata не используются</text>
+<path d="M28 1655L372 1655" class="edge" />
+<text x="28" y="1678" class="m">18..1F  PRP1 = 2000h</text>
+<text x="28" y="1705" class="small">00 20 00 00 00 00 00 00</text>
+<path d="M28 1717L372 1717" class="edge" />
+<text x="28" y="1740" class="m">20..27  PRP2 = 0</text>
+<text x="28" y="1767" class="small">данные целиком в одной странице</text>
+<path d="M28 1779L372 1779" class="edge" />
+<text x="28" y="1802" class="m">28..2F  SLBA = 7</text>
+<text x="28" y="1829" class="small">07 00 00 00 00 00 00 00</text>
+<path d="M28 1841L372 1841" class="edge" />
+<text x="28" y="1864" class="m">30..33  CDW12 = 00000000h</text>
+<text x="28" y="1891" class="small">NLB=0 → 1 блок × 512 B; FUA=0</text>
+<path d="M28 1903L372 1903" class="edge" />
+<text x="28" y="1926" class="m">34..3F  CDW13..15 = 0</text>
+<text x="28" y="1953" class="small">прочие выбранные опции = 0</text>
+</g></svg>

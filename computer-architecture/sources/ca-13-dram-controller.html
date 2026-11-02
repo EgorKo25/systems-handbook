@@ -17,6 +17,99 @@
 <p>SRAM удерживает бит иначе. В обычной шеститранзисторной ячейке два взаимно связанных инвертора поддерживают одно из двух устойчивых состояний, пока есть питание; ещё два транзистора подключают её к линиям чтения/записи. При чтении схема должна различить состояние, не переключив саму защёлку. Дополнительные транзисторы занимают площадь, но периодическое восстановление утёкшего заряда 1T1C ей не требуется. Row buffer DRAM тоже использует усиленное удерживаемое состояние, однако его данные относятся к открытой строке DRAM; локальная копия данных процессора хранится в отдельном массиве со своими метками адресов и разрешениями.</p>
 <p>Устройство с одним транзистором и конденсатором и необходимость восстановления после чтения описаны в первичной работе <a href="https://patents.google.com/patent/US3387286A/en">R.H.Dennard, US3387286A,1968</a>. Числа 30/300 fF,1 V и выбранная схема сравнения здесь служат расчётному объяснению, не воспроизводят технологический процесс патента. Если увеличить ёмкость линии до 600 fF при прежней ячейке, отклонение уменьшится до±0.02381 V: малый сигнал станет труднее различать. Уменьшение ячейки поэтому связано не только с числом размещённых битов.</p>
 
+<figure id="ca-memory-cell-sense" class="dram-cell-circuit"><style>
+.dram-cell-circuit{--dc-paper:var(--reader-paper,var(--paper,#fff));--dc-text:var(--reader-text,var(--text,#202d34));--dc-muted:var(--reader-muted,var(--muted,#5a696e));--dc-accent:var(--reader-accent,var(--accent,#0c6b63));--dc-soft:var(--reader-soft,var(--soft,#e8f2ec));font-family:var(--sans,system-ui,sans-serif);color:var(--dc-text);margin:1.8rem 0}
+.dram-cell-circuit *{box-sizing:border-box;min-width:0}
+.dram-cell-circuit .dc-body{display:grid;grid-template-columns:minmax(15rem,21rem) minmax(0,1fr);gap:1.5rem;align-items:start}
+.dram-cell-circuit .dc-svg{display:block;width:100%;max-width:21rem;height:auto;margin:0 auto;color:var(--dc-text);font-family:var(--sans,system-ui,sans-serif);font-size:16px}
+.dram-cell-circuit svg text{fill:currentColor}
+.dram-cell-circuit .dram-wire,.dram-cell-circuit .dram-symbol{fill:none;stroke:var(--dc-text);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.dram-cell-circuit .dram-signal{fill:none;stroke:var(--dc-accent);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.dram-cell-circuit .dram-dot{fill:var(--dc-text)}
+.dram-cell-circuit .dram-supply,.dram-cell-circuit .dram-contact,.dram-cell-circuit .dram-boundary{fill:var(--dc-paper);stroke:var(--dc-text)}
+.dram-cell-circuit .dram-supply{stroke-width:2}.dram-cell-circuit .dram-contact{stroke-width:1.5}
+.dram-cell-circuit .dram-boundary{stroke-width:1.5;stroke-dasharray:5 4}
+.dram-cell-circuit .dram-bold{font-weight:700}
+.dram-cell-circuit figcaption{font-weight:650;margin-bottom:.8rem}
+.dram-cell-circuit p{line-height:1.6}
+.dram-cell-circuit code{white-space:normal;overflow-wrap:anywhere}
+.dram-cell-circuit .dc-states{margin:0;padding-left:1.5rem}
+.dram-cell-circuit .dc-states>li{padding:0 0 1rem .25rem}
+.dram-cell-circuit h4{font-size:1.05rem;line-height:1.4;margin:.1rem 0 .5rem}
+.dram-cell-circuit .dc-values{font-variant-numeric:tabular-nums}
+.dram-cell-circuit details{border-top:1px solid var(--dc-muted);margin-top:.75rem}
+.dram-cell-circuit summary{min-height:44px;padding:.7rem 0;cursor:pointer;font-weight:650}
+.dram-cell-circuit summary:focus-visible{outline:2px solid var(--dc-accent);outline-offset:3px}
+@media(max-width:900px){.dram-cell-circuit .dc-body{grid-template-columns:1fr}.dram-cell-circuit .dc-svg{max-width:21rem}}
+@media print{.dram-cell-circuit{--dc-paper:#fff;--dc-text:#000;--dc-muted:#000;--dc-accent:#000}.dram-cell-circuit .dc-body{grid-template-columns:1fr}.dram-cell-circuit .dc-svg{max-width:17rem;break-inside:avoid}.dram-cell-circuit details>summary{display:none}.dram-cell-circuit details>.dc-details-body{display:block!important}.dram-cell-circuit details::details-content{content-visibility:visible!important;display:block!important}}
+</style><figcaption>Один транзистор соединяет две ёмкости; усилитель возвращает полный уровень</figcaption><p>На электрической схеме показан срез B, до включения усилителя. <strong>nMOS</strong> — полевой транзистор с n-каналом; WL подключена к его изолированному затвору. <strong>BL и /BL</strong> — пара bitline: в этом чтении ячейка подключается только к BL. <strong>PRE</strong> управляет соединениями с источником предварительного заряда Vpre; <strong>SA_EN</strong> разрешает работу питаемого усилителя SA. C_BL и Cref изображают суммарную ёмкость каждой линии одним конденсатором. Обозначения земли везде означают один опорный потенциал 0 V. Точка соединяет провода; пересечение крест-накрест без точки не создаёт соединения.</p><div class="dc-body"><svg class="dc-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 690" role="img" aria-labelledby="dram-circuit-title dram-circuit-desc">
+<title id="dram-circuit-title">1T1C: открытый nMOS соединяет ячейку 30 fF с bitline 300 fF</title>
+<desc id="dram-circuit-desc">Срез B: precharge разомкнут, wordline активна, sense amplifier выключен. BL и ячейка имеют 0.54545 V, опорная /BL остаётся 0.5 V. Нижние обкладки ёмкостей имеют 0 V. При включении усилителя с питанием 1 V он поднимает BL и ячейку до 1 V, опускает /BL до 0 V. Wordline остаётся активной до восстановления.</desc>
+<!-- Precharge supply and two OPEN switches: state B, not permanent ties to 0.5 V. -->
+<path class="dram-wire" data-net="VPRE" d="M110 52 V35 H280 M180 35 V54 M280 35 V54"/>
+<circle class="dram-supply" cx="110" cy="70" r="18"/>
+<text x="104" y="66">+</text><text x="105" y="85">−</text>
+<text x="16" y="24" class="dram-bold">Vpre = 0.5 V</text>
+<path class="dram-wire" data-net="GND" d="M110 88 V106 M98 106 H122 M102 112 H118 M106 118 H114"/>
+<circle class="dram-contact" cx="180" cy="54" r="3"/><circle class="dram-contact" cx="180" cy="84" r="3"/>
+<circle class="dram-contact" cx="280" cy="54" r="3"/><circle class="dram-contact" cx="280" cy="84" r="3"/>
+<path class="dram-symbol" d="M180 81 L165 61 M280 81 L265 61"/>
+<text x="202" y="74">PRE</text>
+<!-- Paired bitlines are electrical nodes, not a data-flow arrow. -->
+<path class="dram-signal" data-net="BL" d="M180 87 V570"/>
+<path class="dram-wire" data-net="BLB" d="M280 87 V570"/>
+<text x="145" y="109" class="dram-bold">BL</text>
+<text x="286" y="109" class="dram-bold">/BL</text>
+<text x="16" y="161" class="dram-bold">0.54545 V</text><path class="dram-wire" d="M122 155 H180"/>
+<text x="208" y="161" class="dram-bold">0.5 V</text><path class="dram-wire" d="M258 155 H280"/>
+<!-- Enhancement nMOS: insulated gate WL, channel interrupted in the symbol. -->
+<path class="dram-signal" data-net="BL" d="M180 210 H100 H85"/>
+<path class="dram-symbol" d="M85 210 V221 M85 228 V236 M85 243 V250"/>
+<path class="dram-wire" data-net="WL" d="M20 230 H65 M65 208 V252"/>
+<text x="15" y="196" class="dram-bold">WL активна</text>
+<text x="111" y="239">nMOS</text>
+<path class="dram-signal" data-net="CELL" d="M85 250 H100 V280"/>
+<circle class="dram-dot" cx="100" cy="264" r="3"/><circle class="dram-dot" cx="180" cy="210" r="3"/>
+<text x="116" y="273">Vяч</text>
+<!-- Storage capacitor: explicit lower plate at the model's chosen 0 V. -->
+<path class="dram-symbol" d="M82 280 H118 M82 294 H118"/>
+<path class="dram-wire" data-net="GND" d="M100 294 V319 M88 319 H112 M92 325 H108 M96 331 H104"/>
+<text x="17" y="282" class="dram-bold">Cяч</text><text x="17" y="305">30 fF</text>
+<text x="15" y="331">Vplate</text><text x="25" y="351">0 V</text>
+<!-- Lumped parasitic capacitances of the bitline pair; both return to 0 V. -->
+<path class="dram-wire" data-net="BL" d="M180 350 H130 V365"/>
+<path class="dram-symbol" d="M115 365 H145 M115 379 H145"/>
+<path class="dram-wire" data-net="GND" d="M130 379 V405 M118 405 H142 M122 411 H138 M126 417 H134"/>
+<circle class="dram-dot" cx="180" cy="350" r="3"/>
+<text x="20" y="370" class="dram-bold">C_BL</text><text x="20" y="394">300 fF</text>
+<path class="dram-wire" data-net="BLB" d="M280 350 H260 V365"/>
+<path class="dram-symbol" d="M248 365 H272 M248 379 H272"/>
+<path class="dram-wire" data-net="GND" d="M260 379 V405 M248 405 H272 M252 411 H268 M256 417 H264"/>
+<circle class="dram-dot" cx="280" cy="350" r="3"/>
+<text x="199" y="370" class="dram-bold">Cref</text><text x="195" y="394">300 fF</text>
+<!-- Regenerative SA, functional boundary. Bitlines are its feedback nodes. -->
+<rect class="dram-boundary" x="150" y="450" width="155" height="160" rx="2"/>
+<text x="158" y="469" class="dram-bold">SA</text>
+<path class="dram-wire" data-net="BL" d="M180 450 V570 M180 490 H200"/>
+<path class="dram-wire" data-net="BLB" d="M280 450 V570 M245 490 H280 M280 570 H260"/>
+<path class="dram-wire" data-net="BL" d="M215 570 H180"/>
+<path class="dram-symbol" d="M200 470 V510 L235 490 Z M260 550 V590 L225 570 Z"/>
+<circle class="dram-contact" cx="240" cy="490" r="5"/><circle class="dram-contact" cx="220" cy="570" r="5"/>
+<circle class="dram-dot" cx="180" cy="490" r="3"/><circle class="dram-dot" cx="180" cy="570" r="3"/>
+<circle class="dram-dot" cx="280" cy="490" r="3"/><circle class="dram-dot" cx="280" cy="570" r="3"/>
+<text x="171" y="535">EN: 0 → 1</text>
+<!-- Named control port and actual supply/reference, not an unexplained source of charge. -->
+<path class="dram-wire" data-net="ENABLE" d="M20 550 H150"/>
+<circle class="dram-contact" cx="20" cy="550" r="3"/><text x="15" y="579">SA_EN</text>
+<path class="dram-wire" data-net="VDD" d="M70 472 V435 H230 V450"/>
+<circle class="dram-supply" cx="70" cy="490" r="18"/>
+<text x="64" y="486">+</text><text x="65" y="505">−</text>
+<text x="17" y="437" class="dram-bold">VDD</text><text x="17" y="462">1 V</text>
+<path class="dram-wire" data-net="GND" d="M70 508 V524 M58 524 H82 M62 530 H78 M66 536 H74"/>
+<path class="dram-wire" data-net="GND" d="M230 610 V635 M218 635 H242 M222 641 H238 M226 647 H234"/>
+<text x="248" y="641">0 V</text>
+<text x="17" y="681">Срез B; SA_EN = 0</text>
+</svg><ol class="dc-states"><li><h4>A. До выбора строки</h4><p class="dc-values">WL закрыта; PRE включён; SA выключен.<br>Vяч=1 V; BL=0.5 V; /BL=0.5 V.</p><p>Транзистор закрыт. Конденсатор ячейки отделён от линии; precharge подготовил обе bitline до 0.5 V.</p></li><li><h4>B. Перераспределение заряда — этот срез схемы</h4><p class="dc-values">WL активна; PRE выключен; SA выключен.<br>Vяч=0.54545 V; BL=0.54545 V; /BL=0.5 V.</p><p>Precharge отключён, WL открыла nMOS. Ячейка и BL теперь соединены, а опорная /BL не получила заряд выбранной ячейки.</p></li><li><h4>C. Различение и восстановление</h4><p class="dc-values">WL активна; PRE выключен; SA включён.<br>Vяч=1 V; BL=1 V; /BL=0 V.</p><p>Питаемый усилитель усилил разность и удерживает BL=1 V, /BL=0 V. Через всё ещё открытый nMOS он восстановил ячейку.</p></li><li><h4>D. После восстановления и закрытия строки</h4><p class="dc-values">WL закрыта; PRE включён; SA выключен.<br>Vяч=1 V; BL=0.5 V; /BL=0.5 V.</p><p>Сначала ячейку отсоединили. Затем усиление выключили и precharge вернул линии к 0.5 V; сохранённая ячейка за линиями не следует.</p></li></ol></div><p><strong>Откуда взялись 0.54545 V.</strong> При выключенных PRE и SA выбранная ячейка и BL обмениваются зарядом: <code>(30 fF × 1 V + 300 fF × 0.5 V)/(30 fF + 300 fF)=0.54545 V</code>. 1 fC — фемтокулон, 10⁻¹⁵ кулона. Cяч теряет 13.63636 fC, а C_BL получает столько же. Опорная /BL не подключена к этой ячейке и остаётся на 0.5 V. Разность 0.04545 V — около 45.45 mV.</p><p>После разрешения SA два инвертора взаимно усиливают отклонение: рост BL поддерживает падение /BL, а падение /BL поддерживает рост BL. Так действует положительная обратная связь. Питание VDD, а не пассивное перераспределение, позволяет вернуть Vяч к 1 V. Состояние C достигается при всё ещё открытой WL; закрывать ячейку сразу после B означало бы оставить ей 0.54545 V.</p><details><summary>Проверить расчёт и условия схемы</summary><div class="dc-details-body"><p>У нижней обкладки Cяч здесь выбран постоянный Vplate=0 V. Все указанные напряжения отсчитаны от того же 0 V; поэтому Qяч=Cяч·Vяч. До соединения Qяч=30 fC, Q_BL=150 fC, сумма 180 fC. После него: <code>Qяч=180/11 fC</code>, <code>Q_BL=1800/11 fC</code>; сумма по-прежнему 180 fC. Восстановленная ветвь Cяч+BL уже хранит 330 fC: дополнительные 150 fC поступили через питаемый усилитель.</p><p>Для исходного нуля тот же расчёт даёт 0.45455 V, то есть отрицательное отклонение от опорной линии. Если C_BL увеличить до 600 fF, исходная единица поднимет BL лишь до 0.52381 V. Это изменение ёмкости, а не измерение другого модуля памяти.</p><p>30/300 fF и 1 V — числа учебного примера главы. На рисунке сосредоточенные ёмкости; это функциональная электрическая схема, не разводка кристалла. В расчёте открытый nMOS принят идеальным проводящим ключом. Для реального восстановления до VDD уровень WL должен превышать VDD на порог V_T и необходимый запас; V_T — пороговое напряжение транзистора в выбранном режиме. Уровень wordline, её драйвер, утечки, шумы и временные интервалы здесь не рассчитываются. Внутри рамки SA показана регенеративная связь инверторов; транзисторы питания и разрешения не развёрнуты. Символы земли являются соединениями с одним опорным узлом, а не концами незамкнутых проводов.</p><p>Первоисточники: <a href="https://patents.google.com/patent/US3387286A/en">Dennard, US3387286A, рис.1 и описание</a> для соединений 1T1C и восстановления; <a href="https://arxiv.org/html/1805.03048v1">Lee и соавторы, раздел 2</a> для роли паразитной ёмкости bitline и усилителя. Параметры и арифметика рисунка выбраны для книги.</p></div></details></figure>
 <h2>Банк, строка и столбец</h2>
 <p>Банк — часть микросхемы с собственным массивом строк и некоторой независимостью операций. Строка объединяет много ячеек, которые активируются вместе. Столбец выбирает часть открытой строки для передачи. Row buffer, буфер строки, — усилители и состояние, удерживающие открытые данные строки. Усилители удерживают данные выбранной строки внутри DRAM до её закрытия.</p>
 <p>ACTIVATE — команда активации выбранной строки банка. Малый сигнал ячеек усиливается; при чтении DRAM содержимое ячеек нуждается в восстановлении, которое выполняет схема памяти. READ выбирает столбец уже активной строки и запускает передачу. PRECHARGE закрывает текущую строку и готовит банк к следующей активации. Открыть другую строку того же банка мгновенно вместо прежней нельзя: сначала должны выполниться ограничения завершения и подготовки. В другом банке часть работы может перекрываться, но общий интерфейс передачи не становится от этого бесконечным.</p>

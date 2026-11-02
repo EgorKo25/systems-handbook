@@ -27,7 +27,7 @@
     "slug": "postgres",
     "title": "PostgreSQL: от SQL до эксплуатации и высокой доступности",
     "volume": "IX",
-    "words": 75882,
+    "words": 76719,
     "chapters": 25,
     "terms": 441
   },
@@ -43,7 +43,7 @@
     "slug": "git",
     "title": "Git: от байтов объектов до совместной работы и восстановления",
     "volume": "VI",
-    "words": 48364,
+    "words": 48751,
     "chapters": 27,
     "terms": 178
   },
@@ -99,7 +99,7 @@
     "slug": "computer-architecture",
     "title": "Архитектура компьютера: от сигнала до исполняемой машины",
     "volume": "I",
-    "words": 58080,
+    "words": 58333,
     "chapters": 36,
     "terms": 210
   },

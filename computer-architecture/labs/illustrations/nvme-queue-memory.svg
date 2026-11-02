@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="1390" viewBox="0 0 400 1390" role="img" aria-labelledby="title desc"><title id="title">Read NVMe: RAM и MMIO</title><desc id="desc">SQ2: host задаёт tail=1, контроллер продвинул head=1. CQ2: контроллер пишет результат, host читает и задаёт CQ head. SQHD сообщает голову SQ на момент CQE. Буфер 2000h..21FFh отдельно от очередей; MMIO передаёт только индексы.</desc><defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#243c50" /></marker>
+<style>text{font:20px system-ui,sans-serif;fill:#172e40}.h{font-size:24px;font-weight:700}.b{font-weight:700}.m{font:20px ui-monospace,monospace}.small{font-size:19px}.edge{stroke:#385266;stroke-width:1.6;fill:none}.arrow{stroke:#243c50;stroke-width:2;fill:none;marker-end:url(#arrow)}.paper{fill:#fff}.sq{fill:#edf2f9}.cq{fill:#e8f1eb}.data{fill:#fff2d8}.ctl{fill:#f4eff8}.muted{fill:#3d5162}@media print{text{fill:#000}.sq,.cq,.data,.ctl,.paper{fill:#fff}.edge,.arrow{stroke:#000}}</style></defs>
+<rect width="400" height="1390" fill="#fff" /><g transform="translate(0,0)"><text x="16" y="31" class="h">Одна Read: где лежат байты</text>
+<text x="16" y="60" class="m">SQ2 / CQ2 · CID 0011h</text>
+<text x="16" y="90" class="small">После CQE, до передачи CQ head</text>
+<rect x="16" y="110" width="368" height="888" rx="0" class="paper edge" />
+<text x="30" y="142" class="b">RAM host · DMA-адрес = PA</text>
+<rect x="40" y="168" width="326" height="132" rx="0" class="data edge" />
+<text x="52" y="198" class="m">2000..21FFh · 512 B</text>
+<text x="52" y="229" class="">Read: контроллер → RAM</text>
+<text x="52" y="259" class="m">2A 00 00 00 + 508 нулей</text>
+<text x="52" y="286" class="small">CPU читает после разбора CQE</text>
+<path d="M40 321l20 -5 20 10 20 -10 20 10 20 -5H366" class="edge" />
+<text x="52" y="346" class="small muted">промежуток не в масштабе</text>
+<rect x="40" y="365" width="326" height="278" rx="0" class="cq edge" />
+<text x="52" y="395" class="small b">CQ2: контроллер пишет</text>
+<text x="52" y="424" class="small">host читает · 4×16=64 B</text>
+<rect x="52" y="441" width="302" height="38" rx="0" class="cq edge" />
+<text x="61" y="467" class="m">5000  [0] CID 11h  P=1</text>
+<rect x="52" y="479" width="302" height="38" rx="0" class="cq edge" />
+<text x="61" y="505" class="small">5010  [1] P=0, ещё не новая</text>
+<rect x="52" y="517" width="302" height="38" rx="0" class="cq edge" />
+<text x="61" y="543" class="small">5020  [2] P=0, ещё не новая</text>
+<rect x="52" y="555" width="302" height="38" rx="0" class="cq edge" />
+<text x="61" y="581" class="small">5030  [3] P=0, ещё не новая</text>
+<text x="52" y="620" class="m">host: head=0; ждёт P=1</text>
+<path d="M40 666l20 -5 20 10 20 -10 20 10 20 -5H366" class="edge" />
+<text x="52" y="694" class="small muted">промежуток не в масштабе</text>
+<rect x="40" y="712" width="326" height="263" rx="0" class="sq edge" />
+<text x="52" y="742" class="small b">SQ2: host пишет</text>
+<text x="52" y="771" class="small">контроллер читает · 4×64 B</text>
+<rect x="52" y="787" width="302" height="33" rx="0" class="sq edge" />
+<text x="61" y="812" class="m">6000  [0] Read CID 11h</text>
+<rect x="52" y="820" width="302" height="33" rx="0" class="sq edge" />
+<text x="61" y="845" class="small">6040  [1] не опубликован</text>
+<rect x="52" y="853" width="302" height="33" rx="0" class="sq edge" />
+<text x="61" y="878" class="small">6080  [2] не опубликован</text>
+<rect x="52" y="886" width="302" height="33" rx="0" class="sq edge" />
+<text x="61" y="911" class="small">60C0  [3] не опубликован</text>
+<text x="52" y="944" class="small">tail=1 задаёт host</text>
+<text x="52" y="970" class="small">head=1 продвинул контроллер</text>
+<text x="16" y="1032" class="b">SQHD=1: значение SQ head</text>
+<text x="16" y="1061" class="">на момент создания этой CQE.</text>
+<text x="16" y="1090" class="">Это не итог остальных команд.</text>
+<rect x="16" y="1121" width="368" height="248" rx="5" class="ctl edge" stroke-dasharray="7 4" />
+<text x="30" y="1153" class="b">MMIO: регистры контроллера</text>
+<text x="30" y="1182" class="small">Host пишет индексы, не payload.</text>
+<text x="30" y="1221" class="m">Ранее host: SQ2 tail 0 → 1</text>
+<text x="30" y="1249" class="small">SQE и mapping уже видимы</text>
+<text x="30" y="1287" class="m">Затем host: CQ2 head 0 → 1</text>
+<text x="30" y="1315" class="small">CQE обработана: CQ[0] свободен</text>
+<text x="30" y="1349" class="small b">Doorbell не завершает I/O.</text>
+</g></svg>

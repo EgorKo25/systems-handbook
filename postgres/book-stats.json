@@ -50,7 +50,7 @@
     {
       "id": "09-storage",
       "title": "Файлы, страницы и версии строк",
-      "words": 1942
+      "words": 2779
     },
     {
       "id": "10-buffers",
@@ -133,7 +133,7 @@
       "words": 8937
     }
   ],
-  "words": 75882,
+  "words": 76719,
   "terms": 441,
   "external_assets": 0
 }

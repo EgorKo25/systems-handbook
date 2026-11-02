@@ -1,0 +1,77 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" width="390" height="824" viewBox="0 0 390 824" role="img" aria-labelledby="title desc"><title id="title">Полный сумматор из пяти логических вентилей</title><desc id="desc">A и B поданы на XOR и AND: P=A XOR B, G=A AND B. P и Cin поданы на второй XOR и AND: S=P XOR Cin, T=P AND Cin. OR объединяет G и T в Cout. На рисунке A=1, B=0, Cin=1: P=1, G=0, T=1, S=0, Cout=1. Точки соединяют провода; дуга означает пересечение без соединения. Показаны логические функции, не транзисторная топология XOR и не физические задержки.</desc><defs><marker id="flow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0L7 3.5L0 7Z" fill="#243f50" /></marker>
+<style>text{font:21px 'DejaVu Sans',sans-serif;fill:#172b38}.heading{font-size:23px;font-weight:bold}.small{font-size:19px}.code{font-family:'DejaVu Sans Mono',monospace}.panel{fill:#fff;stroke:#71808a;stroke-width:1.5}.wire{stroke:#243f50;stroke-width:2.5;fill:none;stroke-linecap:round;stroke-linejoin:round}.on{stroke:#12644d;stroke-width:5;fill:none}.blocked{stroke:#7c3b25;stroke-width:2.5;fill:none}.open{stroke:#243f50;stroke-width:2.3;fill:#fff}.node{fill:#243f50}.flow{stroke:#243f50;stroke-width:2;stroke-dasharray:5 5;fill:none;marker-end:url(#flow)}.gate{fill:#edf3f5;stroke:#243f50;stroke-width:2.5}.carry{stroke:#744615;stroke-width:3.2;fill:none;stroke-linejoin:round}.quiet{fill:#edf3f5;stroke:none}</style></defs>
+<rect width="390" height="824" fill="#f6f8f9" /><g transform="translate(0 -1062)"><rect x="12" y="1062" width="366" height="824" rx="12" class="panel" />
+<text x="25" y="1096" class="heading">Полный сумматор</text>
+<text x="24" y="1127" class="small">Входы: A=1, B=0, Cin=1</text>
+<g id="full-adder" transform="translate(0 1120)">
+<path d="M49 55H330 M49 85H330" class="wire" />
+<text x="21" y="62">A</text>
+<text x="21" y="92">B</text>
+<circle cx="95" cy="55" r="4" class="node" />
+<path d="M95 55V78 Q107 85 95 92 V140" class="wire" />
+<circle cx="125" cy="85" r="4" class="node" />
+<path d="M125 85V140" class="wire" />
+<circle cx="265" cy="55" r="4" class="node" />
+<path d="M265 55V78 Q277 85 265 92 V140" class="wire" />
+<circle cx="295" cy="85" r="4" class="node" />
+<path d="M295 85V140" class="wire" />
+<g id="xor-P" data-gate="XOR" transform="translate(110 200) rotate(90)">
+<path d="M-35 -30Q10 -30 45 0Q10 30 -35 30Q-15 0 -35 -30Z" class="gate" />
+<path d="M-45 -30Q-25 0 -45 30" class="wire" />
+<path d="M45 0H55" class="wire" />
+<path d="M-60 -15H-27 M-60 15H-27" class="wire" />
+</g>
+<text x="110" y="207" class="small" text-anchor="middle">XOR</text>
+<g id="and-G" data-gate="AND" transform="translate(280 200) rotate(90)">
+<path d="M-35 -30H0A30 30 0 0 1 0 30H-35Z" class="gate" />
+<path d="M30 0H55" class="wire" />
+<path d="M-60 -15H-35 M-60 15H-35" class="wire" />
+</g>
+<text x="280" y="207" class="small" text-anchor="middle">AND</text>
+<path d="M110 255V305 M49 305H330" class="wire" />
+<circle cx="110" cy="305" r="4" class="node" />
+<text x="25" y="294" class="code">P=1</text>
+<path d="M280 255H355V565H275V600" class="carry" />
+<text x="273" y="288" class="code">G=0</text>
+<path d="M49 335H330" class="wire" />
+<text x="16" y="341" class="small">Cin</text>
+<circle cx="95" cy="305" r="4" class="node" />
+<path d="M95 305V328 Q107 335 95 342 V390" class="wire" />
+<circle cx="125" cy="335" r="4" class="node" />
+<path d="M125 335V390" class="wire" />
+<circle cx="265" cy="305" r="4" class="node" />
+<path d="M265 305V328 Q277 335 265 342 V390" class="wire" />
+<circle cx="295" cy="335" r="4" class="node" />
+<path d="M295 335V390" class="wire" />
+<g id="xor-S" data-gate="XOR" transform="translate(110 450) rotate(90)">
+<path d="M-35 -30Q10 -30 45 0Q10 30 -35 30Q-15 0 -35 -30Z" class="gate" />
+<path d="M-45 -30Q-25 0 -45 30" class="wire" />
+<path d="M45 0H55" class="wire" />
+<path d="M-60 -15H-27 M-60 15H-27" class="wire" />
+</g>
+<text x="110" y="457" class="small" text-anchor="middle">XOR</text>
+<g id="and-T" data-gate="AND" transform="translate(280 450) rotate(90)">
+<path d="M-35 -30H0A30 30 0 0 1 0 30H-35Z" class="gate" />
+<path d="M30 0H55" class="wire" />
+<path d="M-60 -15H-35 M-60 15H-35" class="wire" />
+</g>
+<text x="280" y="457" class="small" text-anchor="middle">AND</text>
+<path d="M110 505V560" class="wire" />
+<text x="30" y="590" class="code">S=0</text>
+<path d="M280 505V545H245V600" class="carry" />
+<text x="200" y="531" class="code">T=1</text>
+<g id="or-Cout" data-gate="OR" transform="translate(260 660) rotate(90)">
+<path d="M-35 -30Q10 -30 45 0Q10 30 -35 30Q-15 0 -35 -30Z" class="gate" />
+<path d="M45 0H55" class="wire" />
+<path d="M-60 -15H-27 M-60 15H-27" class="wire" />
+</g>
+<text x="260" y="667" class="small" text-anchor="middle">OR</text>
+<path d="M260 715V739" class="carry" />
+<text x="172" y="754" class="code">Cout=1</text>
+<text x="27" y="640" class="small">P = A XOR B</text>
+<text x="27" y="670" class="small">G = A AND B</text>
+<text x="27" y="700" class="small">T = P AND Cin</text>
+<text x="27" y="730" class="small">S = P XOR Cin</text>
+</g>
+</g></svg>

@@ -48,5 +48,6 @@ CONFIG = {'volume': 'XXIX',
  'term_modules': ['reference_logic', 'reference_memory', 'reference_devices'],
  'command_modules': ['reference_logic', 'reference_memory', 'reference_devices'],
  'diagram_modules': ['diagrams_logic', 'diagrams_memory', 'diagrams_devices'],
+ 'illustration_links': [{'id': 'ca-logic-adder-carry', 'title': 'Полный сумматор и цепочка переноса', 'label': '2 рисунка'}, {'id': 'ca-devices-nvme', 'title': 'NVMe: очереди, команды и завершения в памяти', 'label': 'разрез памяти'}, {'id': 'ca-memory-cell-sense', 'title': 'Ячейка DRAM: ёмкости, транзистор и усилитель', 'label': 'схема ячейки'}],
  'blurb': 'Сквозная машина М32: реальные байты небольшой RV32I-программы, движения данных, смены '
           'владельцев и границы аппаратных моделей.'}

@@ -26,6 +26,127 @@ print('checksum=', hashlib.sha1(data[:-20]).digest() == data[-20:])
 PY</code></pre>
 <p>Выполняйте это только после опыта с одним файлом из главы об объектах. <code>--index-version=2</code> у update-index задаёт формат служебной записи, не переписывая коммиты. <code>--git-path index</code> получает правильный путь даже при особом расположении служебных данных. В Python префикс <code>&gt;</code> задаёт старший байт первым, <code>I</code> — 32-битное беззнаковое число, <code>H</code> — 16-битное. Последнее сравнение вычисляет хеш всех байтов до хвостовой суммы. Эти проверки обнаруживают неверное чтение или повреждение, но не доказывают соответствие рабочего файла индексу.</p>
 <p>В двухбайтовых флагах два бита стадии выбирают значения 0–3, нижние двенадцать обычно задают длину пути до предельного обозначения <code>0xfff</code>, старшие служат другим признакам. Длина не заменяет нулевое завершение и правила версии. В SHA-256-репозитории имена объектов и контрольная сумма длиннее; прежние смещения после имени объекта применять нельзя. Читая реальный формат, всегда сначала устанавливают его договор.</p>
+<!-- GIT_THREE_FORMS_01_BEGIN -->
+<section class="git-three-forms" id="git-index-three-states" aria-labelledby="gtf-title">
+<style>
+.git-three-forms{--gtf-text:var(--reader-text,var(--text));--gtf-paper:var(--reader-paper,var(--paper));--gtf-soft:var(--reader-soft,var(--soft));--gtf-accent:var(--reader-accent,var(--accent));color:var(--gtf-text);font-family:var(--sans, sans-serif);margin:1.6em 0;max-width:100%;min-width:0;overflow-wrap:anywhere}
+.git-three-forms h3{margin:.5em 0}.git-three-forms h4{margin:0 0 .65em}.git-three-forms p{max-width:100%}
+.git-three-forms code,.git-three-forms pre{font-family:ui-monospace,monospace;color:inherit}
+.git-three-forms pre{margin:.5em 0;padding:.65em;background:var(--gtf-soft);white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;max-width:100%;min-width:0;font-size:.9em;line-height:1.55}
+.git-three-forms .gtf-profile{border-left:4px solid var(--gtf-accent);padding:.5em .8em}
+.git-three-forms .gtf-cut{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr) minmax(0,1fr);gap:1.25em;align-items:start;margin:1em 0}
+.git-three-forms .gtf-cut>section{min-width:0;max-width:100%}
+.git-three-forms .gtf-repository{border-top:5px double var(--gtf-text);padding-top:.65em}
+.git-three-forms .gtf-object{margin:.85em 0;padding:0 0 .75em;border-bottom:1px solid var(--gtf-text)}
+.git-three-forms .gtf-object dt{font-weight:700}.git-three-forms .gtf-object dd{margin:.3em 0 0}
+.git-three-forms .gtf-oid{display:block;font-size:.85em;overflow-wrap:anywhere;word-break:break-word}
+.git-three-forms .gtf-object-title{font-weight:700}
+.git-three-forms code.gtf-status{white-space:pre}
+.git-three-forms .gtf-index{padding-top:.65em;border-top:3px solid var(--gtf-accent)}
+.git-three-forms .gtf-index-table{width:100%;border-collapse:collapse;font-size:.92em}
+.git-three-forms .gtf-index-table th,.git-three-forms .gtf-index-table td{text-align:left;vertical-align:top;border-bottom:1px solid var(--gtf-text);padding:.45em .25em;overflow-wrap:anywhere}
+.git-three-forms .gtf-index-table th{width:4.5em}
+.git-three-forms .gtf-file{padding:.75em;border:2px solid var(--gtf-text);border-bottom:5px double var(--gtf-text);background:var(--gtf-paper)}
+.git-three-forms .gtf-bytes{display:flex;flex-wrap:wrap;gap:.3em;margin:.5em 0;max-width:100%;min-width:0}
+.git-three-forms .gtf-byte{display:inline-flex;flex:0 0 auto;flex-direction:column;align-items:center;justify-content:center;min-width:2.3em;padding:.2em .15em;border:1px solid var(--gtf-text);font:normal .9em/1.4 ui-monospace,monospace;background:var(--gtf-paper)}
+.git-three-forms .gtf-byte small{font-size:.75em}.git-three-forms .gtf-byte b{font-weight:700}
+.git-three-forms .gtf-byte.gtf-control{border-style:dashed}
+.git-three-forms .gtf-tree-parts{margin:.5em 0}.git-three-forms .gtf-tree-parts>div{margin:.35em 0}
+.git-three-forms .gtf-tree-parts dt{font-weight:600;font-size:.88em}
+.git-three-forms .gtf-tree-parts dd{margin:.15em 0}
+.git-three-forms .gtf-tree-parts code{display:block;overflow-wrap:anywhere;font-size:.85em}
+.git-three-forms .gtf-note{font-size:.9em}
+.git-three-forms .gtf-ledger{width:100%;border-collapse:collapse;margin:1em 0;font-size:.9em}
+.git-three-forms .gtf-ledger caption{text-align:left;font-weight:700;padding-bottom:.5em}
+.git-three-forms .gtf-ledger th,.git-three-forms .gtf-ledger td{text-align:left;vertical-align:top;border-bottom:1px solid var(--gtf-text);padding:.5em .4em}
+.git-three-forms .gtf-ledger thead{border-top:2px solid var(--gtf-text);border-bottom:2px solid var(--gtf-text)}
+.git-three-forms .gtf-ledger tbody th{width:30%}.git-three-forms .gtf-ledger tbody th small{display:block;font-weight:400;margin-top:.4em}
+.git-three-forms .gtf-ledger .gtf-moment{border-top:3px double var(--gtf-text);border-bottom:3px double var(--gtf-text)}
+.git-three-forms details{margin:1em 0;border-top:1px solid var(--gtf-text)}
+.git-three-forms summary{min-height:44px;box-sizing:border-box;display:list-item;padding:.65em 0;cursor:pointer}
+.git-three-forms summary:focus-visible{outline:3px solid var(--gtf-accent);outline-offset:3px}
+.git-three-forms .gtf-answer{border-left:3px solid var(--gtf-text);padding:.15em .8em}
+@media(max-width:850px){.git-three-forms .gtf-cut{display:block}.git-three-forms .gtf-cut>section{margin:1.3em 0}.git-three-forms .gtf-ledger,.git-three-forms .gtf-ledger tbody,.git-three-forms .gtf-ledger tr,.git-three-forms .gtf-ledger th,.git-three-forms .gtf-ledger td{display:block;width:auto}.git-three-forms .gtf-ledger thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}.git-three-forms .gtf-ledger tbody th{width:auto;border-bottom:0}.git-three-forms .gtf-ledger td::before{content:attr(data-label) ": ";font-weight:700}.git-three-forms .gtf-ledger tr{margin:.8em 0;border-top:2px solid var(--gtf-text)}}
+@media print{.git-three-forms .gtf-cut{display:block}.git-three-forms .gtf-cut>section{margin:1em 0}.git-three-forms details>*{display:block!important}.git-three-forms details>summary{display:none!important}.git-three-forms details::details-content{content-visibility:visible!important;display:block!important}.git-three-forms .gtf-byte,.git-three-forms pre{background:transparent}.git-three-forms .gtf-object,.git-three-forms .gtf-file,.git-three-forms .gtf-ledger tr{break-inside:avoid}.git-three-forms .gtf-ledger thead{display:table-header-group;position:static;width:auto;height:auto;clip-path:none}.git-three-forms .gtf-ledger{display:table}.git-three-forms .gtf-ledger tbody{display:table-row-group}.git-three-forms .gtf-ledger tr{display:table-row}.git-three-forms .gtf-ledger th,.git-three-forms .gtf-ledger td{display:table-cell}.git-three-forms .gtf-ledger td::before{content:none}}
+</style>
+<h3 id="gtf-title">Один note.txt: объекты, запись индекса и рабочие байты</h3>
+<p>Вы уже подготовили <code>staged</code>, затем редактор записал <code>worktree</code>. Посмотрите на момент 2: три чтения одного пути дают разные байты. Дерево коммита связывает имя с blob; индекс хранит свой OID, а файл на диске живёт отдельно.</p>
+<p class="gtf-profile">Расчётный пример продолжает <a href="#01-repository-model">опыт с note.txt</a>: единственный обычный неисполняемый файл, ветка main, SHA-1. C0 и C1 — короткие подписи двух вычисленных ниже commit, а не сокращения их OID. Все строки ASCII и заканчиваются одним LF — байтом <code>0a</code>. Нет преобразований содержимого, обработчиков, подписи, конкурентных записей и авто-подготовки редактором; команды завершаются успешно. Обычный commit здесь вызывается без <code>-a</code> и списка путей.</p>
+<p>В главе об объектах OID вычислялся из типа, длины, NUL и содержимого. Здесь <code>blob</code> хранит только байты, <code>tree</code> — имя, режим и OID blob, <code>commit</code> — OID дерева и метаданные фиксации. NUL — байт <code>00</code>; в tree после него идут 20 сырых байт OID, не 40 букв его печатной записи. Режим <code>100644</code> означает обычный неисполняемый файл, stage 0 — разрешённую запись индекса.</p>
+<figure aria-labelledby="gtf-caption">
+<figcaption id="gtf-caption"><strong>Момент 2. Сохранено first; подготовлено staged; на диске worktree.</strong> Это разные представления одного пути, не три папки-копии. На узком экране три части идут сверху вниз.</figcaption>
+<div class="gtf-cut">
+<section class="gtf-repository" aria-labelledby="gtf-saved-title">
+<h4 id="gtf-saved-title">1. Выбор по HEAD и неизменяемые объекты</h4>
+<p>HEAD выбирает ветку по имени. Значение ветки выбирает C0:</p>
+<pre>HEAD: ref: refs/heads/main
+refs/heads/main:
+b288ad896cd9a91507f57611c7e0028a8a8e7ee4</pre>
+<dl>
+<div class="gtf-object"><dt>Commit C0 · 168 Б содержимого</dt><dd><code class="gtf-oid">b288ad896cd9a91507f57611c7e0028a8a8e7ee4</code><pre>tree ee0b2c55e70a6ef5866614c7af8cb910810c2b3d
+author Reader &lt;reader@example.invalid&gt; 1700000000 +0000
+committer Reader &lt;reader@example.invalid&gt; 1700000000 +0000
+
+first
+</pre><p class="gtf-note">Поле tree называет следующее дерево; имя файла в commit не перечислено.</p></dd></div>
+<div class="gtf-object"><dt>Tree · 36 Б содержимого</dt><dd><code class="gtf-oid">ee0b2c55e70a6ef5866614c7af8cb910810c2b3d</code>
+<dl class="gtf-tree-parts">
+<div><dt>0–5: режим, ASCII</dt><dd><code>31 30 30 36 34 34 · 100644</code></dd></div>
+<div><dt>6: пробел</dt><dd><code>20</code></dd></div>
+<div><dt>7–14: имя, ASCII</dt><dd><code>6e 6f 74 65 2e 74 78 74 · note.txt</code></dd></div>
+<div><dt>15: разделитель NUL</dt><dd><code>00</code></dd></div>
+<div><dt>16–35: 20 сырых байт OID blob</dt><dd><code>9c 59 e2 4b 83 93 17 9a 5d 71 2d e4 f9 90 17 8d f5 73 4d 99</code></dd></div>
+</dl><p class="gtf-note">Режим и имя находятся в tree; содержимое файла берётся из следующего blob.</p></dd></div>
+<div class="gtf-object"><dt>Blob first · 6 Б содержимого</dt><dd><code class="gtf-oid">9c59e24b8393179a5d712de4f990178df5734d99</code><pre>first\n</pre><div class="gtf-bytes"><span class="gtf-byte"><b>66</b><small>f</small></span><span class="gtf-byte"><b>69</b><small>i</small></span><span class="gtf-byte"><b>72</b><small>r</small></span><span class="gtf-byte"><b>73</b><small>s</small></span><span class="gtf-byte"><b>74</b><small>t</small></span><span class="gtf-byte gtf-control"><b>0a</b><small>LF</small></span></div><p class="gtf-note">Ни имени note.txt, ни его режима внутри blob нет.</p></dd></div>
+</dl>
+</section>
+<section class="gtf-index" aria-labelledby="gtf-index-title">
+<h4 id="gtf-index-title">2. Индекс: запись выбранного пути</h4>
+<table class="gtf-index-table"><caption>Логические поля одной записи</caption><tbody>
+<tr><th scope="row">path</th><td><code>note.txt</code></td></tr>
+<tr><th scope="row">mode</th><td><code>100644</code></td></tr>
+<tr><th scope="row">stage</th><td><code>0</code></td></tr>
+<tr><th scope="row">oid</th><td><code class="gtf-oid">19d9cc8584ac2c7dcf57d2680375e80f099dc481</code></td></tr>
+</tbody></table>
+<p>Такой blob уже доступен в хранилище. В самой записи индекса лежит его OID, а не семь байт текста:</p>
+<pre>blob: staged\n
+73 74 61 67 65 64 0a</pre>
+<p class="gtf-note">Это логическая запись, не бинарный дамп всего index. Stat-поля, флаги и расширения описаны выше и здесь не нарисованы.</p>
+<details><summary>Та же запись в формате git ls-files --stage</summary><div><pre>100644 19d9cc8584ac2c7dcf57d2680375e80f099dc481 0&#9;note.txt
+</pre><p>Между стадией 0 и путём стоит табуляция; перед ней режим и OID разделены пробелами. Формат вывода команды отличается от бинарной записи индекса.</p></div></details>
+</section>
+<section class="gtf-file" aria-labelledby="gtf-work-title">
+<h4 id="gtf-work-title">3. Рабочий файл note.txt</h4>
+<p>Обычный файл содержит 9 Б. Номер над клеткой — десятичное смещение от начала файла; ниже hex и символ:</p>
+<div class="gtf-bytes"><span class="gtf-byte"><small>00</small><b>77</b><small>w</small></span><span class="gtf-byte"><small>01</small><b>6f</b><small>o</small></span><span class="gtf-byte"><small>02</small><b>72</b><small>r</small></span><span class="gtf-byte"><small>03</small><b>6b</b><small>k</small></span><span class="gtf-byte"><small>04</small><b>74</b><small>t</small></span><span class="gtf-byte"><small>05</small><b>72</b><small>r</small></span><span class="gtf-byte"><small>06</small><b>65</b><small>e</small></span><span class="gtf-byte"><small>07</small><b>65</b><small>e</small></span><span class="gtf-byte gtf-control"><small>08</small><b>0a</b><small>LF</small></span></div>
+<pre>worktree\n</pre>
+<p>Эти байты читает <code>cat note.txt</code>. LF — последний байт, не две буквы «\n».</p>
+<p class="gtf-note">Для worktree здесь не выполнялся add: его blob не появился в модели хранилища. Вычислить возможный OID можно без записи объекта.</p>
+</section>
+</div>
+</figure>
+<table class="gtf-ledger"><caption>Один последовательный опыт: содержимое пути после каждого действия</caption><thead><tr><th scope="col">Действие и причина</th><th scope="col">HEAD</th><th scope="col">Индекс</th><th scope="col">Рабочий файл</th><th scope="col">Ожидаемый status --short</th></tr></thead><tbody><tr><th scope="row">0. Редактор уже записал staged<small>Сохранённый снимок и запись индекса выбирают first. Менялись только рабочие байты.</small></th><td data-label="HEAD">C0 · first\n</td><td data-label="Индекс">first\n</td><td data-label="Рабочий файл">staged\n</td><td data-label="status --short"><code class="gtf-status">&#32;M&#32;note.txt</code></td></tr><tr><th scope="row">1. git add -- note.txt<small>Подготовлено семь байт: шесть букв staged и LF; blob доступен в хранилище, его OID выбран записью индекса. Main и HEAD не перемещены.</small></th><td data-label="HEAD">C0 · first\n</td><td data-label="Индекс">staged\n</td><td data-label="Рабочий файл">staged\n</td><td data-label="status --short"><code class="gtf-status">M&#32;&#32;note.txt</code></td></tr><tr class="gtf-moment"><th scope="row">2. Редактор записал worktree<small>Девять новых рабочих байт не подготавливались. Индекс всё ещё указывает на staged; этот момент раскрыт выше.</small></th><td data-label="HEAD">C0 · first\n</td><td data-label="Индекс">staged\n</td><td data-label="Рабочий файл">worktree\n</td><td data-label="status --short"><code class="gtf-status">MM&#32;note.txt</code></td></tr><tr><th scope="row">3. git commit -m staged<small>Из индекса получено дерево, создан commit с родителем прежним HEAD, main выбрала новый commit. Рабочие байты не заменены.</small></th><td data-label="HEAD">C1 · staged\n</td><td data-label="Индекс">staged\n</td><td data-label="Рабочий файл">worktree\n</td><td data-label="status --short"><code class="gtf-status">&#32;M&#32;note.txt</code></td></tr></tbody></table>
+<p>В строке 1 add читает рабочие байты, делает соответствующий blob доступным и меняет OID записи индекса. Если blob с теми же байтами уже есть, он используется повторно. Сохранённые C0 и его tree остаются прежними. В строке 3 commit строит tree из подготовленных записей и создаёт C1 с parent=C0; значение main меняется на C1, а символическое содержимое HEAD остаётся тем же.</p>
+<p>После commit логические поля записи индекса <code>path/mode/oid/stage</code> всё ещё выбирают staged, файл всё ещё содержит worktree. Это не обещание неизменности всех байтов служебного index: кэши и сведения проверки файлов могут обновляться. Старые объекты first не переписываются; blob для worktree эта последовательность не сохраняет.</p>
+<details class="gtf-full"><summary>Четыре состояния текстом и точные данные нового коммита</summary><div>
+<ol><li><strong>0. Редактор уже записал staged.</strong> Сохранённый снимок и запись индекса выбирают first. Менялись только рабочие байты. HEAD содержит <code>ref: refs/heads/main</code>; main = <code class="gtf-oid">b288ad896cd9a91507f57611c7e0028a8a8e7ee4</code>. Снимок по HEAD: <code>first\n</code>. Индекс: path=<code>note.txt</code>, mode=<code>100644</code>, stage=<code>0</code>, oid=<code class="gtf-oid">9c59e24b8393179a5d712de4f990178df5734d99</code>. Рабочий файл: <code>staged\n</code>; hex <code>73 74 61 67 65 64 0a</code>. Ожидаемый краткий статус: <code class="gtf-status"> M note.txt</code>.</li><li><strong>1. git add -- note.txt.</strong> Подготовлено семь байт: шесть букв staged и LF; blob доступен в хранилище, его OID выбран записью индекса. Main и HEAD не перемещены. HEAD содержит <code>ref: refs/heads/main</code>; main = <code class="gtf-oid">b288ad896cd9a91507f57611c7e0028a8a8e7ee4</code>. Снимок по HEAD: <code>first\n</code>. Индекс: path=<code>note.txt</code>, mode=<code>100644</code>, stage=<code>0</code>, oid=<code class="gtf-oid">19d9cc8584ac2c7dcf57d2680375e80f099dc481</code>. Рабочий файл: <code>staged\n</code>; hex <code>73 74 61 67 65 64 0a</code>. Ожидаемый краткий статус: <code class="gtf-status">M  note.txt</code>.</li><li><strong>2. Редактор записал worktree.</strong> Девять новых рабочих байт не подготавливались. Индекс всё ещё указывает на staged; этот момент раскрыт выше. HEAD содержит <code>ref: refs/heads/main</code>; main = <code class="gtf-oid">b288ad896cd9a91507f57611c7e0028a8a8e7ee4</code>. Снимок по HEAD: <code>first\n</code>. Индекс: path=<code>note.txt</code>, mode=<code>100644</code>, stage=<code>0</code>, oid=<code class="gtf-oid">19d9cc8584ac2c7dcf57d2680375e80f099dc481</code>. Рабочий файл: <code>worktree\n</code>; hex <code>77 6f 72 6b 74 72 65 65 0a</code>. Ожидаемый краткий статус: <code class="gtf-status">MM note.txt</code>.</li><li><strong>3. git commit -m staged.</strong> Из индекса получено дерево, создан commit с родителем прежним HEAD, main выбрала новый commit. Рабочие байты не заменены. HEAD содержит <code>ref: refs/heads/main</code>; main = <code class="gtf-oid">f4d9dc682abd6629c5431368ccf1aa6788d0570d</code>. Снимок по HEAD: <code>staged\n</code>. Индекс: path=<code>note.txt</code>, mode=<code>100644</code>, stage=<code>0</code>, oid=<code class="gtf-oid">19d9cc8584ac2c7dcf57d2680375e80f099dc481</code>. Рабочий файл: <code>worktree\n</code>; hex <code>77 6f 72 6b 74 72 65 65 0a</code>. Ожидаемый краткий статус: <code class="gtf-status"> M note.txt</code>.</li></ol>
+<p>Для расчётных C0/C1 заданы автор и создатель <code>Reader &lt;reader@example.invalid&gt;</code>. Числа в author/committer — секунды Unix, <code>+0000</code> — смещение UTC. Для C0 это 1700000000 (2023-11-14 22:13:20 UTC), для C1 — 1700000060, на минуту позже. Сообщения — first и staged с LF. Это заданные метаданные модели; в вашем упражнении другие имя, дата или сообщение изменят OID.</p>
+<p>Новое tree · 36 Б содержимого · <code class="gtf-oid">10e9c61d38f27d667d75dd86a23f710538e23eb1</code></p>
+<pre>31 30 30 36 34 34 20 6e 6f 74 65 2e 74 78 74 00 19 d9 cc 85 84 ac 2c 7d cf 57 d2 68 03 75 e8 0f 09 9d c4 81</pre>
+<p>Commit C1 · 217 Б содержимого · <code class="gtf-oid">f4d9dc682abd6629c5431368ccf1aa6788d0570d</code></p><pre>tree 10e9c61d38f27d667d75dd86a23f710538e23eb1
+parent b288ad896cd9a91507f57611c7e0028a8a8e7ee4
+author Reader &lt;reader@example.invalid&gt; 1700000060 +0000
+committer Reader &lt;reader@example.invalid&gt; 1700000060 +0000
+
+staged
+</pre>
+<p>Для получения каждого OID перед содержимым добавляется ASCII-тип, пробел, десятичная длина и NUL: <code>blob 6\0</code>, <code>blob 7\0</code>, <code>tree 36\0</code>, <code>commit 168\0</code> или <code>commit 217\0</code>. Длина не включает сам заголовок. Это канонические байты до сжатия, не размер файлов в .git.</p>
+</div></details>
+<p><strong>Проверьте себя.</strong> После строки 2 выполнен показанный обычный commit. Что прочитают <code>git show HEAD:note.txt</code>, <code>git show :note.txt</code> и <code>cat note.txt</code>? Изменит ли повторный <code>git add -- note.txt</code> уже созданный C1?</p>
+<details><summary>Разбор результата</summary><div class="gtf-answer"><p>Два чтения через Git дадут staged с LF, cat даст worktree с LF. Новый add выберет blob worktree для индекса; C1 и значение main от одного add останутся прежними. Нужен следующий обычный commit, чтобы записать новый выбранный снимок истории.</p></div></details>
+<p class="sources">Механизм проверен по Git 2.43.0: <a href="https://raw.githubusercontent.com/git/git/v2.43.0/Documentation/git-add.txt">выбор содержимого через add</a>, <a href="https://raw.githubusercontent.com/git/git/v2.43.0/Documentation/git-commit.txt">источник обычного commit</a>, <a href="https://raw.githubusercontent.com/git/git/v2.43.0/Documentation/git-ls-files.txt">формат ls-files</a>, <a href="https://raw.githubusercontent.com/git/git/v2.43.0/Documentation/gitformat-index.txt">поля индекса</a>, <a href="https://raw.githubusercontent.com/git/git/v2.43.0/object-file.c">заголовок объекта и хеш</a>, <a href="https://raw.githubusercontent.com/git/git/v2.43.0/builtin/mktree.c">двоичная запись tree</a>, <a href="https://raw.githubusercontent.com/git/git/v2.43.0/commit.c">содержимое commit</a>.</p>
+</section>
+<!-- GIT_THREE_FORMS_01_END -->
 <h2>Какие именно пути подготавливает add</h2>
 <p><code>git add -- path</code> берёт текущее содержимое указанного пути с учётом применимых преобразований. Подготовить удаление отслеживаемого пути тоже можно через <code>add</code>. <code>git add -u</code> обновляет уже отслеживаемые пути, включая удаления, но не добавляет новые неизвестные файлы. <code>git add -A</code> охватывает добавления, изменения и удаления; без ограничивающего пути это весь рабочий репозиторий. Это существенная разница, когда рядом с исправлением лежит сгенерированный файл, который вы ещё не решили сохранять.</p>
 <pre><code>git status --short

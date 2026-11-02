@@ -1,0 +1,80 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" width="390" height="1062" viewBox="0 0 390 1062" role="img" aria-labelledby="title desc"><title id="title">Два состояния CMOS-инвертора</title><desc id="desc">При A=0 pMOS P_A проводит от VDD к Y, nMOS N_A закрыт; Y=1. При A=1 P_A закрыт и N_A проводит от Y к GND; Y=0. Вход A соединён с изолированными затворами. Ёмкость C подключена между Y и GND. Пунктир показывает заряд или разряд во время перехода; в установившихся идеальных состояниях сквозного пути VDD–GND нет. Зазор означает закрытый канал, точка — электрическую связь.</desc><defs><marker id="flow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0L7 3.5L0 7Z" fill="#243f50" /></marker>
+<style>text{font:21px 'DejaVu Sans',sans-serif;fill:#172b38}.heading{font-size:23px;font-weight:bold}.small{font-size:19px}.code{font-family:'DejaVu Sans Mono',monospace}.panel{fill:#fff;stroke:#71808a;stroke-width:1.5}.wire{stroke:#243f50;stroke-width:2.5;fill:none;stroke-linecap:round;stroke-linejoin:round}.on{stroke:#12644d;stroke-width:5;fill:none}.blocked{stroke:#7c3b25;stroke-width:2.5;fill:none}.open{stroke:#243f50;stroke-width:2.3;fill:#fff}.node{fill:#243f50}.flow{stroke:#243f50;stroke-width:2;stroke-dasharray:5 5;fill:none;marker-end:url(#flow)}.gate{fill:#edf3f5;stroke:#243f50;stroke-width:2.5}.carry{stroke:#744615;stroke-width:3.2;fill:none;stroke-linejoin:round}.quiet{fill:#edf3f5;stroke:none}</style></defs>
+<rect width="390" height="1062" fill="#f6f8f9" /><g transform="translate(0 0)"><text x="20" y="31" class="heading">CMOS-инвертор</text>
+<text x="20" y="58" class="small">Два состояния и заряд нагрузки</text>
+<rect x="12" y="78" width="366" height="422" rx="12" class="panel" />
+<text x="25" y="112" class="heading">A=0: заряд Y до 1</text>
+<g id="inverter-0" data-input-a="0" transform="translate(0 120)">
+<text x="154" y="37" class="code">VDD</text>
+<path d="M180 47V66 M180 110V206 M180 250V295" class="wire" />
+<path d="M164 295H196 M170 302H190 M176 309H184" class="wire" />
+<text x="121" y="331" class="code">GND</text>
+<g data-kind="pMOS" data-on="1">
+<path d="M180 66V77 M180 99V110" class="wire" />
+<path d="M180 77V99" class="on" />
+<path d="M167 71V105" class="wire" />
+<circle cx="160" cy="88" r="5" class="open" />
+<path d="M165 88H167" class="wire" />
+</g>
+<g data-kind="nMOS" data-on="0">
+<path d="M180 206V217 M180 239V250" class="wire" />
+<circle cx="180" cy="218" r="3" class="open" /><circle cx="180" cy="238" r="3" class="open" />
+<path d="M189 220L189 236" class="blocked" />
+<path d="M167 211V245" class="wire" />
+</g>
+<path d="M65 160H95 M95 88V228 M95 88H155 M95 228H167" class="wire" />
+<circle cx="95" cy="160" r="4" class="node" />
+<text x="26" y="149" class="code">A=0</text>
+<path d="M180 160H300V190 M280 190H320 M280 202H320 M300 202V280H180" class="wire" />
+<circle cx="180" cy="160" r="4" class="node" />
+<circle cx="180" cy="280" r="4" class="node" />
+<text x="209" y="151" class="code">Y=1</text>
+<text x="275" y="232" class="code">C</text>
+<text x="220" y="77" class="small">pMOS P_A</text>
+<text x="220" y="103" class="small">проводит</text>
+<text x="25" y="258" class="small">nMOS N_A</text>
+<text x="25" y="284" class="small">закрыт</text>
+<path d="M193 55V120H270V176" class="flow" />
+<text x="215" y="185" class="small" />
+</g>
+<text x="25" y="468" class="small">Заряд Y от VDD</text>
+<rect x="12" y="518" width="366" height="422" rx="12" class="panel" />
+<text x="25" y="552" class="heading">A=1: разряд Y до 0</text>
+<g id="inverter-1" data-input-a="1" transform="translate(0 560)">
+<text x="154" y="37" class="code">VDD</text>
+<path d="M180 47V66 M180 110V206 M180 250V295" class="wire" />
+<path d="M164 295H196 M170 302H190 M176 309H184" class="wire" />
+<text x="121" y="331" class="code">GND</text>
+<g data-kind="pMOS" data-on="0">
+<path d="M180 66V77 M180 99V110" class="wire" />
+<circle cx="180" cy="78" r="3" class="open" /><circle cx="180" cy="98" r="3" class="open" />
+<path d="M189 80L189 96" class="blocked" />
+<path d="M167 71V105" class="wire" />
+<circle cx="160" cy="88" r="5" class="open" />
+<path d="M165 88H167" class="wire" />
+</g>
+<g data-kind="nMOS" data-on="1">
+<path d="M180 206V217 M180 239V250" class="wire" />
+<path d="M180 217V239" class="on" />
+<path d="M167 211V245" class="wire" />
+</g>
+<path d="M65 160H95 M95 88V228 M95 88H155 M95 228H167" class="wire" />
+<circle cx="95" cy="160" r="4" class="node" />
+<text x="26" y="149" class="code">A=1</text>
+<path d="M180 160H300V190 M280 190H320 M280 202H320 M300 202V280H180" class="wire" />
+<circle cx="180" cy="160" r="4" class="node" />
+<circle cx="180" cy="280" r="4" class="node" />
+<text x="209" y="151" class="code">Y=0</text>
+<text x="275" y="232" class="code">C</text>
+<text x="220" y="77" class="small">pMOS P_A</text>
+<text x="220" y="103" class="small">закрыт</text>
+<text x="25" y="258" class="small">nMOS N_A</text>
+<text x="25" y="284" class="small">проводит</text>
+<path d="M194 173V279" class="flow" />
+</g>
+<text x="25" y="908" class="small">Разряд Y к GND</text>
+<text x="20" y="987" class="small">Стрелка — только при переходе.</text>
+<text x="20" y="1014" class="small">Зазор: закрыто; точка: связь.</text>
+<text x="20" y="1041" class="small">Затвор отделён от канала.</text>
+</g></svg>

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="640" viewBox="0 0 400 640" role="img" aria-labelledby="title desc"><title id="title">CQ2: запись CQ[0] и оборот фазы</title><desc id="desc">Смещения CQE: SQHD 1 по08h, SQID 2 по0Ah, CID 0011h по0Ch, phase/status 0001h по0Eh. Phase1 при SC0/SCT0. Host после слота 3 переходит к 0 и ожидает phase 0. P меняет контроллер, ожидаемую фазу меняет host. Read не доказывает устойчивость Write.</desc><defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#243c50" /></marker>
+<style>text{font:20px system-ui,sans-serif;fill:#172e40}.h{font-size:24px;font-weight:700}.b{font-weight:700}.m{font:20px ui-monospace,monospace}.small{font-size:19px}.edge{stroke:#385266;stroke-width:1.6;fill:none}.arrow{stroke:#243c50;stroke-width:2;fill:none;marker-end:url(#arrow)}.paper{fill:#fff}.sq{fill:#edf2f9}.cq{fill:#e8f1eb}.data{fill:#fff2d8}.ctl{fill:#f4eff8}.muted{fill:#3d5162}@media print{text{fill:#000}.sq,.cq,.data,.ctl,.paper{fill:#fff}.edge,.arrow{stroke:#000}}</style></defs>
+<rect width="400" height="640" fill="#fff" /><g transform="translate(0,-1998)"><text x="16" y="2029" class="h">CQ2 · CQ[0], 16 B</text>
+<text x="16" y="2058" class="small">Смещения hex от 5000h; little-endian</text>
+<rect x="16" y="2078" width="368" height="295" rx="0" class="cq edge" />
+<text x="28" y="2107" class="m">00..07  DW0/DW1 = 0</text>
+<text x="28" y="2132" class="small">в этой Read не используются</text>
+<text x="28" y="2160" class="m">08..09  SQHD = 1</text>
+<text x="28" y="2185" class="small">01 00 → извлечение из SQ</text>
+<text x="28" y="2213" class="m">0A..0B  SQID = 2</text>
+<text x="28" y="2238" class="small">02 00 → очередь этой команды</text>
+<text x="28" y="2266" class="m">0C..0D  CID = 0011h</text>
+<text x="28" y="2291" class="small">11 00 → тот же запрос, что в SQE</text>
+<text x="28" y="2319" class="m">0E..0F  Status/P = 0001h</text>
+<text x="28" y="2344" class="small">01 00 → P=1; SC=0; SCT=0</text>
+<text x="16" y="2413" class="h">После полного оборота CQ</text>
+<text x="16" y="2448" class="m">слоты:     0 → 1 → 2 → 3 → 0</text>
+<text x="16" y="2478" class="m">host ждёт: 1   1   1   1   0</text>
+<text x="16" y="2510" class="small">В старом CQ[0] P=1: ещё не новая CQE.</text>
+<text x="16" y="2540" class="small">P — контроллер; ожидание — host.</text>
+<path d="M16 2560L384 2560" class="edge" />
+<text x="16" y="2587" class="small muted">Видимость обеспечивает платформа.</text>
+<text x="16" y="2614" class="small muted">Read не доказывает durability.</text>
+</g></svg>
