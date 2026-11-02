@@ -4269,7 +4269,7 @@ Prune удаляет объекты по своей модели неиспол�
 
 Том VIII · Продолжаемый стенд
 
-Продолжаемый практикум: от своего образа до проверенного восстановленияМаршрут использует один подготовленный Engine, один проект и основной том данных. Новое упражнение продолжает прежнее состояние; отдельные цели появляются только там, где мы явно проверяем восстановление или опасное предположение. · 2188 словСодержание главы
+Продолжаемый практикум: от своего образа до проверенного восстановленияМаршрут использует один подготовленный Engine, один проект и основной том данных. Новое упражнение продолжает прежнее состояние; отдельные цели появляются только там, где мы явно проверяем восстановление или опасное предположение. · 2194 словСодержание главы
 
 Подготовка перед автономным днём
 
@@ -4471,12 +4471,14 @@ COUNT
   python3 - "$HANDOFF_RECORD/compose.after.json" "$APP_IMAGE" <<'AFTER'
 import json, sys
 c, = json.load(open(sys.argv[1]))
-m = [m for m in c['Mounts'] if m['Destination'] == '/data']
+m = [m for m in c['Mounts'] if m['Destination'] == '/data' or
+     m['Destination'].startswith('/data/')]
 l = c['Config'].get('Labels') or {}
 if not (c['Image'] == sys.argv[2] and c['State']['Status'] == 'running' and
         c['Config']['User'] == '10001:10001' and
         l.get('com.docker.compose.project') == 'study-docker' and
         l.get('com.docker.compose.service') == 'echo' and len(m) == 1 and
+        m[0]['Destination'] == '/data' and
         m[0]['Type'] == 'volume' and m[0].get('Name') == 'study-data' and m[0]['RW']):
     raise SystemExit('Фактический объект Compose не прошёл проверку')
 AFTER

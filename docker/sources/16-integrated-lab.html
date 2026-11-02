@@ -169,12 +169,14 @@ COUNT
   python3 - &quot;$HANDOFF_RECORD/compose.after.json&quot; &quot;$APP_IMAGE&quot; &lt;&lt;&#x27;AFTER&#x27;
 import json, sys
 c, = json.load(open(sys.argv[1]))
-m = [m for m in c[&#x27;Mounts&#x27;] if m[&#x27;Destination&#x27;] == &#x27;/data&#x27;]
+m = [m for m in c[&#x27;Mounts&#x27;] if m[&#x27;Destination&#x27;] == &#x27;/data&#x27; or
+     m[&#x27;Destination&#x27;].startswith(&#x27;/data/&#x27;)]
 l = c[&#x27;Config&#x27;].get(&#x27;Labels&#x27;) or {}
 if not (c[&#x27;Image&#x27;] == sys.argv[2] and c[&#x27;State&#x27;][&#x27;Status&#x27;] == &#x27;running&#x27; and
         c[&#x27;Config&#x27;][&#x27;User&#x27;] == &#x27;10001:10001&#x27; and
         l.get(&#x27;com.docker.compose.project&#x27;) == &#x27;study-docker&#x27; and
         l.get(&#x27;com.docker.compose.service&#x27;) == &#x27;echo&#x27; and len(m) == 1 and
+        m[0][&#x27;Destination&#x27;] == &#x27;/data&#x27; and
         m[0][&#x27;Type&#x27;] == &#x27;volume&#x27; and m[0].get(&#x27;Name&#x27;) == &#x27;study-data&#x27; and m[0][&#x27;RW&#x27;]):
     raise SystemExit(&#x27;Фактический объект Compose не прошёл проверку&#x27;)
 AFTER
