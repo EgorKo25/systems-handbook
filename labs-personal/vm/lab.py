@@ -72,8 +72,14 @@ class GitHub:
  def api(self,method,path,data=None,missing=False):
   args=[self.gh,'api','--hostname','github.com','--include','--method',method,path,'-H','Accept: application/vnd.github+json','-H','X-GitHub-Api-Version: 2026-03-10']
   if data is not None:args+=['--input','-']
-  r=subprocess.run(args,input=dump(data)if data is not None else None,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL)
-  raw=r.stdout;parts=re.split(rb'\r?\n\r?\n',raw,maxsplit=1);status=re.match(rb'HTTP/\S+\s+(\d+)',parts[0]);require(status is not None,'gh did not return an HTTP status; authentication/network may be unavailable')
+  for attempt in range(3):
+   r=subprocess.run(args,input=dump(data)if data is not None else None,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL)
+   raw=r.stdout;parts=re.split(rb'\r?\n\r?\n',raw,maxsplit=1);status=re.match(rb'HTTP/\S+\s+(\d+)',parts[0])
+   # Only a failed GET with no response can be retried; never replay mutations.
+   if method=='GET'and r.returncode and not raw and status is None and attempt<2:
+    time.sleep(attempt+1);continue
+   break
+  require(status is not None,'gh did not return an HTTP status; authentication/network may be unavailable')
   code=int(status[1])
   if code==404 and missing:return None
   if r.returncode or not 200<=code<300:raise HTTP(code)
