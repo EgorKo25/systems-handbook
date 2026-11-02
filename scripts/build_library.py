@@ -18,8 +18,12 @@ def main():
         subprocess.run([sys.executable, str(ROOT / book / 'build.py')], cwd=ROOT, check=True)
     # A new reader may not exist when an earlier per-volume wrapper builds the
     # home page. Resolve the final shelf only after every reader and its stats.
-    from scripts.build_volume import home
+    from scripts.build_volume import home, command_catalog
     home()
+    from scripts.reader_command_sync import synchronize_readers
+    parser = (ROOT/'scripts/command_reference_parser.js').read_text(encoding='utf-8')
+    print('Reference readers synchronized:', synchronize_readers(
+        ROOT, [row['slug'] for row in PUBLISHED], command_catalog(), parser))
     from scripts.library_catalog import refresh
     print(f'Shared dictionary: {refresh()} definitions')
 

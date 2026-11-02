@@ -96,6 +96,8 @@ jobs:
         run: python3 scripts/check_site.py . --node-check
       - name: Check teaching models
         run: |
+          node tests/check-command-reference-parser.cjs
+          node tests/check-bash-reference-boundaries.cjs --native
           node networks/labs/check-theory-models.cjs
           node cache/labs/test-eviction.cjs
           node cache/labs/test-resources.cjs

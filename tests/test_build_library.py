@@ -19,6 +19,9 @@ class FirstBuildTests(unittest.TestCase):
                 '<section class="notes" style="margin-top:22px"><h2>Как читать</h2>'
                 '</section></main></body></html>')
             (root/'library-stats.json').write_text('[]')
+            (root/'scripts').mkdir()
+            (root/'scripts/command_reference_parser.js').write_text(
+                'function tokenizeQuery(value) { return []; }\n')
             slugs = ('computer-architecture', 'operating-systems')
             configs = {slug: dict(volume=number, short=slug, blurb=slug, diagram_modules=[])
                        for slug, number in zip(slugs, ('XXIX', 'XXX'))}
@@ -34,7 +37,11 @@ class FirstBuildTests(unittest.TestCase):
                 self.assertIn(slug, slugs)
                 self.assertFalse((root/slug/'index.html').exists())
                 (root/slug).mkdir()
-                (root/slug/'index.html').write_text('<h1>New reader</h1>')
+                (root/slug/'index.html').write_text(
+                    '<h1>New reader</h1><script id="command-reference-data">[]</script>'
+                    '<script>function tokenizeQuery(value) { return ["old"]; }\n'
+                    '// Mark only a command position, not words inside strings or configuration fields.\n'
+                    '</script>')
                 stats = json.loads((root/'library-stats.json').read_text())
                 stats.append(dict(slug=slug, volume=configs[slug]['volume'],
                                   chapters=36, words=58000, terms=210))
@@ -53,6 +60,9 @@ class FirstBuildTests(unittest.TestCase):
                     self.assertEqual(route['books'][slug]['status'], 'available')
                     self.assertEqual(route['books'][slug]['href'], slug+'/index.html')
                     self.assertIn('href="'+slug+'/index.html"', page)
+                    reader = (root/slug/'index.html').read_text()
+                    self.assertIn('return [];', reader)
+                    self.assertNotIn('return ["old"];', reader)
                 self.assertEqual(route['order'][:3], [*slugs, 'linux'])
                 self.assertIn('operating-systems · 1 схем', page)
                 self.assertEqual(page.count('href="operating-systems/index.html#os-cow-page"'), 1)
@@ -65,6 +75,7 @@ class FirstBuildTests(unittest.TestCase):
                  patch.object(build_library.subprocess, 'run', side_effect=build_reader), \
                  patch.object(build_volume, 'ROOT', root), \
                  patch.object(build_volume, 'CONFIGS', configs), \
+                 patch.object(build_volume, 'command_catalog', return_value=[]), \
                  patch.object(library_catalog, 'refresh', side_effect=final_catalog):
                 build_library.main()
                 build_volume.home()

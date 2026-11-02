@@ -45,65 +45,65 @@
     {
       "id": "08-status-tests-control",
       "title": "Условия и циклы",
-      "words": 1822
+      "words": 2264
     },
     {
       "id": "09-functions-arrays",
       "title": "Функции и массивы",
-      "words": 1793
+      "words": 2096
     },
     {
       "id": "10-errors-and-traps",
       "title": "Ошибки и обработчики",
-      "words": 1865
+      "words": 2149
     },
     {
       "id": "11-filenames-and-records",
       "title": "Имена файлов",
-      "words": 1761
+      "words": 2101
     },
     {
       "id": "12-text-and-bytes",
       "title": "Текст и байты",
-      "words": 2013
+      "words": 2430
     },
     {
       "id": "13-jobs-signals",
       "title": "Фоновые процессы и сигналы",
-      "words": 1786
+      "words": 2128
     },
     {
       "id": "14-scripts-and-portability",
       "title": "Сценарий как программа",
-      "words": 1673
+      "words": 2064
     },
     {
       "id": "15-reliable-files-concurrency",
       "title": "Надёжность и параллелизм",
-      "words": 2581
+      "words": 3075
     },
     {
       "id": "16-debugging-and-tests",
       "title": "Отладка и проверка",
-      "words": 2411
+      "words": 2652
     },
     {
       "id": "17-language-boundaries",
       "title": "Границы языков",
-      "words": 1963
+      "words": 2259
     },
     {
       "id": "18-practice-and-reference",
       "title": "Автономная практика",
-      "words": 1964
+      "words": 2243
     },
     {
       "id": "99-glossary",
       "title": "Словарь терминов",
-      "words": 6035
+      "words": 6093
     }
   ],
-  "words": 48985,
+  "words": 52872,
   "terms": 273,
   "external_assets": 0
 }

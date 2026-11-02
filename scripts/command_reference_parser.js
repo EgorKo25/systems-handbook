@@ -54,7 +54,7 @@ function flagForms(label) {
     for (const alternatives of groups) {
         const group = [];
         for (const alternative of alternatives) {
-            const expression = /(?:^|\s)([+-]{1,2}(?:[A-Za-z0-9_][A-Za-z0-9_-]*|[%+]))(?:=([^\s]+))?/g;
+            const expression = /(?:^|\s)([+-]{1,2}(?:[A-Za-z0-9_][A-Za-z0-9_.-]*|[%+]))(?:=([^\s]+))?/g;
             const match = expression.exec(alternative);
             if (!match) continue;
             const tail = alternative.slice(expression.lastIndex).trim().split(/\s+/)[0] || '';
@@ -103,13 +103,20 @@ function isOption(token) { return /^[+-][^\s]/.test(token) && token !== '--'; }
 function matchesCommand(command, name) {
     return [command.name,...(command.aliases || [])].some(value => normalizeText(value) === normalizeText(name));
 }
-function prefixOptionSpan(tokens, start, specifications) {
+function prefixOptionSpan(tokens, start, specifications, dispatchSpecifications = null) {
     const token = tokens[start] || '';
     if (!isOption(token)) return 0;
     const equals = token.indexOf('='), name = equals > 0 ? token.slice(0,equals) : token;
     const direct = specifications.get(name);
     const operand = () => start + 1 < tokens.length && tokens[start + 1] !== '--' ? 2 : 0;
-    if (direct) return equals > 0 || !direct.expectsValue ? 1 : operand();
+    if (direct) {
+        // Argo/Cobra Find strips argv using the flags visible at this ancestor.
+        // A known leaf boolean is still value-taking here if the ancestor does
+        // not know it; the final leaf scope is used later to explain its meaning.
+        const expectsValue = dispatchSpecifications
+            ? dispatchSpecifications.get(name)?.expectsValue !== false : direct.expectsValue;
+        return equals > 0 || !expectsValue ? 1 : operand();
+    }
     if (token.startsWith('--') || token.length < 3) return 0;
     for (let i = 1; i < token.length; i++) {
         const specification = specifications.get(token[0] + token[i]);
@@ -193,6 +200,11 @@ function commandMatch(command, tokens) {
         if(scripts.length && (python.mode!=='script' || !scripts.includes(python.target)))
             return {prefix:0,depth:0,indices:[],segments:[]};
     }
+    // Only Argo's explicit persistent-root contract uses this limited Cobra
+    // dispatch model. Ancestor-visible arity finds words; final-local scope
+    // explains shadowing. Persistence alone does not grant this to other CLIs.
+    const finalOptionScope = canonical[0] === 'argocd' &&
+        (command.persistentScopes || []).includes('argocd') ? command.name : null;
     let best = {prefix:0, depth:0, indices:[], segments:[]};
     for (const name of [command.name,...(command.aliases || [])]) {
         const parts = tokenizeQuery(name);
@@ -200,10 +212,12 @@ function commandMatch(command, tokens) {
         let cursor = 0, valid = true;
         const indices = [], segments = [];
         for (let part = 0; part < parts.length; part++) {
-            const scope = prefixScope(command,parts,part);
+            const visibleScope = prefixScope(command,parts,part);
+            const scope = finalOptionScope || visibleScope;
             const specifications = optionSpecifications(command,scope);
+            const dispatchSpecifications = finalOptionScope ? optionSpecifications(command,visibleScope) : null;
             while (part && !isOption(parts[part - 1]) && normalizeText(tokens[cursor] || '') !== normalizeText(parts[part])) {
-                const span = prefixOptionSpan(tokens,cursor,specifications);
+                const span = prefixOptionSpan(tokens,cursor,specifications,dispatchSpecifications);
                 if (!span) { valid = false; break; }
                 segments.push({start:cursor,span,scope}); cursor += span;
             }
@@ -221,7 +235,7 @@ function parseOptions(tokens, specifications, settings = {}) {
     for (let i = 0; i < tokens.length; i++) {
         const token = tokens[i];
         if (token === '--') { words.push(...tokens.slice(i + 1)); break; }
-        if (!isOption(token)) {
+        if (!isOption(token) || settings.optionPrefix === '-' && !token.startsWith('-')) {
             if (settings.stopAtOperand) { words.push(...tokens.slice(i)); break; }
             words.push(token); continue;
         }
@@ -276,10 +290,11 @@ function analyzeQuery(command, query, sharedParsed = null) {
             const prefix = parseOptions(tokens.slice(segment.start,segment.start + segment.span),scope);
             for (const option of prefix.options) optionScopes.set(option,scope);
             parsed.options.push(...prefix.options);
+            parsed.words.push(...prefix.words);
         }
         const local=parseOptions(explicit ? tokens.slice(match.prefix) : tokens,specifications,
-                                {stopAtOperand:command.optionBoundary === 'first-operand'});
-        parsed.options.push(...local.options); parsed.words=local.words;
+                                {stopAtOperand:command.optionBoundary === 'first-operand',optionPrefix:command.optionPrefix});
+        parsed.options.push(...local.options); parsed.words.push(...local.words);
     }
     const matched=new Set(), unmatched=[];
     for (const option of parsed.options) {

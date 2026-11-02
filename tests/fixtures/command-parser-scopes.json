@@ -1,0 +1,2044 @@
+{
+  "provenance": "Projected immutable real production command_catalog() cards for parser regression only. No published command-card changes. Descriptive flag prose/example fields omitted; all flag labels, aliases and scoping metadata retained exactly. Argo/Flyway are unregistered source inputs, not publication claims.",
+  "catalog_sha256": "fd938b6991d1fe0b9da227c9fb623bccce27d270d0f7d405f18fd0ff99cca69a",
+  "source_card_sha256": {
+    "argocd/sources/reference.py": "f6ea774f51227b90b4512d7ead9028478a344a1b4b65c849ed43c5703e903ca9",
+    "flyway/sources/reference.py": "d070293832a155e146e87011a1e1c1931157119d71f9d3e1e44b00bc30416391"
+  },
+  "commands": [
+    {
+      "name": "argocd",
+      "aliases": [],
+      "purpose": "CLI выбранного Argo CD3.5.6. Серверное подключение Argo и Kubernetes-доступ admin-команд различаются.",
+      "syntax": "argocd [ГЛОБАЛЬНЫЕ_ФЛАГИ] КОМАНДА",
+      "flagScopes": [
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd"
+      ],
+      "flags": [
+        {
+          "flag": "--config ФАЙЛ"
+        },
+        {
+          "flag": "--argocd-context ИМЯ"
+        },
+        {
+          "flag": "--server АДРЕС"
+        },
+        {
+          "flag": "--server-crt ФАЙЛ"
+        },
+        {
+          "flag": "--grpc-web"
+        },
+        {
+          "flag": "--core"
+        },
+        {
+          "flag": "--kube-context ИМЯ"
+        },
+        {
+          "flag": "--insecure"
+        },
+        {
+          "flag": "--plaintext"
+        },
+        {
+          "flag": "--loglevel УРОВЕНЬ"
+        }
+      ]
+    },
+    {
+      "name": "argocd version",
+      "aliases": [],
+      "purpose": "Показать версию клиента и при запросе сервер.",
+      "syntax": "argocd version [ФЛАГИ]",
+      "flagScopes": [
+        "argocd version",
+        "argocd version",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd"
+      ],
+      "prefixFlags": {
+        "argocd": [
+          "--config ФАЙЛ",
+          "--argocd-context ИМЯ",
+          "--server АДРЕС",
+          "--server-crt ФАЙЛ",
+          "--grpc-web",
+          "--core",
+          "--kube-context ИМЯ",
+          "--insecure",
+          "--plaintext",
+          "--loglevel УРОВЕНЬ"
+        ]
+      },
+      "persistentScopes": [
+        "argocd"
+      ],
+      "flags": [
+        {
+          "flag": "--client"
+        },
+        {
+          "flag": "--short"
+        },
+        {
+          "flag": "--config ФАЙЛ"
+        },
+        {
+          "flag": "--argocd-context ИМЯ"
+        },
+        {
+          "flag": "--server АДРЕС"
+        },
+        {
+          "flag": "--server-crt ФАЙЛ"
+        },
+        {
+          "flag": "--grpc-web"
+        },
+        {
+          "flag": "--core"
+        },
+        {
+          "flag": "--kube-context ИМЯ"
+        },
+        {
+          "flag": "--insecure"
+        },
+        {
+          "flag": "--plaintext"
+        },
+        {
+          "flag": "--loglevel УРОВЕНЬ"
+        }
+      ]
+    },
+    {
+      "name": "argocd context",
+      "aliases": [
+        "argocd ctx"
+      ],
+      "purpose": "Показать либо переключить именованное подключение Argo в выбранном файле.",
+      "syntax": "argocd context [ИМЯ]",
+      "flagScopes": [
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd"
+      ],
+      "prefixFlags": {
+        "argocd": [
+          "--config ФАЙЛ",
+          "--argocd-context ИМЯ",
+          "--server АДРЕС",
+          "--server-crt ФАЙЛ",
+          "--grpc-web",
+          "--core",
+          "--kube-context ИМЯ",
+          "--insecure",
+          "--plaintext",
+          "--loglevel УРОВЕНЬ"
+        ]
+      },
+      "persistentScopes": [
+        "argocd"
+      ],
+      "flags": [
+        {
+          "flag": "--config ФАЙЛ"
+        },
+        {
+          "flag": "--argocd-context ИМЯ"
+        },
+        {
+          "flag": "--server АДРЕС"
+        },
+        {
+          "flag": "--server-crt ФАЙЛ"
+        },
+        {
+          "flag": "--grpc-web"
+        },
+        {
+          "flag": "--core"
+        },
+        {
+          "flag": "--kube-context ИМЯ"
+        },
+        {
+          "flag": "--insecure"
+        },
+        {
+          "flag": "--plaintext"
+        },
+        {
+          "flag": "--loglevel УРОВЕНЬ"
+        }
+      ]
+    },
+    {
+      "name": "argocd app get",
+      "aliases": [],
+      "purpose": "Получить состояние,условия и описание приложения через сервер.",
+      "syntax": "argocd app get ИМЯ [ФЛАГИ]",
+      "flagScopes": [
+        "argocd app get",
+        "argocd app get",
+        "argocd app get",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd"
+      ],
+      "prefixFlags": {
+        "argocd": [
+          "--config ФАЙЛ",
+          "--argocd-context ИМЯ",
+          "--server АДРЕС",
+          "--server-crt ФАЙЛ",
+          "--grpc-web",
+          "--core",
+          "--kube-context ИМЯ",
+          "--insecure",
+          "--plaintext",
+          "--loglevel УРОВЕНЬ"
+        ],
+        "argocd app": [
+          "--config ФАЙЛ",
+          "--argocd-context ИМЯ",
+          "--server АДРЕС",
+          "--server-crt ФАЙЛ",
+          "--grpc-web",
+          "--core",
+          "--kube-context ИМЯ",
+          "--insecure",
+          "--plaintext",
+          "--loglevel УРОВЕНЬ"
+        ]
+      },
+      "persistentScopes": [
+        "argocd"
+      ],
+      "flags": [
+        {
+          "flag": "--refresh"
+        },
+        {
+          "flag": "--hard-refresh"
+        },
+        {
+          "flag": "-o ФОРМАТ / --output ФОРМАТ"
+        },
+        {
+          "flag": "--config ФАЙЛ"
+        },
+        {
+          "flag": "--argocd-context ИМЯ"
+        },
+        {
+          "flag": "--server АДРЕС"
+        },
+        {
+          "flag": "--server-crt ФАЙЛ"
+        },
+        {
+          "flag": "--grpc-web"
+        },
+        {
+          "flag": "--core"
+        },
+        {
+          "flag": "--kube-context ИМЯ"
+        },
+        {
+          "flag": "--insecure"
+        },
+        {
+          "flag": "--plaintext"
+        },
+        {
+          "flag": "--loglevel УРОВЕНЬ"
+        }
+      ]
+    },
+    {
+      "name": "argocd admin initial-password",
+      "aliases": [],
+      "purpose": "Прочитать первый пароль из Kubernetes Secret своего управляющий контур namespace.",
+      "syntax": "argocd admin initial-password [ФЛАГИ]",
+      "flagScopes": [
+        "argocd admin initial-password",
+        "argocd admin initial-password",
+        "argocd admin initial-password",
+        "argocd admin initial-password",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd"
+      ],
+      "prefixFlags": {
+        "argocd": [
+          "--config ФАЙЛ",
+          "--argocd-context ИМЯ",
+          "--server АДРЕС",
+          "--server-crt ФАЙЛ",
+          "--grpc-web",
+          "--core",
+          "--kube-context ИМЯ",
+          "--insecure",
+          "--plaintext",
+          "--loglevel УРОВЕНЬ"
+        ],
+        "argocd admin": [
+          "--config ФАЙЛ",
+          "--argocd-context ИМЯ",
+          "--server АДРЕС",
+          "--server-crt ФАЙЛ",
+          "--grpc-web",
+          "--core",
+          "--kube-context ИМЯ",
+          "--insecure",
+          "--plaintext",
+          "--loglevel УРОВЕНЬ"
+        ]
+      },
+      "persistentScopes": [
+        "argocd"
+      ],
+      "flags": [
+        {
+          "flag": "--kubeconfig ФАЙЛ"
+        },
+        {
+          "flag": "--context ИМЯ"
+        },
+        {
+          "flag": "-n ИМЯ / --namespace ИМЯ"
+        },
+        {
+          "flag": "--server URL"
+        },
+        {
+          "flag": "--config ФАЙЛ"
+        },
+        {
+          "flag": "--argocd-context ИМЯ"
+        },
+        {
+          "flag": "--server АДРЕС"
+        },
+        {
+          "flag": "--server-crt ФАЙЛ"
+        },
+        {
+          "flag": "--grpc-web"
+        },
+        {
+          "flag": "--core"
+        },
+        {
+          "flag": "--kube-context ИМЯ"
+        },
+        {
+          "flag": "--insecure"
+        },
+        {
+          "flag": "--plaintext"
+        },
+        {
+          "flag": "--loglevel УРОВЕНЬ"
+        }
+      ]
+    },
+    {
+      "name": "argocd admin export",
+      "aliases": [],
+      "purpose": "Экспортировать данные управляющего контура из Kubernetes.",
+      "syntax": "argocd admin export [ФЛАГИ]",
+      "flagScopes": [
+        "argocd admin export",
+        "argocd admin export",
+        "argocd admin export",
+        "argocd admin export",
+        "argocd admin export",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd"
+      ],
+      "prefixFlags": {
+        "argocd": [
+          "--config ФАЙЛ",
+          "--argocd-context ИМЯ",
+          "--server АДРЕС",
+          "--server-crt ФАЙЛ",
+          "--grpc-web",
+          "--core",
+          "--kube-context ИМЯ",
+          "--insecure",
+          "--plaintext",
+          "--loglevel УРОВЕНЬ"
+        ],
+        "argocd admin": [
+          "--config ФАЙЛ",
+          "--argocd-context ИМЯ",
+          "--server АДРЕС",
+          "--server-crt ФАЙЛ",
+          "--grpc-web",
+          "--core",
+          "--kube-context ИМЯ",
+          "--insecure",
+          "--plaintext",
+          "--loglevel УРОВЕНЬ"
+        ]
+      },
+      "persistentScopes": [
+        "argocd"
+      ],
+      "flags": [
+        {
+          "flag": "--kubeconfig ФАЙЛ"
+        },
+        {
+          "flag": "--context ИМЯ"
+        },
+        {
+          "flag": "-n ИМЯ / --namespace ИМЯ"
+        },
+        {
+          "flag": "-o ФАЙЛ / --out ФАЙЛ"
+        },
+        {
+          "flag": "--server URL"
+        },
+        {
+          "flag": "--config ФАЙЛ"
+        },
+        {
+          "flag": "--argocd-context ИМЯ"
+        },
+        {
+          "flag": "--server АДРЕС"
+        },
+        {
+          "flag": "--server-crt ФАЙЛ"
+        },
+        {
+          "flag": "--grpc-web"
+        },
+        {
+          "flag": "--core"
+        },
+        {
+          "flag": "--kube-context ИМЯ"
+        },
+        {
+          "flag": "--insecure"
+        },
+        {
+          "flag": "--plaintext"
+        },
+        {
+          "flag": "--loglevel УРОВЕНЬ"
+        }
+      ]
+    },
+    {
+      "name": "argocd admin import",
+      "aliases": [],
+      "purpose": "Восстановить данные в отдельно подготовленную цель;не запускать на исходной системе ради теста.",
+      "syntax": "argocd admin import ИСТОЧНИК [ФЛАГИ]",
+      "flagScopes": [
+        "argocd admin import",
+        "argocd admin import",
+        "argocd admin import",
+        "argocd admin import",
+        "argocd admin import",
+        "argocd admin import",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd"
+      ],
+      "prefixFlags": {
+        "argocd": [
+          "--config ФАЙЛ",
+          "--argocd-context ИМЯ",
+          "--server АДРЕС",
+          "--server-crt ФАЙЛ",
+          "--grpc-web",
+          "--core",
+          "--kube-context ИМЯ",
+          "--insecure",
+          "--plaintext",
+          "--loglevel УРОВЕНЬ"
+        ],
+        "argocd admin": [
+          "--config ФАЙЛ",
+          "--argocd-context ИМЯ",
+          "--server АДРЕС",
+          "--server-crt ФАЙЛ",
+          "--grpc-web",
+          "--core",
+          "--kube-context ИМЯ",
+          "--insecure",
+          "--plaintext",
+          "--loglevel УРОВЕНЬ"
+        ]
+      },
+      "persistentScopes": [
+        "argocd"
+      ],
+      "flags": [
+        {
+          "flag": "--dry-run"
+        },
+        {
+          "flag": "--prune"
+        },
+        {
+          "flag": "--kubeconfig ФАЙЛ"
+        },
+        {
+          "flag": "--context ИМЯ"
+        },
+        {
+          "flag": "-n ИМЯ / --namespace ИМЯ"
+        },
+        {
+          "flag": "--server URL"
+        },
+        {
+          "flag": "--config ФАЙЛ"
+        },
+        {
+          "flag": "--argocd-context ИМЯ"
+        },
+        {
+          "flag": "--server АДРЕС"
+        },
+        {
+          "flag": "--server-crt ФАЙЛ"
+        },
+        {
+          "flag": "--grpc-web"
+        },
+        {
+          "flag": "--core"
+        },
+        {
+          "flag": "--kube-context ИМЯ"
+        },
+        {
+          "flag": "--insecure"
+        },
+        {
+          "flag": "--plaintext"
+        },
+        {
+          "flag": "--loglevel УРОВЕНЬ"
+        }
+      ]
+    },
+    {
+      "name": "argocd admin settings rbac validate",
+      "aliases": [],
+      "purpose": "Проверить синтаксис локальной политики;в 3.5.6 фабрика всё равно требует создание Kubernetes настройка клиента.",
+      "syntax": "argocd admin settings rbac validate [ФЛАГИ]",
+      "flagScopes": [
+        "argocd admin settings rbac validate",
+        "argocd admin settings rbac validate",
+        "argocd admin settings rbac validate",
+        "argocd admin settings rbac validate",
+        "argocd admin settings rbac validate",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd"
+      ],
+      "prefixFlags": {
+        "argocd": [
+          "--config ФАЙЛ",
+          "--argocd-context ИМЯ",
+          "--server АДРЕС",
+          "--server-crt ФАЙЛ",
+          "--grpc-web",
+          "--core",
+          "--kube-context ИМЯ",
+          "--insecure",
+          "--plaintext",
+          "--loglevel УРОВЕНЬ"
+        ],
+        "argocd admin": [
+          "--config ФАЙЛ",
+          "--argocd-context ИМЯ",
+          "--server АДРЕС",
+          "--server-crt ФАЙЛ",
+          "--grpc-web",
+          "--core",
+          "--kube-context ИМЯ",
+          "--insecure",
+          "--plaintext",
+          "--loglevel УРОВЕНЬ"
+        ],
+        "argocd admin settings": [
+          "--config ФАЙЛ",
+          "--argocd-context ИМЯ",
+          "--server АДРЕС",
+          "--server-crt ФАЙЛ",
+          "--grpc-web",
+          "--core",
+          "--kube-context ИМЯ",
+          "--insecure",
+          "--plaintext",
+          "--loglevel УРОВЕНЬ"
+        ],
+        "argocd admin settings rbac": [
+          "--config ФАЙЛ",
+          "--argocd-context ИМЯ",
+          "--server АДРЕС",
+          "--server-crt ФАЙЛ",
+          "--grpc-web",
+          "--core",
+          "--kube-context ИМЯ",
+          "--insecure",
+          "--plaintext",
+          "--loglevel УРОВЕНЬ"
+        ]
+      },
+      "persistentScopes": [
+        "argocd"
+      ],
+      "flags": [
+        {
+          "flag": "--policy-file ФАЙЛ"
+        },
+        {
+          "flag": "--server URL"
+        },
+        {
+          "flag": "--kubeconfig ФАЙЛ"
+        },
+        {
+          "flag": "--token СТРОКА"
+        },
+        {
+          "flag": "--context ИМЯ"
+        },
+        {
+          "flag": "--config ФАЙЛ"
+        },
+        {
+          "flag": "--argocd-context ИМЯ"
+        },
+        {
+          "flag": "--server АДРЕС"
+        },
+        {
+          "flag": "--server-crt ФАЙЛ"
+        },
+        {
+          "flag": "--grpc-web"
+        },
+        {
+          "flag": "--core"
+        },
+        {
+          "flag": "--kube-context ИМЯ"
+        },
+        {
+          "flag": "--insecure"
+        },
+        {
+          "flag": "--plaintext"
+        },
+        {
+          "flag": "--loglevel УРОВЕНЬ"
+        }
+      ]
+    },
+    {
+      "name": "argocd admin settings rbac can",
+      "aliases": [],
+      "purpose": "Нативно проверить конкретное разрешение по локальной политике или серверному ConfigMap.",
+      "syntax": "argocd admin settings rbac can СУБЪЕКТ ДЕЙСТВИЕ РЕСУРС ОБЪЕКТ [ФЛАГИ]",
+      "flagScopes": [
+        "argocd admin settings rbac can",
+        "argocd admin settings rbac can",
+        "argocd admin settings rbac can",
+        "argocd admin settings rbac can",
+        "argocd admin settings rbac can",
+        "argocd admin settings rbac can",
+        "argocd admin settings rbac can",
+        "argocd admin settings rbac can",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd",
+        "argocd"
+      ],
+      "prefixFlags": {
+        "argocd": [
+          "--config ФАЙЛ",
+          "--argocd-context ИМЯ",
+          "--server АДРЕС",
+          "--server-crt ФАЙЛ",
+          "--grpc-web",
+          "--core",
+          "--kube-context ИМЯ",
+          "--insecure",
+          "--plaintext",
+          "--loglevel УРОВЕНЬ"
+        ],
+        "argocd admin": [
+          "--config ФАЙЛ",
+          "--argocd-context ИМЯ",
+          "--server АДРЕС",
+          "--server-crt ФАЙЛ",
+          "--grpc-web",
+          "--core",
+          "--kube-context ИМЯ",
+          "--insecure",
+          "--plaintext",
+          "--loglevel УРОВЕНЬ"
+        ],
+        "argocd admin settings": [
+          "--config ФАЙЛ",
+          "--argocd-context ИМЯ",
+          "--server АДРЕС",
+          "--server-crt ФАЙЛ",
+          "--grpc-web",
+          "--core",
+          "--kube-context ИМЯ",
+          "--insecure",
+          "--plaintext",
+          "--loglevel УРОВЕНЬ"
+        ],
+        "argocd admin settings rbac": [
+          "--config ФАЙЛ",
+          "--argocd-context ИМЯ",
+          "--server АДРЕС",
+          "--server-crt ФАЙЛ",
+          "--grpc-web",
+          "--core",
+          "--kube-context ИМЯ",
+          "--insecure",
+          "--plaintext",
+          "--loglevel УРОВЕНЬ"
+        ]
+      },
+      "persistentScopes": [
+        "argocd"
+      ],
+      "flags": [
+        {
+          "flag": "--policy-file ФАЙЛ"
+        },
+        {
+          "flag": "--use-builtin-policy"
+        },
+        {
+          "flag": "--default-role РОЛЬ"
+        },
+        {
+          "flag": "--server URL"
+        },
+        {
+          "flag": "--token СТРОКА"
+        },
+        {
+          "flag": "-q / --quiet"
+        },
+        {
+          "flag": "--kubeconfig ФАЙЛ"
+        },
+        {
+          "flag": "--context ИМЯ"
+        },
+        {
+          "flag": "--config ФАЙЛ"
+        },
+        {
+          "flag": "--argocd-context ИМЯ"
+        },
+        {
+          "flag": "--server АДРЕС"
+        },
+        {
+          "flag": "--server-crt ФАЙЛ"
+        },
+        {
+          "flag": "--grpc-web"
+        },
+        {
+          "flag": "--core"
+        },
+        {
+          "flag": "--kube-context ИМЯ"
+        },
+        {
+          "flag": "--insecure"
+        },
+        {
+          "flag": "--plaintext"
+        },
+        {
+          "flag": "--loglevel УРОВЕНЬ"
+        }
+      ]
+    },
+    {
+      "name": "flyway",
+      "purpose": "Запускает официальный CLI выбранного издания с явной конфигурацией проекта.",
+      "syntax": "flyway [ПАРАМЕТРЫ -key=value] КОМАНДА [ПАРАМЕТРЫ -key=value]",
+      "flagScopes": [
+        "flyway",
+        "flyway",
+        "flyway",
+        "flyway",
+        "flyway",
+        "flyway"
+      ],
+      "flags": [
+        {
+          "flag": "-configFiles=ФАЙЛЫ"
+        },
+        {
+          "flag": "-url=JDBC_URL"
+        },
+        {
+          "flag": "-user=РОЛЬ"
+        },
+        {
+          "flag": "-outputType=ФОРМАТ"
+        },
+        {
+          "flag": "-X"
+        },
+        {
+          "flag": "-q"
+        }
+      ]
+    },
+    {
+      "name": "flyway migrate",
+      "purpose": "Координирует исполнителей, выбирает и применяет допустимые миграции, записывает результат.",
+      "syntax": "flyway migrate [-target=ВЕРСИЯ] [-outOfOrder=true|false]",
+      "flagScopes": [
+        "flyway migrate",
+        "flyway migrate",
+        "flyway migrate",
+        "flyway migrate",
+        "flyway migrate",
+        "flyway migrate",
+        "flyway",
+        "flyway",
+        "flyway",
+        "flyway",
+        "flyway",
+        "flyway"
+      ],
+      "prefixFlags": {
+        "flyway": [
+          "-configFiles=ФАЙЛЫ",
+          "-url=JDBC_URL",
+          "-user=РОЛЬ",
+          "-outputType=ФОРМАТ",
+          "-X",
+          "-q"
+        ]
+      },
+      "persistentScopes": [
+        "flyway"
+      ],
+      "flags": [
+        {
+          "flag": "-target=ВЕРСИЯ"
+        },
+        {
+          "flag": "-outOfOrder=ЗНАЧЕНИЕ"
+        },
+        {
+          "flag": "-validateOnMigrate=ЗНАЧЕНИЕ"
+        },
+        {
+          "flag": "-group=ЗНАЧЕНИЕ"
+        },
+        {
+          "flag": "-mixed=ЗНАЧЕНИЕ"
+        },
+        {
+          "flag": "-executeInTransaction=ЗНАЧЕНИЕ"
+        },
+        {
+          "flag": "-configFiles=ФАЙЛЫ"
+        },
+        {
+          "flag": "-url=JDBC_URL"
+        },
+        {
+          "flag": "-user=РОЛЬ"
+        },
+        {
+          "flag": "-outputType=ФОРМАТ"
+        },
+        {
+          "flag": "-X"
+        },
+        {
+          "flag": "-q"
+        }
+      ]
+    },
+    {
+      "name": "flyway info",
+      "purpose": "Сопоставляет schema history и доступные ресурсы; не исполняет Pending.",
+      "syntax": "flyway info [-target=ВЕРСИЯ]",
+      "flagScopes": [
+        "flyway info",
+        "flyway",
+        "flyway",
+        "flyway",
+        "flyway",
+        "flyway",
+        "flyway"
+      ],
+      "prefixFlags": {
+        "flyway": [
+          "-configFiles=ФАЙЛЫ",
+          "-url=JDBC_URL",
+          "-user=РОЛЬ",
+          "-outputType=ФОРМАТ",
+          "-X",
+          "-q"
+        ]
+      },
+      "persistentScopes": [
+        "flyway"
+      ],
+      "flags": [
+        {
+          "flag": "-target=ВЕРСИЯ"
+        },
+        {
+          "flag": "-configFiles=ФАЙЛЫ"
+        },
+        {
+          "flag": "-url=JDBC_URL"
+        },
+        {
+          "flag": "-user=РОЛЬ"
+        },
+        {
+          "flag": "-outputType=ФОРМАТ"
+        },
+        {
+          "flag": "-X"
+        },
+        {
+          "flag": "-q"
+        }
+      ]
+    },
+    {
+      "name": "flyway baseline",
+      "purpose": "Записывает начальную отметку для уже доказанного состояния существующей базы.",
+      "syntax": "flyway baseline -baselineVersion=ВЕРСИЯ [-baselineDescription=ТЕКСТ]",
+      "flagScopes": [
+        "flyway baseline",
+        "flyway baseline",
+        "flyway",
+        "flyway",
+        "flyway",
+        "flyway",
+        "flyway",
+        "flyway"
+      ],
+      "prefixFlags": {
+        "flyway": [
+          "-configFiles=ФАЙЛЫ",
+          "-url=JDBC_URL",
+          "-user=РОЛЬ",
+          "-outputType=ФОРМАТ",
+          "-X",
+          "-q"
+        ]
+      },
+      "persistentScopes": [
+        "flyway"
+      ],
+      "flags": [
+        {
+          "flag": "-baselineVersion=ВЕРСИЯ"
+        },
+        {
+          "flag": "-baselineDescription=ТЕКСТ"
+        },
+        {
+          "flag": "-configFiles=ФАЙЛЫ"
+        },
+        {
+          "flag": "-url=JDBC_URL"
+        },
+        {
+          "flag": "-user=РОЛЬ"
+        },
+        {
+          "flag": "-outputType=ФОРМАТ"
+        },
+        {
+          "flag": "-X"
+        },
+        {
+          "flag": "-q"
+        }
+      ]
+    },
+    {
+      "name": "flyway version",
+      "aliases": [
+        "flyway -v",
+        "flyway --version"
+      ],
+      "purpose": "Показывает версию/издание установленного CLI и компоненты.",
+      "syntax": "flyway version",
+      "flagScopes": [
+        "flyway",
+        "flyway",
+        "flyway",
+        "flyway",
+        "flyway",
+        "flyway"
+      ],
+      "prefixFlags": {
+        "flyway": [
+          "-configFiles=ФАЙЛЫ",
+          "-url=JDBC_URL",
+          "-user=РОЛЬ",
+          "-outputType=ФОРМАТ",
+          "-X",
+          "-q"
+        ]
+      },
+      "persistentScopes": [
+        "flyway"
+      ],
+      "flags": [
+        {
+          "flag": "-configFiles=ФАЙЛЫ"
+        },
+        {
+          "flag": "-url=JDBC_URL"
+        },
+        {
+          "flag": "-user=РОЛЬ"
+        },
+        {
+          "flag": "-outputType=ФОРМАТ"
+        },
+        {
+          "flag": "-X"
+        },
+        {
+          "flag": "-q"
+        }
+      ]
+    },
+    {
+      "name": "flyway help",
+      "aliases": [
+        "flyway -h",
+        "flyway --help",
+        "flyway -?"
+      ],
+      "purpose": "Показывает help без исполнения SQL. Формы flyway -h, flyway --help и flyway -? — aliases этой операции; help migrate показывает целевую справку.",
+      "syntax": "flyway help [КОМАНДА] / flyway -h / flyway --help / flyway -?",
+      "flagScopes": [
+        "flyway help",
+        "flyway",
+        "flyway",
+        "flyway",
+        "flyway",
+        "flyway",
+        "flyway"
+      ],
+      "prefixFlags": {
+        "flyway": [
+          "-configFiles=ФАЙЛЫ",
+          "-url=JDBC_URL",
+          "-user=РОЛЬ",
+          "-outputType=ФОРМАТ",
+          "-X",
+          "-q"
+        ]
+      },
+      "persistentScopes": [
+        "flyway"
+      ],
+      "flags": [
+        {
+          "flag": "migrate"
+        },
+        {
+          "flag": "-configFiles=ФАЙЛЫ"
+        },
+        {
+          "flag": "-url=JDBC_URL"
+        },
+        {
+          "flag": "-user=РОЛЬ"
+        },
+        {
+          "flag": "-outputType=ФОРМАТ"
+        },
+        {
+          "flag": "-X"
+        },
+        {
+          "flag": "-q"
+        }
+      ]
+    },
+    {
+      "name": "git status",
+      "aliases": [],
+      "purpose": "Показать отношения HEAD, индекса и рабочих файлов без создания коммита.",
+      "syntax": "git status [ПАРАМЕТРЫ] [-- ПУТИ]",
+      "flagScopes": [
+        "git status",
+        "git status",
+        "git status",
+        "git status"
+      ],
+      "prefixFlags": {
+        "git": []
+      },
+      "flags": [
+        {
+          "flag": "--short"
+        },
+        {
+          "flag": "--branch"
+        },
+        {
+          "flag": "--porcelain=v1"
+        },
+        {
+          "flag": "--untracked-files=all"
+        }
+      ]
+    },
+    {
+      "name": "git log",
+      "aliases": [],
+      "purpose": "Обойти и показать выбранную историю коммитов.",
+      "syntax": "git log [ПАРАМЕТРЫ] [ДИАПАЗОН] [-- ПУТИ]",
+      "flagScopes": [
+        "git log",
+        "git log",
+        "git log",
+        "git log"
+      ],
+      "prefixFlags": {
+        "git": []
+      },
+      "flags": [
+        {
+          "flag": "--oneline"
+        },
+        {
+          "flag": "--graph"
+        },
+        {
+          "flag": "--all"
+        },
+        {
+          "flag": "-p"
+        }
+      ]
+    },
+    {
+      "name": "docker",
+      "aliases": [],
+      "purpose": "Клиент управляющего API выбранного Engine. Локальная команда может изменять процессы и данные удалённого сервера.",
+      "syntax": "docker [ОПЦИИ КЛИЕНТА] КОМАНДА",
+      "flagScopes": [
+        "docker",
+        "docker",
+        "docker",
+        "docker"
+      ],
+      "flags": [
+        {
+          "flag": "-c ИМЯ / --context ИМЯ"
+        },
+        {
+          "flag": "-H АДРЕС / --host АДРЕС"
+        },
+        {
+          "flag": "-v / --version"
+        },
+        {
+          "flag": "-D / --debug"
+        }
+      ]
+    },
+    {
+      "name": "docker run",
+      "aliases": [],
+      "purpose": "Создать объект контейнера и запустить задачу по выбранному образу и конфигурации.",
+      "syntax": "docker --context study run [ОПЦИИ] ОБРАЗ [КОМАНДА [АРГУМЕНТЫ]]",
+      "flagScopes": [
+        "docker run",
+        "docker run",
+        "docker run",
+        "docker run",
+        "docker run",
+        "docker run",
+        "docker run",
+        "docker run",
+        "docker run",
+        "docker run",
+        "docker run",
+        "docker run",
+        "docker run",
+        "docker run",
+        "docker run",
+        "docker run",
+        "docker run",
+        "docker run",
+        "docker run",
+        "docker run",
+        "docker run",
+        "docker run",
+        "docker run",
+        "docker run",
+        "docker run",
+        "docker",
+        "docker",
+        "docker",
+        "docker"
+      ],
+      "prefixFlags": {
+        "docker": [
+          "-c ИМЯ / --context ИМЯ",
+          "-H АДРЕС / --host АДРЕС",
+          "-v / --version",
+          "-D / --debug"
+        ]
+      },
+      "optionBoundary": "first-operand",
+      "flags": [
+        {
+          "flag": "--name ИМЯ"
+        },
+        {
+          "flag": "--pull ПОЛИТИКА"
+        },
+        {
+          "flag": "-d / --detach"
+        },
+        {
+          "flag": "-i / --interactive"
+        },
+        {
+          "flag": "-t / --tty"
+        },
+        {
+          "flag": "-p АДРЕС:ПОРТ:ПОРТ / --publish АДРЕС:ПОРТ:ПОРТ"
+        },
+        {
+          "flag": "--network ИМЯ"
+        },
+        {
+          "flag": "--ip АДРЕС"
+        },
+        {
+          "flag": "--env ИМЯ=ЗНАЧЕНИЕ"
+        },
+        {
+          "flag": "--mount ОПИСАНИЕ"
+        },
+        {
+          "flag": "--tmpfs ПУТЬ:ОПЦИИ"
+        },
+        {
+          "flag": "--read-only"
+        },
+        {
+          "flag": "--user UID:GID"
+        },
+        {
+          "flag": "--cap-drop СПИСОК"
+        },
+        {
+          "flag": "--security-opt НАСТРОЙКА"
+        },
+        {
+          "flag": "-c ЧИСЛО / --cpu-shares ЧИСЛО"
+        },
+        {
+          "flag": "-v ПОДКЛЮЧЕНИЕ / --volume ПОДКЛЮЧЕНИЕ"
+        },
+        {
+          "flag": "--memory ОБЪЁМ"
+        },
+        {
+          "flag": "--memory-swap ОБЪЁМ"
+        },
+        {
+          "flag": "--cpus ЧИСЛО"
+        },
+        {
+          "flag": "--cpuset-cpus СПИСОК"
+        },
+        {
+          "flag": "--pids-limit ЧИСЛО"
+        },
+        {
+          "flag": "--init"
+        },
+        {
+          "flag": "--restart ПОЛИТИКА"
+        },
+        {
+          "flag": "--rm"
+        },
+        {
+          "flag": "-c ИМЯ / --context ИМЯ"
+        },
+        {
+          "flag": "-H АДРЕС / --host АДРЕС"
+        },
+        {
+          "flag": "-v / --version"
+        },
+        {
+          "flag": "-D / --debug"
+        }
+      ]
+    },
+    {
+      "name": "docker compose logs",
+      "aliases": [],
+      "purpose": "Читать потоки журналов сервисов проекта.",
+      "syntax": "docker compose logs [ОПЦИИ] [СЕРВИС]",
+      "flagScopes": [
+        "docker compose logs",
+        "docker compose logs",
+        "docker compose logs",
+        "docker",
+        "docker",
+        "docker",
+        "docker",
+        "docker compose",
+        "docker compose"
+      ],
+      "prefixFlags": {
+        "docker": [
+          "-c ИМЯ / --context ИМЯ",
+          "-H АДРЕС / --host АДРЕС",
+          "-v / --version",
+          "-D / --debug"
+        ],
+        "docker compose": [
+          "-f ФАЙЛ / --file ФАЙЛ",
+          "-p ИМЯ / --project-name ИМЯ"
+        ]
+      },
+      "flags": [
+        {
+          "flag": "-f / --follow"
+        },
+        {
+          "flag": "--tail N"
+        },
+        {
+          "flag": "--timestamps"
+        },
+        {
+          "flag": "-c ИМЯ / --context ИМЯ"
+        },
+        {
+          "flag": "-H АДРЕС / --host АДРЕС"
+        },
+        {
+          "flag": "-v / --version"
+        },
+        {
+          "flag": "-D / --debug"
+        },
+        {
+          "flag": "-f ФАЙЛ / --file ФАЙЛ"
+        },
+        {
+          "flag": "-p ИМЯ / --project-name ИМЯ"
+        }
+      ]
+    },
+    {
+      "name": "psql",
+      "aliases": [],
+      "purpose": "Клиент PostgreSQL: подключается к выбранной базе, отправляет SQL и обрабатывает свои обратные команды. Не является самим сервером; файл SQL и база подключения имеют разное назначение.",
+      "syntax": "psql [ПАРАМЕТРЫ] [БАЗА [РОЛЬ]]",
+      "flagScopes": [
+        "psql",
+        "psql",
+        "psql",
+        "psql",
+        "psql",
+        "psql",
+        "psql",
+        "psql",
+        "psql",
+        "psql",
+        "psql",
+        "psql"
+      ],
+      "flags": [
+        {
+          "flag": "-X"
+        },
+        {
+          "flag": "-d БАЗА_ИЛИ_CONNINFO"
+        },
+        {
+          "flag": "-f ФАЙЛ"
+        },
+        {
+          "flag": "-v ON_ERROR_STOP=1"
+        },
+        {
+          "flag": "-h УЗЕЛ_ИЛИ_КАТАЛОГ"
+        },
+        {
+          "flag": "-p ПОРТ"
+        },
+        {
+          "flag": "-U РОЛЬ"
+        },
+        {
+          "flag": "-c КОМАНДА"
+        },
+        {
+          "flag": "-A"
+        },
+        {
+          "flag": "-t"
+        },
+        {
+          "flag": "-F РАЗДЕЛИТЕЛЬ"
+        },
+        {
+          "flag": "-x"
+        }
+      ]
+    },
+    {
+      "name": "ip",
+      "aliases": [],
+      "purpose": "Показывает и изменяет устройства, адреса, соседей и маршруты Linux. Сначала выбирается объект, затем действие; приведённые формы show/get только исследуют состояние.",
+      "syntax": "ip [ОБЩИЕ ПАРАМЕТРЫ] ОБЪЕКТ ДЕЙСТВИЕ [АРГУМЕНТЫ]",
+      "flagScopes": [
+        "ip",
+        "ip",
+        "ip",
+        "ip",
+        "ip",
+        "ip",
+        "ip",
+        "ip",
+        "ip",
+        "ip",
+        "ip",
+        "ip",
+        "ip",
+        "ip",
+        "ip",
+        "ip",
+        "ip"
+      ],
+      "flags": [
+        {
+          "flag": "-br"
+        },
+        {
+          "flag": "-s"
+        },
+        {
+          "flag": "route get АДРЕС"
+        },
+        {
+          "flag": "neigh show"
+        },
+        {
+          "flag": "-n ИМЯ"
+        },
+        {
+          "flag": "-4"
+        },
+        {
+          "flag": "-6"
+        },
+        {
+          "flag": "link show"
+        },
+        {
+          "flag": "link set"
+        },
+        {
+          "flag": "address show"
+        },
+        {
+          "flag": "route show"
+        },
+        {
+          "flag": "netns exec ИМЯ КОМАНДА"
+        },
+        {
+          "flag": "-o"
+        },
+        {
+          "flag": "-j"
+        },
+        {
+          "flag": "address add АДРЕС/ПРЕФИКС dev ИМЯ"
+        },
+        {
+          "flag": "route add ПРЕФИКС via ШЛЮЗ dev ИМЯ"
+        },
+        {
+          "flag": "route del ПРЕФИКС dev ИМЯ"
+        }
+      ]
+    },
+    {
+      "name": "ls",
+      "aliases": [],
+      "purpose": "Показывает имена и метаданные для человека. Вывод ls не подходит для восстановления произвольных имён в сценарии.",
+      "syntax": "ls [ПАРАМЕТРЫ] [ПУТЬ...]",
+      "flagScopes": [
+        "ls",
+        "ls",
+        "ls",
+        "ls",
+        "ls"
+      ],
+      "flags": [
+        {
+          "flag": "-l"
+        },
+        {
+          "flag": "-a"
+        },
+        {
+          "flag": "-d"
+        },
+        {
+          "flag": "-i"
+        },
+        {
+          "flag": "-F / --classify"
+        }
+      ]
+    },
+    {
+      "name": "head",
+      "aliases": [],
+      "purpose": "Выводит начало входа. После нужного объёма закрывает канал, и предыдущая стадия может получить SIGPIPE.",
+      "syntax": "head [ПАРАМЕТРЫ] [ФАЙЛ...]",
+      "flagScopes": [
+        "head",
+        "head",
+        "head"
+      ],
+      "flags": [
+        {
+          "flag": "-n ЧИСЛО"
+        },
+        {
+          "flag": "-c ЧИСЛО"
+        },
+        {
+          "flag": "-z"
+        }
+      ]
+    },
+    {
+      "name": "grep",
+      "aliases": [],
+      "purpose": "Выбирает строки по буквальному образцу или регулярному выражению. Статус 0 — найдено, 1 — не найдено, иной ненулевой обычно означает ошибку. Карточка ориентирована на GNU grep; точное число совпадений и полнота обхода требуют отдельного договора.",
+      "syntax": "grep [ПАРАМЕТРЫ] -- ОБРАЗЕЦ [ФАЙЛЫ...]",
+      "flagScopes": [
+        "grep",
+        "grep",
+        "grep",
+        "grep",
+        "grep",
+        "grep",
+        "grep",
+        "grep",
+        "grep",
+        "grep",
+        "grep",
+        "grep",
+        "grep",
+        "grep",
+        "grep",
+        "grep",
+        "grep",
+        "grep",
+        "grep",
+        "grep",
+        "grep",
+        "grep",
+        "grep",
+        "grep",
+        "grep",
+        "grep",
+        "grep"
+      ],
+      "flags": [
+        {
+          "flag": "-F"
+        },
+        {
+          "flag": "-E"
+        },
+        {
+          "flag": "-n"
+        },
+        {
+          "flag": "-q"
+        },
+        {
+          "flag": "-i"
+        },
+        {
+          "flag": "-v"
+        },
+        {
+          "flag": "-w"
+        },
+        {
+          "flag": "-x"
+        },
+        {
+          "flag": "-c"
+        },
+        {
+          "flag": "-o"
+        },
+        {
+          "flag": "-l"
+        },
+        {
+          "flag": "-L"
+        },
+        {
+          "flag": "-H"
+        },
+        {
+          "flag": "-h"
+        },
+        {
+          "flag": "-A N"
+        },
+        {
+          "flag": "-B N"
+        },
+        {
+          "flag": "-C N"
+        },
+        {
+          "flag": "-m N"
+        },
+        {
+          "flag": "-r"
+        },
+        {
+          "flag": "-R"
+        },
+        {
+          "flag": "-Z"
+        },
+        {
+          "flag": "-z"
+        },
+        {
+          "flag": "-a"
+        },
+        {
+          "flag": "-I"
+        },
+        {
+          "flag": "--include=ШАБЛОН"
+        },
+        {
+          "flag": "--exclude-dir=ШАБЛОН"
+        },
+        {
+          "flag": "--line-buffered"
+        }
+      ]
+    },
+    {
+      "name": "find",
+      "aliases": [],
+      "purpose": "Обходит дерево и применяет выражение выбора и действий к объектам. При частичном обходе может уже вывести имена и затем вернуть отказ. Режимы следования ссылкам задаются перед путями; выражение имеет собственные приоритеты И/ИЛИ.",
+      "syntax": "find НАЧАЛЬНЫЙ_ПУТЬ [ВЫРАЖЕНИЕ]",
+      "flagScopes": [
+        "find",
+        "find",
+        "find",
+        "find",
+        "find",
+        "find",
+        "find",
+        "find",
+        "find",
+        "find",
+        "find",
+        "find",
+        "find",
+        "find",
+        "find",
+        "find",
+        "find",
+        "find",
+        "find",
+        "find",
+        "find",
+        "find",
+        "find",
+        "find"
+      ],
+      "flags": [
+        {
+          "flag": "-type f"
+        },
+        {
+          "flag": "-name ШАБЛОН"
+        },
+        {
+          "flag": "-print0"
+        },
+        {
+          "flag": "-exec КОМАНДА {} +"
+        },
+        {
+          "flag": "-maxdepth N"
+        },
+        {
+          "flag": "-print"
+        },
+        {
+          "flag": "-mindepth N"
+        },
+        {
+          "flag": "-type d"
+        },
+        {
+          "flag": "-type l"
+        },
+        {
+          "flag": "-P"
+        },
+        {
+          "flag": "-L"
+        },
+        {
+          "flag": "-H"
+        },
+        {
+          "flag": "-iname ШАБЛОН"
+        },
+        {
+          "flag": "-path ШАБЛОН"
+        },
+        {
+          "flag": "-prune"
+        },
+        {
+          "flag": "-xdev"
+        },
+        {
+          "flag": "-mtime N / +N / -N"
+        },
+        {
+          "flag": "-mmin N / +N / -N"
+        },
+        {
+          "flag": "-size N[СУФФИКС]"
+        },
+        {
+          "flag": "-empty"
+        },
+        {
+          "flag": "-exec КОМАНДА {} \\;"
+        },
+        {
+          "flag": "-execdir КОМАНДА {} +"
+        },
+        {
+          "flag": "-o / -a / ! / \\( ... \\)"
+        },
+        {
+          "flag": "-delete"
+        }
+      ]
+    },
+    {
+      "name": "python3",
+      "aliases": [],
+      "purpose": "Запускает Python 3 для файла, текста программы или модуля. Переданный код разбирается уже по правилам Python.",
+      "syntax": "python3 [ПАРАМЕТРЫ] [ФАЙЛ|-c КОД|-m МОДУЛЬ|-] [АРГУМЕНТЫ...]",
+      "flagScopes": [
+        "python3",
+        "python3",
+        "python3",
+        "python3"
+      ],
+      "flags": [
+        {
+          "flag": "-c КОД"
+        },
+        {
+          "flag": "-m МОДУЛЬ"
+        },
+        {
+          "flag": "-u"
+        },
+        {
+          "flag": "-B"
+        }
+      ]
+    },
+    {
+      "name": "python3 -m unittest",
+      "aliases": [],
+      "purpose": "Запустить стандартную систему тестов Python; -m выбирает модуль, а следующие параметры принадлежат unittest.",
+      "syntax": "python3 -m unittest [discover] [ПАРАМЕТРЫ]",
+      "flagScopes": [
+        "python3 -m unittest",
+        "python3 -m unittest",
+        "python3 -m unittest",
+        "python3 -m unittest",
+        "python3 -m unittest",
+        "python3",
+        "python3"
+      ],
+      "prefixFlags": {
+        "python3": [
+          "-u",
+          "-B"
+        ],
+        "python3 -m": []
+      },
+      "parentOptions": "prefix-only",
+      "flags": [
+        {
+          "flag": "-v"
+        },
+        {
+          "flag": "discover -s КАТАЛОГ"
+        },
+        {
+          "flag": "-p ШАБЛОН"
+        },
+        {
+          "flag": "-f"
+        },
+        {
+          "flag": "-k ОБРАЗЕЦ"
+        },
+        {
+          "flag": "-u"
+        },
+        {
+          "flag": "-B"
+        }
+      ]
+    }
+  ],
+  "nativeArgoDispatch": {
+    "version": "3.5.6+c2b1e30",
+    "binarySHA256": "db9d17b70593d3f86a4dcf08d9ebbb85a42e995426ac5f928b737260656102d3",
+    "scope": "Isolated HOME/config native client-version/help/parse observations; no server or policy operation. This is a command-dispatch discriminator, not a claim all clean reference input is executable.",
+    "cases": [
+      {
+        "argv": [
+          "version",
+          "--client"
+        ],
+        "nativeExit": 0,
+        "referenceCard": "argocd version",
+        "flag": "--client",
+        "referenceFlagMatched": true
+      },
+      {
+        "argv": [
+          "--client",
+          "version"
+        ],
+        "nativeExit": 1,
+        "referenceCard": "argocd",
+        "flag": "--client",
+        "referenceFlagMatched": false
+      },
+      {
+        "argv": [
+          "--client=true",
+          "version"
+        ],
+        "nativeExit": 0,
+        "referenceCard": "argocd version",
+        "flag": "--client",
+        "referenceFlagMatched": true
+      },
+      {
+        "argv": [
+          "--quiet",
+          "admin",
+          "settings",
+          "rbac",
+          "can",
+          "--help"
+        ],
+        "nativeExit": 1,
+        "referenceCard": "argocd",
+        "flag": "--quiet",
+        "referenceFlagMatched": false
+      },
+      {
+        "argv": [
+          "--quiet=true",
+          "admin",
+          "settings",
+          "rbac",
+          "can",
+          "--help"
+        ],
+        "nativeExit": 0,
+        "referenceCard": "argocd admin settings rbac can",
+        "flag": "--quiet",
+        "referenceFlagMatched": true
+      },
+      {
+        "argv": [
+          "admin",
+          "--quiet",
+          "settings",
+          "rbac",
+          "can",
+          "--help"
+        ],
+        "nativeExit": 1,
+        "referenceCard": "argocd",
+        "flag": "--quiet",
+        "referenceFlagMatched": false
+      },
+      {
+        "argv": [
+          "admin",
+          "settings",
+          "--quiet",
+          "rbac",
+          "can",
+          "--help"
+        ],
+        "nativeExit": 1,
+        "referenceCard": "argocd",
+        "flag": "--quiet",
+        "referenceFlagMatched": false
+      },
+      {
+        "argv": [
+          "admin",
+          "settings",
+          "rbac",
+          "--quiet",
+          "can",
+          "--help"
+        ],
+        "nativeExit": 1,
+        "referenceCard": "argocd",
+        "flag": "--quiet",
+        "referenceFlagMatched": false
+      },
+      {
+        "argv": [
+          "admin",
+          "settings",
+          "rbac",
+          "can",
+          "--quiet",
+          "--help"
+        ],
+        "nativeExit": 0,
+        "referenceCard": "argocd admin settings rbac can",
+        "flag": "--quiet",
+        "referenceFlagMatched": true
+      }
+    ]
+  }
+}

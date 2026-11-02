@@ -5,4 +5,4 @@ import os
 import sys
 print(json.dumps([{"index": i, "text": s, "bytes": len(os.fsencode(s)),
                    "hex": os.fsencode(s).hex(" ")} for i, s in enumerate(sys.argv[1:])],
-                 ensure_ascii=False, indent=2))
+                 ensure_ascii=True, indent=2))
