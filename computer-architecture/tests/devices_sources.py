@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 NUMBERS = [19, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32]
 checks = 0
 NVME_CHAPTER = "ca-28-nvme-queues-durability"
+DMA_CHAPTER = "ca-24-dma-rings-iommu"
 
 def require(condition, message):
     global checks
@@ -70,8 +71,8 @@ require(len({x[0].casefold() for x in ref.GLOSSARY}) == len(ref.GLOSSARY), 'Uniq
 for term in ref.GLOSSARY:
     require(len(term) == 2 and all(isinstance(x,str) and x.strip() for x in term), 'Glossary schema')
 ds = load('diagrams_devices').DIAGRAMS
-require(len(ds) == 11, 'Eleven retained interactive device mechanisms')
-require({d['chapter'] for d in ds} == set(texts) - {NVME_CHAPTER},
+require(len(ds) == 10, 'Ten retained interactive device mechanisms')
+require({d['chapter'] for d in ds} == set(texts) - {NVME_CHAPTER, DMA_CHAPTER},
         'All other owned chapters retain their interactive diagrams')
 require(len({d['id'] for d in ds}) == len(ds), 'Unique interactive diagram IDs')
 for d in ds:
@@ -85,6 +86,28 @@ for d in ds:
         require(set(step['states']) == nodes and all(step['states'].values()), d['id'] + ': full states')
         require(set(step['focus']) <= nodes and set(step['active']) <= edges, d['id'] + ': highlights')
         require(bool(step['fields']) and bool(step['bands']), d['id'] + ': fields/bands')
+# DMA now uses a spatial ownership map. Verify the actual inline and downloadable
+# drawings agree, retain bookmarks and explain separate address/ownership paths.
+dma = texts[DMA_CHAPTER]
+dma_links = Links(); dma_links.feed(dma)
+require(dma_links.ids.count('ca-devices-iommu') == 1, 'DMA legacy bookmark occurs once')
+dma_path = ROOT / 'labs/illustrations/dma-buffer-ownership.svg'
+dma_asset = ET.fromstring(dma_path.read_bytes())
+dma_inline = ET.fromstring(re.search(r'<svg\b.*?</svg>', dma, re.S).group())
+require(ET.tostring(dma_inline) == ET.tostring(dma_asset), 'DMA inline and offline asset agree')
+require(dma_asset.get('viewBox') == '0 0 400 1290', 'DMA map viewport')
+ns = '{http://www.w3.org/2000/svg}'
+labels = {' '.join(''.join(n.itertext()).split()) for n in dma_asset.iter(ns + 'text')}
+for label in ['CPU Sv32: VA 00402000h → PA 2000h',
+              'Устройство 1: IOVA 4000h → PA 2000h',
+              'Проверка IOMMU: write, 512 B', '2000..21FFh · 512 B',
+              'owner=completed; published=false', 'Timeout не останавливает DMA',
+              'Кольцо в модели не размещено в RAM.']:
+    require(label in labels, 'DMA address/ownership boundary: ' + label)
+require(dma_asset.find(ns + 'title') is not None and dma_asset.find(ns + 'desc') is not None,
+        'DMA accessible title and description')
+require(not any(n.tag == ns + 'script' for n in dma_asset.iter()), 'DMA has no executable SVG')
+
 # Check literal source bytes as well as the independent JS encoders.
 nvme = texts[NVME_CHAPTER]
 # NVMe now has three subject drawings instead of a generic deep-sketch. Check
@@ -178,5 +201,5 @@ for file in ['model.html', 'boundaries.html']:
             require((ROOT/'labs/devices'/url.split('#')[0]).exists(), file + ': local dependency ' + url)
 require((ROOT/'labs/devices/README.txt').is_file() and (ROOT/'SOURCES-devices.txt').is_file(), 'Reader documents')
 print(json.dumps({'passed': True, 'kind': 'read-only source checks, no native hardware', 'checks': checks,
-                  'chapters': len(chapters), 'terms': len(ref.GLOSSARY), 'diagrams': len(ds), 'subject_svg_chapters': 1, 'subject_svgs': len(artwork),
+                  'chapters': len(chapters), 'terms': len(ref.GLOSSARY), 'diagrams': len(ds), 'subject_svg_chapters': 2, 'subject_svgs': len(artwork) + 1,
                   'steps': sum(len(d['steps']) for d in ds)}, ensure_ascii=False))
