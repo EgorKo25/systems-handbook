@@ -7,10 +7,12 @@ import json
 from pathlib import Path
 import re
 import sys
+import xml.etree.ElementTree as ET
 sys.dont_write_bytecode = True
 ROOT = Path(__file__).resolve().parents[1]
 NUMBERS = [19, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32]
 checks = 0
+NVME_CHAPTER = "ca-28-nvme-queues-durability"
 
 def require(condition, message):
     global checks
@@ -29,10 +31,24 @@ class Links(HTMLParser):
     def __init__(self):
         super().__init__()
         self.links = []
+        self.ids = []
+        self.images = []
+        self.figures = []
     def handle_starttag(self, tag, attrs):
+        values = dict(attrs)
+        if values.get('id'):
+            self.ids.append(values['id'])
+        if tag == 'figure':
+            self.figures.append(values)
+        if tag == 'img':
+            self.images.append((values, self.figures[-1] if self.figures else {}))
         for k, v in attrs:
             if k in ('src', 'href'):
                 self.links.append((k, v))
+
+    def handle_endtag(self, tag):
+        if tag == 'figure' and self.figures:
+            self.figures.pop()
 
 chapters = sorted(p for p in (ROOT/'sources').glob('ca-*.html') if int(p.stem[3:5]) in NUMBERS)
 require(len(chapters) == 12, 'Twelve owned chapters')
@@ -54,8 +70,10 @@ require(len({x[0].casefold() for x in ref.GLOSSARY}) == len(ref.GLOSSARY), 'Uniq
 for term in ref.GLOSSARY:
     require(len(term) == 2 and all(isinstance(x,str) and x.strip() for x in term), 'Glossary schema')
 ds = load('diagrams_devices').DIAGRAMS
-require(len(ds) == 12, 'One selected mechanism per owned chapter')
-require({d['chapter'] for d in ds} == set(texts), 'Chapter diagram coverage')
+require(len(ds) == 11, 'Eleven retained interactive device mechanisms')
+require({d['chapter'] for d in ds} == set(texts) - {NVME_CHAPTER},
+        'All other owned chapters retain their interactive diagrams')
+require(len({d['id'] for d in ds}) == len(ds), 'Unique interactive diagram IDs')
 for d in ds:
     require(d['volume'] == 'computer-architecture' and d['id'].startswith('ca-devices-'), 'Diagram namespace')
     require(texts[d['chapter']].count(d['insert_before']) == 1, d['id'] + ': placement')
@@ -68,7 +86,74 @@ for d in ds:
         require(set(step['focus']) <= nodes and set(step['active']) <= edges, d['id'] + ': highlights')
         require(bool(step['fields']) and bool(step['bands']), d['id'] + ': fields/bands')
 # Check literal source bytes as well as the independent JS encoders.
-nvme = next(v for k,v in texts.items() if k.startswith('ca-28-'))
+nvme = texts[NVME_CHAPTER]
+# NVMe now has three subject drawings instead of a generic deep-sketch. Check
+# their actual SVG bytes and field labels, not a replacement graph-count alone.
+artwork = {
+    'labs/illustrations/nvme-sqe-read.svg': (
+        (400, 625), 'nvme-record', [
+            'SQ2 · SQ[0], 64 B', '00..03 CDW0 = 00110002h',
+            '02 00 11 00 → Read / CID 0011h', '04..07 NSID = 1',
+            '08..17 CDW2/3 = 0; MPTR = 0', '18..1F PRP1 = 2000h',
+            '00 20 00 00 00 00 00 00', '20..27 PRP2 = 0',
+            '28..2F SLBA = 7', '07 00 00 00 00 00 00 00',
+            '30..33 CDW12 = 00000000h', 'NLB=0 → 1 блок × 512 B; FUA=0']),
+    'labs/illustrations/nvme-cqe-phase.svg': (
+        (400, 640), 'nvme-record', [
+            'CQ2 · CQ[0], 16 B', '08..09 SQHD = 1', '0A..0B SQID = 2',
+            '0C..0D CID = 0011h', '0E..0F Status/P = 0001h',
+            '01 00 → P=1; SC=0; SCT=0', 'слоты: 0 → 1 → 2 → 3 → 0',
+            'host ждёт: 1 1 1 1 0',
+            'В старом CQ[0] P=1: ещё не новая CQE.',
+            'Read не доказывает durability.']),
+    'labs/illustrations/nvme-queue-memory.svg': (
+        (400, 1390), 'nvme-memory', [
+            'После CQE, до передачи CQ head', 'RAM host · DMA-адрес = PA',
+            '2000..21FFh · 512 B', '2A 00 00 00 + 508 нулей',
+            'host читает · 4×16=64 B', 'контроллер читает · 4×64 B',
+            '5000 [0] CID 11h P=1', '6000 [0] Read CID 11h',
+            'host: head=0; ждёт P=1', 'tail=1 задаёт host',
+            'head=1 продвинул контроллер', 'SQHD=1: значение SQ head',
+            'Ранее host: SQ2 tail 0 → 1', 'Затем host: CQ2 head 0 → 1',
+            'Host пишет индексы, не payload.', 'Doorbell не завершает I/O.']),
+}
+links = Links(); links.feed(nvme)
+require(links.ids.count('ca-devices-nvme') == 1, 'NVMe legacy bookmark occurs once')
+require(len(links.images) == 3 and {v['src'] for v, _ in links.images} == set(artwork),
+        'NVMe chapter covers all three subject SVGs exactly once')
+SVG = '{http://www.w3.org/2000/svg}'
+normalize = lambda value: ' '.join(value.split())
+for image, figure in links.images:
+    name = image['src']; dimensions, kind, expected_labels = artwork[name]
+    require('nvme-artwork' in figure.get('class', '').split() and
+            kind in figure.get('class', '').split(), name + ': subject figure placement')
+    if kind == 'nvme-memory':
+        require(figure.get('id') == 'ca-devices-nvme', name + ': legacy memory bookmark')
+    require(bool(image.get('alt', '').strip()), name + ': accessible chapter explanation')
+    require((image.get('width'), image.get('height')) == tuple(map(str, dimensions)),
+            name + ': chapter dimensions match asset')
+    asset = ROOT / name
+    require(asset.is_file() and not asset.is_symlink(), name + ': regular local SVG')
+    xml = ET.fromstring(asset.read_bytes())
+    require(xml.tag == SVG + 'svg' and xml.get('viewBox') ==
+            '0 0 ' + ' '.join(map(str, dimensions)), name + ': SVG viewport')
+    ids = [node.get('id') for node in xml.iter() if node.get('id')]
+    require(len(ids) == len(set(ids)), name + ': unique SVG IDs')
+    require(xml.get('role') == 'img' and xml.get('aria-labelledby') and
+            set(xml.get('aria-labelledby').split()) <= set(ids), name + ': labelled SVG')
+    require(xml.find(SVG + 'title') is not None and xml.find(SVG + 'desc') is not None,
+            name + ': title and text alternative')
+    require(not any(node.tag == SVG + 'script' for node in xml.iter()) and
+            all(not key.endswith('href') or value.startswith('#')
+                for node in xml.iter() for key, value in node.attrib.items()),
+            name + ': no executable or external SVG dependency')
+    labels = {normalize(''.join(node.itertext())) for node in xml.iter(SVG + 'text')}
+    for label in expected_labels:
+        require(label in labels, name + ': field/read-path label ' + label)
+require('IOMMU выключен и DMA-адрес совпадает с PA' in nvme,
+        'NVMe picture states its DMA mapping assumption')
+require('Нарисована Read; гарантии устойчивой Write и Flush разобраны ниже.' in nvme,
+        'NVMe picture does not claim a durability experiment')
 blocks = re.findall(r'<pre><code>(.*?)</code></pre>', nvme, re.S)
 sqe = bytes.fromhex(' '.join(' '.join(line.split()[1:]) for line in blocks[0].strip().splitlines()[1:]))
 expected = bytearray(64)
@@ -93,5 +178,5 @@ for file in ['model.html', 'boundaries.html']:
             require((ROOT/'labs/devices'/url.split('#')[0]).exists(), file + ': local dependency ' + url)
 require((ROOT/'labs/devices/README.txt').is_file() and (ROOT/'SOURCES-devices.txt').is_file(), 'Reader documents')
 print(json.dumps({'passed': True, 'kind': 'read-only source checks, no native hardware', 'checks': checks,
-                  'chapters': len(chapters), 'terms': len(ref.GLOSSARY), 'diagrams': len(ds),
+                  'chapters': len(chapters), 'terms': len(ref.GLOSSARY), 'diagrams': len(ds), 'subject_svg_chapters': 1, 'subject_svgs': len(artwork),
                   'steps': sum(len(d['steps']) for d in ds)}, ensure_ascii=False))
