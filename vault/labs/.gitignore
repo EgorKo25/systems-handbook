@@ -1,0 +1,12 @@
+# Private reader state is never source material.
+.env
+private/
+state/
+logs/
+downloads/
+bin/
+gnupg/
+snapshots/
+*.key
+*.pem
+*.snap

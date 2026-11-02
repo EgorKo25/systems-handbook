@@ -1,0 +1,74 @@
+<header><h1>Init, unseal и разные значения слова «ключ»</h1><p>Разблокирование криптографического барьера и получение прав через токен — разные операции с разными хранителями.</p></header>
+<h2>Ключ шифрования не является root token</h2>
+<p>Barrier, «криптографический барьер», — слой, через который Vault шифрует сохраняемые защищённые значения перед передачей storage backend и расшифровывает их после чтения. Хранилище видит зашифрованные байты и служебные структуры; оно не должно знать секреты прикладного API. В оперативной памяти (RAM) unsealed процесса доступны ключи для работы barrier. В модели 1.21 данные шифруются ключами keyring, «набора ключей». Root key защищает этот набор, а unseal key защищает root key. Поэтому одна доля Shamir не является ключом, который можно подставить в AES и прочитать raft.db.</p>
+<p>Init, «инициализация», создаёт первоначальное криптографическое состояние пустого storage и первичный административный токен. Init выполняют <em>один раз на кластер</em>, не при каждом запуске и не отдельно для каждого joining узла. Vault сохраняет защищённое состояние ключей в storage, а материал разблокирования передаёт хранителям. Повторный init существующего storage отклоняется; удаление каталога ради устранения этой ошибки было бы уничтожением данных.</p>
+<p>Shamir secret sharing делит unseal key на доли. При трёх долях и пороге две нужны две разные пригодные доли. Две копии одной доли не образуют две части. Порядок подачи не важен; прогресс накапливается в памяти данного sealed узла. На нескольких узлах Shamir seal разблокируют каждый узел, не складывая «одну долю на первом + одну на втором» в общий порог. После restart прогресс и расшифрованные ключи теряются, данные storage остаются.</p>
+<h2>Какие байты защищает barrier</h2>
+<p>Версионная security model задаёт AES-256-GCM: AES использует 256-битный ключ, GCM добавляет проверку целостности/подлинности шифротекста. Для каждого шифруемого объекта генерируется случайный 96-битный nonce, дополнительное значение алгоритма; это не пароль клиента и не очередная доля Shamir. Повтор nonce с тем же ключом опасен для GCM, поэтому произвольное ручное переиспользование значения недопустимо. При чтении проверяется authentication tag, «тег аутентичности»: подмена защищённых байтов приводит к ошибке проверки, а не к тихому доверию изменённому plaintext.</p>
+<p>Корректный tag доказывает целостность данного защищённого объекта относительно ключа, но не свежесть всей истории. Старый корректно зашифрованный snapshot тоже имеет правильные tags. Владелец произвольного storage-доступа способен удалить данные или вернуть прежнее согласованное состояние; barrier не является независимым защищённым счётчиком последнего backup. Поэтому защита от rollback требует контроля storage/операторов, внешнего журнала контрольных точек и проверки последствий restore. Шифрование защищённого значения и файловый формат Raft — разные уровни; схема ниже не задаёт байтовый layout raft.db.</p>
+<p class="sources"><a href="https://developer.hashicorp.com/vault/docs/v1.21.x/internals/security">Официальная security model1.21.x: AES/GCM, nonce, tag и границы storage rollback</a>.</p>
+<figure id="vault-unseal-key-path">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 685" role="img" aria-labelledby="vault-key-hierarchy-title vault-key-hierarchy-desc" style="display:block;width:100%;max-width:400px;height:auto;margin:auto">
+<title id="vault-key-hierarchy-title">Ключ в памяти и защищённая запись в Raft</title><desc id="vault-key-hierarchy-desc">Две различные доли из трёх реконструируют unseal key. Он открывает root key, root key — keyring, data key из keyring — значение. Root token является отдельным API credential.</desc>
+<style>
+#vault-key-hierarchy-art .paper{fill:var(--reader-paper,#fffcf5)}
+#vault-key-hierarchy-art .soft{fill:var(--reader-soft,#e8f2ec)}
+#vault-key-hierarchy-art text{fill:var(--reader-text,#202d34);font-family:Arial,sans-serif;font-size:20px}
+#vault-key-hierarchy-art .head{font-size:23px;font-weight:bold}
+#vault-key-hierarchy-art .line{fill:none;stroke:var(--reader-text,#202d34);stroke-width:1.5}
+#vault-key-hierarchy-art .mark{fill:var(--reader-accent,#0c6b63)}
+#vault-key-hierarchy-art .accent{fill:none;stroke:var(--reader-accent,#0c6b63);stroke-width:3}
+@media print{#vault-key-hierarchy-art .paper,#vault-key-hierarchy-art .soft{fill:#fff} #vault-key-hierarchy-art text,#vault-key-hierarchy-art .mark{fill:#000} #vault-key-hierarchy-art .line,#vault-key-hierarchy-art .accent{stroke:#000}}
+</style>
+<g id="vault-key-hierarchy-art"><rect class="paper" width="400" height="685"/>
+<text x="16" y="32" class="head">Что открывает следующий слой</text>
+<text x="16" y="66">Shamir: доли A, B, C отдельно</text>
+<path class="accent" d="M28 86h344M28 80v12M208 80v12"/>
+<text x="16" y="122">Две разные доли → unseal key</text>
+<text x="16" y="154">Порог реконструирован в RAM</text>
+<rect class="soft" x="12" y="178" width="376" height="48"/>
+<text x="20" y="208">Ключ в RAM</text><text x="204" y="208">Запись в Raft</text>
+<path class="line" d="M12 226h376M192 178v330M12 320h376M12 414h376M12 508h376"/>
+<text x="20" y="260">1. unseal key</text><text x="204" y="260">E_u(root key)</text>
+<text x="20" y="294">открывает →</text><text x="204" y="294">защищённый ключ</text>
+<text x="20" y="354">2. root key</text><text x="204" y="354">E_r(keyring)</text>
+<text x="20" y="388">открывает →</text><text x="204" y="388">набор data keys</text>
+<text x="20" y="448">3. data key</text><text x="204" y="448">E_d(value)</text>
+<text x="20" y="482">открывает →</text><text x="204" y="482">значение API</text>
+<text x="16" y="544">E_k(x): шифрование x ключом k.</text>
+<text x="16" y="576">Записи символические, не raft.db.</text>
+<path class="line" d="M16 596h368"/>
+<text x="16" y="626">Root token → API, policy/TTL</text>
+<text x="16" y="658">не участвует в трёх расшифровках</text></g></svg>
+<figcaption>Иерархия выбранного Shamir seal. В левой колонке — пригодный ключ в памяти unsealed процесса; справа — защищённая запись хранилища. Обозначения E_u/E_r/E_d не являются бинарным форматом.</figcaption>
+</figure>
+<p>Сначала порог долей даёт unseal key; им получают root key, затем keyring и ключ для защищённого значения. В строке 2 keyring содержит ключи данных, включая нужный для строки 3. Seal убирает пригодные расшифрованные ключи из памяти; правые записи сохраняются. Отдельный root token предъявляется в API и не участвует в этой последовательности. При auto-unseal верхний способ открытия меняется на seal provider; нижняя задача защиты данных остаётся.</p>
+<h2>Контролируемая учебная церемония</h2>
+<p>Предпосылки: TLS listener работает, <code>status</code> показал initialized false, cwd <code>vault/labs</code>, владелец тот же. В лаборатории helper собирает доли в одном частном каталоге для повторяемости; это явно не разделение хранителей production. В реальной церемонии доли доставляют разным уполномоченным людям, часто с PGP-шифрованием ответа для каждого, и проверяют независимость хранения.</p>
+<pre><code>set -euo pipefail
+python3 lab.py --root "$stand" init
+python3 lab.py --root "$stand" status</code></pre>
+<p><code>init</code> вызывает <code>vault operator init -key-shares=3 -key-threshold=2 -format=json</code>, перехватывает вывод, пишет <code>private/init.json</code> mode 0600 и подаёт две доли через локальный HTTPS API. Доли не идут в argv, журнал или публичный stdout. Затем создаётся broad учебная policy оператора, orphan token с TTL (time to live, текущим сроком действия) 8 часов и explicit max TTL 24 часа, и bootstrap root отзывается. Orphan означает отсутствие родителя в дереве токенов: отзыв root не отзовёт этого оператора каскадно. Это не свойство «неограниченных прав»: время и policy проверяются отдельно.</p>
+<p>Ожидается initialized true, sealed false, standby false, HTTP 200. Helper отдельно проверяет, что прежний root получил HTTP 403. Если init завершился после создания состояния, но до сохранения долей, не запускайте init снова и не стирайте storage. Остановитесь, найдите частный результат церемонии и выясните, какие данные реально получены; без пригодных долей сохранённые шифротексты могут оказаться недоступны. Печать init JSON в CI artifact превращает резерв в утечку ключей и административного доступа.</p>
+<h2>Seal и restart</h2>
+<p>Seal удаляет доступ к расшифрованному ключевому материалу из памяти узла. API чтения секретов прекращается; TCP listener и часть health API продолжают отвечать. Копии уже выданных паролей не исчезают и существующие PostgreSQL соединения не закрываются от seal Vault. После restart наш Shamir сервер sealed независимо от того, сохранился ли операторский token. Token доказывает право API, но не заменяет unseal key.</p>
+<pre><code>set -euo pipefail
+python3 lab.py --root "$stand" stop
+python3 lab.py --root "$stand" start
+python3 lab.py --root "$stand" status
+python3 lab.py --root "$stand" unseal</code></pre>
+<p>Это действие сохраняет state. После start ожидается sealed true и HTTP 503, после unseal — HTTP 200. Если доли не подходят, проверьте, не относятся ли они к свежему restore-target до импорта снимка. Неправильный набор не исправляют пересозданием source. Ручная CLI-команда <code>vault operator unseal</code> без аргумента спрашивает долю скрытым вводом в tty; не ставьте её значение после команды в истории shell.</p>
+<h2>Auto-unseal и recovery keys</h2>
+<p>Auto-unseal передаёт функцию защиты ключевого материала доверенному внешнему KMS/HSM или другому поддержанному seal provider. Процесс при запуске получает право дешифрования у этой системы. Поэтому bootstrap переносится к идентичности машины и полномочиям на конкретный KMS key; проблема не исчезает. Recovery keys разрешают некоторые административные церемонии, например generate-root, но не могут сами расшифровать root key при навсегда потерянном KMS key. Даже хороший snapshot тогда недостаточен.</p>
+<p>Rekey меняет материал/распределение долей; rotate меняет ключи шифрования keyring для новых записей. Ни одно слово не означает «сменить все уже выданные пароли». Ротацию CA и динамических PostgreSQL credentials выполняют соответствующие engines. Оператор этого стенда без renewal истечёт через 8h; explicit max TTL 24h ограничивает даже успешно продлеваемый token. После потери доступа выполните явно описанную ниже церемонию. Unseal не продлевает token и не создаёт новый.</p>
+<h2 id="vault-recover-operator">Если оператор истёк: восстановление через порог долей</h2>
+<p>Этот путь предназначен только для собственного Shamir-стенда 1.21.4. Предпосылки: cwd <code>vault/labs</code>, тот же обычный владелец, проверенный TLS endpoint, сервер уже unsealed, в <code>$stand/private/init.json</code> есть пригодные доли именно этого storage. После restart сначала выполните start/unseal из предыдущего блока. Helper проверяет <code>lookup-self</code>: действующий оператор означает отказ от лишней церемонии, HTTP 403 или отсутствующий файл допускают восстановление, неоднозначная сетевая ошибка останавливает его. Наличие двух долей у одного владельца удобно для лаборатории, но не доказывает согласие двух независимых хранителей.</p>
+<pre><code>set -euo pipefail
+python3 lab.py --root "$stand" recover-operator
+python3 lab.py --root "$stand" status</code></pre>
+<p><code>--root</code> выбирает существующий частный стенд; action <code>recover-operator</code> не вызывает init и не меняет KV. Сначала GET <code>sys/generate-root/attempt</code> должен вернуть <code>started=false</code> и <code>required=2</code>. POST туда с пустым объектом создаёт попытку: <code>nonce</code> связывает последующие ответы, <code>otp</code> — одноразовую маску, <code>otp_length</code> — её длину. Две разные доли передаются в JSON-полях <code>key</code>/<code>nonce</code> по HTTPS в <code>sys/generate-root/update</code>. На пороге ответ содержит <code>complete=true</code> и <code>encoded_token</code>; helper декодирует base64 и XOR с OTP, получая временный root token. Это API-credential, не root key из иерархии шифрования.</p>
+<p>Временным этот root делает обязательный отзыв: не полагайтесь на автоматическое короткое истечение. Он создаёт policy <code>handbook-operator</code> и orphan operator с TTL 8h/explicit max 24h; policy широкая административная, но без специальной policy <code>root</code>. Новый token атомарно заменяет <code>private/operator.token</code>. В блоке finally helper отзывает временный root и проверяет HTTP 403. Ожидаются код 0 и сообщение <code>Recovered bounded orphan operator</code>. Shares/OTP/encoded token/root не выводятся и не идут в argv: частный 0600 журнал <code>operator-recovery-*.json</code> сохраняет материал на случай прерывания и поля <code>operator_saved</code>/<code>root_revoked</code>. Его нельзя публиковать или хранить рядом с общими отчётами.</p>
+<p>Уже начатая чужая попытка означает STOP без cancel. Собственную незавершённую попытку helper отменяет только при совпадении nonce. Ошибка после выдачи root требует проверить частный журнал: если <code>root_revoked</code> не подтверждён, временный root остаётся чувствительным административным доступом; завершите его отзыв через <code>auth/token/revoke-self</code> по проверенному HTTPS API, не печатая token, и подтвердите lookup403. Не начинайте следующую попытку, чтобы скрыть эту неопределённость. При потере нужных долей helper не восстанавливает их. Для auto-unseal этот учебный путь неприменим: нужны recovery shares и работающий seal provider по процедуре конкретной поставки.</p>
+<p>В отдельном native опыте 1.21.4 проверены отказ при живом операторе и занятом nonce, новый orphan operator после revoke старого, explicit max 86400s и фактический HTTP 403 временного root. Многопользовательская доставка долей, KMS и production quorum этим опытом не проверены.</p>
+<p class="sources"><a href="https://developer.hashicorp.com/vault/api-docs/v1.21.x/system/generate-root">Generate-root API 1.21.x: attempt/update/OTP/nonce</a>; <a href="https://developer.hashicorp.com/vault/docs/v1.21.x/commands/operator/generate-root">CLI 1.21.x: threshold, stdin, decode и cancel</a>.</p>
+<p class="sources">Первоисточники: <a href="https://developer.hashicorp.com/vault/docs/v1.21.x/concepts/seal">иерархия ключей и recovery keys</a>; <a href="https://developer.hashicorp.com/vault/docs/v1.21.x/commands/operator/init">operator init</a>; <a href="https://developer.hashicorp.com/vault/docs/v1.21.x/commands/operator/rekey">rekey</a>; <a href="https://developer.hashicorp.com/vault/docs/v1.21.x/internals/rotation">key rotation</a>.</p>

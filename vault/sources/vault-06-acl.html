@@ -1,0 +1,41 @@
+<header><h1>ACL: право на путь и реальный отказ</h1><p>Проверим ровно тот путь и ту операцию, которые исполняет сервер, и сохраним разрешения приложения отдельно от оператора.</p></header>
+<h2>Capabilities до первой policy</h2>
+<p>Capability — имя разрешённой операции API. <code>read</code> читает, <code>list</code> перечисляет имена, <code>delete</code> удаляет, <code>create</code> создаёт, <code>update</code> меняет, <code>patch</code> частично обновляет поддерживающий это endpoint. Не каждый endpoint различает create и update: движок должен уметь определить существование объекта. <code>sudo</code> даёт допуск к root-protected операции только вместе с требуемой capability; это не shell sudo и не самостоятельное «разрешить всё». <code>deny</code> запрещает, а отсутствие подходящего разрешения тоже приводит к отказу.</p>
+<p>Policy — именованный набор ACL-правил HCL, который оператор загружает в Vault; файл на диске клиента сам не влияет на сервер. Токен ссылается на имена policy, а не хранит вечную копию текста всех правил. Обновление policy может изменить доступ уже выданного токена. Исключение особого root policy требует особого обращения: root не является удобным способом диагностики того, что разрешено приложению.</p>
+<h2>Три субъекта нашего стенда</h2>
+<p>Среда: предыдущие главы приняты, unsealed active, cwd <code>vault/labs</code>, обычный владелец. Provision — одноразовый шаг над пустым учебным <code>secret/</code>. Не повторяйте его поверх изменённых данных: первая запись использует CAS 0 и специально завершится ошибкой, сохранив имеющийся ключ.</p>
+<pre><code>set -euo pipefail
+python3 lab.py --root "$stand" provision
+. "$stand/env.sh"
+read -r VAULT_TOKEN &lt; "$stand/private/reader.token"
+export VAULT_TOKEN
+vault kv get -mount=secret handbook/config
+if vault kv put -mount=secret handbook/config message=blocked \
+    &gt; "$stand/private/expected-acl.out" 2&gt; "$stand/private/expected-acl.err"; then
+  echo "Неожиданный успех writer для reader" &gt;&amp;2
+  exit 1
+else
+  result=$?
+  test "$result" -eq 2
+  grep -q 'Code: 403' "$stand/private/expected-acl.err"
+fi</code></pre>
+<p>Provision включает KVv2, загружает <a href="labs/policies/reader.hcl">reader</a>, <a href="labs/policies/writer.hcl">writer</a> и <a href="labs/policies/application.hcl">application</a>, записывает два синтетических значения, выдаёт reader/writer tokens на 10 минут и включает локальный аудит. Shell <code>read -r</code> читает token из 0600-файла без печати; export передаёт его дочернему CLI, не записывая в исходники. Cекреты всё равно доступны процессу этого UID: после опыта выполните <code>unset VAULT_TOKEN</code>. Не включайте shell tracing <code>set -x</code>.</p>
+<p>Первый get имеет код 0. Второй put должен получить permission denied и ненулевой код: reader имеет read на <code>secret/data/handbook/config</code>, но не update/create. В shell с остановкой на ошибке проверяйте отказ в отдельном условии; следующие меняющие действия не должны автоматически исполняться после неожиданного кода. Чтобы увидеть ACL на стороне API без изменения, оператор может применить <code>vault token capabilities secret/data/handbook/config</code> со своим или тестовым token, но окончательный критерий — реальный запрос в тех же условиях.</p>
+<h2>LIST не равен READ</h2>
+<pre><code>path "secret/data/handbook/config" {
+  capabilities = ["read"]
+}
+path "secret/metadata/handbook/*" {
+  capabilities = ["list"]
+}
+path "secret/data/handbook/forbidden" {
+  capabilities = ["deny"]
+}</code></pre>
+<p>Это содержимое reader policy, уже созданное комплектом. Чтение KVv2 использует data, перечисление ключей — metadata. Разрешение list на metadata не даёт read содержимого соседних секретов, а имена ключей сами могут быть чувствительными. Нельзя считать LIST ответ отфильтрованным перечнем всего, что клиент может прочитать: модель выдаёт имена по праву перечисления родительского пути. Поэтому в именах не размещают пароли, email и полезные атакующему персональные данные.</p>
+<p>Явный deny на forbidden подготовлен для демонстрации. В обычной reader policy он совпадает с отсутствием allow; более сильная проверка добавляет второй policy с allow на тот же точный путь и убеждается, что deny сохраняет приоритет. Сценарий tests включает отдельную такую пробу. Это отличается от ситуации двух различных wildcard-путей: для разных совпавших шаблонов Vault выбирает приоритетный шаблон, а capabilities одинакового пути объединяет с приоритетом deny. Нельзя безусловно суммировать всё, что когда-либо совпало.</p>
+<h2>Wildcard имеет собственную грамматику</h2>
+<p><code>*</code> в конце шаблона разрешает произвольный остаток после указанного префикса; это glob, не регулярное выражение. <code>+</code> заменяет один сегмент, разделённый косой чертой: <code>secret/data/+/config</code> отличается от <code>secret/data/*</code>. Политика <code>secret/*</code> охватывает и служебные KVv2 пути, если capability применима. Последовательность приоритета включает положение первого wildcard, наличие конечного glob, число <code>+</code>, длину и лексикографию; при спорном правиле проверяют точный путь capabilities и реальной операцией, не угадывают по зрительной длине.</p>
+<p>В 1.21 изменена оценка list-valued параметров в allowed_parameters/denied_parameters. Эти ограничения не следует применять к вложенной KVv2 data как к универсальному фильтру отдельных полей: API KVv2 имеет специальный envelope, а ACL обычно ограничивает путь. Если два поля требуют разных читателей, разместите их по разным путям или выберите другую схему контроля. Default значения endpoint тоже не выводятся ACL evaluator автоматически: отсутствие параметра может отличаться от явно переданного false.</p>
+<h2>Безопасная проверка всех ветвей</h2>
+<p>В следующей главе комплексная команда checks из того же cwd использует подготовленные короткие токены, проверяет HTTP 403 для update и forbidden, HTTP 200 для LIST metadata и 403 для LIST data. Комплексный запуск выполняется один раз в следующей главе после выдачи свежих тестовых tokens; здесь рассматриваем эти ветви без нового исполнения. Ожидается summary с 13 checks и код 0; повторно на изменённом ключе этот одноразовый сценарий закономерно не подходит. Для независимого повтора создают другой root, а сохраняемый исходник продолжают осознанно. Не исправляют расхождение повторной provision или удалением всего mount.</p>
+<p class="sources">Первоисточники: <a href="https://developer.hashicorp.com/vault/docs/v1.21.x/concepts/policies">capabilities, wildcard и приоритет</a>; <a href="https://developer.hashicorp.com/vault/api-docs/v1.21.x/secret/kv/kv-v2">KVv2 пути</a>; <a href="https://developer.hashicorp.com/vault/docs/v1.21.x/commands/token/capabilities">token capabilities</a>.</p>

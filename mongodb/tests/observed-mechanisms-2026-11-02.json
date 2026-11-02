@@ -1,0 +1,365 @@
+{
+  "date": "2026-11-02",
+  "scope": "new targeted native/model checks; not a rerun of historical full seed/restore/TLS/concurrency or benchmark",
+  "go_tests": {
+    "kind": "native Go tests of exact decoder (httptest) and shutdown helper (owned ephemeral loopback); no MongoDB",
+    "go": "go version go1.27.3 linux/amd64",
+    "go_binary_sha256": "5f5eb6d0b2fb6aa0bb5d5f8c5f1c944e0de955c925f0111af92a9d8f79680b5b",
+    "source_sha256": "f5bad349c874189e9619c8857ae0f1f99b5ecb14d8ed40d9c4b726e30bd7aef2",
+    "tests_sha256": "b6fa212c39e7514516cc078d3243695ac1df47a50e82fc546f6d66863bc2e52c",
+    "race": true,
+    "readonly_modules": true,
+    "network_disabled_by_go_env": true,
+    "decoder_cases": 13,
+    "shutdown_cases": 1,
+    "passed": true,
+    "prepared_module_cache_used": "private copied cache; not fresh online checksum validation",
+    "temp_removed": true
+  },
+  "bson_types_native": {
+    "kind": "new real single-node loopback MongoDB for changed BSON semantics assertions only; no seed/HTTP/backup/TLS benchmark",
+    "port": 27317,
+    "admin_source_sha256": "2de9f9e62b78b6667f145e461071c0dc28f151843a5c862ee4836117bad20619",
+    "binaries": {
+      "mongod": {
+        "sha256": "b07e6a9f1802303add4aab26d78798396c9c243d39ce60bad51bc6ad5a8859b7"
+      },
+      "mongosh": {
+        "sha256": "ae30752e32cd1a2360bee9c55a5d5f2206cf60c75cd645157925324402d13ca5"
+      }
+    },
+    "mongodVersion": "db version v8.0.34\nBuild Info: {\n    \"version\": \"8.0.34\",\n    \"gitVersion\": \"51db4515a6597aedcf6188ee4e48a27e65b065ae\",\n    \"openSSLVersion\": \"OpenSSL 3.0.13 30 Jan 2024\",\n    \"modules\": [],\n    \"allocator\": \"tcmalloc-google\",\n    \"environment\": {\n        \"distmod\": \"ubuntu2404\",\n        \"distarch\": \"x86_64\",\n        \"target_arch\": \"x86_64\"\n    }\n}",
+    "mongoshVersion": "2.14.1",
+    "passed": true,
+    "repeat_denied": true,
+    "documents_preserved": 4,
+    "asserted_sets": {
+      "nullOrMissing": [
+        "missing",
+        "null"
+      ],
+      "onlyNull": [
+        "null"
+      ],
+      "differentElements": [
+        "array"
+      ],
+      "sameElement": []
+    },
+    "shutdown_verified": true,
+    "temp_removed": true
+  },
+  "pure_models": {
+    "source_sha256": "69c48708b18dee2c637cdae26adcb19559895b3bb7bf06e4962e10f47e36c8ff",
+    "runs": {
+      "20": {
+        "kind": "pure educational decoder and seed-index arithmetic, not captured packets/server/latency",
+        "request": {
+          "length": 51,
+          "requestID": 17,
+          "responseTo": 0,
+          "opCode": 2013,
+          "flags": 0,
+          "kind": 0,
+          "bsonLength": 30,
+          "fields": [
+            {
+              "name": "ping",
+              "type_byte": 16,
+              "value": 1,
+              "start": 25,
+              "end_inclusive": 34
+            },
+            {
+              "name": "$db",
+              "type_byte": 2,
+              "value": "admin",
+              "start": 35,
+              "end_inclusive": 49
+            }
+          ]
+        },
+        "reply": {
+          "length": 38,
+          "requestID": 90,
+          "responseTo": 17,
+          "opCode": 2013,
+          "flags": 0,
+          "kind": 0,
+          "bsonLength": 17,
+          "fields": [
+            {
+              "name": "ok",
+              "type_byte": 1,
+              "value": 1.0,
+              "start": 25,
+              "end_inclusive": 36
+            }
+          ]
+        },
+        "rejectedCorruptSamples": 5,
+        "index": {
+          "totalDocuments": 20000,
+          "tenantMatches": 200,
+          "modelLimit": 20,
+          "first": {
+            "i": 19901,
+            "id": "seed-019901",
+            "tenant": "tenant-01",
+            "state": "open",
+            "epochSeconds": 1700019901,
+            "date": "2023-11-15T03:45:01Z"
+          },
+          "lastReturned": {
+            "i": 18001,
+            "id": "seed-018001",
+            "tenant": "tenant-01",
+            "state": "open",
+            "epochSeconds": 1700018001,
+            "date": "2023-11-15T03:13:21Z"
+          },
+          "nextUnreturned": {
+            "i": 17901,
+            "id": "seed-017901",
+            "tenant": "tenant-01",
+            "state": "open",
+            "epochSeconds": 1700017901,
+            "date": "2023-11-15T03:11:41Z"
+          },
+          "selectedIds": [
+            "seed-019901",
+            "seed-019801",
+            "seed-019701",
+            "seed-019601",
+            "seed-019501",
+            "seed-019401",
+            "seed-019301",
+            "seed-019201",
+            "seed-019101",
+            "seed-019001",
+            "seed-018901",
+            "seed-018801",
+            "seed-018701",
+            "seed-018601",
+            "seed-018501",
+            "seed-018401",
+            "seed-018301",
+            "seed-018201",
+            "seed-018101",
+            "seed-018001"
+          ],
+          "modelShardRangeCounts": {
+            "seed-010000": [
+              100,
+              100
+            ],
+            "seed-015000": [
+              150,
+              50
+            ]
+          },
+          "logicalWorkInRetainedNativeLimit20": {
+            "nReturned": 20,
+            "keysExamined": 20,
+            "docsExamined": 20
+          },
+          "limits": "Arithmetic only. No B-tree page/IO or live sharding simulation; limit5 prediction is not a new server explain."
+        },
+        "passed": true
+      },
+      "5": {
+        "kind": "pure educational decoder and seed-index arithmetic, not captured packets/server/latency",
+        "request": {
+          "length": 51,
+          "requestID": 17,
+          "responseTo": 0,
+          "opCode": 2013,
+          "flags": 0,
+          "kind": 0,
+          "bsonLength": 30,
+          "fields": [
+            {
+              "name": "ping",
+              "type_byte": 16,
+              "value": 1,
+              "start": 25,
+              "end_inclusive": 34
+            },
+            {
+              "name": "$db",
+              "type_byte": 2,
+              "value": "admin",
+              "start": 35,
+              "end_inclusive": 49
+            }
+          ]
+        },
+        "reply": {
+          "length": 38,
+          "requestID": 90,
+          "responseTo": 17,
+          "opCode": 2013,
+          "flags": 0,
+          "kind": 0,
+          "bsonLength": 17,
+          "fields": [
+            {
+              "name": "ok",
+              "type_byte": 1,
+              "value": 1.0,
+              "start": 25,
+              "end_inclusive": 36
+            }
+          ]
+        },
+        "rejectedCorruptSamples": 5,
+        "index": {
+          "totalDocuments": 20000,
+          "tenantMatches": 200,
+          "modelLimit": 5,
+          "first": {
+            "i": 19901,
+            "id": "seed-019901",
+            "tenant": "tenant-01",
+            "state": "open",
+            "epochSeconds": 1700019901,
+            "date": "2023-11-15T03:45:01Z"
+          },
+          "lastReturned": {
+            "i": 19501,
+            "id": "seed-019501",
+            "tenant": "tenant-01",
+            "state": "open",
+            "epochSeconds": 1700019501,
+            "date": "2023-11-15T03:38:21Z"
+          },
+          "nextUnreturned": {
+            "i": 19401,
+            "id": "seed-019401",
+            "tenant": "tenant-01",
+            "state": "open",
+            "epochSeconds": 1700019401,
+            "date": "2023-11-15T03:36:41Z"
+          },
+          "selectedIds": [
+            "seed-019901",
+            "seed-019801",
+            "seed-019701",
+            "seed-019601",
+            "seed-019501"
+          ],
+          "modelShardRangeCounts": {
+            "seed-010000": [
+              100,
+              100
+            ],
+            "seed-015000": [
+              150,
+              50
+            ]
+          },
+          "logicalWorkInRetainedNativeLimit20": {
+            "nReturned": 20,
+            "keysExamined": 20,
+            "docsExamined": 20
+          },
+          "limits": "Arithmetic only. No B-tree page/IO or live sharding simulation; limit5 prediction is not a new server explain."
+        },
+        "passed": true
+      }
+    },
+    "not_server_or_wire_capture": true
+  },
+  "svg_native": {
+    "kind": "native raster / literal palette endpoints / Pango extents only; not browser/mobile/Safari/print pagination",
+    "versions": {
+      "GdkPixbuf": "2.42.10",
+      "Rsvg": "2.58.0",
+      "Pango": "1.52.1"
+    },
+    "palette_source_sha256": "7f7d9904c41b76eadca40bec9af3f24e71dfe54c9733a9c44b8ad8e0f2dfb506",
+    "palettes": 16,
+    "assets": [
+      {
+        "file": "assets/mongodb-opmsg-bytes.svg",
+        "sha256": "f09c3fef631cf4fa0592cc622cc25ae67bcad2fb10dd1e0c9db83f63ffeca8d6",
+        "raster_widths_px": [
+          300,
+          320,
+          355,
+          390
+        ],
+        "print_mm": [
+          90,
+          196.15384615384616
+        ],
+        "min_font_pt": 10.466384009691097
+      },
+      {
+        "file": "assets/mongodb-index-range.svg",
+        "sha256": "29e7c1b82f2ec7e86ff139700afccd354e47f0140b050b4c91b8266fdb180a0b",
+        "raster_widths_px": [
+          300,
+          320,
+          355,
+          390
+        ],
+        "print_mm": [
+          90,
+          189.23076923076923
+        ],
+        "min_font_pt": 10.466384009691097
+      }
+    ],
+    "text_overflow": [],
+    "packet_printed_bytes_equal_decoder_fixture": true
+  },
+  "historical": {
+    "date": "2026-11-01",
+    "service_sha256": "712ee2ec5692afc1a93dab7e829430e7e4affa4f23611b504bacd0e9cfa59fc5",
+    "reports": [
+      "observed-native-2026-11-01.json",
+      "observed-tls-2026-11-01.json",
+      "observed-offline-cli-2026-11-01.json",
+      "observed-concurrency-2026-11-01.json"
+    ],
+    "unaltered": true,
+    "full_native_tls_did_not_capture_source_sha_or_http_exit": true,
+    "concurrency_recorded_source_and_http_exit": true
+  },
+  "not_checked": [
+    "current full seed/restore/TLS/concurrency integration",
+    "multi-host replication/election/rollback",
+    "sharding runtime",
+    "FCV/upgrade/downgrade",
+    "power failure",
+    "browser/Safari/reader theme controls/real print pagination",
+    "common render/export/publication",
+    "HTTP shutdown deadline expiry/force-close branch; only normal active-handler drain tested"
+  ],
+  "static_contract": {
+    "source_contract": {
+      "chapters": 19,
+      "sourceFragments": 18,
+      "wordsApprox": 14072,
+      "terms": 76,
+      "cards": 5,
+      "diagrams": 3,
+      "parser": {
+        "cases": 10,
+        "declaredForms": 47
+      }
+    },
+    "node": "v18.19.1",
+    "production_parser_sha256": "a2f42e63ddddde72b6f9183f391b5c8afd6777fee5022fea915c9e8d5e3ed3da",
+    "svg_exact_inline": true,
+    "public_files": 52,
+    "historical_reports_unchanged": [
+      "tests/observed-concurrency-2026-11-01.json",
+      "tests/observed-native-2026-11-01.json",
+      "tests/observed-tls-2026-11-01.json",
+      "tests/observed-offline-cli-2026-11-01.json"
+    ],
+    "handler_scope_note": "one InsertOne := to = declaration adaptation after decodeCreate; operation/error/body unchanged"
+  }
+}

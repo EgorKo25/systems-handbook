@@ -1,0 +1,58 @@
+<header><h1>Сохраняемый Go-сервис: два выпуска и один набор данных</h1><p>Сборка, начальное наполнение, миграция, HTTP и повтор после неизвестного исхода</p></header>
+<h2>Сборка до первого вызова</h2>
+<p>Нужен уже принятый сервер с пользователем app. Go 1.25+ должен быть установлен в личном окружении; v2.9.2 официально требует Go 1.25+, сервер MongoDB 4.4+, а для собственного upstream test suite Go 1.26+. Наш пример проверен Go 1.27.3 с сервером 8.0.34; это не испытание всей официальной матрицы. Совместимость конкретного тега подтверждают <a href="https://github.com/mongodb/mongo-go-driver/blob/v2.9.2/README.md">README v2.9.2</a> и его go.mod. Импорт содержит <code>/v2</code>; сигнатуры старого драйвера v1 не подходят автоматически.</p>
+<p>Bash обычного пользователя, cwd тома, LAB из установки существует. Первая команда откажет, если исходники сервиса уже скопированы: сохраните свои изменения. Новые cache и modules лежат внутри постоянного LAB. Сеть нужна лишь для первоначального получения закреплённых модулей; Go сверяет go.sum и checksum database. Не отключайте проверку ради сетевого отказа. Код сборки 0 и существующий бинарник — критерий успеха; при отказе ничего не запускайте.</p>
+<pre><code>set -euo pipefail
+test ! -e "$LAB/service"
+cp -R labs/service "$LAB/service"
+mkdir -p "$LAB/bin" "$LAB/gocache" "$LAB/gomodcache" "$LAB/gopath"
+export GOTOOLCHAIN=local
+export GOCACHE="$LAB/gocache"
+export GOMODCACHE="$LAB/gomodcache"
+export GOPATH="$LAB/gopath"
+(cd "$LAB/service" &amp;&amp; go test -mod=readonly .)
+(cd "$LAB/service" &amp;&amp; go build -mod=readonly -o "$LAB/bin/job-service" .)
+export PATH="$LAB/bin:$PATH"
+export MONGO_URI='mongodb://127.0.0.1:27117/?replicaSet=study&amp;retryWrites=true'
+export MONGO_AUTH_FILE="$LAB/private/app.json"
+job-service -mode=bson</code></pre>
+<p><code>-mod=readonly</code> запрещает незаметное изменение модуля во время сборки, но при наличии сети допускает получение отсутствующих закреплённых зависимостей. GOTOOLCHAIN=local запрещает фоновое получение другого Go. Последний вызов не подключается к серверу, печатает ровно <code>22 bytes: 16000000106e002a00000002730003000000d18f0000</code>. Полное исходное приложение — <a href="labs/service/main.go">main.go</a>, зависимости — <a href="labs/service/go.mod">go.mod</a> и <a href="labs/service/go.sum">go.sum</a>. Файлы private не копируют в книгу, Git или HTTP-ответ.</p>
+<h2>Выпуск 1, затем совместимая миграция</h2>
+<p>В том же Bash вызовите seed. Он создаёт 20 000 job с заранее определёнными ID и датами, по 200 на каждого tenant. Используется upsert с $setOnInsert, поэтому повтор должен вывести new=0 и сохранить даты/состояния. Значение n — размер ожидаемого диапазона, не команда привести коллекцию к этому числу: дополнительные HTTP-задания не удаляются.</p>
+<pre><code>set -euo pipefail
+job-service -mode=seed -n=20000
+job-service -mode=check
+ACTION=explain mongosh 'mongodb://127.0.0.1:27117/admin?directConnection=true' --quiet --norc --file labs/admin.js
+job-service -mode=measure -n=200
+job-service -mode=migrate
+job-service -mode=migrate
+ACTION=explain mongosh 'mongodb://127.0.0.1:27117/admin?directConnection=true' --quiet --norc --file labs/admin.js
+job-service -mode=check</code></pre>
+<p>Первая миграция на чистом seed: matched=20000 modified=20000 и индекс tenant_state_recent; повтор: matched=0 modified=0. Мигрированный документ версии 2 получает priority=0; договор новой формы также допускает отсутствие priority как значение 0, поэтому новый HTTP-документ может не содержать физического поля. Старый Go-читатель игнорирует неизвестное поле, новый понимает отсутствие priority как 0. В этом учебном main.go поле priority не возвращается HTTP: оно показывает безопасное добавление серверного состояния без изменения старого ответа. SchemaVersion сохраняется явно. Индекс строится после backfill; если его создание отказало, уже преобразованные документы не откатываются. Повтор миграции обработает остаток и снова проверит индекс. Удаление priority и откат старого бинарника не возвращают историю значений.</p>
+<p>Для большого production-набора UpdateMany этого урока слишком груб: разделите диапазоны ID на batches, сохраните checkpoint выполнения вне памяти, замеряйте latency и oplog и проверяйте остаток по schemaVersion. Добавление обязательного validator выполняют после совместимого выпуска и backfill, не до. Пока серверный validator здесь не включён, прямой mongosh может обойти HTTP-проверку формы; readWrite-пользователь приложения — учебное упрощение полномочий, не защита от злонамеренного изменения любых jobs.</p>
+<h2>HTTP: устойчивый ID и условный переход</h2>
+<p>HTTP — протокол запросов и ответов приложения. В первом терминале с теми же переменными и cwd запустите <code>job-service -mode=serve</code>: он остаётся в foreground, проверяет primary до listener и слушает только 127.0.0.1:18089. Не закрывайте окно, пока нужны HTTP-запросы. Во втором Bash, cwd произвольный, Python уже доступен; блок ниже обращается только к этому адресу и проверяет статус до следующего действия.</p>
+<pre><code>set -euo pipefail
+python3 - &lt;&lt;'PY'
+import json, urllib.request, urllib.error
+base = 'http://127.0.0.1:18089'
+def post(path, body):
+    r = urllib.request.Request(base+path, data=json.dumps(body).encode(),
+          headers={'Content-Type':'application/json'}, method='POST')
+    try:
+        with urllib.request.urlopen(r, timeout=5) as x:
+            return x.status, json.loads(x.read())
+    except urllib.error.HTTPError as x:
+        return x.code, json.loads(x.read())
+payload = {'id':'http-example-1','tenant':'handmade','title':'Проверить часы'}
+a = post('/jobs', payload); assert a[0] == 201, a
+b = post('/jobs', payload); assert b[0] == 200 and a[1] == b[1], b
+c = post('/jobs', dict(payload, title='Другое')); assert c[0] == 409, c
+assert post('/jobs/http-example-1/close', {}) == (200, {'modified':1})
+assert post('/jobs/http-example-1/close', {}) == (200, {'modified':0})
+print('201 → 200, conflict 409, close 1 → 0')
+PY</code></pre>
+<p>Это исходное состояние нового ID: если он уже существует, первый assert остановит последовательность; исследуйте запись или выберите новый собственный ID, не стирайте данные. Дата первого ответа обрезается до миллисекунд перед BSON-сохранением, чтобы повтор возвращал ту же точность. JSON — текстовый формат именованных значений во входе/ответе HTTP. Обработчик принимает ровно один JSON-объект и дочитывает тело до EOF, конца входного потока. Второй объект, мусор и whitespace-хвост сверх 4096 байт дают 400 до InsertOne. Поля ID/tenant/title ограничены 80/80/200 байтами UTF-8, поэтому 100 букв «Я» занимают 200 байт. Штатный Go-пакет httptest проверяет reader в памяти без listener и БД в <a href="labs/service/main_test.go">13 случаях</a>; go test перед сборкой требует код 0. Неизвестные JSON-поля также отвергаются; полноценная многоарендная авторизация HTTP в урок не входит. Поле tenant — критерий запроса, не удостоверенная личность пользователя.</p>
+<p>Историческая native-проверка 1 ноября конкурентного договора использовала Go-исходник SHA-256 712ee2ec…59fc5, до уточнений JSON-reader и завершения HTTP 2 ноября, с детектором гонок <code>-race</code> и 16 клиентов, стартующих через общий барьер. Для одного нового ID и одинакового payload получены один 201 и пятнадцать 200, одна MongoDB-запись с version=1. В другой группе восемь запросов payload A и восемь payload B конкурировали за один новый ID: один 201, семь 200 победившего payload и восемь 409 другого; сохранены tenant/title/date/schemaVersion победителя. При 16 параллельных close все ответы 200, modified=1 ровно у одного, у остальных 0; состояние closed/version2, остальные поля неизменны. BSON-тип версии остался int64 (Long). Процесс штатно завершился с кодом 0, race diagnostic не обнаружен; stderr сохранён только приватно. После правок новые 13 JSON cases и один shutdown case пройдены отдельно; полный старый seed/restore и 16-клиентный опыт не объявляются повторёнными на новом SHA. MongoDB-операции создания/чтения/close сохранены. Это проверка конкретной конкуренции без искусственной потери ответа; она не доказывает отсутствие всех гонок или exactly-once при любом отказе.</p>
+<p>Повторяемый сценарий — <a href="tests/concurrency_accept.py">concurrency_accept.py</a>, факты — <a href="tests/observed-concurrency-2026-11-01.json">наблюдённый JSON</a>. Он принимает уже подготовленный остановленный <em>собственный TEST LAB</em>, новые ID и бинарник сервиса, не делает seed/restore/reset. Неопределённый исход сети или 503 фиксируется и останавливает проверку; скрытого повтора такого HTTP-запроса нет. Раннее измерение n200 было последовательным и эту конкурентную корректность не проверяло.</p>
+<p>Остановите Go через Ctrl+C в первом терминале. Сервер прекращает приём новых соединений и ждёт активные обработчики до 5 секунд, затем main может отключить MongoDB-клиент. При истечении срока оставшиеся HTTP-соединения закрываются, процесс сообщает ошибку; это не отменяет уже сделанную серверную запись. Отдельный тест запускает собственный loopback listener без MongoDB, удерживает обработчик, подаёт SIGTERM через тестовый канал и проверяет, что завершение не вернулось до освобождения обработчика и получения ответа. Тест не отправляет OS-сигнал процессу или службе. MongoDB хранит данные после остановки HTTP. Семантика ожидания описана в <a href="https://pkg.go.dev/net/http@go1.27.3#Server.Shutdown">net/http Go 1.27.3, Server.Shutdown</a>. В исходном Bash выполните <code>job-service -mode=transaction</code> дважды и <code>job-service -mode=check</code>: ledger должен остаться один, job count=20001. Затем остановите mongod штатно и снова запустите тот же dbPath; check подтвердит состояние. Возврат 503 сообщает, что серверная операция могла быть принята: повторять создание нужно с тем же ID и тем же payload. Базовый протокол проверен историческим интеграционным тестом 1 ноября; изменённые JSON-reader и shutdown — отдельными тестами 2 ноября.</p>

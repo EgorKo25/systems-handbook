@@ -1,0 +1,80 @@
+<header><h1>От Go-вызова до ответа OP_MSG</h1><p>Выбор сервера, ожидание соединения, проверка доступа и декодирование результата</p></header>
+<h2>Один клиент, несколько разных ожиданий</h2>
+<p>Вызов <code>InsertOne(ctx, job)</code> не является прямой записью файла. Сначала драйвер кодирует Go-значения в BSON, определяет тип операции и выбирает сервер. Топология — известная драйверу картина узлов и их ролей; мониторинг поддерживает её отдельными служебными соединениями. <code>mongo.Connect</code> создаёт клиент и запускает обнаружение, но не гарантирует готовое подключение; наш сервис до HTTP-listener вызывает <code>Ping</code> с требованием primary и ограничением времени.</p>
+<p>Server selection — выбор допустимого узла по виду операции, read preference и текущей топологии. Для записи нужен primary; адрес seed в URI — начальная точка обнаружения, а не обещание, что все операции останутся на ней. В <code>hello</code> сервер сообщает имя replica set, роли, адреса членов и wire versions. Имена из конфигурации набора должны разрешаться и быть доступны клиенту: успешное соединение с одним seed ещё не гарантирует доступность остальных. <code>directConnection=true</code> в административном URI фиксирует один учебный узел; Go URI использует <code>replicaSet=study</code> и обычное обнаружение.</p>
+<p>После выбора узла операция получает соединение из pool — набора готовых к повторному использованию TCP-соединений этого Client к этому серверу. При свободном соединении не нужны новый TCP, TLS и SCRAM на каждый запрос. При исчерпании pool операция ждёт в очереди; увеличение maxPoolSize может лишь перенести очередь в сервер и ухудшить хвост задержки. Наш <code>maxPoolSize=12</code> ограничивает рабочие соединения к каждому серверу, <code>maxConnecting=2</code> — параллельное создание новых. Мониторинговые сокеты учитываются отдельно. Один Client переиспользуется всеми HTTP-запросами. Эти механизмы описаны в <a href="https://www.mongodb.com/docs/drivers/go/current/connect/connection-options/connection-pools/">контракте pools</a>.</p>
+<h2>Новый сокет до команды</h2>
+<p>Если соединения ещё нет, драйвер разрешает DNS-имя, соединяет TCP, при включённом TLS проверяет цепочку сертификата и имя, обменивается приветствием и проходит аутентификацию. В нашем literal loopback URI DNS и TLS отсутствуют, но SCRAM остаётся. URI <code>mongodb+srv</code> добавляет DNS SRV/TXT обнаружение и имеет другие defaults: его нельзя подставить в офлайн-лабораторию как обычную строковую замену.</p>
+<p>Контекст Go несёт deadline — конечный момент ожидания и сигнал отмены. У нас выбор сервера ограничен 3 секундами, создание соединения 2 секундами, общий клиентский timeout 5 секундами, а HTTP-операция получает контекст 3 секунды. Не складывайте эти числа как обещанное время ответа: эффективный остаток бюджета и более ранний deadline могут закончить работу раньше. Timeout ожидания не доказывает, что удалённая запись отменена. Если сеть оборвалась после server commit и до получения ответа, клиент знает об ошибке обмена, но не знает исход операции.</p>
+<h2>Сообщение и ответ</h2>
+<p>Современная команда идёт в OP_MSG. Заголовок имеет общую длину, requestID, responseTo и номер opcode 2013; затем flags и секции. Секция kind 0 содержит тело команды BSON с именем команды и <code>$db</code>; kind 1 позволяет передать последовательность документов, например batch insert. Запрос может включать session ID, transaction number и writeConcern. Это транспортные поля и договор исполнения, не дополнительные поля нашего job. Согласованное сжатие может завернуть сообщение в OP_COMPRESSED. TLS, если включён, шифрует этот обмен. Схема ниже объясняет обычную подтверждаемую команду, не реализует сетевой клиент; точные форматы — в <a href="https://www.mongodb.com/docs/v8.0/reference/mongodb-wire-protocol/">официальной спецификации</a>.</p>
+<p>Сервер проверяет сообщение, BSON и размер, удостоверение соединения, права операции и требования к роли узла. Затем получает коллекцию, выбирает план и выполняет чтение/изменение через storage engine, подсистему хранения. Ответ OP_MSG с responseTo связывает результат с запросом. <code>ok:1</code> означает успех команды верхнего уровня, но writeErrors/writeConcernError могут содержать отказ отдельных записей или ожидания подтверждения. Драйвер превращает их в ошибки Go и результат; приложение должно проверить ошибку прежде чем печатать «создано».</p>
+<p>CommandMonitor наблюдает имена команд и их выполнение на драйверном уровне. Он не является packet capture и сам по себе не доказывает запись на диск или полное время ожидания pool/selection. В коде счётчик сохраняет только число успешных команд: полные BSON payload не логируются, чтобы данные и пароли не оказались в диагностике.</p>
+<h2>Разобранный запрос: 51 байт без скрытых полей</h2>
+<p>Возьмём отдельный минимальный пример команды <code>{ping:int32(1),$db:"admin"}</code>, которая проверяет ответ сервера, не читая jobs. Это самостоятельно составленные байты формата OP_MSG, а не перехват соединения нашего Go-сервиса. Выбраны ровно одна секция kind 0, нулевые флаги, отсутствие сжатия и контрольной суммы. Реальный драйвер может добавить lsid, временные отметки и другие поля; TLS скроет их на сетевом соединении. Числа смещений ниже десятичные и считаются с нуля, байты записаны шестнадцатерично; LE означает уже введённый little-endian.</p>
+<p>Четыре поля заголовка занимают по 4 B: длина 51, идентификатор запроса 17, нулевой responseTo и код 2013. Затем идут 4 B flagBits и один байт kind=0. BSON начинается с байта 21, занимает 30 B и заканчивается байтом 50: <code>16+4+1+30=51</code>. Внутренняя длина 30 включает собственные четыре байта длины BSON, но не kind и заголовок OP_MSG. <code>requestID</code> связывает сообщения одного обмена; он не равен нашему строковому _id задания и не является номером сессии.</p>
+<style>.mongodb-wire-figure{margin:1.5em 0;break-inside:avoid}.mongodb-wire-figure svg{display:block;width:100%;max-width:390px;height:auto;margin:0 auto}.mongodb-wire-figure figcaption{margin-top:.7em}@media print{.mongodb-wire-figure svg{width:90mm;max-width:100%;color:#000;--reader-text:#000;--reader-paper:#fff}}</style>
+<figure class="mongodb-wire-figure" id="mongodb-wire-path"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 850" width="390" height="850" role="img" aria-labelledby="mongodb-wire-title mongodb-wire-desc" class="mongodb-wire-svg">
+<title id="mongodb-wire-title">Минимальный OP_MSG: все 51 байт</title>
+<desc id="mongodb-wire-desc">Собственный пример ping:int32(1), $db:admin. Смещения от нуля, целые little-endian. Заголовок 16 B, flags 4 B, kind 1 B и BSON 30 B. Каждая строка показывает реальные байты своего интервала; это модель, не снятый пакет.</desc>
+<style>.mongodb-wire-svg{color:var(--reader-text,#202d34);font-family:system-ui,sans-serif}.mongodb-wire-svg text{fill:currentColor;font-size:16px}.mongodb-wire-svg .title{font-size:20px;font-weight:700}.mongodb-wire-svg .hex{font-family:monospace;font-size:17px}.mongodb-wire-svg .paper{fill:var(--reader-paper,#fffcf5)}.mongodb-wire-svg .line{fill:none;stroke:currentColor;stroke-width:1}.mongodb-wire-svg .heavy{fill:none;stroke:currentColor;stroke-width:3}.mongodb-wire-svg .arrow{fill:none;stroke:currentColor;stroke-width:2;marker-end:url(#mongodb-wire-arrow)}</style>
+<defs><marker id="mongodb-wire-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8Z" fill="currentColor"/></marker></defs>
+<rect class="paper" width="390" height="850"/>
+<text x="10" y="25" class="title">OP_MSG · 51 B</text>
+<text x="10" y="50" class="">Слева — смещение байта, справа — поле.</text>
+<text x="10" y="72" class="">Все целые LE; без TLS/сжатия/checksum.</text>
+<path class="line" d="M63 90H380V682H63Z"/>
+<text x="4" y="113" class="">0…3</text>
+<text x="75" y="110" class="">messageLength = 51</text>
+<text x="75" y="133" class="hex">33 00 00 00</text>
+<path class="line" d="M63 142H380"/>
+<text x="4" y="165" class="">4…7</text>
+<text x="75" y="162" class="">requestID = 17</text>
+<text x="75" y="185" class="hex">11 00 00 00</text>
+<path class="line" d="M63 194H380"/>
+<text x="4" y="217" class="">8…11</text>
+<text x="75" y="214" class="">responseTo = 0</text>
+<text x="75" y="237" class="hex">00 00 00 00</text>
+<path class="line" d="M63 246H380"/>
+<text x="4" y="269" class="">12…15</text>
+<text x="75" y="266" class="">opCode = 2013</text>
+<text x="75" y="289" class="hex">DD 07 00 00</text>
+<path class="line" d="M63 298H380"/>
+<text x="4" y="321" class="">16…19</text>
+<text x="75" y="318" class="">flagBits = 0</text>
+<text x="75" y="341" class="hex">00 00 00 00</text>
+<path class="line" d="M63 350H380"/>
+<text x="4" y="373" class="">20</text>
+<text x="75" y="370" class="">kind = 0, тело команды</text>
+<text x="75" y="393" class="hex">00</text>
+<path class="line" d="M63 402H380"/>
+<text x="4" y="425" class="">21…24</text>
+<text x="75" y="422" class="">Длина BSON = 30</text>
+<text x="75" y="445" class="hex">1E 00 00 00</text>
+<path class="line" d="M63 454H380"/>
+<text x="4" y="477" class="">25…34</text>
+<text x="75" y="474" class="">ping: int32(1)</text>
+<text x="75" y="497" class="hex">10 70 69 6E 67 00</text>
+<text x="75" y="521" class="hex">01 00 00 00</text>
+<path class="line" d="M63 530H380"/>
+<text x="4" y="553" class="">35…49</text>
+<text x="75" y="550" class="">$db: строка admin</text>
+<text x="75" y="573" class="hex">02 24 64 62 00</text>
+<text x="75" y="597" class="hex">06 00 00 00</text>
+<text x="75" y="621" class="hex">61 64 6D 69 6E 00</text>
+<path class="line" d="M63 630H380"/>
+<text x="4" y="653" class="">50</text>
+<text x="75" y="650" class="">Конец BSON</text>
+<text x="75" y="673" class="hex">00</text>
+<path class="line" d="M63 682H380"/>
+<text x="10" y="714" class="title">16 + 4 + 1 + 30 = 51 B</text>
+<text x="10" y="742" class="">Ответ модели: 38 B, requestID=90.</text>
+<text x="10" y="768" class="">Его responseTo=17 ссылается на запрос.</text>
+<text x="10" y="795" class="">Тело ответа {ok: double(1)} = 17 B.</text>
+<text x="10" y="824" class="">Это не ID документа и не ID сессии.</text>
+</svg>
+<figcaption>Карта одного выбранного OP_MSG. Интервалы относятся к фактическим байтам примера; высота строк не пропорциональна размеру поля. Внизу — соответствие поля ответа запросу. <a href="assets/mongodb-opmsg-bytes.svg">Тот же рисунок отдельно</a>.</figcaption></figure>
+<p><strong>Разбор без рисунка.</strong> В смещениях 0…3 стоят <code>33 00 00 00</code>, то есть 51. В 4…7 — <code>11 00 00 00</code>, то есть requestID=17; в 8…11 четыре нуля; в 12…15 — <code>DD 07 00 00</code>, то есть 0x07DD=2013. Флаги в 16…19 нулевые, kind в 20 равен 0. Нулевые флаги здесь означают, что нет checksumPresent и moreToCome; обычный ответ ожидается. checksumPresent обозначает наличие контрольной суммы. moreToCome сообщает получателю, что следующее сообщение придёт без его действия: до сообщения с нулевым флагом получатель не должен отправлять новое. Запрос с moreToCome не получает ответа; в ответах сервер ставит его только после разрешающего exhaustAllowed в запросе. В нашем примере все эти флаги нулевые.</p>
+<p>BSON в 21…24 начинается с <code>1E 00 00 00</code>. Поле ping в 25…34: тип <code>10</code>, имя <code>70 69 6E 67 00</code>, значение <code>01 00 00 00</code>. Поле $db в 35…49: тип строки <code>02</code>, имя <code>24 64 62 00</code>, длина строки <code>06 00 00 00</code>, затем <code>61 64 6D 69 6E 00</code>, admin с конечным нулём. Байт 50 равен 00 и закрывает документ. Сумма BSON: 4 B длины + 10 B ping + 15 B $db + 1 B окончания = 30 B.</p>
+<p>Минимальный модельный ответ с <code>{ok:double(1)}</code> занимает 38 B: 16+4+1+17. Его собственный requestID пусть равен 90, а responseTo обязан указывать 17 из запроса. Успех ping не доказывает доступ к workshop или устойчивость записи. Формат сверяется с <a href="https://www.mongodb.com/docs/v8.0/reference/mongodb-wire-protocol/">Wire protocol 8.0, Header/OP_MSG/Sections</a> и <a href="https://bsonspec.org/spec.html">BSON 1.1</a>; изображение и значения придуманы для этого разбора.</p>
+<p>Проверить длины без сервера можно в Bash, cwd тома, установленным Python 3.12: <code>python3 tests/mechanisms.py --limit 20</code>. Код 0 означает, что самостоятельный декодер прочитал 51 B запроса/38 B ответа и отверг пять повреждённых образцов. <code>--limit</code> меняет только следующий арифметический пример индекса; скрипт не соединяется с MongoDB. Замените в своей копии значение ping 1 на int64(1): размер этого поля вырастет на 4 B, поэтому надо изменить тип, длину BSON и общую длину, а не один числовой литерал. Этот изменённый пакет в сервер не отправляется.</p>

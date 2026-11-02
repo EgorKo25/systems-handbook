@@ -1,0 +1,8 @@
+Original handbook prose, Go service, JavaScript exercises, Python helpers, diagrams and SVG byte/index illustrations were written for this volume. No MongoDB binary, third-party Go module source, private key, password, database or runtime is redistributed here.
+License copies are retained as factual provenance of the separate programs used in native tests:
+MongoDB Community 8.0.34: https://github.com/mongodb/mongo/blob/r8.0.34/LICENSE-Community.txt (SSPL-1.0).
+Go driver v2.9.2: https://github.com/mongodb/mongo-go-driver/blob/v2.9.2/LICENSE (Apache-2.0).
+mongosh 2.14.1: https://github.com/mongodb-js/mongosh/blob/v2.14.1/LICENSE (Apache-2.0); downloaded distribution also has third-party notices which stay with the private distribution.
+Database Tools 100.20.0: LICENSE.md from its official archive; retain full archive license/notices if redistributing that separate artifact.
+The links and small original byte examples explain interfaces; the MongoDB wire specification is linked, not copied as a standalone specification.
+Exporter must retain labs/service/go.mod and go.sum, every labs/*.py and labs/*.js, tests/, sources/, assets/, volume_config.py, build.py, this directory's license copies and NOTICE. There are no required dotfiles or public credentials.

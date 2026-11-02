@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 820" width="390" height="820" role="img" aria-labelledby="mongodb-index-title mongodb-index-desc" class="mongodb-index-svg">
+<title id="mongodb-index-title">Один диапазон составного индекса и двадцать документов</title>
+<desc id="mongodb-index-desc">Упорядоченный диапазон tenant-01/open содержит 200 ключей. createdAt убывает, _id возрастает при равных датах. Возвращаются первые 20: от seed-019901 до seed-018001, следующий seed-017901 не возвращён. FETCH получает title/version из документов. Размеры и страницы B-tree не изображены.</desc>
+<style>.mongodb-index-svg{color:var(--reader-text,#202d34);font-family:system-ui,sans-serif}.mongodb-index-svg text{fill:currentColor;font-size:16px}.mongodb-index-svg .title{font-size:20px;font-weight:700}.mongodb-index-svg .hex{font-family:monospace;font-size:17px}.mongodb-index-svg .paper{fill:var(--reader-paper,#fffcf5)}.mongodb-index-svg .line{fill:none;stroke:currentColor;stroke-width:1}.mongodb-index-svg .heavy{fill:none;stroke:currentColor;stroke-width:3}.mongodb-index-svg .arrow{fill:none;stroke:currentColor;stroke-width:2;marker-end:url(#mongodb-index-arrow)}</style>
+<defs><marker id="mongodb-index-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8Z" fill="currentColor"/></marker></defs>
+<rect class="paper" width="390" height="820"/>
+<text x="10" y="25" class="title">Индекс tenant_state_recent</text>
+<text x="10" y="50" class="">Равенства: tenant-01 и open.</text>
+<text x="10" y="74" class="">Внутри диапазона: createdAt ↓, _id ↑.</text>
+<text x="10" y="101" class="">Дата ниже — UTC 15 ноября 2023.</text>
+<path class="line" d="M46 120H380V495H46Z"/>
+<path class="heavy" d="M31 126H20V416H31"/>
+<text x="4" y="455" class="">21</text>
+<text x="4" y="150" class="">1</text>
+<text x="60" y="150" class="hex">seed-019901</text>
+<text x="60" y="175" class="">createdAt 03:45:01</text>
+<path class="line" d="M46 190H380"/>
+<text x="4" y="220" class="">2</text>
+<text x="60" y="220" class="hex">seed-019801</text>
+<text x="60" y="245" class="">createdAt 03:43:21</text>
+<path class="line" d="M46 260H380"/>
+<text x="4" y="375" class="">20</text>
+<text x="60" y="375" class="hex">seed-018001</text>
+<text x="60" y="400" class="">createdAt 03:13:21</text>
+<text x="60" y="455" class="hex">seed-017901</text>
+<text x="60" y="480" class="">createdAt 03:11:41</text>
+<text x="65" y="295" class="">… ещё 17 ключей до позиции 20 …</text>
+<path class="heavy" d="M46 416H380"/>
+<text x="230" y="410" class="">LIMIT 20</text>
+<text x="10" y="528" class="">200 ключей подходят; взяты первые 20.</text>
+<text x="10" y="553" class="">21-й здесь не нужен для выдачи.</text>
+<path class="arrow" d="M195 570V615"/>
+<text x="210" y="598" class="">FETCH × 20</text>
+<path class="line" d="M12 628H378V738H12Z"/>
+<text x="25" y="652" class="">Пример полученного документа:</text>
+<text x="25" y="678" class="hex">_id = seed-019901</text>
+<text x="25" y="703" class="">title = job 19901; version = 1</text>
+<text x="25" y="727" class="">title/version отсутствуют в ключе.</text>
+<text x="10" y="772" class="">Native: 20 keys + 20 docs → 20 jobs.</text>
+<text x="10" y="799" class="">Это счёт работы, не число дисковых IO.</text>
+</svg>

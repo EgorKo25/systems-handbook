@@ -1,0 +1,83 @@
+<header><h1>KVv2: версия, CAS и необратимость</h1><p>Одинаковое слово «удалить» скрывает разные переходы: новая версия, soft-delete, destroy и удаление metadata.</p></header>
+<p>CAS, compare and set, — условие записи: ожидаемый номер должен совпасть с текущей версией. Версия — сохранённый выпуск значения с собственным номером; metadata хранит эти номера и состояния. Soft-delete скрывает выпуск с возможностью возврата, destroy необратимо удаляет его содержимое через API. Ниже увидим каждый переход на одном синтетическом ключе.</p>
+<h2>Единственный основной запуск комплексной проверки</h2>
+<p>По основному маршруту после provision config ещё version1. Из cwd labs, с действующим оператором, выполните две команды блока ниже один раз. Первый выдаёт свежие reader/writer tokens на 10m без изменения KV; второй проводит всю цепочку ACL/KV/TTL и сохраняет checks.json. Это снимает зависимость от времени чтения предыдущих глав. Ожидается passed13/code0, current version3 с message=second и added=yes, version2 destroyed. Дальше до Agent/Go используем именно это состояние. После выполнения ручные меняющие команды этой главы читаются как разбор уже сделанных шагов.</p>
+<pre><code>set -euo pipefail
+python3 lab.py --root "$stand" test-tokens
+python3 lab.py --root "$stand" checks</code></pre>
+<p>Повторно checks не запускают: читают checks.json. Если выбрали ручную альтернативу ниже, автоматический checks в этом же stand пропускают, а в итоге достигают той же version3. При неожиданном отказе dependent writes остановлены; source сохраняют, выясняют token TTL/текущую metadata, не запускают provision/init заново.</p>
+<h2>KVv1 и KVv2 имеют разные контракты</h2>
+<p>KV, key/value, хранит введённые клиентом пары. KVv1 сохраняет текущее значение по пути без истории KVv2. KVv2 хранит версии значения и metadata: номер текущей и старейшей версий, времена, deletion state, destroyed state, пользовательскую metadata и настройки. В API v1 путь <code>plain/handbook/config</code>, в API v2 — <code>secret/data/handbook/config</code>. Цифра в HTTP-префиксе <code>/v1/</code> не выбирает KVv1: это версия общей оболочки API.</p>
+<p>Нельзя решить, какой KV подключён, по имени secret. Оператор читает <code>vault secrets list -detailed</code> и options mount. CLI <code>-mount=secret</code> явно отделяет mount от относительного ключа; устаревшая запись secret/handbook/config скрывает это различие. Включение <code>vault secrets enable -path=plain -version=1 kv</code> в личном стенде создало бы другой mount, но не преобразовало существующий v2. Переход версии — отдельное изменение с изучением путей, policies, блокировки upgrade и клиентской совместимости.</p>
+<h2>Put заменяет документ, patch сохраняет соседние поля</h2>
+<p>KVv2 put сохраняет новый набор полей как новую версию; при передаче только message прежнее поле другого имени не обязано сохраниться. Patch применяет частичное изменение существующего значения. Родной метод HTTP PATCH использует capability patch; CLI fallback <code>-method=rw</code> сначала читает, затем пишет и имеет другой набор прав и окно гонки. Мы исполняем native PATCH и объясняем это явно. JSON Merge Patch может удалять поле значением null; строка «null» и JSON null — разные входы, поэтому для сложных типов используют подготовленный JSON-файл с mode 0600.</p>
+<p>Версионная история требует ограничения роста. <code>max_versions</code> ограничивает число сохранённых версий; вытесненная старая версия может быть уничтожена. <code>delete_version_after</code> планирует soft-delete новых версий, не делает внешний пароль недействительным. <code>cas_required</code> требует compare-and-set. Меняя настройки после накопления истории, оператор сначала оценивает, какую старую информацию потеряет и что было принято backup.</p>
+<figure id="vault-cas-version">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 690" role="img" aria-labelledby="vault-kv-version-states-title vault-kv-version-states-desc" style="display:block;width:100%;max-width:400px;height:auto;margin:auto">
+<title id="vault-kv-version-states-title">История ключа handbook/config</title><desc id="vault-kv-version-states-desc">Put с CAS0 создаёт версию 1, put с CAS1 — версию 2; устаревший CAS1 отклонён. PATCH с CAS2 создаёт версию 3. Delete, undelete и destroy версии 2 меняют её состояние; current остаётся 3.</desc>
+<style>
+#vault-kv-version-states-art .paper{fill:var(--reader-paper,#fffcf5)}
+#vault-kv-version-states-art .soft{fill:var(--reader-soft,#e8f2ec)}
+#vault-kv-version-states-art text{fill:var(--reader-text,#202d34);font-family:Arial,sans-serif;font-size:20px}
+#vault-kv-version-states-art .head{font-size:23px;font-weight:bold}
+#vault-kv-version-states-art .line{fill:none;stroke:var(--reader-text,#202d34);stroke-width:1.5}
+#vault-kv-version-states-art .mark{fill:var(--reader-accent,#0c6b63)}
+#vault-kv-version-states-art .accent{fill:none;stroke:var(--reader-accent,#0c6b63);stroke-width:3}
+@media print{#vault-kv-version-states-art .paper,#vault-kv-version-states-art .soft{fill:#fff} #vault-kv-version-states-art text,#vault-kv-version-states-art .mark{fill:#000} #vault-kv-version-states-art .line,#vault-kv-version-states-art .accent{stroke:#000}}
+</style>
+<g id="vault-kv-version-states-art"><rect class="paper" width="400" height="690"/>
+<text x="16" y="32" class="head">Один ключ, отдельные версии</text>
+<text x="16" y="65">secret/handbook/config • KVv2</text>
+<rect class="soft" x="12" y="90" width="376" height="56"/>
+<text x="20" y="124">Действие</text><text x="210" y="124">current</text><text x="305" y="124">v2</text>
+<path class="line" d="M12 146h376M198 90v535M294 90v535"/>
+<text x="20" y="182">put CAS0</text><text x="230" y="182">1</text><text x="307" y="182">нет</text>
+<path class="line" d="M12 208h376"/>
+<text x="20" y="244">put CAS1</text><text x="230" y="244">2</text><text x="304" y="244">есть</text>
+<path class="line" d="M12 270h376"/>
+<text x="20" y="305">stale CAS1</text><text x="230" y="305">2</text><text x="304" y="305">есть</text>
+<text x="20" y="333">HTTP400</text><path class="line" d="M12 353h376"/>
+<text x="20" y="390">patch CAS2</text><text x="230" y="390">3</text><text x="304" y="390">есть</text>
+<path class="line" d="M12 416h376"/>
+<text x="20" y="452">delete v2</text><text x="230" y="452">3</text><text x="301" y="452">скрыта</text>
+<path class="line" d="M12 478h376"/>
+<text x="20" y="514">undelete v2</text><text x="230" y="514">3</text><text x="304" y="514">есть</text>
+<path class="line" d="M12 540h376"/>
+<text x="20" y="576">destroy v2</text><text x="230" y="576">3</text><text x="301" y="576">потеряна</text>
+<text x="304" y="608">навсегда</text><path class="line" d="M12 634h376"/>
+<text x="16" y="669">Delete/destroy здесь не создают v4.</text></g></svg>
+<figcaption>Изменения current_version и состояния v2 в единственном checks. Состояние «есть» означает, что read v2 разрешён политикой и версия не удалена/уничтожена; «скрыта» — soft-delete.</figcaption>
+</figure>
+<p>В version1 записан message=first, в version2 — message=second, в version3 — message=second и added=yes. Устаревший CAS1 получил 400 до новой записи. Затем операции с исторической version2 не меняют current_version=3: read v2 даёт 404 после delete, снова 200 после undelete и 404 с destroyed=true после destroy. Read без version продолжает читать 3. Если изменить пример и удалить текущую 3, такое чтение тоже перестанет возвращать значение: движок не выбирает автоматически прежнюю живую версию. Новую запись после soft-delete всё ещё сравнивают с текущим номером 3, не с CAS0.</p>
+<h2>Сравнить до записи</h2>
+<p>При двух writer условие CAS предотвращает потерю уже принятой записи. Клиент A прочитал version1; клиент B уже записал version2. Без CAS A может перезаписать смысл изменения B. <code>-cas=1</code> вместо этого отклоняется. <code>-cas=0</code> требует ещё не существовавший ключ. CAS — контроль конкуренции, не проверка подлинности данных и не контроль доступа.</p>
+<p>Предпосылки: после provision config в version1; cwd labs; адрес/CA из env.sh; сначала выпущены свежие reader/writer tokens командой ниже (она не меняет KV). Эти команды выполняются вручную <em>вместо</em> ветви checks над тем же ключом.</p>
+<pre><code>set -euo pipefail
+python3 lab.py --root "$stand" test-tokens
+read -r VAULT_TOKEN &lt; "$stand/private/writer.token"
+export VAULT_TOKEN
+vault kv put -mount=secret -cas=1 handbook/config message=second
+if vault kv put -mount=secret -cas=1 handbook/config message=stale \
+    &gt; "$stand/private/expected-cas.out" 2&gt; "$stand/private/expected-cas.err"; then
+  echo "Неожиданно принят устаревший CAS" &gt;&amp;2
+  exit 1
+else
+  result=$?
+  test "$result" -eq 2
+  grep -q 'check-and-set parameter did not match' "$stand/private/expected-cas.err"
+fi
+vault kv patch -mount=secret -cas=2 handbook/config added=yes
+vault kv get -mount=secret -version=3 handbook/config</code></pre>
+<p>Первый put создаёт version2. Второй имеет ненулевой код/HTTP 400 CAS mismatch, значение остаётся second. После <em>подтверждённого ожидаемого</em> отказа patch с CAS2 создаёт version3 с message=second и added=yes. Если patch тоже получил mismatch, другой writer уже изменил состояние: читают новое значение, решают, совместимы ли изменения, и только затем выбирают новый CAS. Автоматическое «ещё раз без CAS» снимает защиту.</p>
+<h2>Удаление версии и уничтожение байтов</h2>
+<p>Следующие команды нужны оператору, потому что writer policy не даёт delete/destroy. В cwd labs прочитайте <code>private/operator.token</code> через shell read, не печатая его. Предпосылка — version2 и version3 существуют. Действия изменяют историю конкретного учебного ключа, не чужих данных.</p>
+<pre><code>set -euo pipefail
+read -r VAULT_TOKEN &lt; "$stand/private/operator.token"
+export VAULT_TOKEN
+vault kv delete -mount=secret -versions=2 handbook/config
+vault kv undelete -mount=secret -versions=2 handbook/config
+vault kv destroy -mount=secret -versions=2 handbook/config
+vault kv metadata get -mount=secret handbook/config</code></pre>
+<p>Delete помечает version2 удалённой: read этой версии получает 404, но undelete ещё может вернуть её. Destroy делает содержимое version2 необратимо недоступным через KV, а metadata показывает destroyed=true. Undo/undelete не восстановит её; нужен независимый резерв с прежним состоянием, если правила хранения разрешают такое возвращение. Удаление metadata удалило бы всю историю ключа и настройки, поэтому эта команда не включена в основной опыт.</p>
+<p>Шифрованные страницы, старые backup и копии в приложении имеют свой жизненный цикл. Destroy KV не доказывает физическое стирание всех дисковых секторов и внешних архивов. Если поле было настоящим паролем, смените его у системы, которая принимает этот пароль; просто скрыть версию в Vault недостаточно. После restore старый KV может вновь существовать, но внешний credential уже мог быть отозван — это нужно проверять отдельно.</p>
+<p class="sources">Первоисточники: <a href="https://developer.hashicorp.com/vault/docs/v1.21.x/secrets/kv/kv-v2">KVv2 модель</a>; <a href="https://developer.hashicorp.com/vault/docs/v1.21.x/commands/kv/put">put и CAS</a>; <a href="https://developer.hashicorp.com/vault/docs/v1.21.x/commands/kv/patch">PATCH и rw fallback</a>; <a href="https://developer.hashicorp.com/vault/api-docs/v1.21.x/secret/kv/kv-v2">delete/destroy/metadata</a>.</p>

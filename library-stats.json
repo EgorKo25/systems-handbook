@@ -58,7 +58,7 @@
   {
     "slug": "jenkins",
     "title": "Jenkins: от установки и плагинов до устройства и эксплуатации Pipeline",
-    "volume": "XIII",
+    "volume": "XIV",
     "words": 30240,
     "chapters": 16,
     "terms": 88
@@ -66,7 +66,7 @@
   {
     "slug": "gitlab",
     "title": "GitLab: платформа, исполнение CI и эксплуатация",
-    "volume": "XIV",
+    "volume": "XV",
     "words": 24553,
     "chapters": 18,
     "terms": 167
@@ -74,7 +74,7 @@
   {
     "slug": "practicum",
     "title": "Практикум: от своей сети до эксплуатации продукта",
-    "volume": "XVII",
+    "volume": "XIX",
     "words": 39953,
     "chapters": 26,
     "terms": 38
@@ -90,7 +90,7 @@
   {
     "slug": "sonarqube",
     "title": "SonarQube: от установки до доказуемой проверки изменений",
-    "volume": "XI",
+    "volume": "XII",
     "words": 21114,
     "chapters": 15,
     "terms": 183
@@ -114,7 +114,7 @@
   {
     "slug": "nexus",
     "title": "Nexus Repository: артефакты, Go-модули и сохранение состояния",
-    "volume": "XII",
+    "volume": "XIII",
     "words": 21858,
     "chapters": 19,
     "terms": 94
@@ -122,7 +122,7 @@
   {
     "slug": "kubernetes",
     "title": "Kubernetes: от API до процесса, пакета и восстановления",
-    "volume": "XV",
+    "volume": "XVII",
     "words": 26298,
     "chapters": 26,
     "terms": 130
@@ -130,9 +130,25 @@
   {
     "slug": "helm",
     "title": "Helm: типы, шаблоны, пакеты и жизненный цикл релиза",
-    "volume": "XVI",
+    "volume": "XVIII",
     "words": 18365,
     "chapters": 21,
     "terms": 97
+  },
+  {
+    "slug": "mongodb",
+    "title": "MongoDB: документ, путь запроса и границы сохранности",
+    "volume": "XI",
+    "words": 15752,
+    "chapters": 19,
+    "terms": 76
+  },
+  {
+    "slug": "vault",
+    "title": "HashiCorp Vault: от доверенной поставки до отзыва и восстановления",
+    "volume": "XVI",
+    "words": 15982,
+    "chapters": 19,
+    "terms": 56
   }
 ]

@@ -1,0 +1,19 @@
+{
+  "offlineInstallReplay": "PASS: blocked all urllib network access; all cached hashes + signature verified; binaries unpacked and --version executed",
+  "mongoshFileAliases": [
+    "-f with path containing spaces",
+    "--file with path containing spaces"
+  ],
+  "goArgv": [
+    "-mode=bson",
+    "--mode=bson",
+    "-mode=bson -- -hint=natural"
+  ],
+  "failures": [
+    "existing prepare preserved credentials",
+    "wrong server archive hash stopped before extraction",
+    "busy loopback port stopped runner before preparation",
+    "unknown Go flag exited2 before connection"
+  ],
+  "kind": "native helpers + CLI; not standalone reader export"
+}

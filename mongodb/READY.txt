@@ -1,0 +1,65 @@
+MongoDB · авторский SOURCE_READY candidate · 2 ноября 2026
+
+Работа выполнена в отдельной private-копии от frozen input 9c97. Canonical,
+общий renderer/registry/reader, Git, export и публикация не менялись. Общую
+сборку после авторской сдачи выполняет координатор; peer review ещё впереди.
+
+Состав: 52 public source files; 18 HTML fragments и генерируемый 99-glossary
+(19 разделов), 5 command cards; 3 пошаговые сцены/15 шагов сохранены, два
+общих графа заменены предметными SVG: 51 B OP_MSG и диапазон индексных ключей.
+Сохранены их anchors mongodb-wire-path и mongodb-query-path. Лицензии/NOTICE,
+CONFIG/build.py, Go module files, лаборатории и исторические observed JSON
+входят в исходники. Runtime, module cache, credentials/data/backups/logs,
+системные библиотеки и обязательные dotfiles в public не входят.
+
+Закреплённый профиль: Community Server 8.0.34 Ubuntu 24.04 x86-64,
+mongosh 2.14.1, Tools 100.20.0, Go driver v2.9.2, Go 1.25+; новые Go tests
+реально выполнены Go 1.27.3. Версии не менялись ради перехода на latest.
+Первичная спецификация wire/BSON, snapshot/journal, bounds/multikey,
+concerns/optimes/routing перечитана для адресных дополнений.
+
+Изменения: дочитывание HTTP JSON до EOF в пределах 4096 байт; ожидание
+завершения Shutdown до отключения DB-клиента; исполняемые утверждения
+null/missing/array; конкретные байты/порядок ключей/версии WT/OpTime/routing;
+точные ссылки на сохранённые измерения и разграничение новых/старых опытов.
+
+Новые фактические проверки:
+- 13 JSON cases + 1 shutdown case, Go -race/-mod=readonly/offline, exit 0;
+  shutdown проверен на собственном ephemeral loopback без MongoDB;
+- изменённый ACTION=types на новом собственном MongoDB 8.0.34, четыре
+  множества ID; повтор отказал без перезаписи; 4 документа сохранены;
+  штатная остановка и удаление временного стенда подтверждены;
+- pure Python: запрос 51 B/ответ 38 B, 5 повреждений, seed/order/range,
+  limit 20/5. Это модель, не перехваченный TLS и не новый explain;
+- native SVG/Pango: 300/320/355/390 px, 16 literal palette endpoints,
+  90 mm print geometry; не запуск браузера или реальная пагинация.
+Факты и source SHA: tests/observed-mechanisms-2026-11-02.json.
+
+Текущий main.go SHA-256:
+f5bad349c874189e9619c8857ae0f1f99b5ecb14d8ed40d9c4b726e30bd7aef2
+Исторический main.go SHA-256 1 ноября:
+712ee2ec5692afc1a93dab7e829430e7e4affa4f23611b504bacd0e9cfa59fc5
+Старые native/TLS/concurrency/offline JSON не изменялись. Новому коду не
+приписан старый полный seed/restore/TLS/16-client run. MongoDB-операции
+seed/migrate/transaction/CRUD/close сохранены; JSON-reader и shutdown изменены.
+Прежние normal native/TLS авторские; прежний concurrency -race авторский;
+прежний независимый -race повтор координаторский. Они не общий benchmark.
+
+Безопасный адресный повтор из каталога тома:
+  python3 tests/mechanisms.py --limit 20
+  (cd labs/service && go test -mod=readonly .)
+Go/dependencies уже должны быть подготовлены, без изменения host. Тест с
+-race требует готовый поддержанный C/cgo toolchain. Отказ останавливает сборку.
+Static test из полного исходного дерева книги с production parser:
+  python3 mongodb/tests/check_sources.py
+Личный постоянный reader LAB: $HOME/handbook-lab/mongodb; одноразовые tests
+создают отдельные TEMP. Новые проверки не использовали читательский LAB.
+
+Не исполнены: multi-host election/partition/rollback, sharding runtime,
+physical snapshot/live oplog/PIT, major FCV/upgrade/downgrade, потеря питания,
+Enterprise/Atlas; текущий полный integration после source changes. Нативный
+raster не подтверждает Safari/Chrome/все reader controls/print pagination.
+Source contract suite и production parser: 19 разделов/76 терминов/5 карточек,
+3 сцены/15 шагов, 10 parser cases/47 форм — PASS в собственной TEMP-копии.
+HTTP shutdown deadline expiry отдельно не инъецировался.
+Public/private offline состав и лицензии подробно перечислены в labs/README.txt.

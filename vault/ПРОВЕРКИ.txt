@@ -1,0 +1,70 @@
+ПРОТОКОЛ VAULT — 2 ноября 2026
+
+Новый узкий native опыт
+Vault Community 1.21.4 Linux amd64, commit ffe7023c481dc1ea2d8550bbaca8d85f8e611e0b.
+Executable SHA-256 86fe97e5d039cb6fd5a8d880ac3df366395d83a082bc509621c8388d23300329.
+Три новых private TLS/Raft экземпляра на свободных loopback портах; свои
+HOME/TMP/XDG, явное окружение, без startup scripts, proxy и рабочей сети.
+Внешний timeout 200 s, внутренний deadline 170 s, stop 15 s; все остановлены.
+
+PASS 22: живой оператор запрещает лишний recovery; pki-int collision не создаёт
+pki-root; missing snapshot не инициализирует target; initialized target без
+operator.token явно отклоняется и сохраняет KV. Занятая attempt не отменяется,
+nonce неизменен. После revoke старого operator новый Shamir 2/3+OTP оператор
+принимается как orphan с TTL 8h и explicit max 86400s; временный root отозван 403.
+Снимок предшествовал новому source token: импорт/unseal состоялся, ложного
+restore-complete нет; target recover-operator/verify-restore вернули version1,
+source сохранил последующую version2. Target root тоже отозван 403. Файла
+.vault-token в собственном HOME нет. Shares/OTP/root остаются private 0600.
+
+Отдельно PASS 10: точный Bash-блок lookup/renew из 08 на свежем token с application
+policy (без нового Agent login), фактический TTL 30s, JSON-файлы 0600. Для другого
+учебного KV-ключа current delete дал read404, CAS0 отказал, CAS1 создал version2.
+Возобновлялся только свой source, снова остановлен. Внутренний deadline 120s,
+команда 20s, stop 15s. PG/Agent/большая suite при этом не повторялись.
+
+Текущие source/model проверки
+18 глав, CONFIG/IDs/anchors/локальные ссылки, Python compile,56 терминов,
+39 карточек,5 DIAGRAMS. Production parser точной общей базы:10 случаев,
+129 декларированных форм. Это не проверка всех aliases установленного CLI.
+40 отдельных pure/static guards: неизменные helper functions/оставшиеся 5 схем,
+inline SVG равны assets, namespace/title/desc/ARIA/offline/print, KV-переходы
+и абсолютные сроки TTL0/6/12/18h →8/14/20/24h. Модель не заменяет Vault.
+
+Native SVG-only:3 рисунка ×8 палитр ×2 endpoint теплоты ×300/390 px и mono —
+102 PNG. Pango проверил 66 строк в viewBox; минимальный effective font 15px
+при 300; контраст текста к бумаге≥4.5. Осмотрены paper 300/390, night-warm 300
+и monochrome 300 всех 3 рисунков. Первый запрос raster size с height=-1 не применил
+размер: он сохранён как неуспешный; исправлены положительный height и assert
+точной ширины. Только исправленные PNG приняты. Это не browser/reader/PDF.
+
+Прежние результаты 1 ноября — сохранённый отдельный опыт
+Подпись SHA256SUMS/primary fingerprint/archive hash; actual help29 команд.
+TLS/SAN/Raft/init3/2/root revoke;13 ACL/KV/CAS/PATCH/delete/undelete/destroy/
+TTL/revoke assertions. AppRole wrapping60s, creation_path, single-use unwrap/login.
+PKI root→CSR→intermediate→leaf, outside-domain denied, exact serial CRL.
+Настоящий one-shot Agent/template0600. Go 1.27.3 readonly stdlib read,
+mode0644 reject, watch/SIGTERM clean0, revoked403 без secret body.
+Snapshot3→source4/restore3, restart/sealed/unseal/value, owned stop.
+Author native_repeat:15 верхних checkpoint (внутри 13 ACL/KV и 10 PG), PASS.
+Первый PG run отказал из-за socket path>107B; принят TCP-only repeat.
+Coordinator report:29 checkpoint Vault и отдельные PG 10+2 (reset plugin pool
+после rotate-root, wrongCA400). Новые recovery/preflight проверены выше;
+остальной неизменный код сверяется по source SHA и текстам функций.
+
+PG 18.6/OpenSSL исторически проверен через настоящий database plugin:
+TLS verify-full/SCRAM, CREATEROLE/ADMIN без INHERIT/SET, rotate-root, dynamic
+DML и DDL/flyway_meta denied, lease renew/revoke/expiry. Новый login запрещён;
+открытая сессия сохраняет SELECT1, но теряет app SELECT. pg_signal_backend и
+superuser не выдаются; прекращение TCP-сеанса и внешний PG restore не заявлены.
+Прежнее измерение автора:100 последовательных HTTPS KV reads, новый TLS,
+file audit,0 ошибок; median 3.346ms,p95 4.343ms,p99 5.122ms,max 5.804ms. Это прежнее
+малое окно, не новый замер, не HA capacity/SLO и не универсальная норма.
+
+Не исполнены HA/quorum/partition, disk-full/remote-audit faults, внешние KMS/
+HSM/K8s/OIDC/cert issuer, Enterprise, длительный Agent renewal, реальный upgrade,
+PG backup/restore и совместная lease reconciliation. Общие build/site/reader,
+whole-reader mobile/themes/print/export/offline выполняет координатор отдельно.
+Повторение и продолжение — labs/README.txt. Operator без renewal истекает 8h;
+24h — hard max. Recovery явный, без init/reset. Runtime готовят заранее;
+host services/packages/sudo/Engine не используются.

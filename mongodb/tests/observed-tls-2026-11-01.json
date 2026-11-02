@@ -1,0 +1,18 @@
+{
+  "trustedCA_and_IP": true,
+  "wrongCA": {
+    "exit": 1,
+    "rejected": true
+  },
+  "wrongName": {
+    "exit": 1,
+    "rejected": true
+  },
+  "plaintext": {
+    "exit": 1,
+    "rejected": true
+  },
+  "go_tls": "jobs=20001 invalidVersion=0 successfulCommands=3",
+  "tools_tls": true,
+  "passed": true
+}

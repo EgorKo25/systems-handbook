@@ -1,0 +1,45 @@
+{
+  "kind": "native",
+  "server": "8.0.34",
+  "shell": "2.14.1",
+  "tools": "100.20.0",
+  "driver": "v2.9.2",
+  "accept": true,
+  "anonymous_denied": true,
+  "types": true,
+  "bson": "22 bytes: 16000000106e002a00000002730003000000d18f0000",
+  "seed": "new=20000 requested=20000",
+  "explain_before": "{\n  nReturned: 20,\n  totalKeysExamined: 0,\n  totalDocsExamined: 20000,\n  executionTimeMillis: 7,\n  winningPlan: {\n    isCached: false,\n    stage: 'SORT',\n    sortPattern: {\n      createdAt: -1,\n      _id: 1\n    },\n    memLimit: 104857600,\n    limitAmount: 20,\n    type: 'simple',\n    inputStage: {\n      stage: 'COLLSCAN',\n      filter: {\n        '$and': [\n          {\n            state: {\n              '$eq': 'open'\n            }\n          },\n          {\n            tenant: {\n              '$eq': 'tenant-01'\n            }\n          }\n        ]\n      },\n      direction: 'forward'\n    }\n  }\n}",
+  "migration": "matched=20000 modified=20000 index=tenant_state_recent",
+  "explain_after": "{\n  nReturned: 20,\n  totalKeysExamined: 20,\n  totalDocsExamined: 20,\n  executionTimeMillis: 0,\n  winningPlan: {\n    isCached: false,\n    stage: 'LIMIT',\n    limitAmount: 20,\n    inputStage: {\n      stage: 'FETCH',\n      inputStage: {\n        stage: 'IXSCAN',\n        keyPattern: {\n          tenant: 1,\n          state: 1,\n          createdAt: -1,\n          _id: 1\n        },\n        indexName: 'tenant_state_recent',\n        isMultiKey: false,\n        multiKeyPaths: {\n          tenant: [],\n          state: [],\n          createdAt: [],\n          _id: []\n        },\n        isUnique: false,\n        isSparse: false,\n        isPartial: false,\n        indexVersion: 2,\n        direction: 'forward',\n        indexBounds: {\n          tenant: [\n            '[\"tenant-01\", \"tenant-01\"]'\n          ],\n          state: [\n            '[\"open\", \"open\"]'\n          ],\n          createdAt: [\n            '[MaxKey, MinKey]'\n          ],\n          _id: [\n            '[MinKey, MaxKey]'\n          ]\n        }\n      }\n    }\n  }\n}",
+  "natural": "n=200 serial=1 limit=20 p50_ms=6.773 p95_ms=9.204 p99_ms=10.080 successfulCommands=201",
+  "index": "n=200 serial=1 limit=20 p50_ms=0.270 p95_ms=0.463 p99_ms=0.587 successfulCommands=201",
+  "http_codes": [
+    201,
+    200,
+    409
+  ],
+  "close_modified": [
+    1,
+    0
+  ],
+  "before_restart": {
+    "jobs": 20001,
+    "ledger": 1,
+    "sha256": "1a6b1afa61044f2fff7c9edf60202a9861f8b7909b231a187a2720f6c3f96e49",
+    "index": true
+  },
+  "after_restart": {
+    "jobs": 20001,
+    "ledger": 1,
+    "sha256": "1a6b1afa61044f2fff7c9edf60202a9861f8b7909b231a187a2720f6c3f96e49",
+    "index": true
+  },
+  "restored": {
+    "jobs": 20001,
+    "ledger": 1,
+    "sha256": "1a6b1afa61044f2fff7c9edf60202a9861f8b7909b231a187a2720f6c3f96e49",
+    "index": true
+  },
+  "passed": true
+}

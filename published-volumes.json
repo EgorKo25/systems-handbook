@@ -85,6 +85,16 @@
       "slug": "helm",
       "title": "Helm",
       "build": "managed"
+    },
+    {
+      "slug": "mongodb",
+      "title": "MongoDB",
+      "build": "managed"
+    },
+    {
+      "slug": "vault",
+      "title": "Vault",
+      "build": "managed"
     }
   ],
   "reading_order": [
@@ -98,10 +108,12 @@
     "docker",
     "postgres",
     "cache",
+    "mongodb",
     "sonarqube",
     "nexus",
     "jenkins",
     "gitlab",
+    "vault",
     "kubernetes",
     "helm",
     "practicum"

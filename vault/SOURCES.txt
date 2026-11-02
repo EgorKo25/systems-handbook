@@ -1,0 +1,75 @@
+PRIMARY SOURCES — initially verified 01.11.2026; focused reread 02.11.2026
+
+The prose, examples and diagrams are original. These links document contracts;
+native results are recorded separately in ПРОВЕРКИ.txt. Documentation branch
+v1.21.x matches the pinned Vault 1.21.4 experiment; current2.x and Enterprise
+are not substituted silently. Runtime archives are not bundled.
+
+https://developer.hashicorp.com/vault/api-docs/v1.21.x
+https://developer.hashicorp.com/vault/api-docs/v1.21.x/auth/token
+https://developer.hashicorp.com/vault/api-docs/v1.21.x/secret/databases
+https://developer.hashicorp.com/vault/api-docs/v1.21.x/secret/kv/kv-v2
+https://developer.hashicorp.com/vault/api-docs/v1.21.x/secret/pki
+https://developer.hashicorp.com/vault/api-docs/v1.21.x/system/audit-hash
+https://developer.hashicorp.com/vault/api-docs/v1.21.x/system/health
+https://developer.hashicorp.com/vault/api-docs/v1.21.x/system/leases
+https://developer.hashicorp.com/vault/api-docs/v1.21.x/system/metrics
+https://developer.hashicorp.com/vault/api-docs/v1.21.x/system/storage/raft
+https://developer.hashicorp.com/vault/docs/upgrading
+https://developer.hashicorp.com/vault/docs/v1.21.x
+https://developer.hashicorp.com/vault/docs/v1.21.x/agent-and-proxy/agent/template
+https://developer.hashicorp.com/vault/docs/v1.21.x/agent-and-proxy/autoauth
+https://developer.hashicorp.com/vault/docs/v1.21.x/audit
+https://developer.hashicorp.com/vault/docs/v1.21.x/audit/file
+https://developer.hashicorp.com/vault/docs/v1.21.x/auth/approle
+https://developer.hashicorp.com/vault/docs/v1.21.x/auth/cert
+https://developer.hashicorp.com/vault/docs/v1.21.x/auth/jwt
+https://developer.hashicorp.com/vault/docs/v1.21.x/auth/kubernetes
+https://developer.hashicorp.com/vault/docs/v1.21.x/commands
+https://developer.hashicorp.com/vault/docs/v1.21.x/commands/kv/patch
+https://developer.hashicorp.com/vault/docs/v1.21.x/commands/kv/put
+https://developer.hashicorp.com/vault/docs/v1.21.x/commands/operator/init
+https://developer.hashicorp.com/vault/docs/v1.21.x/commands/operator/raft
+https://developer.hashicorp.com/vault/docs/v1.21.x/commands/operator/raft#snapshot
+https://developer.hashicorp.com/vault/docs/v1.21.x/commands/operator/rekey
+https://developer.hashicorp.com/vault/docs/v1.21.x/commands/status
+https://developer.hashicorp.com/vault/docs/v1.21.x/commands/token/capabilities
+https://developer.hashicorp.com/vault/docs/v1.21.x/concepts/dev-server
+https://developer.hashicorp.com/vault/docs/v1.21.x/concepts/ha
+https://developer.hashicorp.com/vault/docs/v1.21.x/concepts/identity
+https://developer.hashicorp.com/vault/docs/v1.21.x/concepts/lease
+https://developer.hashicorp.com/vault/docs/v1.21.x/concepts/policies
+https://developer.hashicorp.com/vault/docs/v1.21.x/concepts/response-wrapping
+https://developer.hashicorp.com/vault/docs/v1.21.x/concepts/seal
+https://developer.hashicorp.com/vault/docs/v1.21.x/concepts/tokens
+https://developer.hashicorp.com/vault/docs/v1.21.x/concepts/tune-server-performance
+https://developer.hashicorp.com/vault/docs/v1.21.x/configuration/listener/tcp
+https://developer.hashicorp.com/vault/docs/v1.21.x/configuration/storage/raft
+https://developer.hashicorp.com/vault/docs/v1.21.x/enterprise
+https://developer.hashicorp.com/vault/docs/v1.21.x/internals/architecture
+https://developer.hashicorp.com/vault/docs/v1.21.x/internals/integrated-storage
+https://developer.hashicorp.com/vault/docs/v1.21.x/internals/rotation
+https://developer.hashicorp.com/vault/docs/v1.21.x/internals/security
+https://developer.hashicorp.com/vault/docs/v1.21.x/internals/telemetry
+https://developer.hashicorp.com/vault/docs/v1.21.x/secrets
+https://developer.hashicorp.com/vault/docs/v1.21.x/secrets/databases/postgresql
+https://developer.hashicorp.com/vault/docs/v1.21.x/secrets/kv/kv-v2
+https://developer.hashicorp.com/vault/docs/v1.21.x/secrets/pki
+https://developer.hashicorp.com/vault/docs/v1.21.x/secrets/pki/considerations
+https://developer.hashicorp.com/well-architected-framework/verify-hashicorp-binary
+https://github.com/hashicorp/vault/blob/v1.21.4/CHANGELOG.md
+https://github.com/hashicorp/vault/releases/tag/v1.21.4
+https://pkg.go.dev/github.com/hashicorp/vault/api
+https://raw.githubusercontent.com/hashicorp/vault/v1.21.4/LICENSE
+https://releases.hashicorp.com/vault/1.21.4/
+https://www.hashicorp.com/en/trust/security
+https://www.postgresql.org/docs/18/sql-createrole.html
+https://www.postgresql.org/docs/18/sql-grant.html
+
+Focused 02.11.2026 primary reread (actual section scope in private receipt):
+https://developer.hashicorp.com/vault/api-docs/v1.21.x/system/generate-root
+https://developer.hashicorp.com/vault/docs/v1.21.x/commands/operator/generate-root
+Key hierarchy: concepts/seal; AES/GCM: internals/security; KVv2 create/patch/delete/undelete/destroy; tokens TTL/explicit max and orphan hierarchy.
+The new Shamir recovery API path is pinned to1.21.x, not current2.x.
+
+https://docs.python.org/3.11/library/hashlib.html#hashlib.file_digest

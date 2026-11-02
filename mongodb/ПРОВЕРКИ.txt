@@ -1,0 +1,172 @@
+Журнал MongoDB · история 1 ноября и адресная проверка 2 ноября 2026
+Разделы 1–11 ниже — сохранённые факты на 1 ноября, не новый полный прогон.
+
+1. Происхождение (native download + cryptographic verification)
+Community8.0.34 tgz sha256 совпал с официальным current.json, tools100.20.0
+с tools release.json, mongosh2.14.1 с release asset digest. GnuPG server
+VALIDSIG 4B0752C1BCA238C0B4EE14DC41DE058A4E7DCA05; buildInfo gitVersion
+51db4515a6597aedcf6188ee4e48a27e65b065ae, modules[].
+Все скачанные executables/license archives остаются вне публикуемого тома.
+
+2. Настоящие native интеграции
+См. tests/observed-native-2026-11-01.json: native_accept.py после исправлений
+PASS. 20000seed, repeat0, migration20000/repeat0; explain documents20000→20,
+keys0→20; HTTP201/200/409, close1/0, transaction twice ledger1; restart и
+restore на27118 совпадают по20001jobs, ledger1, index и canonical-EJSONsha256.
+Случайные даты HTTP делают digest другим при независимом полном прогоне;
+внутри одного прогона все три snapshots обязаны совпасть.
+Формат измерений: serial1, limit20, n200, warm small dataset, WTcache0.25GiB,
+clientGo1.27.3/driver2.9.2. Первый controlled опыт natural p50/p95/p99
+6.076/6.728/7.517ms; index0.223/0.340/0.504ms. Повтор в observed JSON даёт
+иные реальные значения; это ожидаемая изменчивость общего host.
+
+3. Настоящий TLS
+См. tests/observed-tls-2026-11-01.json: trustedCA/SAN IP pass, wrongCA/name/
+plaintext exit1; Go TLS check jobs20001 и ToolsTLS dump pass. Сертификаты
+самостоятельнойCA только личного опыта,7дней, не системное доверие.
+
+4. Найденные и исправленные ошибки
+- mongosh db.auth возвращает {ok:1}, а не только legacy число1;
+- BSON демонстрация проверена executable:22байта, не24;
+- datetime первого HTTP ответа приведён к миллисекундам BSON, чтобы повтор
+  возвращал одинаковую точность;
+- authenticated shutdown может закрыть socket/датьshell exit1; проверенный
+  Linux runbook использует собственный local --shutdown и проверку журнала;
+- URI /admin в test restore мог перенаправить namespace; targetURI исправлен
+  на / без имениDB, полный data digest теперь проходит;
+- before/after миграция меняла поле priority; отдельно снят controlled
+  natural/index опыт на одинаковом post-migration состоянии;
+- каждый зависимый Bash-блок содержит собственный set -euo pipefail;
+- explicit write-majority формула и implicit-default arbiter exception
+  отделены от voting quorum/majority journal policy.
+
+5. Read-only static/production reader parser
+Из полного исходного дерева книги: python3 mongodb/tests/check_sources.py
+Проверяются CONFIG/source presence, technology chapterIDs, h1/header,
+локальные ссылки, отсутствие runtime внешнихfetch/script/CDN, diagram markers/
+edge/state contracts, карточки/поля и syntaxPython. Node исполняет именно
+scripts/command_reference_parser.js (без модификаций) с собственными cards:
+aliases -f/--config, -f/--file, quotedvalues, equals, JS payload with --tls,
+argv origin, Go first-operand и --boundary. Это покрытие выбранных случаев,
+не полная проверка каждого help alias всех программ.
+
+6. Независимый повтор координатора
+Получено подтверждение PASS для нового собственного state, публичный source
+snapshot собран -race/-mod=readonly/GOPROXY=off. Сравнение before/restart/
+restore и TLS отрицательные ветки повторены; private отчёт координатора
+внеpublic. Автор не выдаёт этот private отчёт за собственную generated книгу.
+
+7. Честные границы
+Native test не создаёт managed services/host packages, privilegedcontainers,
+publiclisteners или нагрузку рабочей сети. Один узел и локальный TCP не
+проверяют hostfailure, networkpartition/election/rollback/sharding/FCV upgrade,
+liveoplog/PIT/physicalsnapshot, физическое питание диска или EnterpriseAtlas.
+Схемы имеют текстовые шаги и печатные таблицы через общий reader; сами они
+не выполняют протокол. Координатор подтвердил полный трёхтомный isolated
+render и shipped reader PASS (19разделов,5cards,5diagrams,25steps). Полный
+export, визуальная mobile-приёмка и все8тем не выполнялись. Автор canonical
+build.py не запускал; export этой авторской тройкой не выполнялся.
+
+8. Вторая QA: offline/CLI/отказ до эффектов
+Реальный offline replay install.py: prepared новый каталог, staged
+server.tgz/server.sig/server-8.0.asc/shell.tgz/dbtools.tgz. urllib.urlopen
+в процессе запретили: любой вызов сети немедленно дал бы RuntimeError.
+Все триsha256/GPG подпись прошли, архивы распакованы, versions всех четырёх
+программ верны. Это проверка exact runtime bundle, не export читателя.
+Реально mongosh -f/--file загрузили JS-файл с пробелами в пути без сервера;
+Go -mode/--mode и -- delimiter дали тот же22byte BSON без подключения.
+Неверныйarchivehash остановил install до tools/, existingprepare сохранил
+байты private/operator.json, новый preflight занятогоport остановил runner
+до созданияLAB и запросов, unknown Go flag далexit2 до подключения.
+Sanitized summary: tests/observed-offline-cli-2026-11-01.json.
+
+9. Связность и состав
+Только prepare/install впервые; TLS использует прежний dataPath и credentials,
+возвратmongod.yml сохраняет основной URI; последующий Go/native/TLS путь уже
+испытан. Новых повторов полного native без изменений Go не делалось.
+Добавлены определения до употребления seed/HTTP/BSON/index/primary/URI/YAML/
+majority+j/role/root/backfill/typebracketing, предметные glossary entries.
+labs/README.txt создан также как обязательная landingpage native commandcards.
+Он перечисляет всё public дерево, private stagedarchives/keys/config/data,
+Go runtime/modules/checksum cache, системныеlibraries, лицензии и отсутствие
+обязательныхdotfiles. На один голыйHTML или go.sum как офлайнruntime не ссылаемся.
+
+10. Дополнительная реальная конкуренция16HTTPклиентов
+Тот же публичный main.go (sha256 в observed report) собран Go1.27.3 -race
+-mod=readonly/GOPROXY=off с отдельным cache, go version -m подтвердил
+build -race=true. Использован продолженный собственный остановленный TEST LAB,
+постоянный reader LAB не трогался; seed/restore не повторялись.
+- одинаковый новыйID/payload,16клиентов через barrier:201x1/200x15;
+  MongoDB count1, версия1, tenant/title/date/schemaVersion сохранены;
+- новыйID,8payloadA+8payloadB:201x1/200x7/409x8, одна запись победившего
+  payload, версия1, исходные поля не перезаписаны проигравшими;
+- параллельныйclose16:200x16, modified1x1/0x15, count1/stateclosed/version2,
+  остальные поля неизменны; BSONversion остаётся Long/int64;
+- unknownOutcomes=[], HTTPпроцесс после SIGTERM завершилсяexit0;
+  race diagnostic не найден; stdout/stderr сохранены толькоprivate.
+Результат: tests/observed-concurrency-2026-11-01.json. Повторяемый runner
+concurrency_accept.py принимает --lab OWN_STOPPED_TEST_LAB --mongod PATH
+--mongosh PATH --service OWN_RACE_BINARY --case-id NEW_SIMPLE_ID.
+Неопределённые network/503 исходы не повторяет и не считает успехом.
+Наблюдение ограничено этим набором,16клиентами и loopback без потериответов;
+не доказывает все возможные гонки, productionthroughput или exactlyonce.
+Старое n200 измеряло serial1 и этот contention contract не проверяло.
+
+При разработке проверки обычный JSON.stringify показал BSONLong как объект
+high/low, поэтому инспектор явно проверяет _bsontypeLong и преобразует только
+учебный малый счётчик для утверждений1/2. Сервис не менялся. Первая проба
+остановилась на типе инспектора; её синтетическая запись оставлена в TEST LAB,
+для окончательного опыта взяты новыеID без reset/delete.
+Portpreflight уточнён SO_REUSEADDR: активный listener по-прежнему даётSTOP,
+а TIME_WAIT после своего штатного shutdown не выдаётся за живую службу.
+Основной native runner теперь также assert фактического HTTPexitcode0 после
+terminate; полный seed/restore повторно ради этой проверки не запускался.
+
+11. Финальная сверка режимов и sourceSHA (без новой волны runtime-тестов)
+main.goSHA=712ee2ec5692afc1a93dab7e829430e7e4affa4f23611b504bacd0e9cfa59fc5.
+На 1 ноября точно совпали source, sourceSHA независимого отчёта координатора и
+codeSha256 observed-concurrency. Авторские native/TLS JSON — функциональные
+прогоны обычного бинарника; concurrency — отдельный race-binary/16клиентов.
+Исторические observed-native/TLS не хранят sourceSHA/HTTPexitcode; они не
+дополнены выдуманными задним числом значениями. Явный HTTPexit0 относится
+к concurrency. Новый assert native runner указан как изменение помощника,
+а не как ещё один уже выполненный полный seed/restore прогон.
+Координаторский повтор: -race/-mod=readonly, GOPROXY=off, GOSUMDB=off,
+подготовленный модульныйкэш; без новой сетевой checksum-db проверки.
+Его serial200 ms не объединяются с авторскими ms: race и runtime условия
+различаются. Ни функциональные native/TLS, ни contention-correctness не
+являются одним общим benchmark. Все observed JSON остались историческими.
+Статическая инвентаризация:47 publicfiles,20sources (18HTML+2Python),10labs,
+8tests,5license/NOTICE и4top-level. Symlinks/hiddenfiles отсутствуют. Все
+локальные href глав ведут к имеющимся README/источникам/отчётам. Это чтение
+и сверка manifest, без новых запусковMongoDB/HTTP/Go. Архивы/runtime/modules/
+credentials/data/private stderr остаются вне public; полные manifests private.
+
+12. Адресный проход 2 ноября 2026
+Два изменения Go: после первого JSON reader требует EOF, включая контроль
+whitespace-хвоста MaxBytesReader; shutdown ждёт активные HTTP handlers до
+5 секунд до выхода main/Disconnect. Native Go 1.27.3: 13 JSON cases и один
+blocked-handler → shutdown-channel → release → response/drained, -race,
+-mod=readonly, GOPROXY=off/GOSUMDB=off, отдельные TEMP caches, exit 0.
+Процессу host сигнал не посылали; один свой listener 127.0.0.1:0 без MongoDB.
+Current sourceSHA: f5bad349c874189e9619c8857ae0f1f99b5ecb14d8ed40d9c4b726e30bd7aef2.
+
+ACTION=types теперь утверждает четыре множества ID. На новом own TEMP
+MongoDB 8.0.34/27317 выполнен normal path; повтор отказал, 4 документа не
+перезаписаны. Проверены shutdown и удаление TEMP. Это отдельная ветка, не
+повтор seed/HTTP/restore/TLS и не benchmark. Архивы повторно сверены по SHA;
+новая криптографическая проверка подписи в этом узком опыте не выполнялась.
+
+tests/mechanisms.py — pure Python 3.12: literal 51 B OP_MSG/38 B reply,
+пять испорченных пакетов, deterministic seed/limit20 и limit5/routing counts.
+Данные синтетические, не перехват driver/TLS. SVG печатает каждый байт того
+же запроса; значения seed сверены с формулой и старым explain отдельно.
+Native GdkPixbuf/Rsvg/Pango проверили размеры текста/300–390 px, 16 literal
+палитр и print90mm. Это не новый Chrome/Safari/reader controls/пагинация.
+См. отдельный tests/observed-mechanisms-2026-11-02.json. Старые JSON и их
+неполные provenance поля сохранены. Авторский общий build/export не запускался.
+
+Source contract suite 2 ноября: 19 разделов/18 fragments/76 terms/5 cards,
+3 scenes/15 steps; Node 18.19.1 исполнил production parser без изменений:
+10 selected cases/47 declared forms PASS. SVG inline байтово равны assets.
+Deadline-expiry/force-close shutdown не инъецировался; проверен normal drain.

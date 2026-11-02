@@ -1,0 +1,18 @@
+HashiCorp Vault handbook volume — original Russian prose, laboratory scripts,
+policies, diagrams and Go example, 2026. Repository license applies to the
+original material. No vendor tutorial/course prose or graphics is reproduced.
+
+The private runtime is NOT redistributed. Vault 1.21.4 is discussed and tested.
+Its exact tag license is preserved as Vault-1.21.4-BUSL-1.1.txt:
+https://raw.githubusercontent.com/hashicorp/vault/v1.21.4/LICENSE
+Source tag licenses can differ from current main. Business Source License 1.1
+is not an OSI open-source license; read its Additional Use Grant and change date.
+
+The Go laboratory uses only the standard library; no third-party Go module,
+SDK, runtime, binary or dependency license is bundled.
+HashiCorp and Vault are trademarks of their owners; this is an independent
+educational handbook and is not an official HashiCorp publication.
+
+Exporter: preserve vault/licenses/, labs/.gitignore and labs/.env.example.
+Do not include any reader private state, CA private keys, tokens, downloaded
+binaries, init JSON, snapshots, generated leaf certificates or audit logs.

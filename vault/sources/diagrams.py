@@ -1,0 +1,62 @@
+"""Original bounded mechanism diagrams; no network or server execution."""
+def make(identifier,chapter,marker,title,intro,assumptions,nodes,edges,rows):
+    keys=[n[0] for n in nodes]
+    steps=[]
+    for title_,explanation,actor,focus,active,values,field in rows:
+        name,before,after,why=field
+        assert len(values)==len(keys)
+        steps.append(dict(title=title_,explanation=explanation,actor=actor,focus=focus,active=active,
+                          states=dict(zip(keys,values)),fields=[dict(name=name,before=before,after=after,why=why)],
+                          bands=[dict(label=name,value=after,detail=why)]))
+    return dict(id=identifier,volume='vault',chapter=chapter,anchor=chapter,insert_before=marker,title=title,intro=intro,assumptions=assumptions,
+                nodes=[dict(id=k,label=l,sub=s) for k,l,s in nodes],
+                edges=[dict(id=k,**{'from':a,'to':b},label=l) for k,a,b,l in edges],steps=steps)
+DIAGRAMS=[
+make('vault-request-flow','vault-05-request','<h2>Проверки внутри сервера</h2>',
+'GET KVv2 до ответа','У каждого перехода есть своя причина отказа: TLS, token, ACL, версия или audit.',
+'Один active узел; KVv2 secret/, допустимый token reader. Не моделируются plugins, MFA и HA forwarding.',
+[('client','Клиент','CLI/Agent/Go'),('tls','Listener','TLS+HTTP'),('auth','Token/Identity','TTL/policy names'),('acl','ACL','read на data'),('engine','KVv2','Версия3'),('store','Barrier/Raft','Защищённое состояние'),('audit','Audit','Request/response')],
+[('wire','client','tls','HTTPS GET'),('identity','tls','auth','X-Vault-Token'),('allow','auth','acl','субъект+путь'),('route','acl','engine','разрешён read'),('load','engine','store','metadata+значение'),('log','engine','audit','результат'),('reply','audit','client','ответ')],
+[('TLS принят','CA и SAN проверены до передачи credential.','Клиент',['client','tls'],['wire'],['проверил CA/SAN','канал принят','не проверен','не проверен','не вызван','сохранён','нет события'],('Транспорт','TCP','TLS server accepted','Доступный порт не доказывает identity сервера.')),
+('Token действителен','Сервер проверил срок/отзыв и связанные policies.','Vault',['auth'],['identity'],['ждёт','принял GET','действителен','ожидает','не вызван','сохранён','request'],('Личность','не проверена','token принят','Успех login не равен allow на каждый путь.')),
+('ACL разрешил','Проверяется secret/data/handbook/config, а не сокращённое CLI имя.','ACL',['acl','engine'],['allow','route'],['ждёт','GET','reader','read allowed','выбран secret/','сохранён','request'],('Полномочие','нет решения','read allowed','Другой capability/path может дать403.')),
+('KV прочитан','Движок нашёл version3, не deleted/destroyed; barrier вернул данные.','KVv2',['engine','store'],['load'],['ждёт','GET','reader','allowed','version3','дешифрование','request'],('Данные','metadata проверяется','version3 готова','403 и404 относятся к разным этапам.')),
+('Аудит и ответ','Запись response принята хотя бы одним включённым устройством.','Vault',['audit','client'],['log','reply'],['получил JSON','ответ','reader','allowed','без новой выдачи PG','без изменения','request+response'],('Наблюдение','результат готов','ответ завершён','Потерянный сетевой ответ не отменяет уже совершённый эффект.'))]),
+make('vault-dynamic-lease','vault-10-postgresql','<h2>Нативная проверка и граница существующей сессии</h2>',
+'Отзыв роли и живое соединение','Выдача, login, lease revoke и работа уже открытой сессии — четыре события.',
+'PG18.6, role член app_runtime, custom REVOKE+DROP statements, без pg_signal_backend. Состояния соответствуют нативно проверенному контракту.',
+[('app','Приложение','Token и pool'),('vault','Vault','LeaseL'),('pg','PostgreSQL','LOGIN-роль'),('session','Сессия','Уже подключена')],
+[('issue','app','vault','read creds'),('create','vault','pg','CREATE+GRANT'),('login','app','session','TLS login'),('revoke','vault','pg','REVOKE+DROP'),('query','session','pg','SELECT после revoke')],
+[('Запрос credential','ACL разрешил read database/creds/handbook-runtime.','Приложение',['app','vault'],['issue'],['ждёт','готовит выдачу','роли нет','нет'],('Lease','нет','создание','Каждый read creds способен создать новую роль.')),
+('Выдача подтверждена','PG создал LOGIN и членство, Vault сохранил lease.','Plugin',['vault','pg'],['create'],['получил user/password','L,TTL15s','роль активна','нет'],('Полномочие','нет роли','LOGIN+app_runtime','Пароль не является token Vault.')),
+('Pool подключился','PG проверил password/VALID UNTIL при входе.','Приложение',['app','session'],['login'],['pool открыт','L действует','роль активна','доступ app'],('Сессия','нет','открыта','Дальше выполняется SQL, не новый login на каждый запрос.')),
+('Lease отозван','Custom revocation отнял app_runtime и удалил role.','Vault',['vault','pg'],['revoke'],['держит старый pool','L отозван','новый вход запрещён','TCP ещё жив'],('Доступ','role существует','role удалена','Отзыв не вызвал terminate_backend.')),
+('Проверена старая сессия','SELECT1 проходит, SELECT app.vault_probe получает отказ.','Сессия',['session','pg'],['query'],['должно сменить pool','отзыв завершён','нет table grant','живёт без app'],('Гарантия','предположение о disconnect','два отдельных факта','Отдельно проверены новый login и старое соединение.'))]),
+make('vault-pki-chain','vault-11-pki','<h2>Что именно происходит</h2>',
+'Подпись intermediate не переносит private key','Root подписывает CSR промежуточного центра; leaf ограничен role/SAN/TTL.',
+'Учебные internal root/intermediate на одном Vault. Не моделируются offline external root ceremony и распространение CRL клиентам.',
+[('root','RootCA','Опора доверия'),('inter','Intermediate','Internal key+CSR'),('role','Role','Имена/TTL'),('leaf','Leaf','Cert+private key'),('crl','CRL','Serial revocation')],
+[('csr','inter','root','CSR с public key'),('sign','root','inter','подпись intermediate'),('issue','role','leaf','разрешённый SAN'),('revoke','leaf','crl','serial revoke')],
+[('Создан CSR','Private key intermediate остаётся за barrier.','Intermediate',['inter','root'],['csr'],['готов подписать','CSR без private key','подготовлена','нет','пустой'],('Материал','ключ отсутствует','key+CSR','CSR не даёт закрытый ключ подписывающему.')),
+('Intermediate принят','Подписанный CA certificate импортирован set-signed.','RootCA',['root','inter'],['sign'],['подписал','issuer готов','ограничивает issuance','нет','пустой'],('Цепочка','CSR','root→intermediate','Это ещё не leaf приложения.')),
+('Leaf выдан','api.lab.example.invalid допустим; outside domain отклоняется.','PKI',['role','leaf'],['issue'],['доверенный root','подписывает','SAN+TTL','новый serial','пустой'],('Удостоверение','запрос','leaf10m','Правильная подпись CSR не разрешает любое имя.')),
+('Serial отозван','CRL содержит serial, но verifier ещё должен получить и применить список.','Оператор',['leaf','crl'],['revoke'],['не менялся','подписывает CRL','не менялась','отозван','serial включён'],('Отзыв','leaf действителен','записан в CRL','Established TLS не закрывается от записи в список.'))]),
+make('vault-raft-partition','vault-13-raft','<h2>Join и восстановление большинства</h2>',
+'Три voters и разделение2+1','Большинство может выбрать/сохранить лидера; меньшинство не становится вторым writer.',
+'Учебная модель трёх отдельных voters, сеть2+1. В редакции multi-node/partition нативно не запускались; времена не измерены.',
+[('a','УзелA','Прежний leader'),('b','УзелB','Follower'),('c','УзелC','Follower'),('client','Клиент','WriteW')],
+[('ab','a','b','репликация'),('bc','b','c','выборы/репликация'),('write','client','b','write на majority')],
+[('Все доступны','Большинство2 из3 подтверждает записи.','Raft',['a','b','c'],['ab'],['leader term7','follower','follower','обычный write'],('Quorum','3 voters','2 нужно','Число voters и health — не одно значение.')),
+('A изолирован','A не может бесконечно удерживать leadership без majority.','Сеть',['a','b','c'],[],['одинок','видитC','видитB','ожидает'],('Связность','3 связаны','1+2','Одиночная сторона не имеет quorum.')),
+('B получил большинство','B+C выбрали leader следующего term.','B',['b','c'],['bc'],['не writer','leader term8','follower term8','адресуетB'],('Leadership','term7','term8','Узел меньшинства не выдаёт согласованный успех write.')),
+('W согласован наB+C','Только majority-side принимает новое изменение.','Клиент',['client','b','c'],['write','bc'],['нет quorum','commit+applyW','принялW','успехW'],('Write','не принят','committed/applied','После возврата A догоняет общую историю.'))]),
+make('vault-snapshot-restore','vault-15-recovery','<h2>Восстановление на другой цели</h2>',
+'Snapshot не равен всей системе','Цель импортирует точку Vault; источник и PostgreSQL продолжают иметь собственную историю.',
+'Нативно принят отдельный Raft restore version3. Последующая version4/PG-effects в схеме — объяснение возможной истории, не автоматический reset.',
+[('source','SourceVault','Current history'),('snap','Snapshot','Контрольная точка3'),('target','RestoreTarget','Новый storage'),('keys','Custody','Source shares'),('pg','ВнешнийPG','Своя история')],
+[('save','source','snap','snapshot save'),('restore','snap','target','restore-force'),('unseal','keys','target','source shares')],
+[('Сохранена точка3','Snapshot зашифрован, но не содержит listener private files/shares/PG.','Оператор',['source','snap'],['save'],['version3','точка3','ещё нет','хранятся отдельно','не входит'],('Резерв','нет экспорта','snapshot3','Создание не доказало восстановление.')),
+('Source пошёл дальше','Новые Vault/PG действия не изменяют старый snapshot.','Приложение',['source','pg'],[],['возможная4','по-прежнему3','новый TLSstand','отдельно','внешние эффекты'],('История','точка3','новые эффекты','Будущий restore не отменит SQL за пределами Vault.')),
+('Target импортировал snapshot','Target свежий init key больше не соответствует импортированным данным.','Оператор',['snap','target'],['restore'],['не перезаписан','точка3','sealed с source state','нужны source shares','не откатился'],('Seal','target keys','source seal','-force не расшифровывает snapshot сам.')),
+('Проверена функция','Source shares открыли target, API вернул version3 и принятую ACL.','Хранители',['keys','target'],['unseal'],['прежняя история','сохранён','version3 готов','порог достигнут','нужна сверкаleases'],('Приёмка','файл есть','отдельный restore принят','PG credentials и leases сверяются отдельно.'))]),
+]

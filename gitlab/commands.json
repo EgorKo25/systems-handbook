@@ -21388,5 +21388,2404 @@
         "--qps <число>"
       ]
     }
+  },
+  {
+    "name": "mongod",
+    "aliases": [],
+    "purpose": "Запустить или локально остановить свой сервер; путь данных и сеть проверяют до записи.",
+    "syntax": "mongod [ОПЦИИ]",
+    "chapter": "mongodb-install",
+    "volume": "mongodb",
+    "source": "https://www.mongodb.com/docs/v8.0/reference/program/mongod/",
+    "sources": [
+      {
+        "title": "Документация или собственный исходник",
+        "url": "https://www.mongodb.com/docs/v8.0/reference/program/mongod/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку закреплённого бинарника.",
+        "when": "Перед использованием параметров иной версии.",
+        "example": "mongod --help",
+        "result": "Код 0, сервер не запускается."
+      },
+      {
+        "flag": "--version",
+        "action": "Показать версию, gitVersion и modules.",
+        "when": "Приёмка Community 8.0.34.",
+        "example": "mongod --version",
+        "result": "modules=[]; не доказывает состояние running server."
+      },
+      {
+        "flag": "-f ФАЙЛ / --config ФАЙЛ",
+        "action": "Прочитать YAML-конфигурацию.",
+        "when": "Сохраняемый свой экземпляр.",
+        "example": "mongod --config \"$LAB/mongod.yml\" --fork",
+        "result": "Относительные пути зависят от cwd; совпадающий CLI параметр имеет приоритет."
+      },
+      {
+        "flag": "--fork",
+        "action": "Оставить сервер в фоне после стартовой проверки.",
+        "when": "Личный Linux-процесс с отдельным logpath.",
+        "example": "mongod --config \"$LAB/mongod.yml\" --fork",
+        "result": "Код 0 не заменяет auth+write/read acceptance."
+      },
+      {
+        "flag": "--dbpath КАТАЛОГ",
+        "action": "Выбрать собственный каталог файлов данных.",
+        "when": "Отдельная restore-цель.",
+        "example": "mongod --dbpath \"$LAB/restore-1/data\" --port 27118 --bind_ip 127.0.0.1 --logpath \"$LAB/restore-1/mongod.log\" --fork",
+        "result": "Путь должен существовать и быть доступен пользователю; не подключать чужой dataPath."
+      },
+      {
+        "flag": "--port ЧИСЛО",
+        "action": "Задать TCP-порт.",
+        "when": "Изолировать restore от основного27117.",
+        "example": "mongod --dbpath \"$LAB/restore-1/data\" --port 27118 --bind_ip 127.0.0.1",
+        "result": "Занятый порт вызывает отказ, чужую службу не останавливают."
+      },
+      {
+        "flag": "--bind_ip АДРЕС",
+        "action": "Ограничить адрес listener.",
+        "when": "Только собственный loopback.",
+        "example": "mongod --dbpath \"$LAB/restore-1/data\" --port 27118 --bind_ip 127.0.0.1",
+        "result": "Не использовать bind_ip_all для этого стенда."
+      },
+      {
+        "flag": "--nounixsocket",
+        "action": "Отключить дополнительный Unix listener.",
+        "when": "Явные точки доступа restore-цели.",
+        "example": "mongod --dbpath \"$LAB/restore-1/data\" --port 27118 --bind_ip 127.0.0.1 --nounixsocket",
+        "result": "TCP listener остаётся по своим настройкам."
+      },
+      {
+        "flag": "--logpath ФАЙЛ",
+        "action": "Писать диагностический журнал в файл.",
+        "when": "Фоновый сервер и расследование startup.",
+        "example": "mongod --config \"$LAB/mongod.yml\" --logpath \"$LAB/log/second.log\" --fork",
+        "result": "Это не WiredTiger journal и не backup."
+      },
+      {
+        "flag": "--pidfilepath ФАЙЛ",
+        "action": "Сохранить номер процесса.",
+        "when": "Наблюдение за своим экземпляром.",
+        "example": "mongod --config \"$LAB/mongod.yml\" --pidfilepath \"$LAB/run/mongod.pid\" --fork",
+        "result": "PID может устареть после аварии; не доказывает готовность."
+      },
+      {
+        "flag": "--wiredTigerCacheSizeGB ЧИСЛО",
+        "action": "Задать размер WT cache в GiB.",
+        "when": "Ограниченный учебный restore.",
+        "example": "mongod --dbpath \"$LAB/restore-1/data\" --bind_ip 127.0.0.1 --port 27118 --wiredTigerCacheSizeGB 0.25",
+        "result": "Это не ограничение всего RSS процесса."
+      },
+      {
+        "flag": "--shutdown",
+        "action": "Локально штатно остановить сервер по своему dbPath (Linux).",
+        "when": "До смены TLS-профиля/перезапуска.",
+        "example": "mongod --config \"$LAB/mongod.yml\" --shutdown",
+        "result": "Данные сохраняются; никакой reset не выполняется."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "mongod",
+      "mongod",
+      "mongod",
+      "mongod",
+      "mongod",
+      "mongod",
+      "mongod",
+      "mongod",
+      "mongod",
+      "mongod",
+      "mongod",
+      "mongod"
+    ]
+  },
+  {
+    "name": "mongosh",
+    "aliases": [],
+    "purpose": "Подключиться к собственному серверу и выполнить ограниченный JavaScript.",
+    "syntax": "mongosh [ОПЦИИ] [URI] [ФАЙЛЫ]",
+    "chapter": "mongodb-access",
+    "volume": "mongodb",
+    "source": "https://www.mongodb.com/docs/mongodb-shell/reference/options/",
+    "sources": [
+      {
+        "title": "Документация или собственный исходник",
+        "url": "https://www.mongodb.com/docs/mongodb-shell/reference/options/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-h / --help",
+        "action": "Показать help mongosh.",
+        "when": "Проверка версии CLI-грамматики.",
+        "example": "mongosh --help",
+        "result": "Справка не подключается к БД."
+      },
+      {
+        "flag": "--version",
+        "action": "Показать версию отдельного shell.",
+        "when": "Приёмка 2.14.1.",
+        "example": "mongosh --version",
+        "result": "Версия mongod проверяется отдельно."
+      },
+      {
+        "flag": "--quiet",
+        "action": "Сократить приветствие подключения.",
+        "when": "Читаемый вывод лаборатории.",
+        "example": "mongosh --quiet --norc \"mongodb://127.0.0.1:27117/admin?directConnection=true\"",
+        "result": "Не скрывает ошибки скрипта."
+      },
+      {
+        "flag": "--norc",
+        "action": "Не выполнять .mongoshrc.js.",
+        "when": "Воспроизводимость своих проверок.",
+        "example": "mongosh --norc --nodb --eval \"print(2)\"",
+        "result": "Неизвестный пользовательский стартовый код не запускается."
+      },
+      {
+        "flag": "--nodb",
+        "action": "Не подключаться к серверу при старте.",
+        "when": "Локальная проверка JS/help.",
+        "example": "mongosh --nodb --norc --quiet --eval \"print(2)\"",
+        "result": "Без db address; не доказывает работоспособность сервера."
+      },
+      {
+        "flag": "-f ФАЙЛ / --file ФАЙЛ",
+        "action": "Загрузить конкретный JS-файл.",
+        "when": "Приёмка с приватным auth-файлом.",
+        "example": "mongosh \"mongodb://127.0.0.1:27117/admin?directConnection=true\" --quiet --norc --file labs/admin.js",
+        "result": "Скрипт выполняется с правами клиента и может менять БД; заранее прочитать ACTION."
+      },
+      {
+        "flag": "--eval КОД",
+        "action": "Выполнить JavaScript как один argv-аргумент.",
+        "when": "Короткая readiness-проба.",
+        "example": "mongosh --nodb --quiet --norc --eval \"print(2)\"",
+        "result": "Shell quoting сохраняет пробелы; код внутри не трактуется справочником как CLI flags."
+      },
+      {
+        "flag": "--tls",
+        "action": "Включить TLS.",
+        "when": "Личный requireTLS профиль.",
+        "example": "mongosh \"mongodb://127.0.0.1:27117/\" --tls --tlsCAFile \"$LAB/private/tls/ca.pem\"",
+        "result": "CA и SAN должны соответствовать; права SCRAM остаются отдельными."
+      },
+      {
+        "flag": "--tlsCAFile ФАЙЛ",
+        "action": "Выбрать доверенную CA для проверки сервера.",
+        "when": "Положительная и wrongCA-проба.",
+        "example": "mongosh \"mongodb://127.0.0.1:27117/\" --tls --tlsCAFile \"$LAB/private/tls/ca.pem\"",
+        "result": "Чужая CA вызывает отказ; allowInvalidCertificates не является исправлением."
+      },
+      {
+        "flag": "-u ИМЯ / --username ИМЯ",
+        "action": "Выбрать пользователя для аутентификации.",
+        "when": "Ручной доступ вместо script auth.",
+        "example": "mongosh \"mongodb://127.0.0.1:27117/admin\" --username operator",
+        "result": "Пароль вводят по приглашению, не помещают в argv/URI."
+      },
+      {
+        "flag": "--authenticationDatabase БАЗА",
+        "action": "Указать базу удостоверения пользователя.",
+        "when": "operator создан в admin.",
+        "example": "mongosh \"mongodb://127.0.0.1:27117/workshop\" --username operator --authenticationDatabase admin",
+        "result": "Не меняет целевую БД коллекции и не создаёт пользователя."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "mongosh",
+      "mongosh",
+      "mongosh",
+      "mongosh",
+      "mongosh",
+      "mongosh",
+      "mongosh",
+      "mongosh",
+      "mongosh",
+      "mongosh",
+      "mongosh"
+    ]
+  },
+  {
+    "name": "mongodump",
+    "aliases": [],
+    "purpose": "Создать logical dump; консистентность нагрузки и restore проверяют отдельно.",
+    "syntax": "mongodump [ОПЦИИ]",
+    "chapter": "mongodb-backup-upgrade",
+    "volume": "mongodb",
+    "source": "https://www.mongodb.com/docs/database-tools/mongodump/",
+    "sources": [
+      {
+        "title": "Документация или собственный исходник",
+        "url": "https://www.mongodb.com/docs/database-tools/mongodump/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "--version",
+        "action": "Показать версию Tools.",
+        "when": "Парность dump/restore 100.20.0.",
+        "example": "mongodump --version",
+        "result": "Номер Tools не равен MongoDB Server."
+      },
+      {
+        "flag": "--config ФАЙЛ",
+        "action": "Получить конфигурацию, включая приватный пароль, из YAML.",
+        "when": "Убрать секрет из argv.",
+        "example": "mongodump --config \"$LAB/private/tools.yml\" --db workshop --archive=\"$LAB/backups/workshop-1.archive.gz\" --gzip",
+        "result": "Файл0600 не публикуется; cli-конфликты нужно исследовать."
+      },
+      {
+        "flag": "-d БАЗА / --db БАЗА",
+        "action": "Ограничить область dump.",
+        "when": "Неподвижный workshop.",
+        "example": "mongodump --config \"$LAB/private/tools.yml\" --db workshop --archive=\"$LAB/backups/workshop-1.archive.gz\"",
+        "result": "Такой scoped dump не совмещают наугад с --oplog."
+      },
+      {
+        "flag": "--archive ФАЙЛ",
+        "action": "Сохранить единый archive Tools.",
+        "when": "Новая копия с явным именем.",
+        "example": "mongodump --config \"$LAB/private/tools.yml\" --db workshop --archive=\"$LAB/backups/workshop-1.archive.gz\" --gzip",
+        "result": "Сначала test ! -e: не перезаписывать прежнюю принятую копию."
+      },
+      {
+        "flag": "--gzip",
+        "action": "Сжать archive/файлы dump.",
+        "when": "Уменьшить место копии.",
+        "example": "mongodump --config \"$LAB/private/tools.yml\" --db workshop --archive=\"$LAB/backups/workshop-1.archive.gz\" --gzip",
+        "result": "Restore должен знать о сжатии."
+      },
+      {
+        "flag": "--ssl",
+        "action": "Включить TLS в грамматике Tools.",
+        "when": "Проверка requireTLS профиля.",
+        "example": "mongodump --config \"$LAB/private/tools.yml\" --ssl --sslCAFile \"$LAB/private/tls/ca.pem\" --db workshop --archive=\"$LAB/backups/tls-probe.archive.gz\" --gzip",
+        "result": "У mongosh аналог называется --tls, имена не переносить автоматически."
+      },
+      {
+        "flag": "--sslCAFile ФАЙЛ",
+        "action": "Указать доверенную CA Tools.",
+        "when": "Удостоверение локального TLS-сервера.",
+        "example": "mongodump --config \"$LAB/private/tools.yml\" --ssl --sslCAFile \"$LAB/private/tls/ca.pem\" --db workshop --archive=\"$LAB/backups/tls-probe.archive.gz\"",
+        "result": "Сертификат должен соответствовать адресу URI."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "mongodump",
+      "mongodump",
+      "mongodump",
+      "mongodump",
+      "mongodump",
+      "mongodump",
+      "mongodump"
+    ]
+  },
+  {
+    "name": "mongorestore",
+    "aliases": [],
+    "purpose": "Импортировать dump на новую отдельную цель и затем проверить данные.",
+    "syntax": "mongorestore [ОПЦИИ]",
+    "chapter": "mongodb-backup-upgrade",
+    "volume": "mongodb",
+    "source": "https://www.mongodb.com/docs/database-tools/mongorestore/",
+    "sources": [
+      {
+        "title": "Документация или собственный исходник",
+        "url": "https://www.mongodb.com/docs/database-tools/mongorestore/"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "--version",
+        "action": "Показать версию restore.",
+        "when": "Совпадение с версией dump.",
+        "example": "mongorestore --version",
+        "result": "Не означает успешное чтение архива."
+      },
+      {
+        "flag": "--uri URI",
+        "action": "Задать целевой адрес без неожиданного имени БД.",
+        "when": "Отдельный loopback27118.",
+        "example": "mongorestore --uri \"mongodb://127.0.0.1:27118/?directConnection=true\" --archive=\"$LAB/backups/workshop-1.archive.gz\" --gzip --stopOnError",
+        "result": "URI с /admin может изменить целевую БД; проверять namespaces."
+      },
+      {
+        "flag": "--archive ФАЙЛ",
+        "action": "Прочитать archive Tools.",
+        "when": "Восстановление принятой копии.",
+        "example": "mongorestore --uri \"mongodb://127.0.0.1:27118/\" --archive=\"$LAB/backups/workshop-1.archive.gz\" --gzip --stopOnError",
+        "result": "Не tar/JSON; источник не должен меняться во время чтения."
+      },
+      {
+        "flag": "--gzip",
+        "action": "Распаковывать gzip dump.",
+        "when": "Архив создан с --gzip.",
+        "example": "mongorestore --uri \"mongodb://127.0.0.1:27118/\" --archive=\"$LAB/backups/workshop-1.archive.gz\" --gzip --stopOnError",
+        "result": "Пропуск флага не превращает сжатые байты в BSON."
+      },
+      {
+        "flag": "--stopOnError",
+        "action": "Остановить дальнейший импорт при ошибке.",
+        "when": "Приёмка новой цели.",
+        "example": "mongorestore --uri \"mongodb://127.0.0.1:27118/\" --archive=\"$LAB/backups/workshop-1.archive.gz\" --gzip --stopOnError",
+        "result": "Уже импортированные записи не отменяются; цель до приёмки частична."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "mongorestore",
+      "mongorestore",
+      "mongorestore",
+      "mongorestore",
+      "mongorestore"
+    ]
+  },
+  {
+    "name": "job-service",
+    "aliases": [],
+    "purpose": "Собственный учебный Go-сервис с сохраняемыми jobs и контролируемыми опытами.",
+    "syntax": "job-service [-mode РЕЖИМ] [-n ЧИСЛО] [-hint ПЛАН]",
+    "chapter": "mongodb-service",
+    "volume": "mongodb",
+    "source": "labs/service/main.go",
+    "sources": [
+      {
+        "title": "Документация или собственный исходник",
+        "url": "labs/service/main.go"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-mode РЕЖИМ / --mode РЕЖИМ",
+        "action": "Выбрать serve/seed/migrate/measure/check/transaction/bson.",
+        "when": "Один из явно описанных этапов стенда.",
+        "example": "job-service -mode=check",
+        "result": "Неизвестный режим завершает процесс; seed/migrate/transaction меняют только workshop."
+      },
+      {
+        "flag": "-n ЧИСЛО / --n ЧИСЛО",
+        "action": "Задать размер seed либо число серийных измерений.",
+        "when": "Одинаковая нагрузка сравнения.",
+        "example": "job-service -mode=measure -n=200",
+        "result": "Для measure допустимо1..10000; n не удаляет лишние данные."
+      },
+      {
+        "flag": "-hint ПЛАН / --hint ПЛАН",
+        "action": "Только measure: natural либо имя индекса.",
+        "when": "Одинаковые документы, разные пути доступа.",
+        "example": "job-service -mode=measure -n=200 -hint=tenant_state_recent",
+        "result": "Hint принуждает план и может отказать; это не настройка HTTP-запросов."
+      }
+    ],
+    "situations": [],
+    "optionBoundary": "first-operand",
+    "flagScopes": [
+      "job-service",
+      "job-service",
+      "job-service"
+    ]
+  },
+  {
+    "name": "vault -help",
+    "aliases": [],
+    "purpose": "Показать корневую справку установленного бинарника; сервер не запускается.",
+    "syntax": "vault -help",
+    "chapter": "vault-02-supply",
+    "volume": "vault",
+    "source": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/",
+    "sources": [
+      {
+        "title": "Официальный CLI1.21.x; actual help1.21.4",
+        "url": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/"
+      }
+    ],
+    "flags": [],
+    "situations": [],
+    "optionBoundary": "first-operand",
+    "flagScopes": [],
+    "parentOptions": "prefix-only",
+    "prefixFlags": {
+      "vault": []
+    }
+  },
+  {
+    "name": "vault version",
+    "aliases": [
+      "vault -version"
+    ],
+    "purpose": "Показать версию, build и commit фактически запущенного файла.",
+    "syntax": "vault version",
+    "chapter": "vault-02-supply",
+    "volume": "vault",
+    "source": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/version",
+    "sources": [
+      {
+        "title": "Официальный CLI1.21.x; actual help1.21.4",
+        "url": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/version"
+      }
+    ],
+    "flags": [],
+    "situations": [],
+    "optionBoundary": "first-operand",
+    "flagScopes": [],
+    "prefixFlags": {
+      "vault": []
+    }
+  },
+  {
+    "name": "vault server",
+    "aliases": [],
+    "purpose": "Запустить сохраняемый сервер по подготовленному HCL; сам запуск не init/unseal.",
+    "syntax": "vault server -config ФАЙЛ",
+    "chapter": "vault-03-server",
+    "volume": "vault",
+    "source": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/server",
+    "sources": [
+      {
+        "title": "Официальный CLI1.21.x; actual help1.21.4",
+        "url": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/server"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-config ФАЙЛ",
+        "action": "Загрузить HCL/JSON конфигурацию или каталог согласно CLI.",
+        "when": "Личный loopback stand с созданными paths и TLS.",
+        "example": "vault server -config /home/student/handbook-vault/server.hcl",
+        "result": "Процесс остаётся работающим; неверные права/порт прекращают запуск."
+      }
+    ],
+    "situations": [],
+    "optionBoundary": "first-operand",
+    "flagScopes": [
+      "vault server"
+    ],
+    "prefixFlags": {
+      "vault": []
+    }
+  },
+  {
+    "name": "vault status",
+    "aliases": [],
+    "purpose": "Прочитать init/seal/HA состояние через TLS.",
+    "syntax": "vault status [ОПЦИИ]",
+    "chapter": "vault-03-server",
+    "volume": "vault",
+    "source": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/status",
+    "sources": [
+      {
+        "title": "Официальный CLI1.21.x; actual help1.21.4",
+        "url": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/status"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-address АДРЕС",
+        "action": "Выбрать HTTPS endpoint для этой операции.",
+        "when": "Проверка другого собственного stand.",
+        "example": "vault status -address=https://127.0.0.1:18200",
+        "result": "Флаг локален выбранной команде; адрес не отключает проверку TLS."
+      },
+      {
+        "flag": "-ca-cert ФАЙЛ",
+        "action": "Принять конкретный PEM CA для проверки listener.",
+        "when": "Свой локальный CA, абсолютный путь private stand.",
+        "example": "vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt",
+        "result": "Проверяется также SAN; неверная CA даёт transport error, а не ACL403."
+      },
+      {
+        "flag": "-format ФОРМАТ",
+        "action": "Выбрать table/json/yaml в поддержанной команде.",
+        "when": "Машинная обработка результата в private файл.",
+        "example": "vault kv get -format=json -mount=secret handbook/config",
+        "result": "JSON сохраняет структуру; вывод может содержать секреты и не является public artifact."
+      }
+    ],
+    "situations": [],
+    "optionBoundary": "first-operand",
+    "flagScopes": [
+      "vault status",
+      "vault status",
+      "vault status"
+    ],
+    "prefixFlags": {
+      "vault": []
+    }
+  },
+  {
+    "name": "vault operator init",
+    "aliases": [],
+    "purpose": "Однократно инициализировать пустой storage; результат чувствителен.",
+    "syntax": "vault operator init [ОПЦИИ]",
+    "chapter": "vault-04-keys",
+    "volume": "vault",
+    "source": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/operator/init",
+    "sources": [
+      {
+        "title": "Официальный CLI1.21.x; actual help1.21.4",
+        "url": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/operator/init"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-address АДРЕС",
+        "action": "Выбрать HTTPS endpoint для этой операции.",
+        "when": "Проверка другого собственного stand.",
+        "example": "vault status -address=https://127.0.0.1:18200",
+        "result": "Флаг локален выбранной команде; адрес не отключает проверку TLS."
+      },
+      {
+        "flag": "-ca-cert ФАЙЛ",
+        "action": "Принять конкретный PEM CA для проверки listener.",
+        "when": "Свой локальный CA, абсолютный путь private stand.",
+        "example": "vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt",
+        "result": "Проверяется также SAN; неверная CA даёт transport error, а не ACL403."
+      },
+      {
+        "flag": "-format ФОРМАТ",
+        "action": "Выбрать table/json/yaml в поддержанной команде.",
+        "when": "Машинная обработка результата в private файл.",
+        "example": "vault kv get -format=json -mount=secret handbook/config",
+        "result": "JSON сохраняет структуру; вывод может содержать секреты и не является public artifact."
+      },
+      {
+        "flag": "-key-shares N",
+        "action": "Создать N долей Shamir.",
+        "when": "Только первый init нового кластера.",
+        "example": "vault operator init -key-shares=3 -key-threshold=2 -format=json",
+        "result": "Частный JSON хранит доли и первоначальный root; stdout не публикуют."
+      },
+      {
+        "flag": "-key-threshold N",
+        "action": "Задать необходимый порог различных долей.",
+        "when": "При принятой церемонии хранителей.",
+        "example": "vault operator init -key-shares=3 -key-threshold=2",
+        "result": "Порог≤числа долей; две копии одной доли не считаются двумя."
+      }
+    ],
+    "situations": [],
+    "optionBoundary": "first-operand",
+    "flagScopes": [
+      "vault operator init",
+      "vault operator init",
+      "vault operator init",
+      "vault operator init",
+      "vault operator init"
+    ],
+    "prefixFlags": {
+      "vault": [],
+      "vault operator": []
+    }
+  },
+  {
+    "name": "vault operator unseal",
+    "aliases": [],
+    "purpose": "Подать долю скрытым tty-вводом либо по защищённому API; не аргументом shell.",
+    "syntax": "vault operator unseal",
+    "chapter": "vault-04-keys",
+    "volume": "vault",
+    "source": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/operator/unseal",
+    "sources": [
+      {
+        "title": "Официальный CLI1.21.x; actual help1.21.4",
+        "url": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/operator/unseal"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-address АДРЕС",
+        "action": "Выбрать HTTPS endpoint для этой операции.",
+        "when": "Проверка другого собственного stand.",
+        "example": "vault status -address=https://127.0.0.1:18200",
+        "result": "Флаг локален выбранной команде; адрес не отключает проверку TLS."
+      },
+      {
+        "flag": "-ca-cert ФАЙЛ",
+        "action": "Принять конкретный PEM CA для проверки listener.",
+        "when": "Свой локальный CA, абсолютный путь private stand.",
+        "example": "vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt",
+        "result": "Проверяется также SAN; неверная CA даёт transport error, а не ACL403."
+      },
+      {
+        "flag": "-reset",
+        "action": "Сбросить накопленный незавершённый unseal progress этого узла.",
+        "when": "Ошибочно начатая церемония; не reset storage.",
+        "example": "vault operator unseal -reset",
+        "result": "Данные не удаляются; для завершения нужны доли заново."
+      }
+    ],
+    "situations": [],
+    "optionBoundary": "first-operand",
+    "flagScopes": [
+      "vault operator unseal",
+      "vault operator unseal",
+      "vault operator unseal"
+    ],
+    "prefixFlags": {
+      "vault": [],
+      "vault operator": []
+    }
+  },
+  {
+    "name": "vault operator seal",
+    "aliases": [],
+    "purpose": "Перевести узел в sealed, прекратив доступ barrier к ключам.",
+    "syntax": "vault operator seal",
+    "chapter": "vault-04-keys",
+    "volume": "vault",
+    "source": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/operator/seal",
+    "sources": [
+      {
+        "title": "Официальный CLI1.21.x; actual help1.21.4",
+        "url": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/operator/seal"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-address АДРЕС",
+        "action": "Выбрать HTTPS endpoint для этой операции.",
+        "when": "Проверка другого собственного stand.",
+        "example": "vault status -address=https://127.0.0.1:18200",
+        "result": "Флаг локален выбранной команде; адрес не отключает проверку TLS."
+      },
+      {
+        "flag": "-ca-cert ФАЙЛ",
+        "action": "Принять конкретный PEM CA для проверки listener.",
+        "when": "Свой локальный CA, абсолютный путь private stand.",
+        "example": "vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt",
+        "result": "Проверяется также SAN; неверная CA даёт transport error, а не ACL403."
+      }
+    ],
+    "situations": [],
+    "optionBoundary": "first-operand",
+    "flagScopes": [
+      "vault operator seal",
+      "vault operator seal"
+    ],
+    "prefixFlags": {
+      "vault": [],
+      "vault operator": []
+    }
+  },
+  {
+    "name": "vault operator rekey",
+    "aliases": [],
+    "purpose": "Провести quorum-церемонию смены unseal/recovery shares.",
+    "syntax": "vault operator rekey [ОПЦИИ]",
+    "chapter": "vault-04-keys",
+    "volume": "vault",
+    "source": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/operator/rekey",
+    "sources": [
+      {
+        "title": "Официальный CLI1.21.x; actual help1.21.4",
+        "url": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/operator/rekey"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-address АДРЕС",
+        "action": "Выбрать HTTPS endpoint для этой операции.",
+        "when": "Проверка другого собственного stand.",
+        "example": "vault status -address=https://127.0.0.1:18200",
+        "result": "Флаг локален выбранной команде; адрес не отключает проверку TLS."
+      },
+      {
+        "flag": "-ca-cert ФАЙЛ",
+        "action": "Принять конкретный PEM CA для проверки listener.",
+        "when": "Свой локальный CA, абсолютный путь private stand.",
+        "example": "vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt",
+        "result": "Проверяется также SAN; неверная CA даёт transport error, а не ACL403."
+      },
+      {
+        "flag": "-target ЦЕЛЬ",
+        "action": "Выбрать barrier/recovery по реальному seal contract.",
+        "when": "Планируемая ротация хранителей.",
+        "example": "vault operator rekey -target=recovery -init",
+        "result": "Не заменяет ключ внешнего KMS и требует принятой процедуры, не исполняется автоматически."
+      },
+      {
+        "flag": "-init",
+        "action": "Начать новую церемонию rekey.",
+        "when": "После выбора числа долей/порога и хранителей.",
+        "example": "vault operator rekey -init -key-shares=3 -key-threshold=2",
+        "result": "Это не одношаговая замена: требуются quorum inputs и проверка."
+      },
+      {
+        "flag": "-key-shares N",
+        "action": "Число новых долей.",
+        "when": "Старт rekey.",
+        "example": "vault operator rekey -init -key-shares=3 -key-threshold=2",
+        "result": "Не меняет SQL passwords."
+      },
+      {
+        "flag": "-key-threshold N",
+        "action": "Порог новых долей.",
+        "when": "Старт rekey.",
+        "example": "vault operator rekey -init -key-shares=3 -key-threshold=2",
+        "result": "Судьбу старых shares принимают после завершения и backup."
+      }
+    ],
+    "situations": [],
+    "optionBoundary": "first-operand",
+    "flagScopes": [
+      "vault operator rekey",
+      "vault operator rekey",
+      "vault operator rekey",
+      "vault operator rekey",
+      "vault operator rekey",
+      "vault operator rekey"
+    ],
+    "prefixFlags": {
+      "vault": [],
+      "vault operator": []
+    }
+  },
+  {
+    "name": "vault operator rotate",
+    "aliases": [],
+    "purpose": "Ротировать ключ шифрования новых storage-записей.",
+    "syntax": "vault operator rotate",
+    "chapter": "vault-04-keys",
+    "volume": "vault",
+    "source": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/operator/rotate",
+    "sources": [
+      {
+        "title": "Официальный CLI1.21.x; actual help1.21.4",
+        "url": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/operator/rotate"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-address АДРЕС",
+        "action": "Выбрать HTTPS endpoint для этой операции.",
+        "when": "Проверка другого собственного stand.",
+        "example": "vault status -address=https://127.0.0.1:18200",
+        "result": "Флаг локален выбранной команде; адрес не отключает проверку TLS."
+      },
+      {
+        "flag": "-ca-cert ФАЙЛ",
+        "action": "Принять конкретный PEM CA для проверки listener.",
+        "when": "Свой локальный CA, абсолютный путь private stand.",
+        "example": "vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt",
+        "result": "Проверяется также SAN; неверная CA даёт transport error, а не ACL403."
+      }
+    ],
+    "situations": [],
+    "optionBoundary": "first-operand",
+    "flagScopes": [
+      "vault operator rotate",
+      "vault operator rotate"
+    ],
+    "prefixFlags": {
+      "vault": [],
+      "vault operator": []
+    }
+  },
+  {
+    "name": "vault operator generate-root",
+    "aliases": [],
+    "purpose": "Quorum-церемония аварийного восстановления административного API-доступа.",
+    "syntax": "vault operator generate-root [ОПЦИИ]",
+    "chapter": "vault-04-keys",
+    "volume": "vault",
+    "source": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/operator/generate-root",
+    "sources": [
+      {
+        "title": "Официальный CLI1.21.x; actual help1.21.4",
+        "url": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/operator/generate-root"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-address АДРЕС",
+        "action": "Выбрать HTTPS endpoint для этой операции.",
+        "when": "Проверка другого собственного stand.",
+        "example": "vault status -address=https://127.0.0.1:18200",
+        "result": "Флаг локален выбранной команде; адрес не отключает проверку TLS."
+      },
+      {
+        "flag": "-ca-cert ФАЙЛ",
+        "action": "Принять конкретный PEM CA для проверки listener.",
+        "when": "Свой локальный CA, абсолютный путь private stand.",
+        "example": "vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt",
+        "result": "Проверяется также SAN; неверная CA даёт transport error, а не ACL403."
+      },
+      {
+        "flag": "-init",
+        "action": "Начать принятую процедуру с OTP/PGP и nonce.",
+        "when": "При потере/истечении оператора, в собственной среде.",
+        "example": "vault operator generate-root -init",
+        "result": "Команда не выдаёт готовый root без quorum; не автоматический helper."
+      }
+    ],
+    "situations": [],
+    "optionBoundary": "first-operand",
+    "flagScopes": [
+      "vault operator generate-root",
+      "vault operator generate-root",
+      "vault operator generate-root"
+    ],
+    "prefixFlags": {
+      "vault": [],
+      "vault operator": []
+    }
+  },
+  {
+    "name": "vault secrets enable",
+    "aliases": [],
+    "purpose": "Подключить secrets engine к новому mount; влияет на сервер.",
+    "syntax": "vault secrets enable [ОПЦИИ] ТИП",
+    "chapter": "vault-07-kv",
+    "volume": "vault",
+    "source": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/secrets/enable",
+    "sources": [
+      {
+        "title": "Официальный CLI1.21.x; actual help1.21.4",
+        "url": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/secrets/enable"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-address АДРЕС",
+        "action": "Выбрать HTTPS endpoint для этой операции.",
+        "when": "Проверка другого собственного stand.",
+        "example": "vault status -address=https://127.0.0.1:18200",
+        "result": "Флаг локален выбранной команде; адрес не отключает проверку TLS."
+      },
+      {
+        "flag": "-ca-cert ФАЙЛ",
+        "action": "Принять конкретный PEM CA для проверки listener.",
+        "when": "Свой локальный CA, абсолютный путь private stand.",
+        "example": "vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt",
+        "result": "Проверяется также SAN; неверная CA даёт transport error, а не ACL403."
+      },
+      {
+        "flag": "-path ПУТЬ",
+        "action": "Выбрать свободный логический mount.",
+        "when": "Создание secret/database/pki в своём стенде.",
+        "example": "vault secrets enable -path=secret -version=2 kv",
+        "result": "Не каталог Linux; существующий mount не перезаписывают."
+      },
+      {
+        "flag": "-version N",
+        "action": "Выбрать поддержанную версию KV.",
+        "when": "Новый KVv2.",
+        "example": "vault secrets enable -path=secret -version=2 kv",
+        "result": "Не то же, что /v1/ в HTTP API; не обновляет существующий mount."
+      }
+    ],
+    "situations": [],
+    "optionBoundary": "first-operand",
+    "flagScopes": [
+      "vault secrets enable",
+      "vault secrets enable",
+      "vault secrets enable",
+      "vault secrets enable"
+    ],
+    "prefixFlags": {
+      "vault": [],
+      "vault secrets": []
+    }
+  },
+  {
+    "name": "vault secrets list",
+    "aliases": [],
+    "purpose": "Прочитать список подключений engines и их опций.",
+    "syntax": "vault secrets list [ОПЦИИ]",
+    "chapter": "vault-07-kv",
+    "volume": "vault",
+    "source": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/secrets/list",
+    "sources": [
+      {
+        "title": "Официальный CLI1.21.x; actual help1.21.4",
+        "url": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/secrets/list"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-address АДРЕС",
+        "action": "Выбрать HTTPS endpoint для этой операции.",
+        "when": "Проверка другого собственного stand.",
+        "example": "vault status -address=https://127.0.0.1:18200",
+        "result": "Флаг локален выбранной команде; адрес не отключает проверку TLS."
+      },
+      {
+        "flag": "-ca-cert ФАЙЛ",
+        "action": "Принять конкретный PEM CA для проверки listener.",
+        "when": "Свой локальный CA, абсолютный путь private stand.",
+        "example": "vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt",
+        "result": "Проверяется также SAN; неверная CA даёт transport error, а не ACL403."
+      },
+      {
+        "flag": "-format ФОРМАТ",
+        "action": "Выбрать table/json/yaml в поддержанной команде.",
+        "when": "Машинная обработка результата в private файл.",
+        "example": "vault kv get -format=json -mount=secret handbook/config",
+        "result": "JSON сохраняет структуру; вывод может содержать секреты и не является public artifact."
+      },
+      {
+        "flag": "-detailed",
+        "action": "Показать расширенную конфигурацию mount.",
+        "when": "Выяснить версию KV и tune перед операцией.",
+        "example": "vault secrets list -detailed",
+        "result": "Имя secret само не доказывает KVv2."
+      }
+    ],
+    "situations": [],
+    "optionBoundary": "first-operand",
+    "flagScopes": [
+      "vault secrets list",
+      "vault secrets list",
+      "vault secrets list",
+      "vault secrets list"
+    ],
+    "prefixFlags": {
+      "vault": [],
+      "vault secrets": []
+    }
+  },
+  {
+    "name": "vault secrets tune",
+    "aliases": [],
+    "purpose": "Изменить сроки/параметры существующего mount.",
+    "syntax": "vault secrets tune [ОПЦИИ] ПУТЬ",
+    "chapter": "vault-08-leases",
+    "volume": "vault",
+    "source": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/secrets/tune",
+    "sources": [
+      {
+        "title": "Официальный CLI1.21.x; actual help1.21.4",
+        "url": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/secrets/tune"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-address АДРЕС",
+        "action": "Выбрать HTTPS endpoint для этой операции.",
+        "when": "Проверка другого собственного stand.",
+        "example": "vault status -address=https://127.0.0.1:18200",
+        "result": "Флаг локален выбранной команде; адрес не отключает проверку TLS."
+      },
+      {
+        "flag": "-ca-cert ФАЙЛ",
+        "action": "Принять конкретный PEM CA для проверки listener.",
+        "when": "Свой локальный CA, абсолютный путь private stand.",
+        "example": "vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt",
+        "result": "Проверяется также SAN; неверная CA даёт transport error, а не ACL403."
+      },
+      {
+        "flag": "-max-lease-ttl ДЛИТЕЛЬНОСТЬ",
+        "action": "Установить верхний предел срока mount.",
+        "when": "При подготовке PKI CA и выдач.",
+        "example": "vault secrets tune -max-lease-ttl=8760h pki-root",
+        "result": "Role/issuer/запрос могут дополнительно ограничить фактическую выдачу."
+      },
+      {
+        "flag": "-default-lease-ttl ДЛИТЕЛЬНОСТЬ",
+        "action": "Настроить default срока.",
+        "when": "После расчёта renewal-нагрузки.",
+        "example": "vault secrets tune -default-lease-ttl=10m database",
+        "result": "Не обещает мгновенно переписать каждый ранее выданный lease."
+      }
+    ],
+    "situations": [],
+    "optionBoundary": "first-operand",
+    "flagScopes": [
+      "vault secrets tune",
+      "vault secrets tune",
+      "vault secrets tune",
+      "vault secrets tune"
+    ],
+    "prefixFlags": {
+      "vault": [],
+      "vault secrets": []
+    }
+  },
+  {
+    "name": "vault policy write",
+    "aliases": [],
+    "purpose": "Загрузить уже созданный HCL файл как серверную ACL policy.",
+    "syntax": "vault policy write ИМЯ ФАЙЛ",
+    "chapter": "vault-06-acl",
+    "volume": "vault",
+    "source": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/policy/write",
+    "sources": [
+      {
+        "title": "Официальный CLI1.21.x; actual help1.21.4",
+        "url": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/policy/write"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-address АДРЕС",
+        "action": "Выбрать HTTPS endpoint для этой операции.",
+        "when": "Проверка другого собственного stand.",
+        "example": "vault status -address=https://127.0.0.1:18200",
+        "result": "Флаг локален выбранной команде; адрес не отключает проверку TLS."
+      },
+      {
+        "flag": "-ca-cert ФАЙЛ",
+        "action": "Принять конкретный PEM CA для проверки listener.",
+        "when": "Свой локальный CA, абсолютный путь private stand.",
+        "example": "vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt",
+        "result": "Проверяется также SAN; неверная CA даёт transport error, а не ACL403."
+      }
+    ],
+    "situations": [],
+    "optionBoundary": "first-operand",
+    "flagScopes": [
+      "vault policy write",
+      "vault policy write"
+    ],
+    "prefixFlags": {
+      "vault": [],
+      "vault policy": []
+    }
+  },
+  {
+    "name": "vault token capabilities",
+    "aliases": [],
+    "purpose": "Показать capabilities текущего token на реальном API-пути.",
+    "syntax": "vault token capabilities ПУТЬ",
+    "chapter": "vault-06-acl",
+    "volume": "vault",
+    "source": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/token/capabilities",
+    "sources": [
+      {
+        "title": "Официальный CLI1.21.x; actual help1.21.4",
+        "url": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/token/capabilities"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-address АДРЕС",
+        "action": "Выбрать HTTPS endpoint для этой операции.",
+        "when": "Проверка другого собственного stand.",
+        "example": "vault status -address=https://127.0.0.1:18200",
+        "result": "Флаг локален выбранной команде; адрес не отключает проверку TLS."
+      },
+      {
+        "flag": "-ca-cert ФАЙЛ",
+        "action": "Принять конкретный PEM CA для проверки listener.",
+        "when": "Свой локальный CA, абсолютный путь private stand.",
+        "example": "vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt",
+        "result": "Проверяется также SAN; неверная CA даёт transport error, а не ACL403."
+      }
+    ],
+    "situations": [],
+    "optionBoundary": "first-operand",
+    "flagScopes": [
+      "vault token capabilities",
+      "vault token capabilities"
+    ],
+    "prefixFlags": {
+      "vault": [],
+      "vault token": []
+    }
+  },
+  {
+    "name": "vault token create",
+    "aliases": [],
+    "purpose": "Выдать service token; результат хранить private, не в логе.",
+    "syntax": "vault token create [ОПЦИИ]",
+    "chapter": "vault-08-leases",
+    "volume": "vault",
+    "source": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/token/create",
+    "sources": [
+      {
+        "title": "Официальный CLI1.21.x; actual help1.21.4",
+        "url": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/token/create"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-address АДРЕС",
+        "action": "Выбрать HTTPS endpoint для этой операции.",
+        "when": "Проверка другого собственного stand.",
+        "example": "vault status -address=https://127.0.0.1:18200",
+        "result": "Флаг локален выбранной команде; адрес не отключает проверку TLS."
+      },
+      {
+        "flag": "-ca-cert ФАЙЛ",
+        "action": "Принять конкретный PEM CA для проверки listener.",
+        "when": "Свой локальный CA, абсолютный путь private stand.",
+        "example": "vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt",
+        "result": "Проверяется также SAN; неверная CA даёт transport error, а не ACL403."
+      },
+      {
+        "flag": "-format ФОРМАТ",
+        "action": "Выбрать table/json/yaml в поддержанной команде.",
+        "when": "Машинная обработка результата в private файл.",
+        "example": "vault kv get -format=json -mount=secret handbook/config",
+        "result": "JSON сохраняет структуру; вывод может содержать секреты и не является public artifact."
+      },
+      {
+        "flag": "-policy ИМЯ",
+        "action": "Привязать policy; повторяемый флаг.",
+        "when": "Создание ограниченного тестового reader.",
+        "example": "vault token create -policy=handbook-reader -ttl=10m -format=json",
+        "result": "Issuer должен иметь право выдать эти policies; имя не доказывает минимальность."
+      },
+      {
+        "flag": "-ttl ДЛИТЕЛЬНОСТЬ",
+        "action": "Запросить срок token.",
+        "when": "Короткий native TTL test.",
+        "example": "vault token create -policy=handbook-reader -ttl=3s",
+        "result": "Фактическое время ограничено server/auth/role; результат содержит секрет."
+      },
+      {
+        "flag": "-explicit-max-ttl ДЛИТЕЛЬНОСТЬ",
+        "action": "Закрепить абсолютный lifetime token.",
+        "when": "Ограниченный оператор личного stand.",
+        "example": "vault token create -policy=handbook-operator -ttl=8h -explicit-max-ttl=24h",
+        "result": "Renewal не обходит предел."
+      },
+      {
+        "flag": "-orphan",
+        "action": "Создать token без родителя при достаточном полномочии.",
+        "when": "Отделить временного оператора перед отзывом bootstrap root.",
+        "example": "vault token create -orphan -policy=handbook-operator -ttl=8h",
+        "result": "Не отменяет TTL/direct revoke; приложения не получают вечный root."
+      }
+    ],
+    "situations": [],
+    "optionBoundary": "first-operand",
+    "flagScopes": [
+      "vault token create",
+      "vault token create",
+      "vault token create",
+      "vault token create",
+      "vault token create",
+      "vault token create",
+      "vault token create"
+    ],
+    "prefixFlags": {
+      "vault": [],
+      "vault token": []
+    }
+  },
+  {
+    "name": "vault token lookup",
+    "aliases": [],
+    "purpose": "Прочитать metadata текущего token.",
+    "syntax": "vault token lookup [ОПЦИИ]",
+    "chapter": "vault-08-leases",
+    "volume": "vault",
+    "source": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/token/lookup",
+    "sources": [
+      {
+        "title": "Официальный CLI1.21.x; actual help1.21.4",
+        "url": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/token/lookup"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-address АДРЕС",
+        "action": "Выбрать HTTPS endpoint для этой операции.",
+        "when": "Проверка другого собственного stand.",
+        "example": "vault status -address=https://127.0.0.1:18200",
+        "result": "Флаг локален выбранной команде; адрес не отключает проверку TLS."
+      },
+      {
+        "flag": "-ca-cert ФАЙЛ",
+        "action": "Принять конкретный PEM CA для проверки listener.",
+        "when": "Свой локальный CA, абсолютный путь private stand.",
+        "example": "vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt",
+        "result": "Проверяется также SAN; неверная CA даёт transport error, а не ACL403."
+      },
+      {
+        "flag": "-format ФОРМАТ",
+        "action": "Выбрать table/json/yaml в поддержанной команде.",
+        "when": "Машинная обработка результата в private файл.",
+        "example": "vault kv get -format=json -mount=secret handbook/config",
+        "result": "JSON сохраняет структуру; вывод может содержать секреты и не является public artifact."
+      }
+    ],
+    "situations": [],
+    "optionBoundary": "first-operand",
+    "flagScopes": [
+      "vault token lookup",
+      "vault token lookup",
+      "vault token lookup"
+    ],
+    "prefixFlags": {
+      "vault": [],
+      "vault token": []
+    }
+  },
+  {
+    "name": "vault token renew",
+    "aliases": [],
+    "purpose": "Попросить продлить token до фактически разрешённого срока.",
+    "syntax": "vault token renew [ОПЦИИ]",
+    "chapter": "vault-08-leases",
+    "volume": "vault",
+    "source": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/token/renew",
+    "sources": [
+      {
+        "title": "Официальный CLI1.21.x; actual help1.21.4",
+        "url": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/token/renew"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-address АДРЕС",
+        "action": "Выбрать HTTPS endpoint для этой операции.",
+        "when": "Проверка другого собственного stand.",
+        "example": "vault status -address=https://127.0.0.1:18200",
+        "result": "Флаг локален выбранной команде; адрес не отключает проверку TLS."
+      },
+      {
+        "flag": "-ca-cert ФАЙЛ",
+        "action": "Принять конкретный PEM CA для проверки listener.",
+        "when": "Свой локальный CA, абсолютный путь private stand.",
+        "example": "vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt",
+        "result": "Проверяется также SAN; неверная CA даёт transport error, а не ACL403."
+      },
+      {
+        "flag": "-format ФОРМАТ",
+        "action": "Выбрать table/json/yaml в поддержанной команде.",
+        "when": "Машинная обработка результата в private файл.",
+        "example": "vault kv get -format=json -mount=secret handbook/config",
+        "result": "JSON сохраняет структуру; вывод может содержать секреты и не является public artifact."
+      },
+      {
+        "flag": "-increment ДЛИТЕЛЬНОСТЬ",
+        "action": "Запросить новый renewal increment.",
+        "when": "До expiry и при renewable=true.",
+        "example": "vault token renew -increment=30s",
+        "result": "Не добавляет безусловно30s к прежнему TTL; actual lease_duration важнее запроса."
+      }
+    ],
+    "situations": [],
+    "optionBoundary": "first-operand",
+    "flagScopes": [
+      "vault token renew",
+      "vault token renew",
+      "vault token renew",
+      "vault token renew"
+    ],
+    "prefixFlags": {
+      "vault": [],
+      "vault token": []
+    }
+  },
+  {
+    "name": "vault token revoke",
+    "aliases": [],
+    "purpose": "Отозвать token и предусмотренное дерево доступа.",
+    "syntax": "vault token revoke [ОПЦИИ]",
+    "chapter": "vault-08-leases",
+    "volume": "vault",
+    "source": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/token/revoke",
+    "sources": [
+      {
+        "title": "Официальный CLI1.21.x; actual help1.21.4",
+        "url": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/token/revoke"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-address АДРЕС",
+        "action": "Выбрать HTTPS endpoint для этой операции.",
+        "when": "Проверка другого собственного stand.",
+        "example": "vault status -address=https://127.0.0.1:18200",
+        "result": "Флаг локален выбранной команде; адрес не отключает проверку TLS."
+      },
+      {
+        "flag": "-ca-cert ФАЙЛ",
+        "action": "Принять конкретный PEM CA для проверки listener.",
+        "when": "Свой локальный CA, абсолютный путь private stand.",
+        "example": "vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt",
+        "result": "Проверяется также SAN; неверная CA даёт transport error, а не ACL403."
+      },
+      {
+        "flag": "-self",
+        "action": "Отозвать предъявленный token без передачи его в argv.",
+        "when": "Завершение bootstrap/root или сессии.",
+        "example": "vault token revoke -self",
+        "result": "Самоотзыв не стирает копии секретов и может отозвать детей/leases."
+      }
+    ],
+    "situations": [],
+    "optionBoundary": "first-operand",
+    "flagScopes": [
+      "vault token revoke",
+      "vault token revoke",
+      "vault token revoke"
+    ],
+    "prefixFlags": {
+      "vault": [],
+      "vault token": []
+    }
+  },
+  {
+    "name": "vault kv put",
+    "aliases": [],
+    "purpose": "Записать новую полную версию KV, с условием CAS при необходимости.",
+    "syntax": "vault kv put [ОПЦИИ] КЛЮЧ ДАННЫЕ",
+    "chapter": "vault-07-kv",
+    "volume": "vault",
+    "source": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/kv/put",
+    "sources": [
+      {
+        "title": "Официальный CLI1.21.x; actual help1.21.4",
+        "url": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/kv/put"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-address АДРЕС",
+        "action": "Выбрать HTTPS endpoint для этой операции.",
+        "when": "Проверка другого собственного stand.",
+        "example": "vault status -address=https://127.0.0.1:18200",
+        "result": "Флаг локален выбранной команде; адрес не отключает проверку TLS."
+      },
+      {
+        "flag": "-ca-cert ФАЙЛ",
+        "action": "Принять конкретный PEM CA для проверки listener.",
+        "when": "Свой локальный CA, абсолютный путь private stand.",
+        "example": "vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt",
+        "result": "Проверяется также SAN; неверная CA даёт transport error, а не ACL403."
+      },
+      {
+        "flag": "-format ФОРМАТ",
+        "action": "Выбрать table/json/yaml в поддержанной команде.",
+        "when": "Машинная обработка результата в private файл.",
+        "example": "vault kv get -format=json -mount=secret handbook/config",
+        "result": "JSON сохраняет структуру; вывод может содержать секреты и не является public artifact."
+      },
+      {
+        "flag": "-mount ПУТЬ",
+        "action": "Отделить KV mount от относительного имени ключа.",
+        "when": "Не путать CLI имя с secret/data API-путём.",
+        "example": "vault kv get -mount=secret handbook/config",
+        "result": "KVv2 CLI сам выбирает data/metadata endpoints; ACL задаётся на них."
+      },
+      {
+        "flag": "-cas N",
+        "action": "Сохранить только при ожидаемом текущем номере;0 означает ещё не существующий ключ.",
+        "when": "Защита от конкурентного writer.",
+        "example": "vault kv put -mount=secret -cas=1 handbook/config message=second",
+        "result": "Mismatch даёт отказ400 и не меняет текущую версию; безусловный retry без CAS теряет защиту."
+      }
+    ],
+    "situations": [],
+    "optionBoundary": "first-operand",
+    "flagScopes": [
+      "vault kv put",
+      "vault kv put",
+      "vault kv put",
+      "vault kv put",
+      "vault kv put"
+    ],
+    "prefixFlags": {
+      "vault": [],
+      "vault kv": []
+    }
+  },
+  {
+    "name": "vault kv get",
+    "aliases": [],
+    "purpose": "Прочитать текущее/конкретное KV-значение.",
+    "syntax": "vault kv get [ОПЦИИ] КЛЮЧ",
+    "chapter": "vault-07-kv",
+    "volume": "vault",
+    "source": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/kv/get",
+    "sources": [
+      {
+        "title": "Официальный CLI1.21.x; actual help1.21.4",
+        "url": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/kv/get"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-address АДРЕС",
+        "action": "Выбрать HTTPS endpoint для этой операции.",
+        "when": "Проверка другого собственного stand.",
+        "example": "vault status -address=https://127.0.0.1:18200",
+        "result": "Флаг локален выбранной команде; адрес не отключает проверку TLS."
+      },
+      {
+        "flag": "-ca-cert ФАЙЛ",
+        "action": "Принять конкретный PEM CA для проверки listener.",
+        "when": "Свой локальный CA, абсолютный путь private stand.",
+        "example": "vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt",
+        "result": "Проверяется также SAN; неверная CA даёт transport error, а не ACL403."
+      },
+      {
+        "flag": "-format ФОРМАТ",
+        "action": "Выбрать table/json/yaml в поддержанной команде.",
+        "when": "Машинная обработка результата в private файл.",
+        "example": "vault kv get -format=json -mount=secret handbook/config",
+        "result": "JSON сохраняет структуру; вывод может содержать секреты и не является public artifact."
+      },
+      {
+        "flag": "-mount ПУТЬ",
+        "action": "Отделить KV mount от относительного имени ключа.",
+        "when": "Не путать CLI имя с secret/data API-путём.",
+        "example": "vault kv get -mount=secret handbook/config",
+        "result": "KVv2 CLI сам выбирает data/metadata endpoints; ACL задаётся на них."
+      },
+      {
+        "flag": "-version N",
+        "action": "Выбрать сохранённую версию KVv2.",
+        "when": "Проверка истории/soft-delete.",
+        "example": "vault kv get -mount=secret -version=2 handbook/config",
+        "result": "Destroyed/soft-deleted версия не выдаёт значение; current не обязательно эта версия."
+      },
+      {
+        "flag": "-field ИМЯ",
+        "action": "Вывести одно поле без trailing newline.",
+        "when": "Защищённый частный канал потребителя.",
+        "example": "vault kv get -mount=secret -field=message handbook/config",
+        "result": "Флаг не обезличивает секрет; stdout защищают."
+      }
+    ],
+    "situations": [],
+    "optionBoundary": "first-operand",
+    "flagScopes": [
+      "vault kv get",
+      "vault kv get",
+      "vault kv get",
+      "vault kv get",
+      "vault kv get",
+      "vault kv get"
+    ],
+    "prefixFlags": {
+      "vault": [],
+      "vault kv": []
+    }
+  },
+  {
+    "name": "vault kv patch",
+    "aliases": [],
+    "purpose": "Частично изменить существующее KVv2-значение; native PATCH отличается от read/write fallback.",
+    "syntax": "vault kv patch [ОПЦИИ] КЛЮЧ ДАННЫЕ",
+    "chapter": "vault-07-kv",
+    "volume": "vault",
+    "source": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/kv/patch",
+    "sources": [
+      {
+        "title": "Официальный CLI1.21.x; actual help1.21.4",
+        "url": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/kv/patch"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-address АДРЕС",
+        "action": "Выбрать HTTPS endpoint для этой операции.",
+        "when": "Проверка другого собственного stand.",
+        "example": "vault status -address=https://127.0.0.1:18200",
+        "result": "Флаг локален выбранной команде; адрес не отключает проверку TLS."
+      },
+      {
+        "flag": "-ca-cert ФАЙЛ",
+        "action": "Принять конкретный PEM CA для проверки listener.",
+        "when": "Свой локальный CA, абсолютный путь private stand.",
+        "example": "vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt",
+        "result": "Проверяется также SAN; неверная CA даёт transport error, а не ACL403."
+      },
+      {
+        "flag": "-format ФОРМАТ",
+        "action": "Выбрать table/json/yaml в поддержанной команде.",
+        "when": "Машинная обработка результата в private файл.",
+        "example": "vault kv get -format=json -mount=secret handbook/config",
+        "result": "JSON сохраняет структуру; вывод может содержать секреты и не является public artifact."
+      },
+      {
+        "flag": "-mount ПУТЬ",
+        "action": "Отделить KV mount от относительного имени ключа.",
+        "when": "Не путать CLI имя с secret/data API-путём.",
+        "example": "vault kv get -mount=secret handbook/config",
+        "result": "KVv2 CLI сам выбирает data/metadata endpoints; ACL задаётся на них."
+      },
+      {
+        "flag": "-cas N",
+        "action": "Условный PATCH известной версии.",
+        "when": "Не затереть конкурентное обновление.",
+        "example": "vault kv patch -mount=secret -cas=2 handbook/config added=yes",
+        "result": "Новая версия сохраняет прежние непереданные поля."
+      },
+      {
+        "flag": "-method МЕТОД",
+        "action": "Выбрать patch или rw.",
+        "when": "Явное сравнение CLI native PATCH и fallback.",
+        "example": "vault kv patch -method=patch -mount=secret -cas=2 handbook/config added=yes",
+        "result": "rw требует read+write и имеет другое окно гонки; основной опыт использует patch."
+      }
+    ],
+    "situations": [],
+    "optionBoundary": "first-operand",
+    "flagScopes": [
+      "vault kv patch",
+      "vault kv patch",
+      "vault kv patch",
+      "vault kv patch",
+      "vault kv patch",
+      "vault kv patch"
+    ],
+    "prefixFlags": {
+      "vault": [],
+      "vault kv": []
+    }
+  },
+  {
+    "name": "vault kv delete",
+    "aliases": [],
+    "purpose": "Soft-delete текущую или выбранные KVv2 версии.",
+    "syntax": "vault kv delete [ОПЦИИ] КЛЮЧ",
+    "chapter": "vault-07-kv",
+    "volume": "vault",
+    "source": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/kv/delete",
+    "sources": [
+      {
+        "title": "Официальный CLI1.21.x; actual help1.21.4",
+        "url": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/kv/delete"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-address АДРЕС",
+        "action": "Выбрать HTTPS endpoint для этой операции.",
+        "when": "Проверка другого собственного stand.",
+        "example": "vault status -address=https://127.0.0.1:18200",
+        "result": "Флаг локален выбранной команде; адрес не отключает проверку TLS."
+      },
+      {
+        "flag": "-ca-cert ФАЙЛ",
+        "action": "Принять конкретный PEM CA для проверки listener.",
+        "when": "Свой локальный CA, абсолютный путь private stand.",
+        "example": "vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt",
+        "result": "Проверяется также SAN; неверная CA даёт transport error, а не ACL403."
+      },
+      {
+        "flag": "-mount ПУТЬ",
+        "action": "Отделить KV mount от относительного имени ключа.",
+        "when": "Не путать CLI имя с secret/data API-путём.",
+        "example": "vault kv get -mount=secret handbook/config",
+        "result": "KVv2 CLI сам выбирает data/metadata endpoints; ACL задаётся на них."
+      },
+      {
+        "flag": "-versions СПИСОК",
+        "action": "Выбрать номера KVv2 версий через запятую.",
+        "when": "Удалить учебную version2, сохраняя возможность undelete.",
+        "example": "vault kv delete -mount=secret -versions=2 handbook/config",
+        "result": "Не destroy, не удаление всего mount."
+      }
+    ],
+    "situations": [],
+    "optionBoundary": "first-operand",
+    "flagScopes": [
+      "vault kv delete",
+      "vault kv delete",
+      "vault kv delete",
+      "vault kv delete"
+    ],
+    "prefixFlags": {
+      "vault": [],
+      "vault kv": []
+    }
+  },
+  {
+    "name": "vault kv undelete",
+    "aliases": [],
+    "purpose": "Снять soft-delete выбранных ещё существующих версий.",
+    "syntax": "vault kv undelete [ОПЦИИ] КЛЮЧ",
+    "chapter": "vault-07-kv",
+    "volume": "vault",
+    "source": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/kv/undelete",
+    "sources": [
+      {
+        "title": "Официальный CLI1.21.x; actual help1.21.4",
+        "url": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/kv/undelete"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-address АДРЕС",
+        "action": "Выбрать HTTPS endpoint для этой операции.",
+        "when": "Проверка другого собственного stand.",
+        "example": "vault status -address=https://127.0.0.1:18200",
+        "result": "Флаг локален выбранной команде; адрес не отключает проверку TLS."
+      },
+      {
+        "flag": "-ca-cert ФАЙЛ",
+        "action": "Принять конкретный PEM CA для проверки listener.",
+        "when": "Свой локальный CA, абсолютный путь private stand.",
+        "example": "vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt",
+        "result": "Проверяется также SAN; неверная CA даёт transport error, а не ACL403."
+      },
+      {
+        "flag": "-mount ПУТЬ",
+        "action": "Отделить KV mount от относительного имени ключа.",
+        "when": "Не путать CLI имя с secret/data API-путём.",
+        "example": "vault kv get -mount=secret handbook/config",
+        "result": "KVv2 CLI сам выбирает data/metadata endpoints; ACL задаётся на них."
+      },
+      {
+        "flag": "-versions СПИСОК",
+        "action": "Указать возвращаемые версии.",
+        "when": "Проверить отличие от destroy.",
+        "example": "vault kv undelete -mount=secret -versions=2 handbook/config",
+        "result": "Не возвращает destroyed/вытесненные версии."
+      }
+    ],
+    "situations": [],
+    "optionBoundary": "first-operand",
+    "flagScopes": [
+      "vault kv undelete",
+      "vault kv undelete",
+      "vault kv undelete",
+      "vault kv undelete"
+    ],
+    "prefixFlags": {
+      "vault": [],
+      "vault kv": []
+    }
+  },
+  {
+    "name": "vault kv destroy",
+    "aliases": [],
+    "purpose": "Необратимо удалить содержимое выбранных версий через KV API.",
+    "syntax": "vault kv destroy [ОПЦИИ] КЛЮЧ",
+    "chapter": "vault-07-kv",
+    "volume": "vault",
+    "source": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/kv/destroy",
+    "sources": [
+      {
+        "title": "Официальный CLI1.21.x; actual help1.21.4",
+        "url": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/kv/destroy"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-address АДРЕС",
+        "action": "Выбрать HTTPS endpoint для этой операции.",
+        "when": "Проверка другого собственного stand.",
+        "example": "vault status -address=https://127.0.0.1:18200",
+        "result": "Флаг локален выбранной команде; адрес не отключает проверку TLS."
+      },
+      {
+        "flag": "-ca-cert ФАЙЛ",
+        "action": "Принять конкретный PEM CA для проверки listener.",
+        "when": "Свой локальный CA, абсолютный путь private stand.",
+        "example": "vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt",
+        "result": "Проверяется также SAN; неверная CA даёт transport error, а не ACL403."
+      },
+      {
+        "flag": "-mount ПУТЬ",
+        "action": "Отделить KV mount от относительного имени ключа.",
+        "when": "Не путать CLI имя с secret/data API-путём.",
+        "example": "vault kv get -mount=secret handbook/config",
+        "result": "KVv2 CLI сам выбирает data/metadata endpoints; ACL задаётся на них."
+      },
+      {
+        "flag": "-versions СПИСОК",
+        "action": "Выбрать уничтожаемые версии.",
+        "when": "Только принятый учебный ключ.",
+        "example": "vault kv destroy -mount=secret -versions=2 handbook/config",
+        "result": "Metadata сохраняет destroyed=true; backup/внешние копии имеют отдельный lifecycle."
+      }
+    ],
+    "situations": [],
+    "optionBoundary": "first-operand",
+    "flagScopes": [
+      "vault kv destroy",
+      "vault kv destroy",
+      "vault kv destroy",
+      "vault kv destroy"
+    ],
+    "prefixFlags": {
+      "vault": [],
+      "vault kv": []
+    }
+  },
+  {
+    "name": "vault kv metadata get",
+    "aliases": [],
+    "purpose": "Прочитать версии и состояние KVv2 без запроса значения.",
+    "syntax": "vault kv metadata get [ОПЦИИ] КЛЮЧ",
+    "chapter": "vault-07-kv",
+    "volume": "vault",
+    "source": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/kv/metadata/get",
+    "sources": [
+      {
+        "title": "Официальный CLI1.21.x; actual help1.21.4",
+        "url": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/kv/metadata/get"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-address АДРЕС",
+        "action": "Выбрать HTTPS endpoint для этой операции.",
+        "when": "Проверка другого собственного stand.",
+        "example": "vault status -address=https://127.0.0.1:18200",
+        "result": "Флаг локален выбранной команде; адрес не отключает проверку TLS."
+      },
+      {
+        "flag": "-ca-cert ФАЙЛ",
+        "action": "Принять конкретный PEM CA для проверки listener.",
+        "when": "Свой локальный CA, абсолютный путь private stand.",
+        "example": "vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt",
+        "result": "Проверяется также SAN; неверная CA даёт transport error, а не ACL403."
+      },
+      {
+        "flag": "-format ФОРМАТ",
+        "action": "Выбрать table/json/yaml в поддержанной команде.",
+        "when": "Машинная обработка результата в private файл.",
+        "example": "vault kv get -format=json -mount=secret handbook/config",
+        "result": "JSON сохраняет структуру; вывод может содержать секреты и не является public artifact."
+      },
+      {
+        "flag": "-mount ПУТЬ",
+        "action": "Отделить KV mount от относительного имени ключа.",
+        "when": "Не путать CLI имя с secret/data API-путём.",
+        "example": "vault kv get -mount=secret handbook/config",
+        "result": "KVv2 CLI сам выбирает data/metadata endpoints; ACL задаётся на них."
+      }
+    ],
+    "situations": [],
+    "optionBoundary": "first-operand",
+    "flagScopes": [
+      "vault kv metadata get",
+      "vault kv metadata get",
+      "vault kv metadata get",
+      "vault kv metadata get"
+    ],
+    "prefixFlags": {
+      "vault": [],
+      "vault kv": [],
+      "vault kv metadata": []
+    }
+  },
+  {
+    "name": "vault auth enable",
+    "aliases": [],
+    "purpose": "Подключить auth method к новому пути.",
+    "syntax": "vault auth enable [ОПЦИИ] ТИП",
+    "chapter": "vault-09-auth",
+    "volume": "vault",
+    "source": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/auth/enable",
+    "sources": [
+      {
+        "title": "Официальный CLI1.21.x; actual help1.21.4",
+        "url": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/auth/enable"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-address АДРЕС",
+        "action": "Выбрать HTTPS endpoint для этой операции.",
+        "when": "Проверка другого собственного stand.",
+        "example": "vault status -address=https://127.0.0.1:18200",
+        "result": "Флаг локален выбранной команде; адрес не отключает проверку TLS."
+      },
+      {
+        "flag": "-ca-cert ФАЙЛ",
+        "action": "Принять конкретный PEM CA для проверки listener.",
+        "when": "Свой локальный CA, абсолютный путь private stand.",
+        "example": "vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt",
+        "result": "Проверяется также SAN; неверная CA даёт transport error, а не ACL403."
+      },
+      {
+        "flag": "-path ПУТЬ",
+        "action": "Выбрать auth mount.",
+        "when": "Своя AppRole роль.",
+        "example": "vault auth enable -path=approle approle",
+        "result": "Подключение не создаёт автоматически role/SecretID."
+      }
+    ],
+    "situations": [],
+    "optionBoundary": "first-operand",
+    "flagScopes": [
+      "vault auth enable",
+      "vault auth enable",
+      "vault auth enable"
+    ],
+    "prefixFlags": {
+      "vault": [],
+      "vault auth": []
+    }
+  },
+  {
+    "name": "vault auth list",
+    "aliases": [],
+    "purpose": "Исследовать подключённые auth methods.",
+    "syntax": "vault auth list [ОПЦИИ]",
+    "chapter": "vault-09-auth",
+    "volume": "vault",
+    "source": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/auth/list",
+    "sources": [
+      {
+        "title": "Официальный CLI1.21.x; actual help1.21.4",
+        "url": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/auth/list"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-address АДРЕС",
+        "action": "Выбрать HTTPS endpoint для этой операции.",
+        "when": "Проверка другого собственного stand.",
+        "example": "vault status -address=https://127.0.0.1:18200",
+        "result": "Флаг локален выбранной команде; адрес не отключает проверку TLS."
+      },
+      {
+        "flag": "-ca-cert ФАЙЛ",
+        "action": "Принять конкретный PEM CA для проверки listener.",
+        "when": "Свой локальный CA, абсолютный путь private stand.",
+        "example": "vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt",
+        "result": "Проверяется также SAN; неверная CA даёт transport error, а не ACL403."
+      },
+      {
+        "flag": "-format ФОРМАТ",
+        "action": "Выбрать table/json/yaml в поддержанной команде.",
+        "when": "Машинная обработка результата в private файл.",
+        "example": "vault kv get -format=json -mount=secret handbook/config",
+        "result": "JSON сохраняет структуру; вывод может содержать секреты и не является public artifact."
+      }
+    ],
+    "situations": [],
+    "optionBoundary": "first-operand",
+    "flagScopes": [
+      "vault auth list",
+      "vault auth list",
+      "vault auth list"
+    ],
+    "prefixFlags": {
+      "vault": [],
+      "vault auth": []
+    }
+  },
+  {
+    "name": "vault write",
+    "aliases": [],
+    "purpose": "Вызвать endpoint записи; чувствительные данные передавать из private @JSON, а не в argv.",
+    "syntax": "vault write [ОПЦИИ] ПУТЬ [ДАННЫЕ]",
+    "chapter": "vault-09-auth",
+    "volume": "vault",
+    "source": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/write",
+    "sources": [
+      {
+        "title": "Официальный CLI1.21.x; actual help1.21.4",
+        "url": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/write"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-address АДРЕС",
+        "action": "Выбрать HTTPS endpoint для этой операции.",
+        "when": "Проверка другого собственного stand.",
+        "example": "vault status -address=https://127.0.0.1:18200",
+        "result": "Флаг локален выбранной команде; адрес не отключает проверку TLS."
+      },
+      {
+        "flag": "-ca-cert ФАЙЛ",
+        "action": "Принять конкретный PEM CA для проверки listener.",
+        "when": "Свой локальный CA, абсолютный путь private stand.",
+        "example": "vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt",
+        "result": "Проверяется также SAN; неверная CA даёт transport error, а не ACL403."
+      },
+      {
+        "flag": "-format ФОРМАТ",
+        "action": "Выбрать table/json/yaml в поддержанной команде.",
+        "when": "Машинная обработка результата в private файл.",
+        "example": "vault kv get -format=json -mount=secret handbook/config",
+        "result": "JSON сохраняет структуру; вывод может содержать секреты и не является public artifact."
+      },
+      {
+        "flag": "-f / -force",
+        "action": "Разрешить write без данных.",
+        "when": "Генерация SecretID/rotate-root на endpoint с такой семантикой.",
+        "example": "vault write -wrap-ttl=60s -f auth/approle/role/handbook/secret-id",
+        "result": "Это разрешение пустого запроса, не универсальный обход ACL."
+      },
+      {
+        "flag": "-wrap-ttl ДЛИТЕЛЬНОСТЬ",
+        "action": "Вернуть ограниченную однократную обёртку ответа.",
+        "when": "Безопасная доставка SecretID.",
+        "example": "vault write -wrap-ttl=60s -f auth/approle/role/handbook/secret-id",
+        "result": "Сам wrapping token тоже secret; проверяют creation_path и одноразовый unwrap."
+      }
+    ],
+    "situations": [],
+    "optionBoundary": "first-operand",
+    "flagScopes": [
+      "vault write",
+      "vault write",
+      "vault write",
+      "vault write",
+      "vault write"
+    ],
+    "prefixFlags": {
+      "vault": []
+    }
+  },
+  {
+    "name": "vault read",
+    "aliases": [],
+    "purpose": "Вызвать read endpoint; динамический creds read имеет побочный эффект выдачи.",
+    "syntax": "vault read [ОПЦИИ] ПУТЬ",
+    "chapter": "vault-10-postgresql",
+    "volume": "vault",
+    "source": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/read",
+    "sources": [
+      {
+        "title": "Официальный CLI1.21.x; actual help1.21.4",
+        "url": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/read"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-address АДРЕС",
+        "action": "Выбрать HTTPS endpoint для этой операции.",
+        "when": "Проверка другого собственного stand.",
+        "example": "vault status -address=https://127.0.0.1:18200",
+        "result": "Флаг локален выбранной команде; адрес не отключает проверку TLS."
+      },
+      {
+        "flag": "-ca-cert ФАЙЛ",
+        "action": "Принять конкретный PEM CA для проверки listener.",
+        "when": "Свой локальный CA, абсолютный путь private stand.",
+        "example": "vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt",
+        "result": "Проверяется также SAN; неверная CA даёт transport error, а не ACL403."
+      },
+      {
+        "flag": "-format ФОРМАТ",
+        "action": "Выбрать table/json/yaml в поддержанной команде.",
+        "when": "Машинная обработка результата в private файл.",
+        "example": "vault kv get -format=json -mount=secret handbook/config",
+        "result": "JSON сохраняет структуру; вывод может содержать секреты и не является public artifact."
+      }
+    ],
+    "situations": [],
+    "optionBoundary": "first-operand",
+    "flagScopes": [
+      "vault read",
+      "vault read",
+      "vault read"
+    ],
+    "prefixFlags": {
+      "vault": []
+    }
+  },
+  {
+    "name": "vault list",
+    "aliases": [],
+    "purpose": "Запросить LIST поддержанного endpoint, не GET содержимого.",
+    "syntax": "vault list [ОПЦИИ] ПУТЬ",
+    "chapter": "vault-06-acl",
+    "volume": "vault",
+    "source": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/list",
+    "sources": [
+      {
+        "title": "Официальный CLI1.21.x; actual help1.21.4",
+        "url": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/list"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-address АДРЕС",
+        "action": "Выбрать HTTPS endpoint для этой операции.",
+        "when": "Проверка другого собственного stand.",
+        "example": "vault status -address=https://127.0.0.1:18200",
+        "result": "Флаг локален выбранной команде; адрес не отключает проверку TLS."
+      },
+      {
+        "flag": "-ca-cert ФАЙЛ",
+        "action": "Принять конкретный PEM CA для проверки listener.",
+        "when": "Свой локальный CA, абсолютный путь private stand.",
+        "example": "vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt",
+        "result": "Проверяется также SAN; неверная CA даёт transport error, а не ACL403."
+      },
+      {
+        "flag": "-format ФОРМАТ",
+        "action": "Выбрать table/json/yaml в поддержанной команде.",
+        "when": "Машинная обработка результата в private файл.",
+        "example": "vault kv get -format=json -mount=secret handbook/config",
+        "result": "JSON сохраняет структуру; вывод может содержать секреты и не является public artifact."
+      }
+    ],
+    "situations": [],
+    "optionBoundary": "first-operand",
+    "flagScopes": [
+      "vault list",
+      "vault list",
+      "vault list"
+    ],
+    "prefixFlags": {
+      "vault": []
+    }
+  },
+  {
+    "name": "vault login",
+    "aliases": [],
+    "purpose": "Войти через настроенный auth method; не сохранять token в host HOME.",
+    "syntax": "vault login [ОПЦИИ]",
+    "chapter": "vault-09-auth",
+    "volume": "vault",
+    "source": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/login",
+    "sources": [
+      {
+        "title": "Официальный CLI1.21.x; actual help1.21.4",
+        "url": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/login"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-address АДРЕС",
+        "action": "Выбрать HTTPS endpoint для этой операции.",
+        "when": "Проверка другого собственного stand.",
+        "example": "vault status -address=https://127.0.0.1:18200",
+        "result": "Флаг локален выбранной команде; адрес не отключает проверку TLS."
+      },
+      {
+        "flag": "-ca-cert ФАЙЛ",
+        "action": "Принять конкретный PEM CA для проверки listener.",
+        "when": "Свой локальный CA, абсолютный путь private stand.",
+        "example": "vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt",
+        "result": "Проверяется также SAN; неверная CA даёт transport error, а не ACL403."
+      },
+      {
+        "flag": "-method ИМЯ",
+        "action": "Выбрать настроенный метод, например oidc/cert.",
+        "when": "После подготовки обеих сторон trust.",
+        "example": "vault login -method=oidc -no-store",
+        "result": "OIDC требует зарегистрированный callback/issuer; это не первый bootstrap."
+      },
+      {
+        "flag": "-no-store",
+        "action": "Не писать полученный token в token helper.",
+        "when": "Личный ручной login без ~/.vault-token.",
+        "example": "vault login -method=oidc -no-store",
+        "result": "Вывод всё ещё содержит credential; учебный helper использует API без печати."
+      }
+    ],
+    "situations": [],
+    "optionBoundary": "first-operand",
+    "flagScopes": [
+      "vault login",
+      "vault login",
+      "vault login",
+      "vault login"
+    ],
+    "prefixFlags": {
+      "vault": []
+    }
+  },
+  {
+    "name": "vault unwrap",
+    "aliases": [],
+    "purpose": "Однократно извлечь wrapped response с предъявленным wrapping token.",
+    "syntax": "vault unwrap",
+    "chapter": "vault-09-auth",
+    "volume": "vault",
+    "source": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/unwrap",
+    "sources": [
+      {
+        "title": "Официальный CLI1.21.x; actual help1.21.4",
+        "url": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/unwrap"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-address АДРЕС",
+        "action": "Выбрать HTTPS endpoint для этой операции.",
+        "when": "Проверка другого собственного stand.",
+        "example": "vault status -address=https://127.0.0.1:18200",
+        "result": "Флаг локален выбранной команде; адрес не отключает проверку TLS."
+      },
+      {
+        "flag": "-ca-cert ФАЙЛ",
+        "action": "Принять конкретный PEM CA для проверки listener.",
+        "when": "Свой локальный CA, абсолютный путь private stand.",
+        "example": "vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt",
+        "result": "Проверяется также SAN; неверная CA даёт transport error, а не ACL403."
+      }
+    ],
+    "situations": [],
+    "optionBoundary": "first-operand",
+    "flagScopes": [
+      "vault unwrap",
+      "vault unwrap"
+    ],
+    "prefixFlags": {
+      "vault": []
+    }
+  },
+  {
+    "name": "vault agent",
+    "aliases": [],
+    "purpose": "Запустить Agent auto-auth/templates по созданной конфигурации.",
+    "syntax": "vault agent -config ФАЙЛ",
+    "chapter": "vault-12-agent-go",
+    "volume": "vault",
+    "source": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/agent",
+    "sources": [
+      {
+        "title": "Официальный CLI1.21.x; actual help1.21.4",
+        "url": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/agent"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-config ФАЙЛ",
+        "action": "Прочитать конфигурацию Agent.",
+        "when": "Файлы role-id/нового SecretID уже доставлены private.",
+        "example": "vault agent -config /home/student/handbook-vault/private/agent.hcl",
+        "result": "exit_after_auth в учебном config проверяет one-shot, а не длительный renewal."
+      }
+    ],
+    "situations": [],
+    "optionBoundary": "first-operand",
+    "flagScopes": [
+      "vault agent"
+    ],
+    "prefixFlags": {
+      "vault": []
+    }
+  },
+  {
+    "name": "vault audit enable",
+    "aliases": [],
+    "purpose": "Включить устройство аудита; путь должен быть доступен server UID.",
+    "syntax": "vault audit enable [ОПЦИИ] ТИП [ДАННЫЕ]",
+    "chapter": "vault-14-audit",
+    "volume": "vault",
+    "source": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/audit/enable",
+    "sources": [
+      {
+        "title": "Официальный CLI1.21.x; actual help1.21.4",
+        "url": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/audit/enable"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-address АДРЕС",
+        "action": "Выбрать HTTPS endpoint для этой операции.",
+        "when": "Проверка другого собственного stand.",
+        "example": "vault status -address=https://127.0.0.1:18200",
+        "result": "Флаг локален выбранной команде; адрес не отключает проверку TLS."
+      },
+      {
+        "flag": "-ca-cert ФАЙЛ",
+        "action": "Принять конкретный PEM CA для проверки listener.",
+        "when": "Свой локальный CA, абсолютный путь private stand.",
+        "example": "vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt",
+        "result": "Проверяется также SAN; неверная CA даёт transport error, а не ACL403."
+      }
+    ],
+    "situations": [],
+    "optionBoundary": "first-operand",
+    "flagScopes": [
+      "vault audit enable",
+      "vault audit enable"
+    ],
+    "prefixFlags": {
+      "vault": [],
+      "vault audit": []
+    }
+  },
+  {
+    "name": "vault audit list",
+    "aliases": [],
+    "purpose": "Прочитать уже включённые audit devices.",
+    "syntax": "vault audit list [ОПЦИИ]",
+    "chapter": "vault-14-audit",
+    "volume": "vault",
+    "source": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/audit/list",
+    "sources": [
+      {
+        "title": "Официальный CLI1.21.x; actual help1.21.4",
+        "url": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/audit/list"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-address АДРЕС",
+        "action": "Выбрать HTTPS endpoint для этой операции.",
+        "when": "Проверка другого собственного stand.",
+        "example": "vault status -address=https://127.0.0.1:18200",
+        "result": "Флаг локален выбранной команде; адрес не отключает проверку TLS."
+      },
+      {
+        "flag": "-ca-cert ФАЙЛ",
+        "action": "Принять конкретный PEM CA для проверки listener.",
+        "when": "Свой локальный CA, абсолютный путь private stand.",
+        "example": "vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt",
+        "result": "Проверяется также SAN; неверная CA даёт transport error, а не ACL403."
+      },
+      {
+        "flag": "-format ФОРМАТ",
+        "action": "Выбрать table/json/yaml в поддержанной команде.",
+        "when": "Машинная обработка результата в private файл.",
+        "example": "vault kv get -format=json -mount=secret handbook/config",
+        "result": "JSON сохраняет структуру; вывод может содержать секреты и не является public artifact."
+      },
+      {
+        "flag": "-detailed",
+        "action": "Показать опции устройства.",
+        "when": "Проверка file_path/mode без повторного enable.",
+        "example": "vault audit list -detailed",
+        "result": "Журналы и ключи HMAC сюда не копируются."
+      }
+    ],
+    "situations": [],
+    "optionBoundary": "first-operand",
+    "flagScopes": [
+      "vault audit list",
+      "vault audit list",
+      "vault audit list",
+      "vault audit list"
+    ],
+    "prefixFlags": {
+      "vault": [],
+      "vault audit": []
+    }
+  },
+  {
+    "name": "vault operator raft list-peers",
+    "aliases": [],
+    "purpose": "Прочитать voters/leader текущего Raft peer set.",
+    "syntax": "vault operator raft list-peers",
+    "chapter": "vault-13-raft",
+    "volume": "vault",
+    "source": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/operator/raft/list-peers",
+    "sources": [
+      {
+        "title": "Официальный CLI1.21.x; actual help1.21.4",
+        "url": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/operator/raft/list-peers"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-address АДРЕС",
+        "action": "Выбрать HTTPS endpoint для этой операции.",
+        "when": "Проверка другого собственного stand.",
+        "example": "vault status -address=https://127.0.0.1:18200",
+        "result": "Флаг локален выбранной команде; адрес не отключает проверку TLS."
+      },
+      {
+        "flag": "-ca-cert ФАЙЛ",
+        "action": "Принять конкретный PEM CA для проверки listener.",
+        "when": "Свой локальный CA, абсолютный путь private stand.",
+        "example": "vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt",
+        "result": "Проверяется также SAN; неверная CA даёт transport error, а не ACL403."
+      }
+    ],
+    "situations": [],
+    "optionBoundary": "first-operand",
+    "flagScopes": [
+      "vault operator raft list-peers",
+      "vault operator raft list-peers"
+    ],
+    "prefixFlags": {
+      "vault": [],
+      "vault operator": [],
+      "vault operator raft": []
+    }
+  },
+  {
+    "name": "vault operator raft snapshot save",
+    "aliases": [],
+    "purpose": "Создать согласованный экспорт Raft на частный путь.",
+    "syntax": "vault operator raft snapshot save ФАЙЛ",
+    "chapter": "vault-15-recovery",
+    "volume": "vault",
+    "source": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/operator/raft#snapshot",
+    "sources": [
+      {
+        "title": "Официальный CLI1.21.x; actual help1.21.4",
+        "url": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/operator/raft#snapshot"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-address АДРЕС",
+        "action": "Выбрать HTTPS endpoint для этой операции.",
+        "when": "Проверка другого собственного stand.",
+        "example": "vault status -address=https://127.0.0.1:18200",
+        "result": "Флаг локален выбранной команде; адрес не отключает проверку TLS."
+      },
+      {
+        "flag": "-ca-cert ФАЙЛ",
+        "action": "Принять конкретный PEM CA для проверки listener.",
+        "when": "Свой локальный CA, абсолютный путь private stand.",
+        "example": "vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt",
+        "result": "Проверяется также SAN; неверная CA даёт transport error, а не ACL403."
+      }
+    ],
+    "situations": [],
+    "optionBoundary": "first-operand",
+    "flagScopes": [
+      "vault operator raft snapshot save",
+      "vault operator raft snapshot save"
+    ],
+    "prefixFlags": {
+      "vault": [],
+      "vault operator": [],
+      "vault operator raft": [],
+      "vault operator raft snapshot": []
+    }
+  },
+  {
+    "name": "vault operator raft snapshot restore",
+    "aliases": [],
+    "purpose": "Импортировать snapshot в явно выбранную цель; операция меняет state.",
+    "syntax": "vault operator raft snapshot restore [ОПЦИИ] ФАЙЛ",
+    "chapter": "vault-15-recovery",
+    "volume": "vault",
+    "source": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/operator/raft#snapshot",
+    "sources": [
+      {
+        "title": "Официальный CLI1.21.x; actual help1.21.4",
+        "url": "https://developer.hashicorp.com/vault/docs/v1.21.x/commands/operator/raft#snapshot"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-address АДРЕС",
+        "action": "Выбрать HTTPS endpoint для этой операции.",
+        "when": "Проверка другого собственного stand.",
+        "example": "vault status -address=https://127.0.0.1:18200",
+        "result": "Флаг локален выбранной команде; адрес не отключает проверку TLS."
+      },
+      {
+        "flag": "-ca-cert ФАЙЛ",
+        "action": "Принять конкретный PEM CA для проверки listener.",
+        "when": "Свой локальный CA, абсолютный путь private stand.",
+        "example": "vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt",
+        "result": "Проверяется также SAN; неверная CA даёт transport error, а не ACL403."
+      },
+      {
+        "flag": "-force",
+        "action": "Пропустить проверку соответствия seal snapshot текущему target.",
+        "when": "Только новый отдельный target лаборатории с source shares.",
+        "example": "vault operator raft snapshot restore -force /private/checkpoint-v3.snap",
+        "result": "Не универсальное исправление failed restore; после импорта нужны ключи SOURCE, target данные заменены."
+      }
+    ],
+    "situations": [],
+    "optionBoundary": "first-operand",
+    "flagScopes": [
+      "vault operator raft snapshot restore",
+      "vault operator raft snapshot restore",
+      "vault operator raft snapshot restore"
+    ],
+    "prefixFlags": {
+      "vault": [],
+      "vault operator": [],
+      "vault operator raft": [],
+      "vault operator raft snapshot": []
+    }
   }
 ]

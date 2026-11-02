@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 690" role="img" aria-labelledby="vault-kv-version-states-title vault-kv-version-states-desc" style="display:block;width:100%;max-width:400px;height:auto;margin:auto">
+<title id="vault-kv-version-states-title">История ключа handbook/config</title><desc id="vault-kv-version-states-desc">Put с CAS0 создаёт версию 1, put с CAS1 — версию 2; устаревший CAS1 отклонён. PATCH с CAS2 создаёт версию 3. Delete, undelete и destroy версии 2 меняют её состояние; current остаётся 3.</desc>
+<style>
+#vault-kv-version-states-art .paper{fill:var(--reader-paper,#fffcf5)}
+#vault-kv-version-states-art .soft{fill:var(--reader-soft,#e8f2ec)}
+#vault-kv-version-states-art text{fill:var(--reader-text,#202d34);font-family:Arial,sans-serif;font-size:20px}
+#vault-kv-version-states-art .head{font-size:23px;font-weight:bold}
+#vault-kv-version-states-art .line{fill:none;stroke:var(--reader-text,#202d34);stroke-width:1.5}
+#vault-kv-version-states-art .mark{fill:var(--reader-accent,#0c6b63)}
+#vault-kv-version-states-art .accent{fill:none;stroke:var(--reader-accent,#0c6b63);stroke-width:3}
+@media print{#vault-kv-version-states-art .paper,#vault-kv-version-states-art .soft{fill:#fff} #vault-kv-version-states-art text,#vault-kv-version-states-art .mark{fill:#000} #vault-kv-version-states-art .line,#vault-kv-version-states-art .accent{stroke:#000}}
+</style>
+<g id="vault-kv-version-states-art"><rect class="paper" width="400" height="690"/>
+<text x="16" y="32" class="head">Один ключ, отдельные версии</text>
+<text x="16" y="65">secret/handbook/config • KVv2</text>
+<rect class="soft" x="12" y="90" width="376" height="56"/>
+<text x="20" y="124">Действие</text><text x="210" y="124">current</text><text x="305" y="124">v2</text>
+<path class="line" d="M12 146h376M198 90v535M294 90v535"/>
+<text x="20" y="182">put CAS0</text><text x="230" y="182">1</text><text x="307" y="182">нет</text>
+<path class="line" d="M12 208h376"/>
+<text x="20" y="244">put CAS1</text><text x="230" y="244">2</text><text x="304" y="244">есть</text>
+<path class="line" d="M12 270h376"/>
+<text x="20" y="305">stale CAS1</text><text x="230" y="305">2</text><text x="304" y="305">есть</text>
+<text x="20" y="333">HTTP400</text><path class="line" d="M12 353h376"/>
+<text x="20" y="390">patch CAS2</text><text x="230" y="390">3</text><text x="304" y="390">есть</text>
+<path class="line" d="M12 416h376"/>
+<text x="20" y="452">delete v2</text><text x="230" y="452">3</text><text x="301" y="452">скрыта</text>
+<path class="line" d="M12 478h376"/>
+<text x="20" y="514">undelete v2</text><text x="230" y="514">3</text><text x="304" y="514">есть</text>
+<path class="line" d="M12 540h376"/>
+<text x="20" y="576">destroy v2</text><text x="230" y="576">3</text><text x="301" y="576">потеряна</text>
+<text x="304" y="608">навсегда</text><path class="line" d="M12 634h376"/>
+<text x="16" y="669">Delete/destroy здесь не создают v4.</text></g></svg>

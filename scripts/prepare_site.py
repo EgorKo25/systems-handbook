@@ -73,7 +73,8 @@ def is_reading_file(name: str) -> bool:
             "docker/labs/echo/.dockerignore", "sonarqube/labs/.gitignore",
             "terraform/.gitignore", "terraform/labs/foundation/.gitignore",
             "terraform/labs/adapters/libvirt/.terraform.lock.hcl",
-            "helm/labs/chart/.helmignore"}:
+            "helm/labs/chart/.helmignore", "flyway/labs/.gitignore",
+            "vault/labs/.gitignore", "vault/labs/.env.example"}:
         return True
     if any(p.startswith(".") or p in {"__pycache__", "node_modules"} for p in path.parts):
         return False

@@ -1,0 +1,46 @@
+VAULT — ИСХОДНИКИ ДЛЯ ВЗАИМНОЙ ВЫЧИТКИ, 2 ноября 2026
+
+18 HTML (маршрут и 17 глав), CONFIG, 56 терминов, 39 native-карточек,
+5 пошаговых схем и 3 предметных SVG: ключи/шифротексты, версии KV, шкала TTL.
+Сохранены anchors vault-unseal-key-path и vault-cas-version. Включены labs,
+README, policies/SQL, клиент Go, тесты, лицензия точного tag, NOTICE и dotfiles.
+Регистрацию, общую сборку и публикацию выполняет координатор.
+
+Версия опыта — Vault Community 1.21.4, commit
+ffe7023c481dc1ea2d8550bbaca8d85f8e611e0b. SHA-256 официального linux_amd64 zip:
+889b681990fe221b884b7932fa9c9dd0ee9811b9349554f1aa287ab63c9f3dae.
+Primary fingerprint подписи C874011F0AB405110D02105534365D9472D7468F.
+Документация v1.21.x, лицензия BUSL 1.1; current 2.x/Enterprise различены.
+Runtime, ключи, tokens, init JSON, snapshots и журналы не входят в исходники.
+
+Исправлены Python 3.11 prerequisite, свежие tokens ручного KV-маршрута,
+переход cwd после сборки Go, свежий Agent sink и OIDC -no-store. Таблица
+запроса связывает HTTP-поля, API-путь, policy, версию и причины отказа.
+Явный recover-operator выполняет Shamir/nonce/OTP → новый orphan operator →
+отзыв временного root с проверкой 403. Оператор без renewal истекает через
+8 часов; explicit max 24 часа ограничивает даже успешно продлеваемый token.
+Restore проверяет snapshot/custody до target init и sys/init отдельно от
+пустоты state. Импорт отделён от проверки доступа; если текущего source
+token нет в снимке, target recover-operator/verify-restore продолжают импорт.
+PKI проверяет наличие обоих mounts до первого создания.
+
+Новые узкие native результаты: 22 проверки recovery/restore/PKI preflight,
+ещё 10 — точный ручной lookup/renew и current KV delete/CAS. Все три собственных
+TLS/Raft процесса остановлены, состояние сохранено private. Полная прежняя
+ACL/Agent/PG suite ради текста не повторялась. Исторические результаты
+1 ноября сохранены с отдельными датами и проверкой неизменных исходников.
+Подробные факты и пределы перечислены в ПРОВЕРКИ.txt.
+
+Текущие source/schema checks и production parser прошли 10 случаев/129 форм;
+предметные расчёты и guards — 40 проверок. Native SVG-preview: 300/390 px,
+8 палитр × neutral/warm и монохром; несколько PNG фактически осмотрены.
+Это SVG-only результат. Новый Chrome/Safari, весь reader, печать PDF, export
+и автономный перенос этим не проверены. После прежних SIGTRAP до page новый
+Chrome в той же среде не запускался. Общий render выполняет координатор.
+
+Не исполнялись многосерверные HA/partition, audit disk-full/remote sink,
+внешние KMS/HSM/Kubernetes/OIDC/cert issuer, Enterprise, длительный Agent,
+реальное обновление и совместное восстановление Vault/PG. TTL-шкала — расчёт,
+не суточный замер. Сохраняемый reader продолжается по labs/README.txt:
+checks только в KV07; prepare/init/provision/pki повторно не запускают.
+Независимый native_repeat требует отдельный новый work-root и свой runtime.

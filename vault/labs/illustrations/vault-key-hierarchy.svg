@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 685" role="img" aria-labelledby="vault-key-hierarchy-title vault-key-hierarchy-desc" style="display:block;width:100%;max-width:400px;height:auto;margin:auto">
+<title id="vault-key-hierarchy-title">Ключ в памяти и защищённая запись в Raft</title><desc id="vault-key-hierarchy-desc">Две различные доли из трёх реконструируют unseal key. Он открывает root key, root key — keyring, data key из keyring — значение. Root token является отдельным API credential.</desc>
+<style>
+#vault-key-hierarchy-art .paper{fill:var(--reader-paper,#fffcf5)}
+#vault-key-hierarchy-art .soft{fill:var(--reader-soft,#e8f2ec)}
+#vault-key-hierarchy-art text{fill:var(--reader-text,#202d34);font-family:Arial,sans-serif;font-size:20px}
+#vault-key-hierarchy-art .head{font-size:23px;font-weight:bold}
+#vault-key-hierarchy-art .line{fill:none;stroke:var(--reader-text,#202d34);stroke-width:1.5}
+#vault-key-hierarchy-art .mark{fill:var(--reader-accent,#0c6b63)}
+#vault-key-hierarchy-art .accent{fill:none;stroke:var(--reader-accent,#0c6b63);stroke-width:3}
+@media print{#vault-key-hierarchy-art .paper,#vault-key-hierarchy-art .soft{fill:#fff} #vault-key-hierarchy-art text,#vault-key-hierarchy-art .mark{fill:#000} #vault-key-hierarchy-art .line,#vault-key-hierarchy-art .accent{stroke:#000}}
+</style>
+<g id="vault-key-hierarchy-art"><rect class="paper" width="400" height="685"/>
+<text x="16" y="32" class="head">Что открывает следующий слой</text>
+<text x="16" y="66">Shamir: доли A, B, C отдельно</text>
+<path class="accent" d="M28 86h344M28 80v12M208 80v12"/>
+<text x="16" y="122">Две разные доли → unseal key</text>
+<text x="16" y="154">Порог реконструирован в RAM</text>
+<rect class="soft" x="12" y="178" width="376" height="48"/>
+<text x="20" y="208">Ключ в RAM</text><text x="204" y="208">Запись в Raft</text>
+<path class="line" d="M12 226h376M192 178v330M12 320h376M12 414h376M12 508h376"/>
+<text x="20" y="260">1. unseal key</text><text x="204" y="260">E_u(root key)</text>
+<text x="20" y="294">открывает →</text><text x="204" y="294">защищённый ключ</text>
+<text x="20" y="354">2. root key</text><text x="204" y="354">E_r(keyring)</text>
+<text x="20" y="388">открывает →</text><text x="204" y="388">набор data keys</text>
+<text x="20" y="448">3. data key</text><text x="204" y="448">E_d(value)</text>
+<text x="20" y="482">открывает →</text><text x="204" y="482">значение API</text>
+<text x="16" y="544">E_k(x): шифрование x ключом k.</text>
+<text x="16" y="576">Записи символические, не raft.db.</text>
+<path class="line" d="M16 596h368"/>
+<text x="16" y="626">Root token → API, policy/TTL</text>
+<text x="16" y="658">не участвует в трёх расшифровках</text></g></svg>

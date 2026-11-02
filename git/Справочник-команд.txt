@@ -7855,3 +7855,845 @@ helm template ledger ./chart --kube-version 1.36.6 --debug --namespace helm-lab
 Когда: Только после измерения задержки и throttling.
 helm status ledger --qps 5 --burst-limit 10 --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
 Результат: Не увеличивает серверную ёмкость и не ускоряет scheduling автоматически.
+
+mongod
+Запустить или локально остановить свой сервер; путь данных и сеть проверяют до записи.
+mongod [ОПЦИИ]
+-h / --help — Показать справку закреплённого бинарника.
+Когда: Перед использованием параметров иной версии.
+mongod --help
+Результат: Код 0, сервер не запускается.
+--version — Показать версию, gitVersion и modules.
+Когда: Приёмка Community 8.0.34.
+mongod --version
+Результат: modules=[]; не доказывает состояние running server.
+-f ФАЙЛ / --config ФАЙЛ — Прочитать YAML-конфигурацию.
+Когда: Сохраняемый свой экземпляр.
+mongod --config "$LAB/mongod.yml" --fork
+Результат: Относительные пути зависят от cwd; совпадающий CLI параметр имеет приоритет.
+--fork — Оставить сервер в фоне после стартовой проверки.
+Когда: Личный Linux-процесс с отдельным logpath.
+mongod --config "$LAB/mongod.yml" --fork
+Результат: Код 0 не заменяет auth+write/read acceptance.
+--dbpath КАТАЛОГ — Выбрать собственный каталог файлов данных.
+Когда: Отдельная restore-цель.
+mongod --dbpath "$LAB/restore-1/data" --port 27118 --bind_ip 127.0.0.1 --logpath "$LAB/restore-1/mongod.log" --fork
+Результат: Путь должен существовать и быть доступен пользователю; не подключать чужой dataPath.
+--port ЧИСЛО — Задать TCP-порт.
+Когда: Изолировать restore от основного27117.
+mongod --dbpath "$LAB/restore-1/data" --port 27118 --bind_ip 127.0.0.1
+Результат: Занятый порт вызывает отказ, чужую службу не останавливают.
+--bind_ip АДРЕС — Ограничить адрес listener.
+Когда: Только собственный loopback.
+mongod --dbpath "$LAB/restore-1/data" --port 27118 --bind_ip 127.0.0.1
+Результат: Не использовать bind_ip_all для этого стенда.
+--nounixsocket — Отключить дополнительный Unix listener.
+Когда: Явные точки доступа restore-цели.
+mongod --dbpath "$LAB/restore-1/data" --port 27118 --bind_ip 127.0.0.1 --nounixsocket
+Результат: TCP listener остаётся по своим настройкам.
+--logpath ФАЙЛ — Писать диагностический журнал в файл.
+Когда: Фоновый сервер и расследование startup.
+mongod --config "$LAB/mongod.yml" --logpath "$LAB/log/second.log" --fork
+Результат: Это не WiredTiger journal и не backup.
+--pidfilepath ФАЙЛ — Сохранить номер процесса.
+Когда: Наблюдение за своим экземпляром.
+mongod --config "$LAB/mongod.yml" --pidfilepath "$LAB/run/mongod.pid" --fork
+Результат: PID может устареть после аварии; не доказывает готовность.
+--wiredTigerCacheSizeGB ЧИСЛО — Задать размер WT cache в GiB.
+Когда: Ограниченный учебный restore.
+mongod --dbpath "$LAB/restore-1/data" --bind_ip 127.0.0.1 --port 27118 --wiredTigerCacheSizeGB 0.25
+Результат: Это не ограничение всего RSS процесса.
+--shutdown — Локально штатно остановить сервер по своему dbPath (Linux).
+Когда: До смены TLS-профиля/перезапуска.
+mongod --config "$LAB/mongod.yml" --shutdown
+Результат: Данные сохраняются; никакой reset не выполняется.
+
+mongosh
+Подключиться к собственному серверу и выполнить ограниченный JavaScript.
+mongosh [ОПЦИИ] [URI] [ФАЙЛЫ]
+-h / --help — Показать help mongosh.
+Когда: Проверка версии CLI-грамматики.
+mongosh --help
+Результат: Справка не подключается к БД.
+--version — Показать версию отдельного shell.
+Когда: Приёмка 2.14.1.
+mongosh --version
+Результат: Версия mongod проверяется отдельно.
+--quiet — Сократить приветствие подключения.
+Когда: Читаемый вывод лаборатории.
+mongosh --quiet --norc "mongodb://127.0.0.1:27117/admin?directConnection=true"
+Результат: Не скрывает ошибки скрипта.
+--norc — Не выполнять .mongoshrc.js.
+Когда: Воспроизводимость своих проверок.
+mongosh --norc --nodb --eval "print(2)"
+Результат: Неизвестный пользовательский стартовый код не запускается.
+--nodb — Не подключаться к серверу при старте.
+Когда: Локальная проверка JS/help.
+mongosh --nodb --norc --quiet --eval "print(2)"
+Результат: Без db address; не доказывает работоспособность сервера.
+-f ФАЙЛ / --file ФАЙЛ — Загрузить конкретный JS-файл.
+Когда: Приёмка с приватным auth-файлом.
+mongosh "mongodb://127.0.0.1:27117/admin?directConnection=true" --quiet --norc --file labs/admin.js
+Результат: Скрипт выполняется с правами клиента и может менять БД; заранее прочитать ACTION.
+--eval КОД — Выполнить JavaScript как один argv-аргумент.
+Когда: Короткая readiness-проба.
+mongosh --nodb --quiet --norc --eval "print(2)"
+Результат: Shell quoting сохраняет пробелы; код внутри не трактуется справочником как CLI flags.
+--tls — Включить TLS.
+Когда: Личный requireTLS профиль.
+mongosh "mongodb://127.0.0.1:27117/" --tls --tlsCAFile "$LAB/private/tls/ca.pem"
+Результат: CA и SAN должны соответствовать; права SCRAM остаются отдельными.
+--tlsCAFile ФАЙЛ — Выбрать доверенную CA для проверки сервера.
+Когда: Положительная и wrongCA-проба.
+mongosh "mongodb://127.0.0.1:27117/" --tls --tlsCAFile "$LAB/private/tls/ca.pem"
+Результат: Чужая CA вызывает отказ; allowInvalidCertificates не является исправлением.
+-u ИМЯ / --username ИМЯ — Выбрать пользователя для аутентификации.
+Когда: Ручной доступ вместо script auth.
+mongosh "mongodb://127.0.0.1:27117/admin" --username operator
+Результат: Пароль вводят по приглашению, не помещают в argv/URI.
+--authenticationDatabase БАЗА — Указать базу удостоверения пользователя.
+Когда: operator создан в admin.
+mongosh "mongodb://127.0.0.1:27117/workshop" --username operator --authenticationDatabase admin
+Результат: Не меняет целевую БД коллекции и не создаёт пользователя.
+
+mongodump
+Создать logical dump; консистентность нагрузки и restore проверяют отдельно.
+mongodump [ОПЦИИ]
+--version — Показать версию Tools.
+Когда: Парность dump/restore 100.20.0.
+mongodump --version
+Результат: Номер Tools не равен MongoDB Server.
+--config ФАЙЛ — Получить конфигурацию, включая приватный пароль, из YAML.
+Когда: Убрать секрет из argv.
+mongodump --config "$LAB/private/tools.yml" --db workshop --archive="$LAB/backups/workshop-1.archive.gz" --gzip
+Результат: Файл0600 не публикуется; cli-конфликты нужно исследовать.
+-d БАЗА / --db БАЗА — Ограничить область dump.
+Когда: Неподвижный workshop.
+mongodump --config "$LAB/private/tools.yml" --db workshop --archive="$LAB/backups/workshop-1.archive.gz"
+Результат: Такой scoped dump не совмещают наугад с --oplog.
+--archive ФАЙЛ — Сохранить единый archive Tools.
+Когда: Новая копия с явным именем.
+mongodump --config "$LAB/private/tools.yml" --db workshop --archive="$LAB/backups/workshop-1.archive.gz" --gzip
+Результат: Сначала test ! -e: не перезаписывать прежнюю принятую копию.
+--gzip — Сжать archive/файлы dump.
+Когда: Уменьшить место копии.
+mongodump --config "$LAB/private/tools.yml" --db workshop --archive="$LAB/backups/workshop-1.archive.gz" --gzip
+Результат: Restore должен знать о сжатии.
+--ssl — Включить TLS в грамматике Tools.
+Когда: Проверка requireTLS профиля.
+mongodump --config "$LAB/private/tools.yml" --ssl --sslCAFile "$LAB/private/tls/ca.pem" --db workshop --archive="$LAB/backups/tls-probe.archive.gz" --gzip
+Результат: У mongosh аналог называется --tls, имена не переносить автоматически.
+--sslCAFile ФАЙЛ — Указать доверенную CA Tools.
+Когда: Удостоверение локального TLS-сервера.
+mongodump --config "$LAB/private/tools.yml" --ssl --sslCAFile "$LAB/private/tls/ca.pem" --db workshop --archive="$LAB/backups/tls-probe.archive.gz"
+Результат: Сертификат должен соответствовать адресу URI.
+
+mongorestore
+Импортировать dump на новую отдельную цель и затем проверить данные.
+mongorestore [ОПЦИИ]
+--version — Показать версию restore.
+Когда: Совпадение с версией dump.
+mongorestore --version
+Результат: Не означает успешное чтение архива.
+--uri URI — Задать целевой адрес без неожиданного имени БД.
+Когда: Отдельный loopback27118.
+mongorestore --uri "mongodb://127.0.0.1:27118/?directConnection=true" --archive="$LAB/backups/workshop-1.archive.gz" --gzip --stopOnError
+Результат: URI с /admin может изменить целевую БД; проверять namespaces.
+--archive ФАЙЛ — Прочитать archive Tools.
+Когда: Восстановление принятой копии.
+mongorestore --uri "mongodb://127.0.0.1:27118/" --archive="$LAB/backups/workshop-1.archive.gz" --gzip --stopOnError
+Результат: Не tar/JSON; источник не должен меняться во время чтения.
+--gzip — Распаковывать gzip dump.
+Когда: Архив создан с --gzip.
+mongorestore --uri "mongodb://127.0.0.1:27118/" --archive="$LAB/backups/workshop-1.archive.gz" --gzip --stopOnError
+Результат: Пропуск флага не превращает сжатые байты в BSON.
+--stopOnError — Остановить дальнейший импорт при ошибке.
+Когда: Приёмка новой цели.
+mongorestore --uri "mongodb://127.0.0.1:27118/" --archive="$LAB/backups/workshop-1.archive.gz" --gzip --stopOnError
+Результат: Уже импортированные записи не отменяются; цель до приёмки частична.
+
+job-service
+Собственный учебный Go-сервис с сохраняемыми jobs и контролируемыми опытами.
+job-service [-mode РЕЖИМ] [-n ЧИСЛО] [-hint ПЛАН]
+-mode РЕЖИМ / --mode РЕЖИМ — Выбрать serve/seed/migrate/measure/check/transaction/bson.
+Когда: Один из явно описанных этапов стенда.
+job-service -mode=check
+Результат: Неизвестный режим завершает процесс; seed/migrate/transaction меняют только workshop.
+-n ЧИСЛО / --n ЧИСЛО — Задать размер seed либо число серийных измерений.
+Когда: Одинаковая нагрузка сравнения.
+job-service -mode=measure -n=200
+Результат: Для measure допустимо1..10000; n не удаляет лишние данные.
+-hint ПЛАН / --hint ПЛАН — Только measure: natural либо имя индекса.
+Когда: Одинаковые документы, разные пути доступа.
+job-service -mode=measure -n=200 -hint=tenant_state_recent
+Результат: Hint принуждает план и может отказать; это не настройка HTTP-запросов.
+
+vault -help
+Показать корневую справку установленного бинарника; сервер не запускается.
+vault -help
+
+
+vault version
+Показать версию, build и commit фактически запущенного файла.
+vault version
+
+
+vault server
+Запустить сохраняемый сервер по подготовленному HCL; сам запуск не init/unseal.
+vault server -config ФАЙЛ
+-config ФАЙЛ — Загрузить HCL/JSON конфигурацию или каталог согласно CLI.
+Когда: Личный loopback stand с созданными paths и TLS.
+vault server -config /home/student/handbook-vault/server.hcl
+Результат: Процесс остаётся работающим; неверные права/порт прекращают запуск.
+
+vault status
+Прочитать init/seal/HA состояние через TLS.
+vault status [ОПЦИИ]
+-address АДРЕС — Выбрать HTTPS endpoint для этой операции.
+Когда: Проверка другого собственного stand.
+vault status -address=https://127.0.0.1:18200
+Результат: Флаг локален выбранной команде; адрес не отключает проверку TLS.
+-ca-cert ФАЙЛ — Принять конкретный PEM CA для проверки listener.
+Когда: Свой локальный CA, абсолютный путь private stand.
+vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt
+Результат: Проверяется также SAN; неверная CA даёт transport error, а не ACL403.
+-format ФОРМАТ — Выбрать table/json/yaml в поддержанной команде.
+Когда: Машинная обработка результата в private файл.
+vault kv get -format=json -mount=secret handbook/config
+Результат: JSON сохраняет структуру; вывод может содержать секреты и не является public artifact.
+
+vault operator init
+Однократно инициализировать пустой storage; результат чувствителен.
+vault operator init [ОПЦИИ]
+-address АДРЕС — Выбрать HTTPS endpoint для этой операции.
+Когда: Проверка другого собственного stand.
+vault status -address=https://127.0.0.1:18200
+Результат: Флаг локален выбранной команде; адрес не отключает проверку TLS.
+-ca-cert ФАЙЛ — Принять конкретный PEM CA для проверки listener.
+Когда: Свой локальный CA, абсолютный путь private stand.
+vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt
+Результат: Проверяется также SAN; неверная CA даёт transport error, а не ACL403.
+-format ФОРМАТ — Выбрать table/json/yaml в поддержанной команде.
+Когда: Машинная обработка результата в private файл.
+vault kv get -format=json -mount=secret handbook/config
+Результат: JSON сохраняет структуру; вывод может содержать секреты и не является public artifact.
+-key-shares N — Создать N долей Shamir.
+Когда: Только первый init нового кластера.
+vault operator init -key-shares=3 -key-threshold=2 -format=json
+Результат: Частный JSON хранит доли и первоначальный root; stdout не публикуют.
+-key-threshold N — Задать необходимый порог различных долей.
+Когда: При принятой церемонии хранителей.
+vault operator init -key-shares=3 -key-threshold=2
+Результат: Порог≤числа долей; две копии одной доли не считаются двумя.
+
+vault operator unseal
+Подать долю скрытым tty-вводом либо по защищённому API; не аргументом shell.
+vault operator unseal
+-address АДРЕС — Выбрать HTTPS endpoint для этой операции.
+Когда: Проверка другого собственного stand.
+vault status -address=https://127.0.0.1:18200
+Результат: Флаг локален выбранной команде; адрес не отключает проверку TLS.
+-ca-cert ФАЙЛ — Принять конкретный PEM CA для проверки listener.
+Когда: Свой локальный CA, абсолютный путь private stand.
+vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt
+Результат: Проверяется также SAN; неверная CA даёт transport error, а не ACL403.
+-reset — Сбросить накопленный незавершённый unseal progress этого узла.
+Когда: Ошибочно начатая церемония; не reset storage.
+vault operator unseal -reset
+Результат: Данные не удаляются; для завершения нужны доли заново.
+
+vault operator seal
+Перевести узел в sealed, прекратив доступ barrier к ключам.
+vault operator seal
+-address АДРЕС — Выбрать HTTPS endpoint для этой операции.
+Когда: Проверка другого собственного stand.
+vault status -address=https://127.0.0.1:18200
+Результат: Флаг локален выбранной команде; адрес не отключает проверку TLS.
+-ca-cert ФАЙЛ — Принять конкретный PEM CA для проверки listener.
+Когда: Свой локальный CA, абсолютный путь private stand.
+vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt
+Результат: Проверяется также SAN; неверная CA даёт transport error, а не ACL403.
+
+vault operator rekey
+Провести quorum-церемонию смены unseal/recovery shares.
+vault operator rekey [ОПЦИИ]
+-address АДРЕС — Выбрать HTTPS endpoint для этой операции.
+Когда: Проверка другого собственного stand.
+vault status -address=https://127.0.0.1:18200
+Результат: Флаг локален выбранной команде; адрес не отключает проверку TLS.
+-ca-cert ФАЙЛ — Принять конкретный PEM CA для проверки listener.
+Когда: Свой локальный CA, абсолютный путь private stand.
+vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt
+Результат: Проверяется также SAN; неверная CA даёт transport error, а не ACL403.
+-target ЦЕЛЬ — Выбрать barrier/recovery по реальному seal contract.
+Когда: Планируемая ротация хранителей.
+vault operator rekey -target=recovery -init
+Результат: Не заменяет ключ внешнего KMS и требует принятой процедуры, не исполняется автоматически.
+-init — Начать новую церемонию rekey.
+Когда: После выбора числа долей/порога и хранителей.
+vault operator rekey -init -key-shares=3 -key-threshold=2
+Результат: Это не одношаговая замена: требуются quorum inputs и проверка.
+-key-shares N — Число новых долей.
+Когда: Старт rekey.
+vault operator rekey -init -key-shares=3 -key-threshold=2
+Результат: Не меняет SQL passwords.
+-key-threshold N — Порог новых долей.
+Когда: Старт rekey.
+vault operator rekey -init -key-shares=3 -key-threshold=2
+Результат: Судьбу старых shares принимают после завершения и backup.
+
+vault operator rotate
+Ротировать ключ шифрования новых storage-записей.
+vault operator rotate
+-address АДРЕС — Выбрать HTTPS endpoint для этой операции.
+Когда: Проверка другого собственного stand.
+vault status -address=https://127.0.0.1:18200
+Результат: Флаг локален выбранной команде; адрес не отключает проверку TLS.
+-ca-cert ФАЙЛ — Принять конкретный PEM CA для проверки listener.
+Когда: Свой локальный CA, абсолютный путь private stand.
+vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt
+Результат: Проверяется также SAN; неверная CA даёт transport error, а не ACL403.
+
+vault operator generate-root
+Quorum-церемония аварийного восстановления административного API-доступа.
+vault operator generate-root [ОПЦИИ]
+-address АДРЕС — Выбрать HTTPS endpoint для этой операции.
+Когда: Проверка другого собственного stand.
+vault status -address=https://127.0.0.1:18200
+Результат: Флаг локален выбранной команде; адрес не отключает проверку TLS.
+-ca-cert ФАЙЛ — Принять конкретный PEM CA для проверки listener.
+Когда: Свой локальный CA, абсолютный путь private stand.
+vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt
+Результат: Проверяется также SAN; неверная CA даёт transport error, а не ACL403.
+-init — Начать принятую процедуру с OTP/PGP и nonce.
+Когда: При потере/истечении оператора, в собственной среде.
+vault operator generate-root -init
+Результат: Команда не выдаёт готовый root без quorum; не автоматический helper.
+
+vault secrets enable
+Подключить secrets engine к новому mount; влияет на сервер.
+vault secrets enable [ОПЦИИ] ТИП
+-address АДРЕС — Выбрать HTTPS endpoint для этой операции.
+Когда: Проверка другого собственного stand.
+vault status -address=https://127.0.0.1:18200
+Результат: Флаг локален выбранной команде; адрес не отключает проверку TLS.
+-ca-cert ФАЙЛ — Принять конкретный PEM CA для проверки listener.
+Когда: Свой локальный CA, абсолютный путь private stand.
+vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt
+Результат: Проверяется также SAN; неверная CA даёт transport error, а не ACL403.
+-path ПУТЬ — Выбрать свободный логический mount.
+Когда: Создание secret/database/pki в своём стенде.
+vault secrets enable -path=secret -version=2 kv
+Результат: Не каталог Linux; существующий mount не перезаписывают.
+-version N — Выбрать поддержанную версию KV.
+Когда: Новый KVv2.
+vault secrets enable -path=secret -version=2 kv
+Результат: Не то же, что /v1/ в HTTP API; не обновляет существующий mount.
+
+vault secrets list
+Прочитать список подключений engines и их опций.
+vault secrets list [ОПЦИИ]
+-address АДРЕС — Выбрать HTTPS endpoint для этой операции.
+Когда: Проверка другого собственного stand.
+vault status -address=https://127.0.0.1:18200
+Результат: Флаг локален выбранной команде; адрес не отключает проверку TLS.
+-ca-cert ФАЙЛ — Принять конкретный PEM CA для проверки listener.
+Когда: Свой локальный CA, абсолютный путь private stand.
+vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt
+Результат: Проверяется также SAN; неверная CA даёт transport error, а не ACL403.
+-format ФОРМАТ — Выбрать table/json/yaml в поддержанной команде.
+Когда: Машинная обработка результата в private файл.
+vault kv get -format=json -mount=secret handbook/config
+Результат: JSON сохраняет структуру; вывод может содержать секреты и не является public artifact.
+-detailed — Показать расширенную конфигурацию mount.
+Когда: Выяснить версию KV и tune перед операцией.
+vault secrets list -detailed
+Результат: Имя secret само не доказывает KVv2.
+
+vault secrets tune
+Изменить сроки/параметры существующего mount.
+vault secrets tune [ОПЦИИ] ПУТЬ
+-address АДРЕС — Выбрать HTTPS endpoint для этой операции.
+Когда: Проверка другого собственного stand.
+vault status -address=https://127.0.0.1:18200
+Результат: Флаг локален выбранной команде; адрес не отключает проверку TLS.
+-ca-cert ФАЙЛ — Принять конкретный PEM CA для проверки listener.
+Когда: Свой локальный CA, абсолютный путь private stand.
+vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt
+Результат: Проверяется также SAN; неверная CA даёт transport error, а не ACL403.
+-max-lease-ttl ДЛИТЕЛЬНОСТЬ — Установить верхний предел срока mount.
+Когда: При подготовке PKI CA и выдач.
+vault secrets tune -max-lease-ttl=8760h pki-root
+Результат: Role/issuer/запрос могут дополнительно ограничить фактическую выдачу.
+-default-lease-ttl ДЛИТЕЛЬНОСТЬ — Настроить default срока.
+Когда: После расчёта renewal-нагрузки.
+vault secrets tune -default-lease-ttl=10m database
+Результат: Не обещает мгновенно переписать каждый ранее выданный lease.
+
+vault policy write
+Загрузить уже созданный HCL файл как серверную ACL policy.
+vault policy write ИМЯ ФАЙЛ
+-address АДРЕС — Выбрать HTTPS endpoint для этой операции.
+Когда: Проверка другого собственного stand.
+vault status -address=https://127.0.0.1:18200
+Результат: Флаг локален выбранной команде; адрес не отключает проверку TLS.
+-ca-cert ФАЙЛ — Принять конкретный PEM CA для проверки listener.
+Когда: Свой локальный CA, абсолютный путь private stand.
+vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt
+Результат: Проверяется также SAN; неверная CA даёт transport error, а не ACL403.
+
+vault token capabilities
+Показать capabilities текущего token на реальном API-пути.
+vault token capabilities ПУТЬ
+-address АДРЕС — Выбрать HTTPS endpoint для этой операции.
+Когда: Проверка другого собственного stand.
+vault status -address=https://127.0.0.1:18200
+Результат: Флаг локален выбранной команде; адрес не отключает проверку TLS.
+-ca-cert ФАЙЛ — Принять конкретный PEM CA для проверки listener.
+Когда: Свой локальный CA, абсолютный путь private stand.
+vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt
+Результат: Проверяется также SAN; неверная CA даёт transport error, а не ACL403.
+
+vault token create
+Выдать service token; результат хранить private, не в логе.
+vault token create [ОПЦИИ]
+-address АДРЕС — Выбрать HTTPS endpoint для этой операции.
+Когда: Проверка другого собственного stand.
+vault status -address=https://127.0.0.1:18200
+Результат: Флаг локален выбранной команде; адрес не отключает проверку TLS.
+-ca-cert ФАЙЛ — Принять конкретный PEM CA для проверки listener.
+Когда: Свой локальный CA, абсолютный путь private stand.
+vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt
+Результат: Проверяется также SAN; неверная CA даёт transport error, а не ACL403.
+-format ФОРМАТ — Выбрать table/json/yaml в поддержанной команде.
+Когда: Машинная обработка результата в private файл.
+vault kv get -format=json -mount=secret handbook/config
+Результат: JSON сохраняет структуру; вывод может содержать секреты и не является public artifact.
+-policy ИМЯ — Привязать policy; повторяемый флаг.
+Когда: Создание ограниченного тестового reader.
+vault token create -policy=handbook-reader -ttl=10m -format=json
+Результат: Issuer должен иметь право выдать эти policies; имя не доказывает минимальность.
+-ttl ДЛИТЕЛЬНОСТЬ — Запросить срок token.
+Когда: Короткий native TTL test.
+vault token create -policy=handbook-reader -ttl=3s
+Результат: Фактическое время ограничено server/auth/role; результат содержит секрет.
+-explicit-max-ttl ДЛИТЕЛЬНОСТЬ — Закрепить абсолютный lifetime token.
+Когда: Ограниченный оператор личного stand.
+vault token create -policy=handbook-operator -ttl=8h -explicit-max-ttl=24h
+Результат: Renewal не обходит предел.
+-orphan — Создать token без родителя при достаточном полномочии.
+Когда: Отделить временного оператора перед отзывом bootstrap root.
+vault token create -orphan -policy=handbook-operator -ttl=8h
+Результат: Не отменяет TTL/direct revoke; приложения не получают вечный root.
+
+vault token lookup
+Прочитать metadata текущего token.
+vault token lookup [ОПЦИИ]
+-address АДРЕС — Выбрать HTTPS endpoint для этой операции.
+Когда: Проверка другого собственного stand.
+vault status -address=https://127.0.0.1:18200
+Результат: Флаг локален выбранной команде; адрес не отключает проверку TLS.
+-ca-cert ФАЙЛ — Принять конкретный PEM CA для проверки listener.
+Когда: Свой локальный CA, абсолютный путь private stand.
+vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt
+Результат: Проверяется также SAN; неверная CA даёт transport error, а не ACL403.
+-format ФОРМАТ — Выбрать table/json/yaml в поддержанной команде.
+Когда: Машинная обработка результата в private файл.
+vault kv get -format=json -mount=secret handbook/config
+Результат: JSON сохраняет структуру; вывод может содержать секреты и не является public artifact.
+
+vault token renew
+Попросить продлить token до фактически разрешённого срока.
+vault token renew [ОПЦИИ]
+-address АДРЕС — Выбрать HTTPS endpoint для этой операции.
+Когда: Проверка другого собственного stand.
+vault status -address=https://127.0.0.1:18200
+Результат: Флаг локален выбранной команде; адрес не отключает проверку TLS.
+-ca-cert ФАЙЛ — Принять конкретный PEM CA для проверки listener.
+Когда: Свой локальный CA, абсолютный путь private stand.
+vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt
+Результат: Проверяется также SAN; неверная CA даёт transport error, а не ACL403.
+-format ФОРМАТ — Выбрать table/json/yaml в поддержанной команде.
+Когда: Машинная обработка результата в private файл.
+vault kv get -format=json -mount=secret handbook/config
+Результат: JSON сохраняет структуру; вывод может содержать секреты и не является public artifact.
+-increment ДЛИТЕЛЬНОСТЬ — Запросить новый renewal increment.
+Когда: До expiry и при renewable=true.
+vault token renew -increment=30s
+Результат: Не добавляет безусловно30s к прежнему TTL; actual lease_duration важнее запроса.
+
+vault token revoke
+Отозвать token и предусмотренное дерево доступа.
+vault token revoke [ОПЦИИ]
+-address АДРЕС — Выбрать HTTPS endpoint для этой операции.
+Когда: Проверка другого собственного stand.
+vault status -address=https://127.0.0.1:18200
+Результат: Флаг локален выбранной команде; адрес не отключает проверку TLS.
+-ca-cert ФАЙЛ — Принять конкретный PEM CA для проверки listener.
+Когда: Свой локальный CA, абсолютный путь private stand.
+vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt
+Результат: Проверяется также SAN; неверная CA даёт transport error, а не ACL403.
+-self — Отозвать предъявленный token без передачи его в argv.
+Когда: Завершение bootstrap/root или сессии.
+vault token revoke -self
+Результат: Самоотзыв не стирает копии секретов и может отозвать детей/leases.
+
+vault kv put
+Записать новую полную версию KV, с условием CAS при необходимости.
+vault kv put [ОПЦИИ] КЛЮЧ ДАННЫЕ
+-address АДРЕС — Выбрать HTTPS endpoint для этой операции.
+Когда: Проверка другого собственного stand.
+vault status -address=https://127.0.0.1:18200
+Результат: Флаг локален выбранной команде; адрес не отключает проверку TLS.
+-ca-cert ФАЙЛ — Принять конкретный PEM CA для проверки listener.
+Когда: Свой локальный CA, абсолютный путь private stand.
+vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt
+Результат: Проверяется также SAN; неверная CA даёт transport error, а не ACL403.
+-format ФОРМАТ — Выбрать table/json/yaml в поддержанной команде.
+Когда: Машинная обработка результата в private файл.
+vault kv get -format=json -mount=secret handbook/config
+Результат: JSON сохраняет структуру; вывод может содержать секреты и не является public artifact.
+-mount ПУТЬ — Отделить KV mount от относительного имени ключа.
+Когда: Не путать CLI имя с secret/data API-путём.
+vault kv get -mount=secret handbook/config
+Результат: KVv2 CLI сам выбирает data/metadata endpoints; ACL задаётся на них.
+-cas N — Сохранить только при ожидаемом текущем номере;0 означает ещё не существующий ключ.
+Когда: Защита от конкурентного writer.
+vault kv put -mount=secret -cas=1 handbook/config message=second
+Результат: Mismatch даёт отказ400 и не меняет текущую версию; безусловный retry без CAS теряет защиту.
+
+vault kv get
+Прочитать текущее/конкретное KV-значение.
+vault kv get [ОПЦИИ] КЛЮЧ
+-address АДРЕС — Выбрать HTTPS endpoint для этой операции.
+Когда: Проверка другого собственного stand.
+vault status -address=https://127.0.0.1:18200
+Результат: Флаг локален выбранной команде; адрес не отключает проверку TLS.
+-ca-cert ФАЙЛ — Принять конкретный PEM CA для проверки listener.
+Когда: Свой локальный CA, абсолютный путь private stand.
+vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt
+Результат: Проверяется также SAN; неверная CA даёт transport error, а не ACL403.
+-format ФОРМАТ — Выбрать table/json/yaml в поддержанной команде.
+Когда: Машинная обработка результата в private файл.
+vault kv get -format=json -mount=secret handbook/config
+Результат: JSON сохраняет структуру; вывод может содержать секреты и не является public artifact.
+-mount ПУТЬ — Отделить KV mount от относительного имени ключа.
+Когда: Не путать CLI имя с secret/data API-путём.
+vault kv get -mount=secret handbook/config
+Результат: KVv2 CLI сам выбирает data/metadata endpoints; ACL задаётся на них.
+-version N — Выбрать сохранённую версию KVv2.
+Когда: Проверка истории/soft-delete.
+vault kv get -mount=secret -version=2 handbook/config
+Результат: Destroyed/soft-deleted версия не выдаёт значение; current не обязательно эта версия.
+-field ИМЯ — Вывести одно поле без trailing newline.
+Когда: Защищённый частный канал потребителя.
+vault kv get -mount=secret -field=message handbook/config
+Результат: Флаг не обезличивает секрет; stdout защищают.
+
+vault kv patch
+Частично изменить существующее KVv2-значение; native PATCH отличается от read/write fallback.
+vault kv patch [ОПЦИИ] КЛЮЧ ДАННЫЕ
+-address АДРЕС — Выбрать HTTPS endpoint для этой операции.
+Когда: Проверка другого собственного stand.
+vault status -address=https://127.0.0.1:18200
+Результат: Флаг локален выбранной команде; адрес не отключает проверку TLS.
+-ca-cert ФАЙЛ — Принять конкретный PEM CA для проверки listener.
+Когда: Свой локальный CA, абсолютный путь private stand.
+vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt
+Результат: Проверяется также SAN; неверная CA даёт transport error, а не ACL403.
+-format ФОРМАТ — Выбрать table/json/yaml в поддержанной команде.
+Когда: Машинная обработка результата в private файл.
+vault kv get -format=json -mount=secret handbook/config
+Результат: JSON сохраняет структуру; вывод может содержать секреты и не является public artifact.
+-mount ПУТЬ — Отделить KV mount от относительного имени ключа.
+Когда: Не путать CLI имя с secret/data API-путём.
+vault kv get -mount=secret handbook/config
+Результат: KVv2 CLI сам выбирает data/metadata endpoints; ACL задаётся на них.
+-cas N — Условный PATCH известной версии.
+Когда: Не затереть конкурентное обновление.
+vault kv patch -mount=secret -cas=2 handbook/config added=yes
+Результат: Новая версия сохраняет прежние непереданные поля.
+-method МЕТОД — Выбрать patch или rw.
+Когда: Явное сравнение CLI native PATCH и fallback.
+vault kv patch -method=patch -mount=secret -cas=2 handbook/config added=yes
+Результат: rw требует read+write и имеет другое окно гонки; основной опыт использует patch.
+
+vault kv delete
+Soft-delete текущую или выбранные KVv2 версии.
+vault kv delete [ОПЦИИ] КЛЮЧ
+-address АДРЕС — Выбрать HTTPS endpoint для этой операции.
+Когда: Проверка другого собственного stand.
+vault status -address=https://127.0.0.1:18200
+Результат: Флаг локален выбранной команде; адрес не отключает проверку TLS.
+-ca-cert ФАЙЛ — Принять конкретный PEM CA для проверки listener.
+Когда: Свой локальный CA, абсолютный путь private stand.
+vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt
+Результат: Проверяется также SAN; неверная CA даёт transport error, а не ACL403.
+-mount ПУТЬ — Отделить KV mount от относительного имени ключа.
+Когда: Не путать CLI имя с secret/data API-путём.
+vault kv get -mount=secret handbook/config
+Результат: KVv2 CLI сам выбирает data/metadata endpoints; ACL задаётся на них.
+-versions СПИСОК — Выбрать номера KVv2 версий через запятую.
+Когда: Удалить учебную version2, сохраняя возможность undelete.
+vault kv delete -mount=secret -versions=2 handbook/config
+Результат: Не destroy, не удаление всего mount.
+
+vault kv undelete
+Снять soft-delete выбранных ещё существующих версий.
+vault kv undelete [ОПЦИИ] КЛЮЧ
+-address АДРЕС — Выбрать HTTPS endpoint для этой операции.
+Когда: Проверка другого собственного stand.
+vault status -address=https://127.0.0.1:18200
+Результат: Флаг локален выбранной команде; адрес не отключает проверку TLS.
+-ca-cert ФАЙЛ — Принять конкретный PEM CA для проверки listener.
+Когда: Свой локальный CA, абсолютный путь private stand.
+vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt
+Результат: Проверяется также SAN; неверная CA даёт transport error, а не ACL403.
+-mount ПУТЬ — Отделить KV mount от относительного имени ключа.
+Когда: Не путать CLI имя с secret/data API-путём.
+vault kv get -mount=secret handbook/config
+Результат: KVv2 CLI сам выбирает data/metadata endpoints; ACL задаётся на них.
+-versions СПИСОК — Указать возвращаемые версии.
+Когда: Проверить отличие от destroy.
+vault kv undelete -mount=secret -versions=2 handbook/config
+Результат: Не возвращает destroyed/вытесненные версии.
+
+vault kv destroy
+Необратимо удалить содержимое выбранных версий через KV API.
+vault kv destroy [ОПЦИИ] КЛЮЧ
+-address АДРЕС — Выбрать HTTPS endpoint для этой операции.
+Когда: Проверка другого собственного stand.
+vault status -address=https://127.0.0.1:18200
+Результат: Флаг локален выбранной команде; адрес не отключает проверку TLS.
+-ca-cert ФАЙЛ — Принять конкретный PEM CA для проверки listener.
+Когда: Свой локальный CA, абсолютный путь private stand.
+vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt
+Результат: Проверяется также SAN; неверная CA даёт transport error, а не ACL403.
+-mount ПУТЬ — Отделить KV mount от относительного имени ключа.
+Когда: Не путать CLI имя с secret/data API-путём.
+vault kv get -mount=secret handbook/config
+Результат: KVv2 CLI сам выбирает data/metadata endpoints; ACL задаётся на них.
+-versions СПИСОК — Выбрать уничтожаемые версии.
+Когда: Только принятый учебный ключ.
+vault kv destroy -mount=secret -versions=2 handbook/config
+Результат: Metadata сохраняет destroyed=true; backup/внешние копии имеют отдельный lifecycle.
+
+vault kv metadata get
+Прочитать версии и состояние KVv2 без запроса значения.
+vault kv metadata get [ОПЦИИ] КЛЮЧ
+-address АДРЕС — Выбрать HTTPS endpoint для этой операции.
+Когда: Проверка другого собственного stand.
+vault status -address=https://127.0.0.1:18200
+Результат: Флаг локален выбранной команде; адрес не отключает проверку TLS.
+-ca-cert ФАЙЛ — Принять конкретный PEM CA для проверки listener.
+Когда: Свой локальный CA, абсолютный путь private stand.
+vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt
+Результат: Проверяется также SAN; неверная CA даёт transport error, а не ACL403.
+-format ФОРМАТ — Выбрать table/json/yaml в поддержанной команде.
+Когда: Машинная обработка результата в private файл.
+vault kv get -format=json -mount=secret handbook/config
+Результат: JSON сохраняет структуру; вывод может содержать секреты и не является public artifact.
+-mount ПУТЬ — Отделить KV mount от относительного имени ключа.
+Когда: Не путать CLI имя с secret/data API-путём.
+vault kv get -mount=secret handbook/config
+Результат: KVv2 CLI сам выбирает data/metadata endpoints; ACL задаётся на них.
+
+vault auth enable
+Подключить auth method к новому пути.
+vault auth enable [ОПЦИИ] ТИП
+-address АДРЕС — Выбрать HTTPS endpoint для этой операции.
+Когда: Проверка другого собственного stand.
+vault status -address=https://127.0.0.1:18200
+Результат: Флаг локален выбранной команде; адрес не отключает проверку TLS.
+-ca-cert ФАЙЛ — Принять конкретный PEM CA для проверки listener.
+Когда: Свой локальный CA, абсолютный путь private stand.
+vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt
+Результат: Проверяется также SAN; неверная CA даёт transport error, а не ACL403.
+-path ПУТЬ — Выбрать auth mount.
+Когда: Своя AppRole роль.
+vault auth enable -path=approle approle
+Результат: Подключение не создаёт автоматически role/SecretID.
+
+vault auth list
+Исследовать подключённые auth methods.
+vault auth list [ОПЦИИ]
+-address АДРЕС — Выбрать HTTPS endpoint для этой операции.
+Когда: Проверка другого собственного stand.
+vault status -address=https://127.0.0.1:18200
+Результат: Флаг локален выбранной команде; адрес не отключает проверку TLS.
+-ca-cert ФАЙЛ — Принять конкретный PEM CA для проверки listener.
+Когда: Свой локальный CA, абсолютный путь private stand.
+vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt
+Результат: Проверяется также SAN; неверная CA даёт transport error, а не ACL403.
+-format ФОРМАТ — Выбрать table/json/yaml в поддержанной команде.
+Когда: Машинная обработка результата в private файл.
+vault kv get -format=json -mount=secret handbook/config
+Результат: JSON сохраняет структуру; вывод может содержать секреты и не является public artifact.
+
+vault write
+Вызвать endpoint записи; чувствительные данные передавать из private @JSON, а не в argv.
+vault write [ОПЦИИ] ПУТЬ [ДАННЫЕ]
+-address АДРЕС — Выбрать HTTPS endpoint для этой операции.
+Когда: Проверка другого собственного stand.
+vault status -address=https://127.0.0.1:18200
+Результат: Флаг локален выбранной команде; адрес не отключает проверку TLS.
+-ca-cert ФАЙЛ — Принять конкретный PEM CA для проверки listener.
+Когда: Свой локальный CA, абсолютный путь private stand.
+vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt
+Результат: Проверяется также SAN; неверная CA даёт transport error, а не ACL403.
+-format ФОРМАТ — Выбрать table/json/yaml в поддержанной команде.
+Когда: Машинная обработка результата в private файл.
+vault kv get -format=json -mount=secret handbook/config
+Результат: JSON сохраняет структуру; вывод может содержать секреты и не является public artifact.
+-f / -force — Разрешить write без данных.
+Когда: Генерация SecretID/rotate-root на endpoint с такой семантикой.
+vault write -wrap-ttl=60s -f auth/approle/role/handbook/secret-id
+Результат: Это разрешение пустого запроса, не универсальный обход ACL.
+-wrap-ttl ДЛИТЕЛЬНОСТЬ — Вернуть ограниченную однократную обёртку ответа.
+Когда: Безопасная доставка SecretID.
+vault write -wrap-ttl=60s -f auth/approle/role/handbook/secret-id
+Результат: Сам wrapping token тоже secret; проверяют creation_path и одноразовый unwrap.
+
+vault read
+Вызвать read endpoint; динамический creds read имеет побочный эффект выдачи.
+vault read [ОПЦИИ] ПУТЬ
+-address АДРЕС — Выбрать HTTPS endpoint для этой операции.
+Когда: Проверка другого собственного stand.
+vault status -address=https://127.0.0.1:18200
+Результат: Флаг локален выбранной команде; адрес не отключает проверку TLS.
+-ca-cert ФАЙЛ — Принять конкретный PEM CA для проверки listener.
+Когда: Свой локальный CA, абсолютный путь private stand.
+vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt
+Результат: Проверяется также SAN; неверная CA даёт transport error, а не ACL403.
+-format ФОРМАТ — Выбрать table/json/yaml в поддержанной команде.
+Когда: Машинная обработка результата в private файл.
+vault kv get -format=json -mount=secret handbook/config
+Результат: JSON сохраняет структуру; вывод может содержать секреты и не является public artifact.
+
+vault list
+Запросить LIST поддержанного endpoint, не GET содержимого.
+vault list [ОПЦИИ] ПУТЬ
+-address АДРЕС — Выбрать HTTPS endpoint для этой операции.
+Когда: Проверка другого собственного stand.
+vault status -address=https://127.0.0.1:18200
+Результат: Флаг локален выбранной команде; адрес не отключает проверку TLS.
+-ca-cert ФАЙЛ — Принять конкретный PEM CA для проверки listener.
+Когда: Свой локальный CA, абсолютный путь private stand.
+vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt
+Результат: Проверяется также SAN; неверная CA даёт transport error, а не ACL403.
+-format ФОРМАТ — Выбрать table/json/yaml в поддержанной команде.
+Когда: Машинная обработка результата в private файл.
+vault kv get -format=json -mount=secret handbook/config
+Результат: JSON сохраняет структуру; вывод может содержать секреты и не является public artifact.
+
+vault login
+Войти через настроенный auth method; не сохранять token в host HOME.
+vault login [ОПЦИИ]
+-address АДРЕС — Выбрать HTTPS endpoint для этой операции.
+Когда: Проверка другого собственного stand.
+vault status -address=https://127.0.0.1:18200
+Результат: Флаг локален выбранной команде; адрес не отключает проверку TLS.
+-ca-cert ФАЙЛ — Принять конкретный PEM CA для проверки listener.
+Когда: Свой локальный CA, абсолютный путь private stand.
+vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt
+Результат: Проверяется также SAN; неверная CA даёт transport error, а не ACL403.
+-method ИМЯ — Выбрать настроенный метод, например oidc/cert.
+Когда: После подготовки обеих сторон trust.
+vault login -method=oidc -no-store
+Результат: OIDC требует зарегистрированный callback/issuer; это не первый bootstrap.
+-no-store — Не писать полученный token в token helper.
+Когда: Личный ручной login без ~/.vault-token.
+vault login -method=oidc -no-store
+Результат: Вывод всё ещё содержит credential; учебный helper использует API без печати.
+
+vault unwrap
+Однократно извлечь wrapped response с предъявленным wrapping token.
+vault unwrap
+-address АДРЕС — Выбрать HTTPS endpoint для этой операции.
+Когда: Проверка другого собственного stand.
+vault status -address=https://127.0.0.1:18200
+Результат: Флаг локален выбранной команде; адрес не отключает проверку TLS.
+-ca-cert ФАЙЛ — Принять конкретный PEM CA для проверки listener.
+Когда: Свой локальный CA, абсолютный путь private stand.
+vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt
+Результат: Проверяется также SAN; неверная CA даёт transport error, а не ACL403.
+
+vault agent
+Запустить Agent auto-auth/templates по созданной конфигурации.
+vault agent -config ФАЙЛ
+-config ФАЙЛ — Прочитать конфигурацию Agent.
+Когда: Файлы role-id/нового SecretID уже доставлены private.
+vault agent -config /home/student/handbook-vault/private/agent.hcl
+Результат: exit_after_auth в учебном config проверяет one-shot, а не длительный renewal.
+
+vault audit enable
+Включить устройство аудита; путь должен быть доступен server UID.
+vault audit enable [ОПЦИИ] ТИП [ДАННЫЕ]
+-address АДРЕС — Выбрать HTTPS endpoint для этой операции.
+Когда: Проверка другого собственного stand.
+vault status -address=https://127.0.0.1:18200
+Результат: Флаг локален выбранной команде; адрес не отключает проверку TLS.
+-ca-cert ФАЙЛ — Принять конкретный PEM CA для проверки listener.
+Когда: Свой локальный CA, абсолютный путь private stand.
+vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt
+Результат: Проверяется также SAN; неверная CA даёт transport error, а не ACL403.
+
+vault audit list
+Прочитать уже включённые audit devices.
+vault audit list [ОПЦИИ]
+-address АДРЕС — Выбрать HTTPS endpoint для этой операции.
+Когда: Проверка другого собственного stand.
+vault status -address=https://127.0.0.1:18200
+Результат: Флаг локален выбранной команде; адрес не отключает проверку TLS.
+-ca-cert ФАЙЛ — Принять конкретный PEM CA для проверки listener.
+Когда: Свой локальный CA, абсолютный путь private stand.
+vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt
+Результат: Проверяется также SAN; неверная CA даёт transport error, а не ACL403.
+-format ФОРМАТ — Выбрать table/json/yaml в поддержанной команде.
+Когда: Машинная обработка результата в private файл.
+vault kv get -format=json -mount=secret handbook/config
+Результат: JSON сохраняет структуру; вывод может содержать секреты и не является public artifact.
+-detailed — Показать опции устройства.
+Когда: Проверка file_path/mode без повторного enable.
+vault audit list -detailed
+Результат: Журналы и ключи HMAC сюда не копируются.
+
+vault operator raft list-peers
+Прочитать voters/leader текущего Raft peer set.
+vault operator raft list-peers
+-address АДРЕС — Выбрать HTTPS endpoint для этой операции.
+Когда: Проверка другого собственного stand.
+vault status -address=https://127.0.0.1:18200
+Результат: Флаг локален выбранной команде; адрес не отключает проверку TLS.
+-ca-cert ФАЙЛ — Принять конкретный PEM CA для проверки listener.
+Когда: Свой локальный CA, абсолютный путь private stand.
+vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt
+Результат: Проверяется также SAN; неверная CA даёт transport error, а не ACL403.
+
+vault operator raft snapshot save
+Создать согласованный экспорт Raft на частный путь.
+vault operator raft snapshot save ФАЙЛ
+-address АДРЕС — Выбрать HTTPS endpoint для этой операции.
+Когда: Проверка другого собственного stand.
+vault status -address=https://127.0.0.1:18200
+Результат: Флаг локален выбранной команде; адрес не отключает проверку TLS.
+-ca-cert ФАЙЛ — Принять конкретный PEM CA для проверки listener.
+Когда: Свой локальный CA, абсолютный путь private stand.
+vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt
+Результат: Проверяется также SAN; неверная CA даёт transport error, а не ACL403.
+
+vault operator raft snapshot restore
+Импортировать snapshot в явно выбранную цель; операция меняет state.
+vault operator raft snapshot restore [ОПЦИИ] ФАЙЛ
+-address АДРЕС — Выбрать HTTPS endpoint для этой операции.
+Когда: Проверка другого собственного stand.
+vault status -address=https://127.0.0.1:18200
+Результат: Флаг локален выбранной команде; адрес не отключает проверку TLS.
+-ca-cert ФАЙЛ — Принять конкретный PEM CA для проверки listener.
+Когда: Свой локальный CA, абсолютный путь private stand.
+vault status -ca-cert=/home/student/handbook-vault/tls/ca.crt
+Результат: Проверяется также SAN; неверная CA даёт transport error, а не ACL403.
+-force — Пропустить проверку соответствия seal snapshot текущему target.
+Когда: Только новый отдельный target лаборатории с source shares.
+vault operator raft snapshot restore -force /private/checkpoint-v3.snap
+Результат: Не универсальное исправление failed restore; после импорта нужны ключи SOURCE, target данные заменены.

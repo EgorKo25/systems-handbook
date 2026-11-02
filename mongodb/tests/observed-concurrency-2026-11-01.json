@@ -1,0 +1,55 @@
+{
+  "kind": "real concurrent loopback HTTP with database inspection",
+  "clients": 16,
+  "caseId": "contention-20261101-2",
+  "serviceSha256": "eadb6cdde9ed51bbe5cd4fa8ed41201356ee03f039ed71c6e18c681d2f8b63a5",
+  "codeSha256": "712ee2ec5692afc1a93dab7e829430e7e4affa4f23611b504bacd0e9cfa59fc5",
+  "unknownOutcomes": [],
+  "samePayload": {
+    "responses": {
+      "200": 15,
+      "201": 1
+    },
+    "records": 1,
+    "version": 1,
+    "versionBsonType": "Long",
+    "fieldsUnchanged": true
+  },
+  "competingPayloads": {
+    "responses": {
+      "409": 8,
+      "200": 7,
+      "201": 1
+    },
+    "records": 1,
+    "winnerTenant": "concurrency-B",
+    "version": 1,
+    "versionBsonType": "Long",
+    "fieldsUnchanged": true
+  },
+  "parallelClose": {
+    "responses": {
+      "200": 16
+    },
+    "modified": {
+      "0": 15,
+      "1": 1
+    },
+    "records": 1,
+    "version": 2,
+    "state": "closed",
+    "versionBsonType": "Long",
+    "otherFieldsUnchanged": true
+  },
+  "httpExitCode": 0,
+  "raceDiagnosticDetected": false,
+  "stderrKeptPrivate": true,
+  "passed": true,
+  "verifiedBuild": {
+    "go": "1.27.3",
+    "race": true,
+    "mod": "readonly",
+    "GOPROXY": "off",
+    "verification": "go version -m included build -race=true; public source hash matched"
+  }
+}
