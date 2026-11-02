@@ -1237,8 +1237,8 @@ SHOW block_size;</code></pre>
 .pg-page-cut .pgpc-byte{display:inline-flex;min-width:2.35em;min-height:2.35em;align-items:center;justify-content:center;border:1px solid var(--reader-text,var(--text,#202d34));font-family:monospace;font-size:1rem}
 .pg-page-cut details>summary{min-height:44px;padding:.7rem 0;cursor:pointer;font-weight:650}
 .pg-page-cut details>summary:focus-visible{outline:2px solid var(--accent,#0c6b63);outline-offset:3px}
-.pg-page-cut table{width:100%;border-collapse:collapse;font-size:1rem}
-.pg-page-cut td,.pg-page-cut th{text-align:left;vertical-align:top;border:1px solid var(--reader-muted,var(--muted,#5a696e));padding:.5rem;overflow-wrap:anywhere}
+.pg-page-cut table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:1rem}
+.pg-page-cut td,.pg-page-cut th{min-width:0;text-align:left;vertical-align:top;border:1px solid var(--reader-muted,var(--muted,#5a696e));padding:.5rem;overflow-wrap:anywhere}
 @media(max-width:760px){.pg-page-cut .pgpc-views{grid-template-columns:1fr}.pg-page-cut{padding:.65rem}.pg-page-cut .pgpc-view+.pgpc-view{border-top:2px solid var(--reader-muted,var(--muted,#5a696e));padding-top:1rem}}
 @media print{.pg-page-cut{break-inside:auto}.pg-page-cut .pgpc-views{grid-template-columns:1fr}.pg-page-cut .pgpc-view{break-inside:avoid}.pg-page-cut .pgpc-view svg{max-width:18rem}.pg-page-cut details>summary{display:none}.pg-page-cut details>.pgpc-details-body{display:block!important}.pg-page-cut details::details-content{content-visibility:visible!important;display:block!important}}
 </style><figcaption><strong>Страница 8 КиБ: указатель и версия расходуют место с двух сторон</strong></figcaption><p>В сохранённой странице уже лежат две версии. Рассчитаем размещение ещё одной: <code>(3,'ghijkl')</code> для тех же столбцов <code>id integer, body text</code>. Оба значения заданы, текст занимает шесть ASCII-байт и остаётся внутри версии. Для этого расчёта страница уже выбрана, свободных старых слотов нет, очистка и перемещение прежних версий не выполняются.</p>
