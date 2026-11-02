@@ -1,0 +1,4 @@
+#include "textflag.h"
+TEXT ·Ret(SB),NOSPLIT,$0-8
+ MOVQ $42,ret+0(FP)
+ RET

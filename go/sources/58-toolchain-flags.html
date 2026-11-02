@@ -7,17 +7,20 @@
 <p>Подпись <code>-o &lt;путь&gt;</code> обозначает обязательное значение: допустимы <code>-o out/app</code> и <code>-o=out/app</code>. У логического флага другой разбор: <code>-race=false</code> выключает режим, но <code>-race false</code> оставляет отдельное слово false, которое может оказаться именем пакета. Счётные флаги compile тоже принимают присоединённое значение: <code>-m=2</code> задаёт уровень, <code>-N=false</code> сбрасывает переключатель. Наличие равенства и кавычек здесь влияет на маршрут аргумента, а не только на оформление.</p>
 
 <h2>Малый модуль, на котором видны различия</h2>
-<p>Опыты ниже предназначены для отдельного нового каталога на Linux/amd64 с установленным Go1.27.3. Не подставляйте путь рабочего проекта. Создайте <code>flaglab</code>, войдите в него, создайте <code>out</code> и сохраните следующие файлы. Минимальная версия языка в go.mod не скачивает старый Go и не меняет версию установленного компилятора.</p>
+<p>Опыты ниже предназначены для отдельного нового каталога на Linux/amd64 с установленным Go 1.27.3. Не подставляйте путь рабочего проекта. В подготовленном projects/ch58 уже есть out и четыре следующих файла. Минимальная версия языка в go.mod не скачивает старый Go и не меняет версию установленного компилятора.</p>
+<p class="lab-contract">Поставленный исходник: <code>$LABROOT/projects/ch58</code>. Читайте его как текст файла.</p>
 <pre><code># go.mod
 module example.org/flaglab
 
 go 1.25.0
 </code></pre>
+<p class="lab-contract">Поставленный исходник: <code>$LABROOT/projects/ch58</code>. Читайте его как текст файла.</p>
 <pre><code>// sum.go
 package main
 
 func Add(a, b int) int { return a + b }
 </code></pre>
+<p class="lab-contract">Поставленный исходник: <code>$LABROOT/projects/ch58</code>. Читайте его как текст файла.</p>
 <pre><code>// main.go
 package main
 
@@ -27,6 +30,7 @@ var Version = "dev"
 
 func main() { fmt.Println(Add(2, 3), Version) }
 </code></pre>
+<p class="lab-contract">Поставленный исходник: <code>$LABROOT/projects/ch58</code>. Читайте его как текст файла.</p>
 <pre><code>// sum_test.go
 package main
 
@@ -50,45 +54,65 @@ func FuzzAdd(f *testing.F) {
 }
 </code></pre>
 <p>Для локального опыта можно установить <code>GOENV=off</code>, чтобы не читать пользовательский файл настроек Go, <code>GOWORK=off</code>, чтобы родительский go.work не объединял модули, <code>GOTOOLCHAIN=local</code>, чтобы не выбирать скачиваемую цепочку, и <code>GOPROXY=off</code>, чтобы запретить загрузку модулей через proxy. Это разные границы: readonly у go.mod не запрещает сеть, а отключённый proxy не изолирует произвольный исполняемый тест. Здесь внешних зависимостей нет; стандартные пакеты берутся из установленного Go и при необходимости компилируются локально.</p>
-<pre><code>go build -o ./out/app .
-./out/app
-go build -ldflags='-X main.Version=1.2.0' -o ./out/versioned .
-./out/versioned
-go test -count=1 -run='^TestAdd$/^positive$' -v .
+<p class="lab-contract">Обычный пользователь, подготовленный личный стенд из главы 48; cwd <code>$LABROOT/projects/ch58</code>, входы приведены выше и поставлены в fixtures. Ожидается код 0 у каждой команды. При ненулевом коде остановитесь, сохраните stderr и исправьте указанный вход; прежний бинарник не считается результатом новой сборки.</p>
+<pre><code>cd "$LABROOT/projects/ch58" || exit 1
+go build -o ./out/app . || exit 1
+./out/app || exit 1
+go build -ldflags='-X main.Version=1.2.0' -o ./out/versioned . || exit 1
+./out/versioned || exit 1
+go test -count=1 -run='^TestAdd$/^positive$' -v . || exit 1
 </code></pre>
 <p>Первая программа выводит <code>5 dev</code>, вторая — <code>5 1.2.0</code>. Внешний <code>-o</code> назначает выходной путь, внутренний <code>-X</code> меняет допустимую строковую переменную на стадии link. У test <code>-count=1</code> заставляет исполнить проверки заново, сохранив возможность взять готовые объекты из кэша сборки. <code>-run</code> выбирает тест/подслучай регулярными выражениями; <code>-v</code> показывает их события. Это три разных изменения, проверяемые разными наблюдениями.</p>
 
 <h2>Передача через gcflags, asmflags и ldflags</h2>
 <p>Значение <code>-gcflags</code> имеет грамматику <code>[шаблон_пакета=]список_аргументов</code>. Один аргумент оболочки содержит несколько аргументов следующего процесса. В Linux-оболочке одинарные кавычки сохраняют пробелы до разбора командой go. Например:</p>
-<pre><code>go build -gcflags='example.org/flaglab=-N -l' -o ./out/debug .
-go build -gcflags='example.org/flaglab=-m=2' -o ./out/explained .
-go build -gcflags='all=-m' -gcflags='example.org/flaglab=-m=2' .
+<p class="lab-contract">Обычный пользователь, подготовленный личный стенд из главы 48; cwd <code>$LABROOT/projects/ch58</code>, входы приведены выше и поставлены в fixtures. Ожидается код 0 у каждой команды. При ненулевом коде остановитесь, сохраните stderr и исправьте указанный вход; прежний бинарник не считается результатом новой сборки.</p>
+<pre><code>cd "$LABROOT/projects/ch58" || exit 1
+go build -gcflags='example.org/flaglab=-N -l' -o ./out/debug . || exit 1
+go build -gcflags='example.org/flaglab=-m=2' -o ./out/explained . || exit 1
+go build -gcflags='all=-m' -gcflags='example.org/flaglab=-m=2' . || exit 1
 </code></pre>
 <p><code>-N</code> отключает оптимизации, <code>-l</code> отдельно отключает встраивание, <code>-m=2</code> печатает подробные решения оптимизатора. Без шаблона параметры получают явно указанные в командной строке пакеты. Шаблон <code>all</code> охватывает также зависимости, поэтому может дать огромный журнал и другую стоимость сборки. Если правил несколько, для пакета действует последнее подходящее; списки не складываются. В третьем примере свой пакет получает <code>-m=2</code>, остальные — <code>-m</code>.</p>
 <p>Аналогично <code>-asmflags</code> направляет параметры Go-ассемблеру, <code>-ldflags</code> — Go-компоновщику, <code>-gccgoflags</code> — альтернативному gccgo. Для C-компоновщика существует ещё один переход: Go link читает <code>-extldflags</code> и передаёт вложенный список внешнему системному инструменту. Команда <code>go build -ldflags='-linkmode=external -extldflags "-Wl,-z,now"' .</code> требует подходящей ELF/C-среды. Вложенные двойные кавычки сохраняются благодаря внешним одинарным; <code>-Wl</code> понимает C-драйвер, а не compile. Этот платформенный пример не объявляется проверенным на всех ОС.</p>
 
+<h2>Одинаковый флаг, разные имена пакета и подготовленные входы</h2>
+<p>Формы в справочнике проверены по сохранённому help Go 1.27.3; не все из 264 флагов образуют совместимые сочетания. Для обычных стадий уже поставлены отдельные проекты ch58 (Add/Version/tests), ch58-asm (ret.s без смешивания с main), ch58-cgo (demo.go с import C). Сначала задаётся cwd своего проекта; каталог out принадлежит ему. Ошибочные/внутренние режимы в карточках требуют названных специальных входов и не входят в безопасный маршрут исполнения.</p>
+<p>В <code>projects/flaglab</code> есть TestVersion, читающий WANT_VERSION. Драйвер test создаёт ещё один main — тестовый launcher; исходный main-пакет компилируется под import path example.org/flaglab. Поэтому <code>-X main.Version=1.2.0</code>, верный для go build, при go test не меняет исследуемую Version. Link может завершиться успешно, и лишь проверка значения обнаруживает ошибку.</p>
+<p>Обычный пользователь, cwd flaglab; ожидаемый отказ первой команды —1, вывод Version=dev want=1.2.0. Он не является ошибкой подготовки стенда. Вторая команда должна дать 0 и PASS; если не дала, сохраните вывод и не продолжайте как с установленной версией.</p>
+<pre><code>cd "$LABROOT/projects/flaglab" || exit 1
+WANT_VERSION=1.2.0 "$GO" test -count=1 -run='^TestVersion$' -ldflags='-X main.Version=1.2.0' .
+WANT_VERSION=1.2.0 "$GO" test -count=1 -run='^TestVersion$' \
+  -ldflags='-X example.org/flaglab.Version=1.2.0' . || exit 1</code></pre>
+<p>Это исправлено и в собственной карточке go test; обычная build-карточка сохраняет main.Version. Другие совпадающие написания тоже требуют контекста: compile -C убирает колонки сообщений, build -C меняет каталог; compile -h останавливается при ошибке, а не показывает справку; asm -spectre принимает ret/all, compile знает и index. Параметр memprofilerate=0 у compile/link и test в Go 1.27.3 сохраняет прежний runtime.MemProfileRate; для отключения профилирования сама программа устанавливает эту переменную в 0. Механически передавать флаг через произвольный внешний уровень нельзя.</p>
+<p>Чтобы повторить прямой compile/link, используйте подготовленный importcfg из главы 52; строки packagefile указывают архивы точной версии/цели, а не исходные директории. Для asm include указывает <code>GOROOT/pkg/include</code>, gensymabis создаёт текстовую ABI-таблицу, обычный asm — объект; один не заменяет другой. Cgo-objdir также не содержит готового executable: C-компилятор и Go-драйвер выполняют дальнейшие стадии. Ошибки несовместимых режимов надо сохранить как отказы, а исходный удачный binary держать отдельным именем. Реальные источники регистрации флагов закреплены tag go1.27.3 в карточках; help новой версии нужно сверять заново.</p>
 <h2>Объекту недостаточно имени main.a</h2>
 <p>Прямой import-free опыт действительно мал: <code>go tool compile -p example.org/flaglab -pack -o out/sum.a sum.go</code>. Здесь <code>-p</code> задаёт идентичность, <code>-pack</code> выбирает пакетный архив, <code>-o</code> — файл. Архив содержит функцию Add, но не подготовку runtime, исполняемый main и все его импорты. Добавление main.go с fmt уже требует сведений о совместимых архивных зависимостях.</p>
 <p>Следующий маршрут полностью подготавливает такой контекст средствами установленного go. Все команды выполняются в том же отдельном модуле. Не меняйте GOOS/GOARCH, инструментирование и прочие настройки между действиями:</p>
-<pre><code>go list -deps -export -f '{{if .Export}}packagefile {{.ImportPath}}={{.Export}}{{end}}' . &gt; importcfg.link
-go tool compile -importcfg=importcfg.link -p main -pack -o main.a sum.go main.go
-go tool link -importcfg=importcfg.link -o ./out/direct-app main.a
-./out/direct-app
+<p class="lab-contract">Обычный пользователь, подготовленный личный стенд из главы 48; cwd <code>$LABROOT/projects/ch58</code>, входы приведены выше и поставлены в fixtures. Ожидается код 0 у каждой команды. При ненулевом коде остановитесь, сохраните stderr и исправьте указанный вход; прежний бинарник не считается результатом новой сборки.</p>
+<pre><code>cd "$LABROOT/projects/ch58" || exit 1
+go list -deps -export -f '{{if .Export}}packagefile {{.ImportPath}}={{.Export}}{{end}}' . &gt; importcfg.link || exit 1
+go tool compile -importcfg=importcfg.link -p main -pack -o main.a sum.go main.go || exit 1
+go tool link -importcfg=importcfg.link -o ./out/direct-app main.a || exit 1
+./out/direct-app || exit 1
 </code></pre>
 <p><code>go list</code> описывает пакеты; <code>-deps</code> включает транзитивные зависимости, <code>-export</code> обеспечивает их экспортные архивы, <code>-f</code> форматирует записи шаблоном. Поле Export даёт реальный путь архива. Перенаправление <code>&gt;</code> выполняет оболочка. Полученный importcfg.link связывает импортный путь с файлом пакета; пустые строки здесь допустимы. Формат подходит нашему простому набору без специальных importmap, embed и cgo. Он не является универсальным генератором полной конфигурации любого проекта.</p>
 <p>Теперь прямые карточки с <code>importcfg.link</code> и <code>main.a</code> имеют реальные входы. Для сложной сборки используйте <code>go build -work -x</code>: <code>-x</code> печатает исполняемые команды, <code>-work</code> сохраняет промежуточный каталог с точными конфигурациями. Сравните его с <code>-n</code>, печатающим план без исполнения. Сохранённые архивы зависят от версии, архитектуры, режимов и флагов; перенос произвольного старого importcfg на другую машину не восстанавливает эти предпосылки.</p>
 
 <h2>У ассемблера и cgo собственные входы</h2>
 <p>Для amd64 сохраните отдельно <code>ret.s</code>. Не оставляйте его среди исходников обычного модуля без согласованного Go-объявления и понимания ABI — соглашения передачи аргументов и результатов между машинными функциями.</p>
+<p class="lab-contract">Поставленный исходник: <code>$LABROOT/projects/ch58-asm</code>. Читайте его как текст файла.</p>
 <pre><code>#include "textflag.h"
 TEXT ·Ret(SB), NOSPLIT, $0-0
     RET
 </code></pre>
-<pre><code>go tool asm -I "$(go env GOROOT)/pkg/include" -p example.org/flaglab -S -o out/ret.o ret.s
-go tool asm -gensymabis -I "$(go env GOROOT)/pkg/include" -p example.org/flaglab -o out/symabis ret.s
+<p class="lab-contract">Обычный пользователь, подготовленный личный стенд из главы 48; cwd <code>$LABROOT/projects/ch58-asm</code>, входы приведены выше и поставлены в fixtures. Ожидается код 0 у каждой команды. При ненулевом коде остановитесь, сохраните stderr и исправьте указанный вход; прежний бинарник не считается результатом новой сборки.</p>
+<pre><code>cd "$LABROOT/projects/ch58-asm" || exit 1
+go tool asm -I "$(go env GOROOT)/pkg/include" -p example.org/flaglab -S -o out/ret.o ret.s || exit 1
+go tool asm -gensymabis -I "$(go env GOROOT)/pkg/include" -p example.org/flaglab -o out/symabis ret.s || exit 1
 </code></pre>
 <p>Подстановка <code>$(...)</code> принадлежит оболочке; <code>go env GOROOT</code> возвращает корень установки. <code>-I</code> находит textflag.h, <code>-S</code> показывает инструкции и байты. <code>-gensymabis</code> вместо обычного объекта создаёт ABI-таблицу для compiler <code>-symabis</code>. Таблица и объект — разные результаты одной стадии. Для ARM64 этот исходник не обещан рабочим: набор инструкций и согласование ABI проверяются для цели отдельно.</p>
 <p>cgo сначала генерирует связующие исходники и анализирует C-типы. В отдельном каталоге с установленным C-компилятором создайте <code>demo.go</code>:</p>
+<p class="lab-contract">Поставленный исходник: <code>$LABROOT/projects/ch58-cgo</code>. Читайте его как текст файла.</p>
 <pre><code>package demo
 /*
 static int twice(int x) { return x * 2; }
@@ -97,8 +121,10 @@ import "C"
 
 func Twice(x int) int { return int(C.twice(C.int(x))) }
 </code></pre>
-<pre><code>mkdir cgo-out
-go tool cgo -debug-gcc -objdir=./cgo-out demo.go
+<p class="lab-contract">Обычный пользователь, подготовленный личный стенд из главы 48; cwd <code>$LABROOT/projects/ch58-cgo</code>, входы приведены выше и поставлены в fixtures. Ожидается код 0 у каждой команды. При ненулевом коде остановитесь, сохраните stderr и исправьте указанный вход; прежний бинарник не считается результатом новой сборки. C/GCC должен уже существовать; иначе пропустите внешний режим, ничего не устанавливая.</p>
+<pre><code>cd "$LABROOT/projects/ch58-cgo" || exit 1
+mkdir -p cgo-out || exit 1
+go tool cgo -debug-gcc -objdir=./cgo-out demo.go || exit 1
 </code></pre>
 <p><code>-debug-gcc</code> показывает фактические вызовы C-компилятора, <code>-objdir</code> выбирает каталог вспомогательных файлов. Получение demo.cgo1.go и demo.cgo2.c ещё не означает создание программы: полная цепочка должна скомпилировать Go/C, согласовать динамические импорты и выполнить link. Режим <code>-dynimport</code> принимает уже подготовленный объект, а не demo.go. Если нужен его настоящий вход <code>_cgo_.o</code>, берите его из сохранённого WORK полного cgo-build, не создавайте пустой файл с подходящим именем.</p>
 <p>Особая ловушка автоматических перечней: строки <code>-fgo-pkgpath</code> и <code>-fgo-prefix</code> встречаются в help cgo как упоминания параметров gccgo. Сам cgo их не принимает. Его соответствующие параметры называются <code>-gccgopkgpath</code> и <code>-gccgoprefix</code>. В справочнике поэтому 20 реальных cgo-флагов, а не 22 найденных поиском слов с дефисом.</p>
@@ -118,4 +144,4 @@ go tool cgo -debug-gcc -objdir=./cgo-out demo.go
 <h2>Как пользоваться полной карточкой без перебора всех переключателей</h2>
 <p>У шести карточек 264 реальные записи: build33, test65 с наследуемыми параметрами, compile69, link60, asm17, cgo20. В карточке у каждого флага есть действие, условия выбора, пример и ожидаемое наблюдение. Открывайте её по команде в тексте или через встроенный поиск. Выбирайте один изменяемый фактор: например, сначала сравните <code>-l</code> через <code>-m</code>, затем отдельно измерьте нагрузку. Не объявляйте изменение быстрым только потому, что бинарник стал меньше или в журнале стало меньше строк.</p>
 <p>Профили compile/link относятся к процессам сборки; cpuprofile у test — к тестовой программе. <code>-race</code>, <code>-asan</code>, <code>-msan</code> требуют поддерживаемой среды и согласования стадий. Внутренние <code>-B</code>, <code>-wb=false</code>, <code>-f</code>, <code>-g</code> могут отключать проверки или гарантии: наличие объяснения не делает их нормальным способом ускорить службу. Флаг с верным синтаксисом может быть неприменим к конкретной цели.</p>
-<p>Опорные источники: <a href="https://go.dev/cmd/compile/">compile</a>, <a href="https://go.dev/cmd/link/">link</a>, <a href="https://go.dev/cmd/asm/">asm</a>, <a href="https://go.dev/cmd/cgo/">cgo</a>, <a href="https://github.com/golang/go/tree/go1.27.3/src/cmd">исходники Go1.27.3</a>. Офлайн-снимки <a href="labs/toolchain-reference/inventory.json">инвентаря</a> и <a href="labs/toolchain-reference/help/build.txt">help build</a> позволяют сверить именно закреплённую версию. Набор проверенных здесь опытов ограничен Linux/amd64; платформенные карточки объясняют контракт, а не заявляют выполнение на Windows/macOS и всех санитайзерах.</p>
+<p>Опорные источники: <a href="https://go.dev/cmd/compile/">compile</a>, <a href="https://go.dev/cmd/link/">link</a>, <a href="https://go.dev/cmd/asm/">asm</a>, <a href="https://go.dev/cmd/cgo/">cgo</a>, <a href="https://github.com/golang/go/tree/go1.27.3/src/cmd">исходники Go 1.27.3</a>. Офлайн-снимки <a href="labs/toolchain-reference/inventory.json">инвентаря</a> и <a href="labs/toolchain-reference/help/build.txt">help build</a> позволяют сверить именно закреплённую версию. Набор проверенных здесь опытов ограничен Linux/amd64; платформенные карточки объясняют контракт, а не заявляют выполнение на Windows/macOS и всех санитайзерах.</p>

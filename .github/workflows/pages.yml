@@ -39,6 +39,8 @@ jobs:
         run: |
           python3 go/labs/check.py
           python3 gitlab/labs/check.py
+      - name: Check the compiler and runtime practice on Go 1.27.3
+        run: bash go/labs/compiler-runtime/check.sh
       - name: Check the container Go example
         working-directory: docker/labs/echo
         run: |

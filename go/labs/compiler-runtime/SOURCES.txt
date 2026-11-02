@@ -1,0 +1,40 @@
+Оригинальные учебные программы и пояснения, профиль проверок 1 ноября2026.
+Точная реализация: официальный исходный tag go1.27.3, linux/amd64/GOAMD64v1.
+Закреплённые первичные источники (те же пути проверены в локальном GOROOT):
+https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/internal/gc/main.go
+https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/internal/escape/escape.go
+https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/internal/ssa/prove.go
+https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/internal/ssa/checkbce.go
+https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/abi-internal.md
+https://github.com/golang/go/blob/go1.27.3/src/cmd/link/internal/amd64/asm.go
+https://github.com/golang/go/blob/go1.27.3/src/runtime/rt0_linux_amd64.s
+https://github.com/golang/go/blob/go1.27.3/src/runtime/asm_amd64.s
+https://github.com/golang/go/blob/go1.27.3/src/runtime/proc.go
+https://github.com/golang/go/blob/go1.27.3/src/runtime/symtab.go
+https://github.com/golang/go/blob/go1.27.3/src/runtime/stack.go
+https://github.com/golang/go/blob/go1.27.3/src/runtime/malloc.go
+https://github.com/golang/go/blob/go1.27.3/src/runtime/mcache.go
+https://github.com/golang/go/blob/go1.27.3/src/runtime/mgcpacer.go
+https://github.com/golang/go/blob/go1.27.3/src/runtime/mgcmark_greenteagc.go
+https://github.com/golang/go/blob/go1.27.3/src/runtime/mbarrier.go
+https://github.com/golang/go/blob/go1.27.3/src/runtime/cgocall.go
+https://github.com/golang/go/blob/go1.27.3/src/runtime/cgo/handle.go
+https://github.com/golang/go/blob/go1.27.3/src/runtime/pinner.go
+https://github.com/golang/go/blob/go1.27.3/src/cmd/cgo/doc.go
+https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/internal/devirtualize/pgo.go
+https://github.com/golang/go/blob/go1.27.3/src/testing/benchmark.go
+https://github.com/golang/go/blob/go1.27.3/src/internal/buildcfg/exp.go
+https://go.dev/doc/go1.23#vet — stdversion добавлен в1.23, не в1.27.
+https://go.dev/doc/gc-guide — общая модель стоимости, версионные детали выше.
+https://go.dev/doc/pgo — применение представительного CPU-профиля.
+
+Связанные опубликованные части библиотеки (снимок bf78c7e):
+computer-architecture: ca-09-control-stack-abi — сохранение продолжения/ABI;
+operating-systems: os-04-address-spaces — диапазон/страница/резидентность;
+os-06-process-lifecycle — создание, exec, готовность, ожидание;
+os-18-open-files — имя, открытая ссылка и время жизни.
+Эти входы только прочитаны; новые Go-опыты не меняют их модели или исходники.
+
+Linux-only ownership observer in release.py (read-only own child):
+https://man7.org/linux/man-pages/man5/proc_pid_fd.5.html — man-pages6.19 socket:[inode].
+https://docs.kernel.org/6.12/networking/proc_net_tcp.html — local endpoint/state/inode fields.

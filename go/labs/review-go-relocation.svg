@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" id="go52-reloc-map" viewBox="0 0 360 610" role="img" aria-labelledby="go52-reloc-title go52-reloc-desc" style="display:block;width:100%;height:auto;color:inherit;font-family:system-ui,sans-serif;font-size:16px">
+<title id="go52-reloc-title">Как ссылка на символ превращается в четыре байта CALL</title>
+<desc id="go52-reloc-desc">Вычисляемая модель ELF64 Linux amd64. Секция text начинается в файле на 0x1000 и по виртуальному адресу 0x401000. Вызов начинается на 0x401010, его четырёхбайтное поле P на 0x401011. Символ main.Keep размещён на 0x401080. Разность между целью и следующей инструкцией равна 0x6B. Нулевое поле заменяется байтами 6B 00 00 00. Процессор получает следующую инструкцию 0x401015 плюс 0x6B, то есть main.Keep.</desc>
+<g fill="currentColor">
+<text x="16" y="26" font-weight="700">Разрез секции .text · модель</text>
+<text x="16" y="54">VA начала 0x401000; file 0x1000</text>
+<text x="16" y="86">main.Caller начинается в 0x401000</text>
+<text x="16" y="114">CALL: VA 0x401010 / file 0x1010</text>
+<text x="16" y="142">До исправления:</text>
+</g>
+<g fill="none" stroke="currentColor" stroke-width="1.5">
+<rect x="20" y="156" width="60" height="42"/><rect x="80" y="156" width="240" height="42"/>
+<path d="M140 156V198 M200 156V198 M260 156V198"/>
+</g>
+<g fill="currentColor" text-anchor="middle" font-family="monospace">
+<text x="50" y="183">E8</text><text x="110" y="183">00</text><text x="170" y="183">00</text><text x="230" y="183">00</text><text x="290" y="183">00</text>
+</g>
+<path d="M80 206V216H320V206 M200 216V235" fill="none" stroke="currentColor" stroke-width="1.5"/>
+<g fill="currentColor">
+<text x="16" y="258">Поле P: VA 0x401011 / file 0x1011</text>
+<text x="16" y="286">Go relocation: Off=0x11, Size=4</text>
+<text x="16" y="314">R_CALL → main.Keep; Add=0</text>
+<text x="16" y="346" font-weight="700">Символ main.Keep: S=0x401080</text>
+<text x="16" y="378">S + Add − (P + 4) = 0x6B = 107</text>
+<text x="16" y="410">После размещения и исправления:</text>
+</g>
+<g fill="none" stroke="currentColor" stroke-width="1.5">
+<rect x="20" y="424" width="60" height="42"/><rect x="80" y="424" width="240" height="42" stroke-width="3"/>
+<path d="M140 424V466 M200 424V466 M260 424V466"/>
+</g>
+<g fill="currentColor" text-anchor="middle" font-family="monospace">
+<text x="50" y="451">E8</text><text x="110" y="451" font-weight="700">6B</text><text x="170" y="451">00</text><text x="230" y="451">00</text><text x="290" y="451">00</text>
+</g>
+<g fill="currentColor">
+<text x="16" y="500">6B 00 00 00: младший байт первым</text>
+<text x="16" y="530">Следующая инструкция: 0x401015</text>
+<text x="16" y="558">0x401015 + 107 = 0x401080</text>
+<text x="16" y="588" font-weight="700">Процессор переходит к main.Keep</text>
+</g>
+</svg>

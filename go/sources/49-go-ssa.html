@@ -7,6 +7,7 @@
 <p>Блоки нумеруются для удобства диагностики. Номер b3 не означает третью строку исходника и не обязан сохраняться после оптимизации. Если проход удалил ветку или разделил путь ошибки, форма графа изменится. Для сопоставления используйте смысл операции, позиции исходника и связи между узлами, а не запоминание точных номеров из чужого изображения.</p>
 <h2>Phi выбирает значение по пришедшему ребру</h2>
 <p>После if переменная может иметь результат из одной из двух ветвей. В SSA это выражается phi-узлом: его вход выбирается в зависимости от предшествующего блока. Это не обычная функция Go и не обязательный вызов во время исполнения. Поздние стадии могут реализовать выбор перемещениями, условной инструкцией или самой организацией переходов.</p>
+<p class="lab-contract">Поясняющий фрагмент/схема; частичное дополнение не является отдельным готовым файлом.</p>
 <pre><code>if flag { n = a } else { n = b }
 // смысл после соединения:
 // n_join = Phi(n_from_true, n_from_false)</code></pre>
@@ -14,8 +15,82 @@
 <h2>Память тоже имеет порядок зависимостей</h2>
 <p>Недостаточно отслеживать только целые числа: чтения и записи в память нельзя произвольно переставлять. Внутренняя SSA Go использует значение памяти, через которое связывает операции с соответствующими эффектами. Запись создаёт новое состояние зависимости, последующее чтение получает нужный вход. Это способ выразить порядок внутри компилятора, а не выделяемый приложением объект с названием memory.</p>
 <p>Обычный арифметический узел может не зависеть от памяти. Вызов с побочными эффектами и запись через указатель требуют учитывать её изменение. Если компилятор доказал, что конкретная запись никем не наблюдается, её можно удалить. Но простое отсутствие чтения той же переменной по текстовому имени не является достаточным доказательством: доступ может происходить через другой указатель или вызов.</p>
+<h2>Phi на каждой итерации и зависимость от памяти</h2>
+<p>В сохраняемом compilerlab функция SumIndex имеет s=0 и i=0. Реальный <code>SumIndex_02__prove.dump</code> содержит b2 с предшественниками b1 и b4: <code>v10=Phi v7 v26</code> для i, <code>v31=Phi v7 v23</code> для s. v7 — ноль из входа; v26 — i+1 из тела; v23 — сумма из тела. Для xs={2,4,6} состояния на входе проверки цикла таковы:</p>
+<table><thead><tr><th>Предшественник b2</th><th>Выбранные i,s</th><th>Условие i&lt;3</th><th>Следующее изменение</th></tr></thead><tbody>
+<tr><td>b1</td><td>0,0</td><td>true</td><td>Load xs[0]=2 → s=2, i=1</td></tr>
+<tr><td>b4</td><td>1,2</td><td>true</td><td>xs[1]=4 → s=6, i=2</td></tr>
+<tr><td>b4</td><td>2,6</td><td>true</td><td>xs[2]=6 → s=12, i=3</td></tr>
+<tr><td>b4</td><td>3,12</td><td>false</td><td>Ret 12</td></tr></tbody></table>
+<p>Аргумент Phi выбирается по ребру, по которому пришли в блок. При новом вызове граф тот же, а значения другие; компилятор не разворачивает эту таблицу до известных трёх итераций для всех срезов. На допустимом пути i неотрицателен и меньше длины; prove заменил ветвь дополнительного IsInBounds на First. В тексте после prove ещё могут временно находиться недостижимые блоки, которые удалит следующий проход.</p>
+<figure id="go49-ssa-phi-map">
+<style>
+#go49-ssa-phi-map{margin:1.5rem 0;color:var(--text,#202832);--ssa-first:#2474b5;--ssa-back:#bd6b24}
+#go49-ssa-phi-map svg{display:block;width:100%;height:auto;min-width:0;max-width:28rem;margin-inline:auto;color:inherit;overflow:visible}
+#go49-ssa-phi-map .ssa-node{fill:none;stroke:currentColor;stroke-width:1.5}
+#go49-ssa-phi-map .ssa-line{fill:none;stroke:currentColor;stroke-width:2}
+#go49-ssa-phi-map .ssa-first{stroke:var(--ssa-first)}
+#go49-ssa-phi-map .ssa-back{stroke:var(--ssa-back);stroke-dasharray:6 4}
+#go49-ssa-phi-map .ssa-code{font:16px ui-monospace,monospace;fill:currentColor}
+#go49-ssa-phi-map .ssa-label{font:16px system-ui,sans-serif;fill:currentColor}
+#go49-ssa-phi-map figcaption{margin-top:.75rem}
+@media print{#go49-ssa-phi-map{color:#111;--ssa-first:#164c77;--ssa-back:#7b420d;break-inside:auto}#go49-ssa-phi-map svg{max-width:18rem;break-inside:avoid}}
+</style>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 950" role="img" aria-labelledby="go49-phi-title go49-phi-desc">
+<title id="go49-phi-title">Один Phi, два входящих ребра цикла SumIndex</title>
+<desc id="go49-phi-desc">После prove блок b2 имеет предшественников b1 и b4 в таком порядке. Первый аргумент каждого Phi приходит по ребру P0 из b1: v7 равен нулю. Второй приходит по P1 из b4: v26 равен следующему индексу, v23 новой сумме. Для xs равного 2, 4, 6 первый вход даёт i=0, s=0; первое обратное ребро даёт i=1, s=2. Условие ведёт в тело через b3 либо в b5 с возвратом суммы. Путь ошибки после First не показан.</desc>
+<defs><marker id="go49-phi-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0L8 4L0 8Z" fill="currentColor"/></marker></defs>
+<text x="30" y="27" class="ssa-label">SumIndex: фрагмент после prove</text>
+<text x="30" y="53" class="ssa-label">xs = {2, 4, 6}; len(xs) = 3</text>
+<path class="ssa-node" d="M30 80H290V162H30Z"/>
+<text x="44" y="106" class="ssa-code">b1 — вход функции</text>
+<text x="44" y="133" class="ssa-code">v7 = Const64 [0]</text>
+<path class="ssa-line ssa-first" d="M105 162V230" marker-end="url(#go49-phi-arrow)"/>
+<text x="119" y="195" class="ssa-label">P0: первый вход</text>
+<path class="ssa-node" d="M30 230H290V438H30Z"/>
+<text x="44" y="257" class="ssa-code">b2: ← b1 b4</text>
+<text x="44" y="286" class="ssa-code">v10 = Phi v7 v26</text>
+<text x="44" y="312" class="ssa-code">  i: P0→0, P1→i+1</text>
+<text x="44" y="343" class="ssa-code">v31 = Phi v7 v23</text>
+<text x="44" y="369" class="ssa-code">  s: P0→0, P1→s+xs[i]</text>
+<text x="44" y="410" class="ssa-code">If i &lt; len(xs)</text>
+<path class="ssa-line" d="M135 438V491" marker-end="url(#go49-phi-arrow)"/>
+<text x="149" y="468" class="ssa-label">true</text>
+<text x="44" y="515" class="ssa-code">b3: First → b4</text>
+<path class="ssa-line" d="M135 526V563" marker-end="url(#go49-phi-arrow)"/>
+<path class="ssa-node" d="M30 563H290V704H30Z"/>
+<text x="44" y="591" class="ssa-code">b4 — тело цикла</text>
+<text x="44" y="620" class="ssa-code">v22 = Load xs[i]</text>
+<text x="44" y="648" class="ssa-code">v23 = v22 + v31</text>
+<text x="44" y="676" class="ssa-code">v26 = 1 + v10</text>
+<path class="ssa-line ssa-back" d="M290 648H334V208H240V230" marker-end="url(#go49-phi-arrow)"/>
+<text x="44" y="742" class="ssa-label">P1: после первого тела</text>
+<text x="44" y="770" class="ssa-code">v26=1, v23=2 → i=1,s=2</text>
+<path class="ssa-line" d="M30 410H12V804H134V827" marker-end="url(#go49-phi-arrow)"/>
+<text x="30" y="796" class="ssa-label">false → выход из цикла</text>
+<path class="ssa-node" d="M30 827H290V892H30Z"/>
+<text x="44" y="854" class="ssa-code">b5: Ret v31</text>
+<text x="44" y="880" class="ssa-label">При i=3 возвращается s=12</text>
+<text x="30" y="928" class="ssa-label">P0/P1 — наши подписи рёбер.</text>
+</svg>
+<figcaption>Первый аргумент <code>Phi</code> соответствует первому предшественнику, второй — второму: порядок <code>b1 b4</code> принципиален. Сплошное ребро P0 приносит нули; пунктирное P1 возвращает новые индекс и сумму. Это поясняющая проекция сохранённого <code>SumIndex_02__prove.dump</code> Go 1.27.3, а не новый запуск и не полный граф: часть адресных операций, зависимость памяти и отброшенный путь ошибки скрыты.</figcaption>
+<p>Текстовая альтернатива: при входе из b1 узлы <code>v10=Phi(v7,v26)</code> и <code>v31=Phi(v7,v23)</code> выбирают v7=0. После первого тела xs[0]=2, v23=2, v26=1; вход из b4 выбирает вторые аргументы и даёт i=1,s=2. Затем приходят пары 2,6 и 3,12; последняя не проходит условие i&lt;3 и возвращает 12. Phi выбирает уже полученное значение по ребру; она не складывает аргументы и не выполняет обе ветви.</p>
+</figure>
+<p>Память тоже имеет SSA-зависимость. В Mem(p) записи <code>*p=1; a:=*p; *p=2; return a+*p</code> логически образуют m0→Store1→m1→Load1→Store2→m2→Load2. Нельзя объединить два Load только по равному адресу p: второй читает другое состояние памяти. После доказательства известных значений наш машинный код оставил запись 2 и результат 3. Это допустимо, потому что между действиями нет наблюдателя или вызова; добавление неизвестного вызова меняет доступное доказательство.</p>
+<p>Для собственных дампов: обычный пользователь, cwd compilerlab, существующий lab.go и отдельный каталог <code>reports/ssa</code>. Код 0 подтверждает завершённую компиляцию; ошибки -d сначала сверяйте со справкой этой версии. При попадании в кэш диагностический текст мог не быть создан заново, поэтому свежему опыту назначается отдельный GOCACHE, сохраняя общий стенд.</p>
+<pre><code>cd "$LABROOT/projects/compilerlab" || exit 1
+mkdir -p "$LABROOT/reports/ssa" || exit 1
+SSA_CACHE="$LABROOT/cache/ssa-observation-01"
+if test -e "$SSA_CACHE"; then
+  printf '%s\n' 'Для нового опыта выберите новое имя SSA_CACHE, например ssa-observation-02.' &gt;&amp;2
+  exit 1
+fi
+GOCACHE="$SSA_CACHE" GOSSAFUNC=Select GOSSADIR="$LABROOT/reports/ssa" \
+"$GO" build '-gcflags=example.org/compilerlab/lab=-d=ssa/build/dump=Select,ssa/prove/dump=Select,ssa/build/dump=SumIndex,ssa/prove/dump=SumIndex,ssa/check_bce/debug=1' ./lab || exit 1</code></pre>
+<p>Текстовые dump создаются в cwd, HTML — в GOSSADIR; их имена печатает инструмент. Модель на схеме использует фактические v/b Go 1.27.3, но эти номера не входят в язык. Контроль Unchecked сохраняет проверку, а TestValues вызывает её с −1 и требует panic. Меняя условие на i&lt;=len(xs), получите дополнительную плохую итерацию; исправление — вернуть строгое сравнение, а не отключить проверки через -B. Источники: <a href="https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/internal/ssa/prove.go">prove</a>, <a href="https://github.com/golang/go/blob/go1.27.3/src/cmd/compile/internal/ssa/checkbce.go">checkbce</a>.</p>
 <h2>Полный опыт: безопасный цикл и произвольный индекс</h2>
-<p>Создайте новый модуль и сохраните main.go. Оба обращения к срезу должны соблюдать правила языка, но у первого граница выводится из самого цикла, а у второго индекс передаётся независимо. Различие станет видно и в диагностике, и в коде пути ошибки.</p>
+<p>В подготовленном projects/ch49 уже лежат go.mod и main.go ниже. Оба обращения к срезу должны соблюдать правила языка, но у первого граница выводится из самого цикла, а у второго индекс передаётся независимо. Различие станет видно и в диагностике, и в коде пути ошибки.</p>
+<p class="lab-contract">Поставленный исходник: <code>$LABROOT/projects/ch49</code>. Читайте его как текст файла.</p>
 <pre><code>package main
 //go:noinline
 func Sum(xs []int) int {
@@ -29,8 +104,10 @@ func main() {
     println(Sum([]int{1, 2, 3}))
     println(At([]int{9}, 0))
 }</code></pre>
-<pre><code>GOSSAFUNC=Sum go build -gcflags=-d=ssa/check_bce/debug -o demo .
-go tool objdump -s 'main.(Sum|At)$' demo</code></pre>
+<p class="lab-contract">Обычный пользователь, подготовленный личный стенд из главы 48; cwd <code>$LABROOT/projects/ch49</code>, входы приведены выше и поставлены в fixtures. Ожидается код 0 у каждой команды. При ненулевом коде остановитесь, сохраните stderr и исправьте указанный вход; прежний бинарник не считается результатом новой сборки.</p>
+<pre><code>cd "$LABROOT/projects/ch49" || exit 1
+GOSSAFUNC=Sum go build -gcflags=-d=ssa/check_bce/debug -o demo . || exit 1
+go tool objdump -s 'main.(Sum|At)$' demo || exit 1</code></pre>
 <p>Переменная GOSSAFUNC выбирает исследуемую функцию; в проверенном запуске создан файл ssa.html. Параметр -d=ssa/check_bce/debug включает специальную диагностику оставшихся проверок границ, а не общий журнал всех доказательств. Команда objdump показывает инструкции уже связанного файла, -s фильтрует имена символов регулярным выражением. Кавычки сохраняют шаблон для инструмента.</p>
 <h2>Что действительно наблюдалось</h2>
 <p>В Go 1.27.3 HTML содержал промежуточные формы с Phi и стадии нижнего преобразования. Диагностика сообщила Found IsInBounds у произвольного xs[i] в At. В инструкции Sum не требовался отдельный переход к обработчику ошибки для каждого обращения внутри корректного цикла. У At сохранилось сравнение индекса с длиной и переход в runtime.panicBounds. Именно такое имя обработчика наблюдалось в этом выпуске; старые тексты часто показывают panicIndex.</p>
