@@ -1,0 +1,117 @@
+<!-- subject-visual-v1-postgres:pg11-commit-wal:begin -->
+<style>
+#pg11-commit-wal-timeline{margin:1.5em 0;padding:1em 0;border-block:1px solid var(--line,#d9ded8);color:var(--text,#202d34);background:var(--paper,#fffcf5);line-height:1.6}
+#pg11-commit-wal-timeline h3{margin:0 0 .65em;font-size:1.15em;line-height:1.35}
+#pg11-commit-wal-timeline p{margin:.7em 0}
+#pg11-commit-wal-timeline code{white-space:normal;overflow-wrap:anywhere;font-size:.95em}
+#pg11-commit-wal-timeline .pg11-wal-records{margin:1em 0;padding:.75em;border-inline-start:3px solid currentColor;background:var(--soft,#e8f2ec)}
+#pg11-commit-wal-timeline dt{font-weight:700;margin-top:.65em}
+#pg11-commit-wal-timeline dt:first-child{margin-top:0}
+#pg11-commit-wal-timeline dd{margin:.25em 0 0;overflow-wrap:anywhere}
+#pg11-commit-wal-timeline .pg11-wal-svg{display:block;width:100%;max-width:304px;height:auto;margin:1.25em auto}
+#pg11-commit-wal-timeline a{color:var(--accent,#0c6b63);text-decoration:underline;text-underline-offset:.15em;overflow-wrap:anywhere}
+#pg11-commit-wal-timeline .pg11-wal-key{padding:.75em;border:1px dashed currentColor}
+@media print{
+#pg11-commit-wal-timeline{color:#000;background:#fff;border-color:#000;break-inside:auto}
+#pg11-commit-wal-timeline .pg11-wal-records{background:#fff}
+#pg11-commit-wal-timeline .pg11-wal-svg{break-inside:avoid;max-width:78mm}
+#pg11-commit-wal-timeline a{color:#000}
+}
+</style>
+<figure id="pg11-commit-wal-timeline" aria-labelledby="pg11-wal-question" aria-describedby="pg11-wal-alternative">
+<figcaption>
+<h3 id="pg11-wal-question">До какой позиции WAL нужно дойти, чтобы подтвердить этот COMMIT?</h3>
+<p>Возьмём две уже разобранные записи транзакции <code>xid=791</code>: вставку <code>(3, 'wal-visible')</code> в <code>book.pages</code> и её COMMIT. Байты и начальные LSN взяты из сохранённого примера PostgreSQL 18.6. Временная шкала ниже — выбранный допустимый порядок, а не измерение его длительности или момента сброса.</p>
+</figcaption>
+<p>Зададим <code>fsync=on</code>, <code>synchronous_commit=on</code> и отсутствие синхронного standby: <code>synchronous_standby_names=''</code>. Для рисунка выбран способ синхронизации <code>wal_sync_method=fdatasync</code>; это условие рисунка, а не установленное значение исходного опыта. Предполагаем, что ОС, контроллер и накопитель соблюдают запрос синхронизации. До показанной записи страницы в файл других изменений того же heap-блока нет.</p>
+<p>Нужно различить начало записи и её конец. Поле <code>xl_tot_len</code> считает байты самой записи, включая 24-байтовый заголовок. «Конец записи» ниже — исключающая граница: адрес сразу после её последнего байта, то есть и после последнего байта её тела. Байты выравнивания в <code>xl_tot_len</code> не входят. В выбранной 64-битной сборке граница резервирования выравнивается на 8 байт. <code>XLogInsert</code> возвращает конец зарезервированного участка WAL, а не адрес начала и не обязательно простую сумму начала с <code>xl_tot_len</code>.</p>
+<dl class="pg11-wal-records">
+<dt>Heap INSERT, <code>xid=791</code></dt>
+<dd>Начало: <code>0/01CB1438</code>.<br><code>xl_tot_len=194 B</code>: 24 B заголовка и 170 B после него.<br>Конец записи: <code>0/01CB14FA</code>.<br>Затем 6 B выравнивания; возвращённый конец <strong>I = <code>0/01CB1500</code></strong>.</dd>
+<dt>Transaction COMMIT, <code>xid=791</code></dt>
+<dd>Начало: <code>0/01CB1500</code>.<br><code>xl_tot_len=34 B</code>: 24 B заголовка и 10 B после него.<br>Конец записи: <code>0/01CB1522</code>.<br>Затем 6 B выравнивания; конец подтверждаемой транзакции <strong>C = <code>0/01CB1528</code></strong>.</dd>
+</dl>
+<p>В этом расчёте обе записи целиком помещаются в одну страницу WAL размером 8192 B: их начала находятся на смещениях 5176 и 5376, а конец C — на смещении 5416. Поэтому здесь достаточно округления: <code>194 + 6 + 34 + 6 = 240 B</code> от первого начала до C. При переходе через границу страницы WAL в физическом потоке появляются её заголовки; такое сложение нельзя автоматически переносить на произвольную запись. Концы I и C получены из принятой ветви исходного кода и арифметики, а не измерены отдельным вызовом функции наблюдения. <a href="https://github.com/postgres/postgres/blob/REL_18_6/src/backend/access/transam/xlog.c#L1089-L1146">Резервирование и возвращаемый EndPos в PostgreSQL 18.6</a>.</p>
+<p>У heap-страницы есть поле <code>pd_lsn</code>: позиция WAL, соответствующая последнему изменению этой страницы. В показанном пути INSERT PostgreSQL передаёт результат <code>XLogInsert</code> в <code>PageSetLSN</code>. Поэтому для выбранного состояния после INSERT <code>pd_lsn=I</code>. COMMIT описывает исход транзакции и сам по себе не заменяет это поле на C. Сохранённый в исходном опыте <code>page-0.bin</code> снят раньше третьей вставки и содержит <code>pd_lsn=0/01CA84C8</code>; это не снимок страницы в нарисованном состоянии. <a href="https://github.com/postgres/postgres/blob/REL_18_6/src/backend/access/heap/heapam.c#L2248-L2253">Присвоение PageLSN в heap INSERT</a>.</p>
+<p>Обозначим <strong>W</strong> границу уже записанного в файл WAL, а <strong>F</strong> — границу WAL, устойчиво сброшенного на носитель. Запись в файл может закончиться в кэше ОС: из <code>W ≥ C</code> ещё не следует <code>F ≥ C</code>. Слово <i>dirty</i> означает, что копия heap-страницы в общей памяти изменена и нуждается в записи; оно не означает неподтверждённую транзакцию. I, C, W и F — позиции одного потока WAL, а не адреса heap-файла.</p>
+<svg data-plain-skip="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 304 954" role="img" aria-labelledby="pg11-svg-title pg11-svg-desc" class="pg11-wal-svg">
+<title id="pg11-svg-title">COMMIT ждёт устойчивого WAL, а не записи heap-страницы</title>
+<desc id="pg11-svg-desc">Условная последовательность для xid 791: INSERT резервирует WAL до I, COMMIT — до C. Запись WAL в файл ещё не означает устойчивость. После синхронизации F достигает C; сервер может подтвердить COMMIT, хотя heap-страница остаётся dirty. Её запись в файл показана позже. Шкала задаёт порядок, не длительность.</desc>
+<style>
+.pg11-wal-svg{color:var(--text,#202d34);background:var(--paper,#fffcf5);font:15px system-ui,sans-serif}
+.pg11-wal-svg text{fill:currentColor}
+.pg11-wal-svg .small{font-size:13px}
+.pg11-wal-svg .mono{font-family:ui-monospace,monospace;font-size:13px}
+.pg11-wal-svg .label{font-weight:700}
+.pg11-wal-svg .line{fill:none;stroke:currentColor;stroke-width:1.5}
+.pg11-wal-svg .soft{fill:var(--soft,#e8f2ec);stroke:currentColor;stroke-width:1.5}
+.pg11-wal-svg .record{fill:var(--paper,#fffcf5);stroke:currentColor;stroke-width:2}
+.pg11-wal-svg .dash{stroke-dasharray:5 4}
+@media print{.pg11-wal-svg{color:#000;background:#fff}.pg11-wal-svg .soft,.pg11-wal-svg .record{fill:#fff}}
+</style>
+<text x="12" y="24" class="label">Порядок событий ↓</text>
+<text x="12" y="46" class="small">Не масштаб времени; ветвь выбрана явно</text>
+<text x="16" y="78" class="label">Heap: RAM</text>
+<text x="148" y="78" class="label">WAL → носитель</text>
+<path d="M122 91V731" class="line"/>
+<path d="m118 724 4 8 4-8" class="line"/>
+<rect x="17" y="108" width="91" height="613" rx="3" class="soft dash"/>
+<text x="27" y="135" class="label">Блок 0</text>
+<text x="27" y="159">dirty</text>
+<text x="27" y="182" class="mono">pd_lsn=I</text>
+<text x="27" y="206" class="small">Изменён</text>
+<text x="27" y="225" class="small">в памяти</text>
+<text x="27" y="244" class="small">для INSERT</text>
+<circle cx="122" cy="122" r="4" fill="currentColor"/>
+<rect x="139" y="105" width="151" height="108" class="record"/>
+<text x="149" y="128" class="label">1. Heap INSERT</text>
+<text x="149" y="151">194 B + 6 B</text>
+<text x="149" y="173" class="small">выравнивания</text>
+<text x="149" y="197" class="mono">I=0/01CB1500</text>
+<circle cx="122" cy="259" r="4" fill="currentColor"/>
+<rect x="139" y="242" width="151" height="108" class="record"/>
+<text x="149" y="265" class="label">2. COMMIT</text>
+<text x="149" y="288">34 B + 6 B</text>
+<text x="149" y="310" class="small">выравнивания</text>
+<text x="149" y="334" class="mono">C=0/01CB1528</text>
+<text x="27" y="286" class="small">COMMIT</text>
+<text x="27" y="305" class="small">не меняет</text>
+<text x="27" y="324" class="small">pd_lsn</text>
+<circle cx="122" cy="393" r="4" fill="currentColor"/>
+<path d="M139 378H290M139 413H290" class="line"/>
+<text x="148" y="400" class="label">3. В файл: W ≥ C</text>
+<text x="140" y="438">Ещё F &lt; C</text>
+<text x="140" y="460" class="small">Успех COMMIT рано</text>
+<circle cx="122" cy="501" r="4" fill="currentColor"/>
+<text x="139" y="500" class="label">4. fdatasync</text>
+<text x="139" y="523" class="small">успешно завершён</text>
+<path d="M138 542H290M138 547H290" class="line"/>
+<text x="141" y="569" class="label">F ≥ C</text>
+<text x="141" y="589">WAL устойчив</text>
+<text x="27" y="502" class="small">В этой</text>
+<text x="27" y="521" class="small">ветви</text>
+<text x="27" y="540" class="small">ещё dirty</text>
+<circle cx="122" cy="617" r="4" fill="currentColor"/>
+<text x="139" y="616" class="label">5. Статус, ресурсы</text>
+<path d="M139 639H272m-7-4 7 4-7 4" class="line"/>
+<text x="139" y="665">Клиент: COMMIT</text>
+<text x="139" y="688" class="small">Ответ после flush</text>
+<text x="27" y="630" class="small">Файл ещё</text>
+<text x="27" y="649" class="small">может быть</text>
+<text x="27" y="668" class="small">прежним</text>
+<path d="M62 722V761m-4-7 4 7 4-7" class="line"/>
+<text x="16" y="789" class="label">6. Позже: страница → файл</text>
+<text x="16" y="813">Перед записью страницы: F ≥ I</text>
+<text x="16" y="838" class="small">Запись файла ≠ синхронизация файла</text>
+<path d="M16 868H290" class="line"/>
+<text x="16" y="893" class="small">I — конец INSERT; C — конец COMMIT.</text>
+<text x="16" y="915" class="small">W — записано; F — устойчиво сброшено.</text>
+<text x="16" y="937" class="small">Все четыре позиции относятся к WAL.</text>
+</svg>
+
+<p id="pg11-wal-alternative" class="pg11-wal-key"><strong>Текстовое чтение рисунка.</strong> INSERT меняет heap-блок 0 в общей памяти, создаёт 194-байтовую запись WAL и устанавливает PageLSN=I. COMMIT добавляет 34-байтовую запись до C. В выбранном промежуточном состоянии WAL уже записан до C, но ещё не сброшен до C: успешный ответ пока запрещён. Затем синхронизация делает WAL устойчивым до C. Сервер завершает действия подтверждения транзакции и может отправить успех клиенту. На этой ветви heap-страница всё ещё dirty и записывается в файл позже. Прямоугольники справа обозначают записи WAL; их высота не пропорциональна числу байтов. Длинная полоса слева обозначает время нахождения изменённой страницы в памяти, а не устройство страницы 8 KiB.</p>
+<p>Для выбранного режима <code>XLogFlush(XactLastRecEnd)</code>, где <code>XactLastRecEnd=C</code>, должен завершиться до успешного ответа COMMIT. Условие локальной устойчивости — <strong><code>F ≥ C</code></strong>. Оно не означает, что клиент получает ответ в тот же миг: после сброса остаются действия со статусом транзакции, освобождением ресурсов и отправкой ответа. Отсутствие синхронного standby убирает ожидание такой реплики, но сохраняет локальное ожидание WAL. <a href="https://github.com/postgres/postgres/blob/REL_18_6/src/backend/access/transam/xact.c#L1498-L1508">Сброс WAL и подтверждение транзакции</a>, <a href="https://www.postgresql.org/docs/18/wal-async-commit.html">синхронное и асинхронное подтверждение</a>.</p>
+<p>В выбранной ветви WAL сначала записывается, затем успешно завершается <code>fdatasync</code>, и PostgreSQL продвигает границу Flush. Устойчивость зависит от всей цепочки хранения, включая кэши устройства: рисунок не доказывает её испытанием с отключением питания. Если успешный ответ потеряется в сети, это не отменит уже подтверждённую транзакцию; клиент не сможет определить её исход по одному отсутствию ответа. <a href="https://github.com/postgres/postgres/blob/REL_18_6/src/backend/access/transam/xlog.c#L2424-L2556">Запись и продвижение Flush</a>, <a href="https://github.com/postgres/postgres/blob/REL_18_6/src/backend/access/transam/xlog.c#L8746-L8783">ветвь fdatasync</a>, <a href="https://www.postgresql.org/docs/18/wal-reliability.html">надёжность цепочки хранения</a>.</p>
+<p>Запись heap-страницы в её файл требует своего порядка: сначала WAL должен быть устойчив хотя бы до PageLSN, то есть <strong><code>F ≥ I</code></strong>. Страница может уйти в файл и до COMMIT, если это условие уже выполнено; рисунок выбирает другую допустимую ветвь, где запись происходит позже. Завершение записи файла не тождественно его синхронизации с носителем. COMMIT не обязан ждать записи и синхронизации этой heap-страницы: после сбоя её изменение можно восстановить из устойчивого WAL. Именно к этому приводит следующий разбор <a href="#pg-11-redo">аварийного восстановления</a>. <a href="https://github.com/postgres/postgres/blob/REL_18_6/src/backend/storage/buffer/bufmgr.c#L4347-L4379">WAL перед записью постоянной страницы</a>, <a href="https://www.postgresql.org/docs/18/wal-intro.html">причина отложенной записи страниц</a>.</p>
+</figure>
+<!-- subject-visual-v1-postgres:pg11-commit-wal:end -->

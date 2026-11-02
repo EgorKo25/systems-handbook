@@ -1,0 +1,74 @@
+<svg data-plain-skip="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 304 954" role="img" aria-labelledby="pg11-svg-title pg11-svg-desc" class="pg11-wal-svg">
+<title id="pg11-svg-title">COMMIT ждёт устойчивого WAL, а не записи heap-страницы</title>
+<desc id="pg11-svg-desc">Условная последовательность для xid 791: INSERT резервирует WAL до I, COMMIT — до C. Запись WAL в файл ещё не означает устойчивость. После синхронизации F достигает C; сервер может подтвердить COMMIT, хотя heap-страница остаётся dirty. Её запись в файл показана позже. Шкала задаёт порядок, не длительность.</desc>
+<style>
+.pg11-wal-svg{color:var(--text,#202d34);background:var(--paper,#fffcf5);font:15px system-ui,sans-serif}
+.pg11-wal-svg text{fill:currentColor}
+.pg11-wal-svg .small{font-size:13px}
+.pg11-wal-svg .mono{font-family:ui-monospace,monospace;font-size:13px}
+.pg11-wal-svg .label{font-weight:700}
+.pg11-wal-svg .line{fill:none;stroke:currentColor;stroke-width:1.5}
+.pg11-wal-svg .soft{fill:var(--soft,#e8f2ec);stroke:currentColor;stroke-width:1.5}
+.pg11-wal-svg .record{fill:var(--paper,#fffcf5);stroke:currentColor;stroke-width:2}
+.pg11-wal-svg .dash{stroke-dasharray:5 4}
+@media print{.pg11-wal-svg{color:#000;background:#fff}.pg11-wal-svg .soft,.pg11-wal-svg .record{fill:#fff}}
+</style>
+<text x="12" y="24" class="label">Порядок событий ↓</text>
+<text x="12" y="46" class="small">Не масштаб времени; ветвь выбрана явно</text>
+<text x="16" y="78" class="label">Heap: RAM</text>
+<text x="148" y="78" class="label">WAL → носитель</text>
+<path d="M122 91V731" class="line"/>
+<path d="m118 724 4 8 4-8" class="line"/>
+<rect x="17" y="108" width="91" height="613" rx="3" class="soft dash"/>
+<text x="27" y="135" class="label">Блок 0</text>
+<text x="27" y="159">dirty</text>
+<text x="27" y="182" class="mono">pd_lsn=I</text>
+<text x="27" y="206" class="small">Изменён</text>
+<text x="27" y="225" class="small">в памяти</text>
+<text x="27" y="244" class="small">для INSERT</text>
+<circle cx="122" cy="122" r="4" fill="currentColor"/>
+<rect x="139" y="105" width="151" height="108" class="record"/>
+<text x="149" y="128" class="label">1. Heap INSERT</text>
+<text x="149" y="151">194 B + 6 B</text>
+<text x="149" y="173" class="small">выравнивания</text>
+<text x="149" y="197" class="mono">I=0/01CB1500</text>
+<circle cx="122" cy="259" r="4" fill="currentColor"/>
+<rect x="139" y="242" width="151" height="108" class="record"/>
+<text x="149" y="265" class="label">2. COMMIT</text>
+<text x="149" y="288">34 B + 6 B</text>
+<text x="149" y="310" class="small">выравнивания</text>
+<text x="149" y="334" class="mono">C=0/01CB1528</text>
+<text x="27" y="286" class="small">COMMIT</text>
+<text x="27" y="305" class="small">не меняет</text>
+<text x="27" y="324" class="small">pd_lsn</text>
+<circle cx="122" cy="393" r="4" fill="currentColor"/>
+<path d="M139 378H290M139 413H290" class="line"/>
+<text x="148" y="400" class="label">3. В файл: W ≥ C</text>
+<text x="140" y="438">Ещё F &lt; C</text>
+<text x="140" y="460" class="small">Успех COMMIT рано</text>
+<circle cx="122" cy="501" r="4" fill="currentColor"/>
+<text x="139" y="500" class="label">4. fdatasync</text>
+<text x="139" y="523" class="small">успешно завершён</text>
+<path d="M138 542H290M138 547H290" class="line"/>
+<text x="141" y="569" class="label">F ≥ C</text>
+<text x="141" y="589">WAL устойчив</text>
+<text x="27" y="502" class="small">В этой</text>
+<text x="27" y="521" class="small">ветви</text>
+<text x="27" y="540" class="small">ещё dirty</text>
+<circle cx="122" cy="617" r="4" fill="currentColor"/>
+<text x="139" y="616" class="label">5. Статус, ресурсы</text>
+<path d="M139 639H272m-7-4 7 4-7 4" class="line"/>
+<text x="139" y="665">Клиент: COMMIT</text>
+<text x="139" y="688" class="small">Ответ после flush</text>
+<text x="27" y="630" class="small">Файл ещё</text>
+<text x="27" y="649" class="small">может быть</text>
+<text x="27" y="668" class="small">прежним</text>
+<path d="M62 722V761m-4-7 4 7 4-7" class="line"/>
+<text x="16" y="789" class="label">6. Позже: страница → файл</text>
+<text x="16" y="813">Перед записью страницы: F ≥ I</text>
+<text x="16" y="838" class="small">Запись файла ≠ синхронизация файла</text>
+<path d="M16 868H290" class="line"/>
+<text x="16" y="893" class="small">I — конец INSERT; C — конец COMMIT.</text>
+<text x="16" y="915" class="small">W — записано; F — устойчиво сброшено.</text>
+<text x="16" y="937" class="small">Все четыре позиции относятся к WAL.</text>
+</svg>

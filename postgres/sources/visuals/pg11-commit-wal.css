@@ -1,0 +1,17 @@
+#pg11-commit-wal-timeline{margin:1.5em 0;padding:1em 0;border-block:1px solid var(--line,#d9ded8);color:var(--text,#202d34);background:var(--paper,#fffcf5);line-height:1.6}
+#pg11-commit-wal-timeline h3{margin:0 0 .65em;font-size:1.15em;line-height:1.35}
+#pg11-commit-wal-timeline p{margin:.7em 0}
+#pg11-commit-wal-timeline code{white-space:normal;overflow-wrap:anywhere;font-size:.95em}
+#pg11-commit-wal-timeline .pg11-wal-records{margin:1em 0;padding:.75em;border-inline-start:3px solid currentColor;background:var(--soft,#e8f2ec)}
+#pg11-commit-wal-timeline dt{font-weight:700;margin-top:.65em}
+#pg11-commit-wal-timeline dt:first-child{margin-top:0}
+#pg11-commit-wal-timeline dd{margin:.25em 0 0;overflow-wrap:anywhere}
+#pg11-commit-wal-timeline .pg11-wal-svg{display:block;width:100%;max-width:304px;height:auto;margin:1.25em auto}
+#pg11-commit-wal-timeline a{color:var(--accent,#0c6b63);text-decoration:underline;text-underline-offset:.15em;overflow-wrap:anywhere}
+#pg11-commit-wal-timeline .pg11-wal-key{padding:.75em;border:1px dashed currentColor}
+@media print{
+#pg11-commit-wal-timeline{color:#000;background:#fff;border-color:#000;break-inside:auto}
+#pg11-commit-wal-timeline .pg11-wal-records{background:#fff}
+#pg11-commit-wal-timeline .pg11-wal-svg{break-inside:avoid;max-width:78mm}
+#pg11-commit-wal-timeline a{color:#000}
+}

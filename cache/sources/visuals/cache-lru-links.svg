@@ -1,0 +1,193 @@
+<svg data-plain-skip="true" id="cache-lru-memory-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 1220" role="img" aria-labelledby="clru-svg-title clru-svg-desc">
+<title id="clru-svg-title">Три физических слота LRU до get, после get и после вытеснения</title>
+<desc id="clru-svg-desc">Условные адреса 1000, 1028 и 1050 остаются на месте. Начальный порядок A B C. get A меняет четыре поля prev/next и head/tail, оставляет индекс и значения прежними: B C A. Затем B удаляется из индекса, его слот 1028 используется для D, итог C A D. Рамка с точкой отмечает поле, отличающееся от предыдущего снимка. Адреса в ячейках записаны в hex без префикса 0x. Буквы у корзин поясняют ключи; сама корзина хранит только ссылку. Это учебная реализация, не Redis и не память OrderedDict.</desc>
+<style>
+#cache-lru-memory-svg{color:var(--text,#17212b);background:var(--paper,#fff);font-family:system-ui,sans-serif}
+#cache-lru-memory-svg text{fill:currentColor;font-size:14px}
+#cache-lru-memory-svg .clru-title{font-size:18px;font-weight:700}
+#cache-lru-memory-svg .clru-cell{fill:var(--paper,#fff);stroke:var(--line,#687582);stroke-width:1}
+#cache-lru-memory-svg .clru-value{fill:var(--soft,#edf1f4)}
+#cache-lru-memory-svg .clru-num{font:16px ui-monospace,SFMono-Regular,Consolas,monospace}
+#cache-lru-memory-svg .clru-small{font-size:14px;fill:var(--muted,#52606d)}
+#cache-lru-memory-svg .clru-changed{stroke:var(--accent,#075d78);stroke-width:3}
+#cache-lru-memory-svg .clru-mark{fill:var(--accent,#075d78)}
+#cache-lru-memory-svg .clru-rule{stroke:var(--line,#687582);stroke-width:1}
+</style>
+<g transform="translate(0 0)">
+<text x="8" y="24" class="clru-title">1. До get(A)</text>
+<text x="8" y="47">Индекс: 4 ссылки по 8 B</text>
+<rect x="8" y="56" width="76" height="44" class="clru-cell"/>
+<text x="46" y="74" text-anchor="middle">0: ∅</text>
+<text x="46" y="94" class="clru-num" text-anchor="middle">∅</text>
+<rect x="84" y="56" width="76" height="44" class="clru-cell"/>
+<text x="122" y="74" text-anchor="middle">1: A</text>
+<text x="122" y="94" class="clru-num" text-anchor="middle">1000</text>
+<rect x="160" y="56" width="76" height="44" class="clru-cell"/>
+<text x="198" y="74" text-anchor="middle">2: B</text>
+<text x="198" y="94" class="clru-num" text-anchor="middle">1028</text>
+<rect x="236" y="56" width="76" height="44" class="clru-cell"/>
+<text x="274" y="74" text-anchor="middle">3: C</text>
+<text x="274" y="94" class="clru-num" text-anchor="middle">1050</text>
+<rect x="8" y="111" width="144" height="25" class="clru-cell"/>
+<text x="15" y="129" class="clru-num">head=1000</text>
+<rect x="168" y="111" width="144" height="25" class="clru-cell"/>
+<text x="175" y="129" class="clru-num">tail=1050</text>
+<text x="160" y="160" class="clru-num" text-anchor="middle">LRU  A ⇄ B ⇄ C  MRU</text>
+<text x="38.4" y="184" text-anchor="middle">key 8 B</text>
+<text x="129.6" y="184" text-anchor="middle">value 16 B</text>
+<text x="220.8" y="184" text-anchor="middle">prev 8 B</text>
+<text x="281.6" y="184" text-anchor="middle">next 8 B</text>
+<text x="8" y="202" class="clru-small">Узел @0x1000 · 40 B</text>
+<rect x="8" y="210" width="60.8" height="36" class="clru-cell"/>
+<text x="38.4" y="234" class="clru-num" text-anchor="middle">A</text>
+<rect x="68.8" y="210" width="121.6" height="36" class="clru-cell clru-value"/>
+<text x="129.6" y="234" class="clru-num" text-anchor="middle">a×16</text>
+<rect x="190.4" y="210" width="60.8" height="36" class="clru-cell"/>
+<text x="220.8" y="234" class="clru-num" text-anchor="middle">∅</text>
+<rect x="251.2" y="210" width="60.8" height="36" class="clru-cell"/>
+<text x="281.6" y="234" class="clru-num" text-anchor="middle">1028</text>
+<text x="8" y="258" class="clru-small">Узел @0x1028 · 40 B</text>
+<rect x="8" y="266" width="60.8" height="36" class="clru-cell"/>
+<text x="38.4" y="290" class="clru-num" text-anchor="middle">B</text>
+<rect x="68.8" y="266" width="121.6" height="36" class="clru-cell clru-value"/>
+<text x="129.6" y="290" class="clru-num" text-anchor="middle">b×16</text>
+<rect x="190.4" y="266" width="60.8" height="36" class="clru-cell"/>
+<text x="220.8" y="290" class="clru-num" text-anchor="middle">1000</text>
+<rect x="251.2" y="266" width="60.8" height="36" class="clru-cell"/>
+<text x="281.6" y="290" class="clru-num" text-anchor="middle">1050</text>
+<text x="8" y="314" class="clru-small">Узел @0x1050 · 40 B</text>
+<rect x="8" y="322" width="60.8" height="36" class="clru-cell"/>
+<text x="38.4" y="346" class="clru-num" text-anchor="middle">C</text>
+<rect x="68.8" y="322" width="121.6" height="36" class="clru-cell clru-value"/>
+<text x="129.6" y="346" class="clru-num" text-anchor="middle">c×16</text>
+<rect x="190.4" y="322" width="60.8" height="36" class="clru-cell"/>
+<text x="220.8" y="346" class="clru-num" text-anchor="middle">1028</text>
+<rect x="251.2" y="322" width="60.8" height="36" class="clru-cell"/>
+<text x="281.6" y="346" class="clru-num" text-anchor="middle">∅</text>
+<text x="8" y="384">Три узла остаются в своих ячейках.</text>
+<path d="M8 399H312" class="clru-rule"/>
+</g>
+<g transform="translate(0 408)">
+<text x="8" y="24" class="clru-title">2. get(A): попадание</text>
+<text x="8" y="47">Индекс: 4 ссылки по 8 B</text>
+<rect x="8" y="56" width="76" height="44" class="clru-cell"/>
+<text x="46" y="74" text-anchor="middle">0: ∅</text>
+<text x="46" y="94" class="clru-num" text-anchor="middle">∅</text>
+<rect x="84" y="56" width="76" height="44" class="clru-cell"/>
+<text x="122" y="74" text-anchor="middle">1: A</text>
+<text x="122" y="94" class="clru-num" text-anchor="middle">1000</text>
+<rect x="160" y="56" width="76" height="44" class="clru-cell"/>
+<text x="198" y="74" text-anchor="middle">2: B</text>
+<text x="198" y="94" class="clru-num" text-anchor="middle">1028</text>
+<rect x="236" y="56" width="76" height="44" class="clru-cell"/>
+<text x="274" y="74" text-anchor="middle">3: C</text>
+<text x="274" y="94" class="clru-num" text-anchor="middle">1050</text>
+<rect x="8" y="111" width="144" height="25" class="clru-cell clru-changed"/>
+<text x="15" y="129" class="clru-num">head=1028</text>
+<circle cx="146" cy="117" r="2" class="clru-mark"/>
+<rect x="168" y="111" width="144" height="25" class="clru-cell clru-changed"/>
+<text x="175" y="129" class="clru-num">tail=1000</text>
+<circle cx="306" cy="117" r="2" class="clru-mark"/>
+<text x="160" y="160" class="clru-num" text-anchor="middle">LRU  B ⇄ C ⇄ A  MRU</text>
+<text x="38.4" y="184" text-anchor="middle">key 8 B</text>
+<text x="129.6" y="184" text-anchor="middle">value 16 B</text>
+<text x="220.8" y="184" text-anchor="middle">prev 8 B</text>
+<text x="281.6" y="184" text-anchor="middle">next 8 B</text>
+<text x="8" y="202" class="clru-small">Узел @0x1000 · 40 B</text>
+<rect x="8" y="210" width="60.8" height="36" class="clru-cell"/>
+<text x="38.4" y="234" class="clru-num" text-anchor="middle">A</text>
+<rect x="68.8" y="210" width="121.6" height="36" class="clru-cell clru-value"/>
+<text x="129.6" y="234" class="clru-num" text-anchor="middle">a×16</text>
+<rect x="190.4" y="210" width="60.8" height="36" class="clru-cell clru-changed"/>
+<text x="220.8" y="234" class="clru-num" text-anchor="middle">1050</text>
+<circle cx="245.2" cy="216" r="2" class="clru-mark"/>
+<rect x="251.2" y="210" width="60.8" height="36" class="clru-cell clru-changed"/>
+<text x="281.6" y="234" class="clru-num" text-anchor="middle">∅</text>
+<circle cx="306" cy="216" r="2" class="clru-mark"/>
+<text x="8" y="258" class="clru-small">Узел @0x1028 · 40 B</text>
+<rect x="8" y="266" width="60.8" height="36" class="clru-cell"/>
+<text x="38.4" y="290" class="clru-num" text-anchor="middle">B</text>
+<rect x="68.8" y="266" width="121.6" height="36" class="clru-cell clru-value"/>
+<text x="129.6" y="290" class="clru-num" text-anchor="middle">b×16</text>
+<rect x="190.4" y="266" width="60.8" height="36" class="clru-cell clru-changed"/>
+<text x="220.8" y="290" class="clru-num" text-anchor="middle">∅</text>
+<circle cx="245.2" cy="272" r="2" class="clru-mark"/>
+<rect x="251.2" y="266" width="60.8" height="36" class="clru-cell"/>
+<text x="281.6" y="290" class="clru-num" text-anchor="middle">1050</text>
+<text x="8" y="314" class="clru-small">Узел @0x1050 · 40 B</text>
+<rect x="8" y="322" width="60.8" height="36" class="clru-cell"/>
+<text x="38.4" y="346" class="clru-num" text-anchor="middle">C</text>
+<rect x="68.8" y="322" width="121.6" height="36" class="clru-cell clru-value"/>
+<text x="129.6" y="346" class="clru-num" text-anchor="middle">c×16</text>
+<rect x="190.4" y="322" width="60.8" height="36" class="clru-cell"/>
+<text x="220.8" y="346" class="clru-num" text-anchor="middle">1028</text>
+<rect x="251.2" y="322" width="60.8" height="36" class="clru-cell clru-changed"/>
+<text x="281.6" y="346" class="clru-num" text-anchor="middle">1000</text>
+<circle cx="306" cy="328" r="2" class="clru-mark"/>
+<text x="8" y="384">4 поля связей + head и tail изменились.</text>
+<path d="M8 399H312" class="clru-rule"/>
+</g>
+<g transform="translate(0 816)">
+<text x="8" y="24" class="clru-title">3. put(D): B вытеснен</text>
+<text x="8" y="47">Индекс: 4 ссылки по 8 B</text>
+<rect x="8" y="56" width="76" height="44" class="clru-cell clru-changed"/>
+<text x="46" y="74" text-anchor="middle">0: D</text>
+<text x="46" y="94" class="clru-num" text-anchor="middle">1028</text>
+<circle cx="78" cy="62" r="2" class="clru-mark"/>
+<rect x="84" y="56" width="76" height="44" class="clru-cell"/>
+<text x="122" y="74" text-anchor="middle">1: A</text>
+<text x="122" y="94" class="clru-num" text-anchor="middle">1000</text>
+<rect x="160" y="56" width="76" height="44" class="clru-cell clru-changed"/>
+<text x="198" y="74" text-anchor="middle">2: ∅</text>
+<text x="198" y="94" class="clru-num" text-anchor="middle">∅</text>
+<circle cx="230" cy="62" r="2" class="clru-mark"/>
+<rect x="236" y="56" width="76" height="44" class="clru-cell"/>
+<text x="274" y="74" text-anchor="middle">3: C</text>
+<text x="274" y="94" class="clru-num" text-anchor="middle">1050</text>
+<rect x="8" y="111" width="144" height="25" class="clru-cell clru-changed"/>
+<text x="15" y="129" class="clru-num">head=1050</text>
+<circle cx="146" cy="117" r="2" class="clru-mark"/>
+<rect x="168" y="111" width="144" height="25" class="clru-cell clru-changed"/>
+<text x="175" y="129" class="clru-num">tail=1028</text>
+<circle cx="306" cy="117" r="2" class="clru-mark"/>
+<text x="160" y="160" class="clru-num" text-anchor="middle">LRU  C ⇄ A ⇄ D  MRU</text>
+<text x="38.4" y="184" text-anchor="middle">key 8 B</text>
+<text x="129.6" y="184" text-anchor="middle">value 16 B</text>
+<text x="220.8" y="184" text-anchor="middle">prev 8 B</text>
+<text x="281.6" y="184" text-anchor="middle">next 8 B</text>
+<text x="8" y="202" class="clru-small">Узел @0x1000 · 40 B</text>
+<rect x="8" y="210" width="60.8" height="36" class="clru-cell"/>
+<text x="38.4" y="234" class="clru-num" text-anchor="middle">A</text>
+<rect x="68.8" y="210" width="121.6" height="36" class="clru-cell clru-value"/>
+<text x="129.6" y="234" class="clru-num" text-anchor="middle">a×16</text>
+<rect x="190.4" y="210" width="60.8" height="36" class="clru-cell"/>
+<text x="220.8" y="234" class="clru-num" text-anchor="middle">1050</text>
+<rect x="251.2" y="210" width="60.8" height="36" class="clru-cell clru-changed"/>
+<text x="281.6" y="234" class="clru-num" text-anchor="middle">1028</text>
+<circle cx="306" cy="216" r="2" class="clru-mark"/>
+<text x="8" y="258" class="clru-small">Узел @0x1028 · 40 B</text>
+<rect x="8" y="266" width="60.8" height="36" class="clru-cell clru-changed"/>
+<text x="38.4" y="290" class="clru-num" text-anchor="middle">D</text>
+<circle cx="62.8" cy="272" r="2" class="clru-mark"/>
+<rect x="68.8" y="266" width="121.6" height="36" class="clru-cell clru-value clru-changed"/>
+<text x="129.6" y="290" class="clru-num" text-anchor="middle">d×16</text>
+<circle cx="184.4" cy="272" r="2" class="clru-mark"/>
+<rect x="190.4" y="266" width="60.8" height="36" class="clru-cell clru-changed"/>
+<text x="220.8" y="290" class="clru-num" text-anchor="middle">1000</text>
+<circle cx="245.2" cy="272" r="2" class="clru-mark"/>
+<rect x="251.2" y="266" width="60.8" height="36" class="clru-cell clru-changed"/>
+<text x="281.6" y="290" class="clru-num" text-anchor="middle">∅</text>
+<circle cx="306" cy="272" r="2" class="clru-mark"/>
+<text x="8" y="314" class="clru-small">Узел @0x1050 · 40 B</text>
+<rect x="8" y="322" width="60.8" height="36" class="clru-cell"/>
+<text x="38.4" y="346" class="clru-num" text-anchor="middle">C</text>
+<rect x="68.8" y="322" width="121.6" height="36" class="clru-cell clru-value"/>
+<text x="129.6" y="346" class="clru-num" text-anchor="middle">c×16</text>
+<rect x="190.4" y="322" width="60.8" height="36" class="clru-cell clru-changed"/>
+<text x="220.8" y="346" class="clru-num" text-anchor="middle">∅</text>
+<circle cx="245.2" cy="328" r="2" class="clru-mark"/>
+<rect x="251.2" y="322" width="60.8" height="36" class="clru-cell"/>
+<text x="281.6" y="346" class="clru-num" text-anchor="middle">1000</text>
+<text x="8" y="384">Тот же адрес 0x1028 теперь содержит D.</text>
+</g>
+</svg>
