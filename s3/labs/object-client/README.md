@@ -15,7 +15,7 @@ Root flags строго до command, значения отдельно, не --
 
 ## SDK и сборка
 
-go.mod: aws-sdk-go-v2 v1.47.1, service/s3 v1.114.0, smithy-go v1.28.1; snapshot release-2026-10-02. Документированный reader toolchain Go1.27.3 linux/amd64. Первый mod tidy получает полный граф и создаёт go.sum, может добавить indirect requirements. Сохраните go.mod/go.sum, go list -m all и лицензии; затем build -mod=readonly. Ни go.sum, ни native PASS не сфабрикованы. Точный изолированный путь в главе03; не меняйте HOME, очистите GOFLAGS, используйте GOTOOLCHAIN=local/GOWORK=off/GOENV=off и private caches. Offline требует подготовленного cache и повторной сборки с GOPROXY=off.
+go.mod: aws-sdk-go-v2 v1.47.1, service/s3 v1.114.0, smithy-go v1.28.1; snapshot release-2026-10-02. Проверенный toolchain — Go1.27.3 linux/amd64. Полный граф из 11 модулей получен через официальный Go proxy и sumdb; сохранены go.sum и восемь indirect requirements. При повторении сохраняйте go.mod/go.sum, go list -m all и лицензии; затем используйте build -mod=readonly. Точный изолированный путь в главе03; не меняйте HOME, очистите GOFLAGS, используйте GOTOOLCHAIN=local/GOWORK=off/GOENV=off и private caches. Offline требует подготовленного cache и повторной сборки с GOPROXY=off.
 
 ## Передача данных и квитанция
 
@@ -29,6 +29,8 @@ Exit0 success;2 input/config/profile;3 последний явный ответ 
 
 Нет durable intent: operation ID может потеряться при гибели процесса до сохранения receipt. HEAD/GET текущего ключа не устанавливают авторство при конкуренции; non-null saved version помогает, mutable suspended null-version — нет. Историю/reconciliation выполняет отдельный принятый инструмент.
 
-## Pending native acceptance
+## Проверка сборки и оставшаяся приёмка
 
-Получить зависимости/checksums/licenses, проверить типы и собрать, затем own AWS/MinIO/RGW profiles отдельно: put/get/head; IfNone/IfMatch conflicts; max/known-length/truncated/checksum/BodyClose; existing final; source pre/post-dispatch failure; lost reply/retry412; cancel/timeout; post-link sync failure; stdout failure. Проверка gofmt — только синтаксический разбор/формат, не этот gate.
+2026-11-03 успешно выполнены go mod verify, go test -mod=readonly и go build -mod=readonly с GOPROXY=off на Go1.27.3 linux/amd64. Оба пакета сообщили [no test files]: автоматических тестов поведения клиента пока нет; проверена компиляция пакетов. Бинарник не запускался, запросы к серверу не отправлялись. Запуск на Windows не проверен. Версии, контрольные суммы и пути к лицензиям перечислены в [dependencies.json](dependencies.json).
+
+Для собственных AWS/MinIO/RGW profiles отдельно остаются: put/get/head; IfNone/IfMatch conflicts; max/known-length/truncated/checksum/BodyClose; existing final; source pre/post-dispatch failure; lost reply/retry412; cancel/timeout; post-link sync failure; stdout failure. Успешная сборка не заменяет эти проверки.

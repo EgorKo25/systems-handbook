@@ -1,0 +1,161 @@
+{
+  "schema_version": 1,
+  "toolchain": "go1.27.3 linux/amd64",
+  "modules": [
+    {
+      "path": "github.com/aws/aws-sdk-go-v2",
+      "version": "v1.47.1",
+      "sum": "h1:uOIZnp4PK3ZhKI0dNrJrhTEsLxbpXHTAJlwoS1pvAtw=",
+      "go_mod_sum": "h1:bttEH6JqnUL8LepvDVfdrds/fZ5bCIxzpe3abyUrhDU=",
+      "license_files": [
+        {
+          "path": "licenses/github.com__aws__aws-sdk-go-v2@v1.47.1/LICENSE.txt",
+          "bytes": 11358,
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+        },
+        {
+          "path": "licenses/github.com__aws__aws-sdk-go-v2@v1.47.1/NOTICE.txt",
+          "bytes": 120,
+          "sha256": "a6e830174d62dafad3a718384772ea1f4c0e27989f050932dc442a5e3ddad080"
+        }
+      ]
+    },
+    {
+      "path": "github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream",
+      "version": "v1.7.20",
+      "sum": "h1:GPRlPwz40I2B2VrBEASOA3Bi77NyeqejNLkifosX0rs=",
+      "go_mod_sum": "h1:g7PNzKcsOKWb4fkSRBA7BZVAS6Y8IcxzN+nRohhQ1Q8=",
+      "license_files": [
+        {
+          "path": "licenses/github.com__aws__aws-sdk-go-v2__aws__protocol__eventstream@v1.7.20/LICENSE.txt",
+          "bytes": 11358,
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+        }
+      ]
+    },
+    {
+      "path": "github.com/aws/aws-sdk-go-v2/internal/configsources",
+      "version": "v1.5.4",
+      "sum": "h1:CLq4+8UHCI+ZZYl/EuJxXovaIVN2xeeT8JV+dsApQ5E=",
+      "go_mod_sum": "h1:Wv4q5sAM04xAMkoOedxLx2inVf6K5FdxYp+A61L+q/0=",
+      "license_files": [
+        {
+          "path": "licenses/github.com__aws__aws-sdk-go-v2__internal__configsources@v1.5.4/LICENSE.txt",
+          "bytes": 11358,
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+        }
+      ]
+    },
+    {
+      "path": "github.com/aws/aws-sdk-go-v2/internal/endpoints/v2",
+      "version": "v2.8.4",
+      "sum": "h1:dD4MR81I7YkpEBRk6UP9rocC2QnT3qVuXwzlYTtfGEs=",
+      "go_mod_sum": "h1:EcXV1kAFd5XwSkDHlj94gnF3q5CkJyYiIJfH8N0VmrE=",
+      "license_files": [
+        {
+          "path": "licenses/github.com__aws__aws-sdk-go-v2__internal__endpoints__v2@v2.8.4/LICENSE.txt",
+          "bytes": 11358,
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+        }
+      ]
+    },
+    {
+      "path": "github.com/aws/aws-sdk-go-v2/internal/v4a",
+      "version": "v1.5.4",
+      "sum": "h1:7Wo47d/xn/7KttCSBd8EGYeZ7ULRFRkUHr6vkZPBzVQ=",
+      "go_mod_sum": "h1:tDB2IVC1xC3vX8o+6uRlzhTxP3g1b77CZXFX/oD2FnQ=",
+      "license_files": [
+        {
+          "path": "licenses/github.com__aws__aws-sdk-go-v2__internal__v4a@v1.5.4/LICENSE.txt",
+          "bytes": 11358,
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+        }
+      ]
+    },
+    {
+      "path": "github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding",
+      "version": "v1.13.19",
+      "sum": "h1:bAdDl/HkGCcGPoe25ToSHEw23VIxt6CT5fLcg111BKg=",
+      "go_mod_sum": "h1:KaUzbLxv4CeSxh6ZCl9B4m7CuFenS8kUEaDs+f/DQr4=",
+      "license_files": [
+        {
+          "path": "licenses/github.com__aws__aws-sdk-go-v2__service__internal__accept-encoding@v1.13.19/LICENSE.txt",
+          "bytes": 11358,
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+        }
+      ]
+    },
+    {
+      "path": "github.com/aws/aws-sdk-go-v2/service/internal/checksum",
+      "version": "v1.11.5",
+      "sum": "h1:/TYsZXdA8UTa+WCtCYSAJIr1vwl0+eho6TUgJGwFFO8=",
+      "go_mod_sum": "h1:qPqp1Uwd/BqdhPufv6oem9j5J7HNsgc2V22dUiDPn+s=",
+      "license_files": [
+        {
+          "path": "licenses/github.com__aws__aws-sdk-go-v2__service__internal__checksum@v1.11.5/LICENSE.txt",
+          "bytes": 11358,
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+        }
+      ]
+    },
+    {
+      "path": "github.com/aws/aws-sdk-go-v2/service/internal/presigned-url",
+      "version": "v1.14.4",
+      "sum": "h1:29SvnfGhXjTl8ONxFwbj2rs6lbhiFXD2CgFQmbT/bXY=",
+      "go_mod_sum": "h1:wm04I5DMuNVvZHFe/dHnUxincvNbbK7AiNBbYsQivek=",
+      "license_files": [
+        {
+          "path": "licenses/github.com__aws__aws-sdk-go-v2__service__internal__presigned-url@v1.14.4/LICENSE.txt",
+          "bytes": 11358,
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+        }
+      ]
+    },
+    {
+      "path": "github.com/aws/aws-sdk-go-v2/service/internal/s3shared",
+      "version": "v1.20.4",
+      "sum": "h1:pPiWfgeNxqluKEph7hvU88kuGKBPOWzO+Dk9t2zqqNs=",
+      "go_mod_sum": "h1:YlwGoIUDG/3kBQbdNOVs/xKZ9J01G8e/6D1mRBj9uTk=",
+      "license_files": [
+        {
+          "path": "licenses/github.com__aws__aws-sdk-go-v2__service__internal__s3shared@v1.20.4/LICENSE.txt",
+          "bytes": 11358,
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+        }
+      ]
+    },
+    {
+      "path": "github.com/aws/aws-sdk-go-v2/service/s3",
+      "version": "v1.114.0",
+      "sum": "h1:VMAdYqr4Jn/8ATs9BHC5riwrs0d6m1Z2ohFriSwZwm0=",
+      "go_mod_sum": "h1:9APRWGLFITKD+xzWSIyT9V7QV4bNlEuIieWlzXgGFlI=",
+      "license_files": [
+        {
+          "path": "licenses/github.com__aws__aws-sdk-go-v2__service__s3@v1.114.0/LICENSE.txt",
+          "bytes": 11358,
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+        }
+      ]
+    },
+    {
+      "path": "github.com/aws/smithy-go",
+      "version": "v1.28.1",
+      "sum": "h1:R/nXH00c8qcfCzQVELtRw+eLQWtzv+VAIEFJ1/xxXlQ=",
+      "go_mod_sum": "h1:YE2RhdIuDbA5E5bTdciG9KrW3+TiEONeUWCqxX9i1Fc=",
+      "license_files": [
+        {
+          "path": "licenses/github.com__aws__smithy-go@v1.28.1/LICENSE",
+          "bytes": 10142,
+          "sha256": "09e8a9bcec8067104652c168685ab0931e7868f9c8284b66f5ae6edae5f1130b"
+        },
+        {
+          "path": "licenses/github.com__aws__smithy-go@v1.28.1/NOTICE",
+          "bytes": 67,
+          "sha256": "d4290ed64c2edd0fce1d84e3f9dfb2881240fe534def76b8cd29ed6af683e287"
+        }
+      ]
+    }
+  ],
+  "verification": "Official Go checksum database during download; go mod verify, typechecking and build with GOPROXY=off.",
+  "scope": "Build verified; no application requests to AWS, MinIO or Ceph RGW were performed."
+}

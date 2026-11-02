@@ -170,7 +170,7 @@
   "source_notes": [
     "Explanations, synthetic data, models and CLI source are original author material; standards are cited, not copied as course prose.",
     "AWS service guarantees and IAM semantics do not apply automatically to MinIO or Ceph RGW.",
-    "No runtime/SDK vendor/module cache/binary/credentials included; native dependency checksums and license inventory remain pending.",
+    "Dependency checksums and license inventory obtained 2026-11-03; Go1.27.3 linux/amd64 typechecking and offline build passed. go test reported [no test files]; endpoint and Windows acceptance remain pending. No runtime/SDK vendor/module cache/binary/credentials included.",
     "The S3 API URLs for SigV4 may redirect to an empty API index; developer-guide URLs were used for actual content."
   ]
 }

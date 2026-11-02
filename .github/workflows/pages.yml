@@ -48,6 +48,18 @@ jobs:
           go test -race ./...
           go vet ./...
           CGO_ENABLED=0 go build -trimpath -buildvcs=false -o "$RUNNER_TEMP/handbook-container-echo" ./cmd/echo
+      - name: Compile the S3 teaching client with pinned dependencies
+        working-directory: s3/labs/object-client
+        env:
+          GOTOOLCHAIN: local
+          GOWORK: 'off'
+          GOENV: 'off'
+          GOFLAGS: ''
+          CGO_ENABLED: '0'
+        run: |
+          go mod download
+          go mod verify
+          go build -mod=readonly -trimpath -buildvcs=false -o "$RUNNER_TEMP/handbook-object-study" ./cmd/object-study
       - name: Check container models and analysis report contracts
         run: |
           python3 -m unittest discover -s docker/labs -p 'test_*.py' -v
