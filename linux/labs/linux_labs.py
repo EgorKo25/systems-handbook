@@ -42,9 +42,22 @@ def lab06():
 def lab07():
     with tempfile.TemporaryDirectory(prefix='linux-book-') as d:
         q=Path(d);target=q/'config';tmp=q/'config.new';target.write_bytes(b'old\n');old=os.open(target,os.O_RDONLY)
-        fd=os.open(tmp,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600);os.write(fd,b'new\n');os.fsync(fd);os.close(fd);os.replace(tmp,target)
-        directory=os.open(q,os.O_RDONLY|os.O_DIRECTORY);os.fsync(directory);os.close(directory)
-        line('read_old_descriptor',os.read(old,99).decode().strip());line('read_new_path',target.read_text().strip());os.close(old)
+        try:
+            fd=os.open(tmp,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)
+            try:
+                data=memoryview(b'new\n');written=0
+                while written<len(data):
+                    progress=os.write(fd,data[written:])
+                    if progress<=0: raise RuntimeError('write made no progress before publication')
+                    written+=progress
+                os.fsync(fd)
+            finally: os.close(fd)
+            os.replace(tmp,target)
+            directory=os.open(q,os.O_RDONLY|os.O_DIRECTORY)
+            try: os.fsync(directory)
+            finally: os.close(directory)
+            line('read_old_descriptor',os.read(old,99).decode().strip());line('read_new_path',target.read_text().strip())
+        finally: os.close(old)
 def lab08():
     with tempfile.TemporaryDirectory(prefix='linux-book-') as d:
         p=Path(d)/'private';saved=os.umask(0o027)
@@ -52,13 +65,52 @@ def lab08():
         finally: os.umask(saved)
         s=p.stat();line('requested_mode','0666');line('umask','0027');line('actual_mode',oct(stat.S_IMODE(s.st_mode)));line('owner_uid',s.st_uid);line('our_effective_uid',os.geteuid());line('groups',os.getgroups())
 def lab09():
-    r,w=os.pipe();p=os.fork()
+    r,w=os.pipe()
+    try: p=os.fork()
+    except BaseException:
+        os.close(r);os.close(w);raise
     if p==0:
-        os.close(r);signal.pthread_sigmask(signal.SIG_BLOCK,{signal.SIGUSR1});os.write(w,b'ready\n');v=signal.sigwait({signal.SIGUSR1});os.write(w,f'received={v}\n'.encode());os.close(w);os._exit(0)
-    os.close(w)
-    ready=b''
-    while not ready.endswith(b'\n'): ready+=os.read(r,1)
-    line('child',ready.decode().strip());os.kill(p,signal.SIGUSR1);line('child',read_all(r).decode().strip());os.close(r);_,s=os.waitpid(p,0);line('exit',os.waitstatus_to_exitcode(s))
+        os.close(r)
+        try:
+            signal.pthread_sigmask(signal.SIG_BLOCK,{signal.SIGUSR1})
+            os.write(w,b'ready\n');v=signal.sigwait({signal.SIGUSR1})
+            os.write(w,f'received={v}\n'.encode())
+        except BaseException: os.close(w);os._exit(1)
+        os.close(w);os._exit(0)
+    os.close(w);reaped=False;deadline=time.monotonic()+5.0
+    def receive_line(stage):
+        buf=bytearray()
+        while not buf.endswith(b'\n'):
+            remaining=deadline-time.monotonic()
+            if remaining<=0 or not select.select([r],[],[],remaining)[0]:
+                raise TimeoutError(f'timeout waiting for {stage}')
+            chunk=os.read(r,1)
+            if not chunk: raise EOFError(f'EOF before complete {stage}: {bytes(buf)!r}')
+            buf.extend(chunk)
+            if len(buf)>64: raise RuntimeError(f'oversized {stage} marker')
+        return bytes(buf)
+    try:
+        ready=receive_line('ready')
+        if ready!=b'ready\n': raise RuntimeError(f'invalid ready marker: {ready!r}')
+        line('child',ready.decode().strip());os.kill(p,signal.SIGUSR1)
+        received=receive_line('received')
+        if received!=f'received={signal.SIGUSR1}\n'.encode():
+            raise RuntimeError(f'invalid received marker: {received!r}')
+        line('child',received.decode().strip())
+        while True:
+            child,status=os.waitpid(p,os.WNOHANG)
+            if child==p: reaped=True;break
+            remaining=deadline-time.monotonic()
+            if remaining<=0: raise TimeoutError('timeout waiting for own child exit')
+            time.sleep(min(0.01,remaining))
+        result=os.waitstatus_to_exitcode(status);line('exit',result)
+        if result!=0: raise RuntimeError(f'own child failed: {result}')
+    finally:
+        os.close(r)
+        if not reaped:
+            try: os.kill(p,signal.SIGKILL)
+            except ProcessLookupError: pass
+            os.waitpid(p,0)
 def lab10():
     r,w=os.pipe();p=os.fork()
     if p==0:

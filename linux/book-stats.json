@@ -35,75 +35,75 @@
     {
       "id": "06-vfs",
       "title": "От имени файла к его байтам",
-      "words": 1807
+      "words": 2288
     },
     {
       "id": "07-storage",
       "title": "Как запись достигает накопителя",
-      "words": 3672
+      "words": 4309
     },
     {
       "id": "08-rights",
       "title": "Откуда берётся право выполнить действие",
-      "words": 1753
+      "words": 1930
     },
     {
       "id": "09-signals-terminal",
       "title": "Сигналы, сеансы и терминал",
-      "words": 1329
+      "words": 1542
     },
     {
       "id": "10-ipc",
       "title": "Как процессы договариваются",
-      "words": 3129
+      "words": 3723
     },
     {
       "id": "11-boot",
       "title": "От включения до первой службы",
-      "words": 1190
+      "words": 1457
     },
     {
       "id": "12-services",
       "title": "Как служба работает под наблюдением",
-      "words": 1278
+      "words": 1775
     },
     {
       "id": "13-devices-network",
       "title": "Устройства и сеть внутри Linux",
-      "words": 1709
+      "words": 2116
     },
     {
       "id": "14-isolation",
       "title": "Как собирается контейнер",
-      "words": 1692
+      "words": 1848
     },
     {
       "id": "15-observation",
       "title": "Как читать состояние системы",
-      "words": 2105
+      "words": 2274
     },
     {
       "id": "16-investigation",
       "title": "Проследить запрос и расследовать сбой",
-      "words": 1817
+      "words": 1921
     },
     {
       "id": "17-experiments",
       "title": "Шестнадцать автономных опытов",
-      "words": 1570
+      "words": 2200
     },
     {
       "id": "18-reference",
       "title": "Справочник и проверка понимания",
-      "words": 4432
+      "words": 4518
     },
     {
       "id": "99-glossary",
       "title": "Словарь терминов",
-      "words": 8381
+      "words": 8642
     }
   ],
-  "words": 51025,
-  "terms": 341,
+  "words": 55704,
+  "terms": 348,
   "external_assets": 0
 }

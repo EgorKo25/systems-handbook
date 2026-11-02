@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" class="linux-vfs-drawing"
+ viewBox="0 0 300 858" role="img" aria-labelledby="lvfs-title lvfs-desc">
+<title id="lvfs-title">Два дескриптора читают через одну позицию</title>
+<desc id="lvfs-desc">В одном процессе fd 3 и fd 4 ведут к открытому описанию A, fd 5 — к B. Оба описания ведут к inode 42 файла letters. Имя найдено через dentry. Чтения дают AB, CD, AB; позиции A и B становятся 4 и 2.</desc>
+<style>
+.linux-vfs-drawing{display:block;width:100%;height:auto;color:var(--text,#202d34);background:var(--paper,#fffcf5);font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+.linux-vfs-drawing text{fill:currentColor;font-size:15px}
+.linux-vfs-drawing .lvfs-small{font-size:14px}
+.linux-vfs-drawing .lvfs-head{font-weight:700}
+.linux-vfs-drawing .lvfs-mono{font-family:ui-monospace,"Liberation Mono",monospace;font-size:14px}
+.linux-vfs-drawing .lvfs-outline{fill:var(--paper,#fffcf5);stroke:currentColor;stroke-width:1.4}
+.linux-vfs-drawing .lvfs-field{fill:var(--soft,#e8f2ec);stroke:currentColor;stroke-width:1}
+.linux-vfs-drawing .lvfs-wire{fill:none;stroke:var(--accent,#0c6b63);stroke-width:2}
+.linux-vfs-drawing .lvfs-rule{fill:none;stroke:currentColor;stroke-width:1}
+.linux-vfs-drawing .lvfs-link{fill:none;stroke:var(--accent,#0c6b63);stroke-width:2;marker-end:url(#lvfs-arrow)}
+.linux-vfs-drawing .lvfs-byte{fill:var(--paper,#fffcf5);stroke:currentColor;stroke-width:1}
+.linux-vfs-drawing .lvfs-first{fill:var(--soft,#e8f2ec);stroke:currentColor;stroke-width:2}
+@media print{.linux-vfs-drawing{color:#000;background:#fff}.linux-vfs-drawing .lvfs-outline,.linux-vfs-drawing .lvfs-byte{fill:#fff}.linux-vfs-drawing .lvfs-field,.linux-vfs-drawing .lvfs-first{fill:#eee}.linux-vfs-drawing .lvfs-link,.linux-vfs-drawing .lvfs-wire{stroke:#000}}
+</style>
+<defs><marker id="lvfs-arrow" viewBox="0 0 8 8" refX="7" refY="4"
+ markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+<path d="M1 1 L7 4 L1 7" fill="none" stroke="currentColor" stroke-width="1.4"/>
+</marker></defs>
+<text x="12" y="24" class="lvfs-head">Один процесс</text>
+<text x="154" y="24" class="lvfs-head">Ядро: OFD</text>
+<text x="12" y="50" class="lvfs-small">Таблица fd</text>
+<rect x="12" y="76" width="104" height="180" class="lvfs-outline"/>
+<path d="M12 136H116 M12 196H116" class="lvfs-rule"/>
+<text x="24" y="112" class="lvfs-mono">a = 3</text>
+<text x="24" y="172" class="lvfs-mono">b = 4</text>
+<text x="24" y="232" class="lvfs-mono">c = 5</text>
+<text x="12" y="281" class="lvfs-small">b = dup(a)</text>
+<text x="12" y="303" class="lvfs-small">c = open(…)</text>
+<rect x="154" y="60" width="120" height="118" class="lvfs-outline"/>
+<path d="M154 88H274" class="lvfs-rule"/>
+<text x="164" y="80" class="lvfs-mono lvfs-head">struct file A</text>
+<text x="164" y="108" class="lvfs-small">f_flags:</text>
+<text x="164" y="128" class="lvfs-mono">O_RDONLY</text>
+<rect x="154" y="138" width="120" height="28" class="lvfs-field"/>
+<text x="160" y="157" class="lvfs-mono">f_pos: 0→2→4</text>
+<rect x="154" y="202" width="120" height="118" class="lvfs-outline"/>
+<path d="M154 230H274" class="lvfs-rule"/>
+<text x="164" y="222" class="lvfs-mono lvfs-head">struct file B</text>
+<text x="164" y="250" class="lvfs-small">f_flags:</text>
+<text x="164" y="270" class="lvfs-mono">O_RDONLY</text>
+<rect x="154" y="280" width="120" height="28" class="lvfs-field"/>
+<text x="160" y="299" class="lvfs-mono">f_pos: 0→2</text>
+<path d="M116 106H154 M116 166H136V116H154 M116 226H144V250H154" class="lvfs-link"/>
+<path d="M274 170H288V500H274" class="lvfs-link"/>
+<path d="M274 312H288" class="lvfs-wire"/>
+<text x="12" y="344" class="lvfs-head">Имя и найденный объект</text>
+<path d="M12 356H66L76 366H116V414H12Z" class="lvfs-outline"/>
+<text x="20" y="388" class="lvfs-mono">letters</text>
+<rect x="154" y="366" width="120" height="48" class="lvfs-outline"/>
+<text x="164" y="386" class="lvfs-head">dentry D</text>
+<text x="164" y="405" class="lvfs-small">кеш имени</text>
+<path d="M116 390H154 M214 414V452" class="lvfs-link"/>
+<rect x="12" y="452" width="262" height="94" class="lvfs-outline"/>
+<path d="M12 482H274" class="lvfs-rule"/>
+<text x="24" y="473" class="lvfs-head">ФС F · inode 42</text>
+<text x="24" y="507" class="lvfs-mono">i_ino = 42</text>
+<text x="158" y="507" class="lvfs-mono">i_size = 8</text>
+<text x="24" y="532">Тип: обычный файл</text>
+<text x="12" y="580" class="lvfs-head">Содержимое: 8 байтов</text>
+<g class="lvfs-mono" text-anchor="middle">
+<text x="34" y="602">0</text><text x="66" y="602">1</text>
+<text x="98" y="602">2</text><text x="130" y="602">3</text>
+<text x="162" y="602">4</text><text x="194" y="602">5</text>
+<text x="226" y="602">6</text><text x="258" y="602">7</text>
+</g>
+<path d="M18 610H274V644H18Z M50 610V644 M82 610V644 M114 610V644 M146 610V644 M178 610V644 M210 610V644 M242 610V644" class="lvfs-byte"/>
+<g text-anchor="middle" class="lvfs-head">
+<text x="34" y="633">A</text><text x="66" y="633">B</text>
+<text x="98" y="633">C</text><text x="130" y="633">D</text>
+<text x="162" y="633">E</text><text x="194" y="633">F</text>
+<text x="226" y="633">G</text><text x="258" y="633">H</text>
+</g>
+<text x="12" y="682" class="lvfs-head">Три чтения по порядку</text>
+<text x="20" y="712" class="lvfs-small">вызов</text>
+<text x="132" y="712" class="lvfs-small">байты</text>
+<text x="202" y="712" class="lvfs-small">f_pos</text>
+<path d="M12 722H288 M12 762H288 M12 802H288 M12 842H288 M124 696V842 M188 696V842" class="lvfs-rule"/>
+<g class="lvfs-mono">
+<text x="20" y="748">read(3,2)</text><text x="138" y="748">AB</text><text x="198" y="748">A:0→2</text>
+<text x="20" y="788">read(4,2)</text><text x="138" y="788">CD</text><text x="198" y="788">A:2→4</text>
+<text x="20" y="828">read(5,2)</text><text x="138" y="828">AB</text><text x="198" y="828">B:0→2</text>
+</g>
+</svg>
