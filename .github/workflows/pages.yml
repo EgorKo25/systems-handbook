@@ -19,7 +19,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # Full reader and native-example checks need room for artifact cleanup.
+    timeout-minutes: 25
     permissions:
       contents: read
       pages: read
