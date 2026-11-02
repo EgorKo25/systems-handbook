@@ -85,4 +85,18 @@ class ReaderNavigationTests(unittest.TestCase):
         self.assertEqual(NAV.normalize_reader_navigation(fixed),fixed)
 
 
-if __name__=='__main__':unittest.main()
+class InitialBookmarkTests(unittest.TestCase):
+    def test_guard_is_idempotent_and_leaves_other_code_untouched(self):
+        old = " if(state.current&&state.current!==chapter.id){state.scroll[state.current]=scrollY;save();}"
+        page = "function select(hash,restore=false){let target=null;\n" + old + "\nkeepNotesAndRuntime();}"
+        new = NAV.preserve_initial_bookmark(page)
+        self.assertIn("if(!restore&&state.current", new)
+        self.assertTrue(new.endswith("\nkeepNotesAndRuntime();}"))
+        self.assertEqual(NAV.preserve_initial_bookmark(new), new)
+        self.assertEqual(NAV.preserve_initial_bookmark(old), old)
+        with self.assertRaises(ValueError):
+            NAV.preserve_initial_bookmark(page + "\n" + page)
+
+
+if __name__ == '__main__':
+    unittest.main()

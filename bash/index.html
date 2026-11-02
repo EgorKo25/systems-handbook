@@ -2921,7 +2921,7 @@ const norm=s=>s.toLocaleLowerCase('ru').replace(/ё/g,'е');
 const chapters=$$('.chapter');
 function updateRead(){data.forEach(c=>{let a=$(`#nav-${c.id}`);a.classList.toggle('nav-read',!!state.read[c.id]);let b=$('.read-toggle',document.getElementById(c.id));b.textContent=state.read[c.id]?'✓ Глава прочитана':'Отметить прочитанной';b.setAttribute('aria-pressed',String(!!state.read[c.id]));});$('#read-status').textContent=`Прочитано ${Object.values(state.read).filter(Boolean).length} из ${data.length} глав`;}
 function select(hash,restore=false){let target=document.getElementById(decodeURIComponent((hash||'').replace(/^#/,'')));let chapter=target?.closest('.chapter');if(!chapter){chapter=document.getElementById(state.current)||chapters[0];target=chapter;}
- if(state.current&&state.current!==chapter.id){state.scroll[state.current]=scrollY;save();}
+ if(!restore&&state.current&&state.current!==chapter.id){state.scroll[state.current]=scrollY;save();}
  chapters.forEach(c=>c.hidden=c!==chapter);state.current=chapter.id;data.forEach(c=>$(`#nav-${c.id}`).setAttribute('aria-current',c.id===chapter.id?'page':'false'));
  $('#top-title').textContent=data.find(x=>x.id===chapter.id).title;$('#side-nav').classList.remove('open');$('#menu').setAttribute('aria-expanded','false');save();
  requestAnimationFrame(()=>{if(target!==chapter){let d=target.closest('details');if(d)d.open=true;target.scrollIntoView({behavior:'auto',block:'start'});}else scrollTo({top:restore?(state.scroll[chapter.id]||0):0,behavior:'auto'});updateProgress();});}

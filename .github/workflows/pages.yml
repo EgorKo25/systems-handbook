@@ -97,6 +97,7 @@ jobs:
       - name: Check teaching models
         run: |
           node tests/check-command-reference-parser.cjs
+          node tests/check-reader-position.cjs
           node tests/check-bash-reference-boundaries.cjs --native
           node networks/labs/check-theory-models.cjs
           node cache/labs/test-eviction.cjs

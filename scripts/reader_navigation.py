@@ -1,6 +1,6 @@
-"""Keep authored section numbers without a second browser-generated number.
+"""Normalize reader navigation lists and preserve the initial reading bookmark.
 
-Only navigation lists are changed. Chapter headings, link labels/anchors,
+List normalization changes only navigation lists. Chapter headings, link labels/anchors,
 ordinary ordered examples and the chapter-number column remain untouched.
 """
 from html.parser import HTMLParser
@@ -71,7 +71,25 @@ def numbered_class(opening, enabled):
     return opening[:-1]+' class="'+CLASS+'">' if enabled else opening
 
 
+def preserve_initial_bookmark(page):
+    """Initial restore has no outgoing rendered chapter to measure.
+
+    state.current was loaded from storage, while scrollY belongs to the new
+    document. Saving it would erase that chapter's previous reading position
+    when opening a link to a different chapter. Normal hash navigation still
+    records the position of the chapter that is actually being left.
+    """
+    old = " if(state.current&&state.current!==chapter.id){state.scroll[state.current]=scrollY;save();}"
+    new = " if(!restore&&state.current&&state.current!==chapter.id){state.scroll[state.current]=scrollY;save();}"
+    # Match inside the existing reader function, not sample code or JSON data.
+    pattern = re.compile(r'(function select\(hash,restore=false\)\{[^\n]*\n)' + re.escape(old))
+    if len(pattern.findall(page)) > 1:
+        raise ValueError('Ambiguous reader select function')
+    return pattern.sub(lambda match: match[1] + new, page, count=1)
+
+
 def normalize_reader_navigation(page):
+    page = preserve_initial_bookmark(page)
     parser = NavigationLists(page)
     parser.feed(page)
     authored = False
