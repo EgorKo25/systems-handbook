@@ -1,0 +1,24 @@
+{
+  "scope": "nexus source contracts; no server execution",
+  "chapters": 19,
+  "html_sources": 18,
+  "source_words_approx": 15544,
+  "glossary": 91,
+  "commands": 17,
+  "flags": 6,
+  "diagrams": 6,
+  "diagram_steps": 36,
+  "primary_sources": 49,
+  "source_checks": "passed",
+  "isolated_shared_builder": {
+    "volume": "nexus",
+    "words": 19514,
+    "chapters": 19,
+    "terms": 91,
+    "commands": 170,
+    "diagrams": 6,
+    "steps": 36
+  },
+  "rendered_bytes": 1385679,
+  "render_checks": "passed; temporary output removed; shared repository not rendered"
+}

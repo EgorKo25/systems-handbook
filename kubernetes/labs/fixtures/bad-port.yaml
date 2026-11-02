@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: invalid-port
+  namespace: lab
+spec:
+  ports:
+  - port: "eighty"

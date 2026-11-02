@@ -1,0 +1,7 @@
+apiVersion: v2
+name: ledger-api
+description: Original handbook HTTP service, no external chart dependencies
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+kubeVersion: ">=1.36.0 <1.38.0"

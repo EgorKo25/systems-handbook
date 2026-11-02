@@ -1,0 +1,4 @@
+apiVersion: v2
+name: lab-labels
+type: library
+version: 0.1.0

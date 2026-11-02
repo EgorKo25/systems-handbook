@@ -1,0 +1,56 @@
+<header><h1>Первый release: от image до HTTP-ответа</h1><p>Все кластерные действия относятся только к своему подготовленному kubeconfig/context; рецепты здесь не объявлены исполненными.</p></header>
+
+<h2>Подготовить входы, сохранив прошлую работу</h2>
+<p>Рабочая папка — ваша копия labs; chart и namespace не сбрасываются между упражнениями. Если image ledger-api:0.1.0 уже собран в Kubernetes-практикуме из этих точных source, повторно используйте те же bytes. Иначе создайте static Linux executable и контейнер для выбранной node architecture. Наш scratch image не содержит shell, CA bundle и debug tools: приложение только HTTP, это осознанный минимальный контракт.</p>
+<pre><code>(
+    cd service || exit 1
+    mkdir -p bin || exit 1
+    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+      -trimpath -o bin/ledger-api . || exit 1
+    docker build -t ledger-api:0.1.0 . || exit 1
+)
+</code></pre>
+<p>Скобки создают дочернюю оболочку: после сборки вы остаетесь в рабочей папке labs, где находятся chart и fixtures. Если компилятор отказал, docker build не запускается со старым оставшимся бинарником. GOARCH выбирают под узлы; этот блок показывает только amd64.</p>
+<p>Эти команды сборки предназначены личной VM/контейнерной среде, не запускаются автоматически тестами книги. -trimpath удаляет зависимые от путей записи сборки, CGO_ENABLED=0 позволяет static Go без внешней libc. GOARCH должен соответствовать nodes; ошибку exec format error нельзя исправить --wait timeout. Для kind выполните <code>kind load docker-image ledger-api:0.1.0 --name handbook</code> в своём compact-профиле. Для kubeadm image должен быть в доступном nodes registry; подставьте repository и digest своего опубликованного образа в отдельный values. Docker клиента не равен containerd nodes, поэтому docker images на ноутбуке не доказывает наличие image в кластере.</p>
+<h2>Сделать local review</h2>
+<p>Один файл environment.yaml станет сохранённым источником параметров для проверки и установки. Создайте его из defaults только при первом занятии; существующий файл сохраняется. Режим оболочки <code>set -C</code> запрещает перенаправлению молча затереть уже появившийся файл. Просмотрите его перед рендерингом. Значения ожидаемого ответа ниже относятся к неизменённой исходной копии: две реплики и MESSAGE=Hello from Helm.</p>
+<pre><code>if test -e environment.yaml || test -L environment.yaml; then
+    printf '%s\n' 'Using existing environment.yaml; inspect it before changing the release.'
+else
+    (set -C; cat chart/values.yaml &gt; environment.yaml) || exit 1
+fi
+</code></pre>
+<pre><code>helm lint ./chart --strict --kube-version 1.36.6 -f environment.yaml &amp;&amp;
+helm template ledger ./chart --namespace helm-lab --kube-version 1.36.6 \
+  -f environment.yaml &gt; rendered.yaml &amp;&amp;
+kubectl --kubeconfig &quot;$LAB_KUBECONFIG&quot; --context &quot;$LAB_CONTEXT&quot; \
+  --namespace helm-lab apply --server-side --dry-run=server -f rendered.yaml</code></pre>
+<p>Lint и template локальны. Последняя команда требует API и проверяет текущий server-side admission с правами текущей личности; test-hook Pod в rendered stream тоже проверится как обычный документ, но не будет исполнен. Dry-run создания CRD и последующего CR в одной пачке имеет особые ограничения, которых наш chart не создаёт. Просмотрите resources, selectors, image, requests и namespace до настоящего install.</p>
+<p>Проверяются именно те chart и environment.yaml, которые будут переданы install. Между просмотром rendered.yaml и установкой не меняйте эти файлы или зависимости. Helm install снова рендерит чарт, а не читает rendered.yaml: файл служит материалом проверки, а не уже применяемым пакетом. В нашем чарте нет now, случайной генерации, lookup или post-renderer; с такими внешними входами совпадение отдельного render и install потребовало бы дополнительного контроля.</p>
+<h2>Одна установка</h2>
+<pre><code>helm install ledger ./chart -f environment.yaml --kubeconfig &quot;$LAB_KUBECONFIG&quot; \
+  --kube-context &quot;$LAB_CONTEXT&quot; --namespace helm-lab \
+  --wait=watcher --timeout 180s
+helm status ledger --kubeconfig &quot;$LAB_KUBECONFIG&quot; \
+  --kube-context &quot;$LAB_CONTEXT&quot; --namespace helm-lab
+helm history ledger --kubeconfig &quot;$LAB_KUBECONFIG&quot; \
+  --kube-context &quot;$LAB_CONTEXT&quot; --namespace helm-lab</code></pre>
+<p>Имя ledger — identity release, ./chart — источник package; аргументы нельзя переставлять как у произвольной команды. Namespace должен уже существовать и быть учебным. Ожидаемый, не записанный с кластера автора, результат: revision 1, status deployed, Deployment desired=2/ready=2 и Service с двумя подходящими endpoints. Если install failed, не удаляйте релиз автоматически: сохраните status/history/events и установите точку отказа. Повторный install того же имени конфликтует с существующей записью; нужен осмысленный upgrade/восстановление.</p>
+<h2>Проверить каждый слой</h2>
+<pre><code>kubectl --kubeconfig &quot;$LAB_KUBECONFIG&quot; --context &quot;$LAB_CONTEXT&quot; \
+  --namespace helm-lab get deployment,pod,service,endpointslice
+kubectl --kubeconfig &quot;$LAB_KUBECONFIG&quot; --context &quot;$LAB_CONTEXT&quot; \
+  --namespace helm-lab rollout status deployment/ledger-ledger-api --timeout=120s
+helm get values ledger --all --kubeconfig &quot;$LAB_KUBECONFIG&quot; \
+  --kube-context &quot;$LAB_CONTEXT&quot; --namespace helm-lab</code></pre>
+<p>Rollout status относится к Deployment, Helm status — к релизу; их истории различаются. EndpointSlice связывает selector Service с ready Pod addresses. Get values без --all возвращает user-supplied config, с --all — computed values с defaults; оба могут раскрывать Secret. Get manifest показывает сохранённый last manifest, не обязательно текущие live objects после ручных kubectl изменений.</p>
+<pre><code>kubectl --kubeconfig &quot;$LAB_KUBECONFIG&quot; --context &quot;$LAB_CONTEXT&quot; \
+  --namespace helm-lab port-forward service/ledger-ledger-api 18080:80
+# В другом терминале:
+curl --fail http://127.0.0.1:18080/readyz
+curl --fail http://127.0.0.1:18080/api/hello</code></pre>
+<p>Port-forward создаёт локальный tunnel до выбранного Pod через API, занимает порт 18080 до Ctrl+C. Это проверка обработчика и доступа, но она не доказывает весь сетевой путь обычного клиента через ClusterIP/Ingress: port-forward Service выбирает backend. JSON должен содержать service=ledger-api и message=Hello from Helm. Тест внутри cluster через helm test позже дополнит этот опыт DNS/Service-path. Успешный /readyz не обещает работу внешней БД, которой в этом сервисе нет.</p>
+<h2>Права и границы отказа</h2>
+<p>Forbidden до создания Secret release означает нехватку storage permissions, даже если роль позволяет Deployment. Forbidden на get/watch workloads мешает wait. Namespace не является автоматической полной изоляцией; chart может содержать cluster-scoped CRD/RBAC, а плагины исполняются у клиента. Наш chart не создаёт ServiceAccount/RBAC и отключает automount token у приложения и теста. Сам Helm использует полномочия вашей kubeconfig-личности, а не токен приложения.</p>
+
+<h2>Первичные источники и версия</h2><p>Проверено 1 ноября 2026; основной CLI Helm 4.3.1, chart API v2. <a href="https://helm.sh/docs/helm/helm_install/">Install</a>, <a href="https://helm.sh/docs/helm/helm_get_values/">Get values</a>, <a href="https://helm.sh/docs/helm/helm_status/">Status</a>, <a href="https://helm.sh/docs/topics/rbac/">RBAC</a>, <a href="https://kubernetes.io/docs/reference/using-api/api-concepts/#dry-run">Kubernetes dry-run</a>.</p>

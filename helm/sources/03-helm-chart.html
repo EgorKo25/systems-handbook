@@ -1,0 +1,38 @@
+<header><h1>Чарт как проверяемый интерфейс</h1><p>Разбираем layout, schema, capabilities и независимые идентичности chart и приложения.</p></header>
+
+<h2>Состав нашего пакета</h2>
+<pre><code>chart/
+  Chart.yaml
+  values.yaml
+  values.schema.json
+  .helmignore
+  files/operator-note.txt
+  templates/
+    _helpers.tpl
+    deployment.yaml
+    configmap.yaml
+    service.yaml
+    secret.yaml
+    pvc.yaml
+    tests/http.yaml
+    NOTES.txt</code></pre>
+<p>Chart.yaml задаёт name, SemVer version, строковое appVersion, type, kubeVersion и dependencies. SemVer — Semantic Versioning, соглашение major.minor.patch с дополнительными частями. Chart version относится к интерфейсу и содержимому пакета; appVersion — информативная строка приложения и сама не меняет image Deployment. Image tag — отдельный указатель registry, digest — идентификатор содержимого манифеста. Одинаковые цифры 0.1.0 не делают эти три сущности одним объектом.</p>
+<p>Values задают defaults, но сами не запрещают произвольный ввод. Schema — JSON Schema, контракт типов и ограничений. Templates проходят через engine; файл с начальным подчёркиванием содержит helpers и не печатается как отдельный ресурс. NOTES.txt выводит пояснение, не исполняется как shell. Files — включённые обычные bytes, доступные .Files.Get. CRD размещается отдельно и имеет особый lifecycle.</p>
+<h2>Что исключает helmignore</h2>
+<p>.helmignore похож на gitignore, но не равен ему; нельзя переносить все правила отрицания и ** без проверки. Исключение из Git не гарантирует исключения из chart package. Не кладите kubeconfig, credentials и rendered Secrets внутрь chart. Проверяйте tar -tzf и конкретные members. Результат package складывайте вне исходного каталога.</p>
+<p>Реальный отрицательный опыт редакции: широкое правило <code>*.tgz</code> исключило dependency archive из charts/, после чего template сообщил missing dependency. Исправлено хранением готовых packages снаружи и удалением широкого правила. Dependency build создал файл, но loader имел право исключить его; это разные доказательства. Лабораторный test отдельно проверяет точные bytes operator-note.txt и отсутствие заведомо исключённого test-secret.private во временной копии.</p>
+<h2>Schema — входная граница, а не scheduler</h2>
+<pre><code>{&quot;type&quot;:&quot;object&quot;, &quot;properties&quot;: {
+  &quot;replicaCount&quot;:{&quot;type&quot;:&quot;integer&quot;,&quot;minimum&quot;:1,&quot;maximum&quot;:6},
+  &quot;config&quot;:{&quot;type&quot;:&quot;object&quot;,&quot;required&quot;:[&quot;message&quot;],
+    &quot;properties&quot;:{&quot;message&quot;:{&quot;type&quot;:&quot;string&quot;,&quot;minLength&quot;:1}}}
+}}</code></pre>
+<p>Это сокращённый пример; полный файл в labs/chart. Schema проверяет объединённые values; overlay — файл частичных переопределений поверх предыдущих параметров — может не содержать key, предоставленный defaults. Required JSON Schema проверяет присутствие key; template-функция required проверяет непустоту, это разные правила. Schema не узнает свободную память nodes, существование Secret или подлинность registry digest.</p>
+<p>Внутри image/config/service и других interfaces additionalProperties=false ловит опечатки. Корень оставлен расширяемым для отдельного dependency-упражнения: при строгом корне нужно перечислить global и subchart keys. CPU/memory оставлены строковыми quantity; API проверит их грамматику и соотношение requests/limits. Самодельная regex редко воспроизводит все правила Kubernetes.</p>
+<pre><code>helm lint ./chart --strict --kube-version 1.36.6
+helm lint ./chart --strict --kube-version 1.36.6 -f fixtures/wrong-replicas.yaml</code></pre>
+<p>Первый запуск проходит, второй отвергает строку "3" вместо integer. --strict превращает lint warnings в ошибки, но не запускает Pod. --skip-schema-validation отключил бы защиту, не исправив ввод. Такие флаги допустимы как точный диагностический опыт или управляемая миграция, а не обход неизвестной ошибки CI.</p>
+<h2>Capabilities и версии API</h2>
+<p><code>.Capabilities.KubeVersion</code> сообщает версию, <code>.Capabilities.APIVersions.Has</code> — наличие API. Локальный --kube-version меняет модель версии, --api-versions добавляет моделируемую capability; CRD или controller они не устанавливают. Для Gateway API номер Kubernetes сам по себе не доказывает наличие CRD. Наш chart использует стабильные apps/v1 и v1. При удалении key, изменении типа, selector или dependency повышают chart version и документируют миграцию. Уже опубликованную 0.1.0 нельзя перезаписать другими bytes: кэши, provenance и журнал выпуска рассчитывают на неизменность.</p>
+
+<h2>Первичные источники и версия</h2><p>Проверено 1 ноября 2026; основной CLI Helm 4.3.1, chart API v2. <a href="https://helm.sh/docs/topics/charts/">Charts</a>, <a href="https://helm.sh/docs/chart_template_guide/helm_ignore_file/">Helmignore</a>, <a href="https://github.com/helm/helm/blob/v4.3.1/pkg/chart/common/util/jsonschema.go">Schema source</a>, <a href="https://helm.sh/docs/helm/helm_lint/">Lint</a>.</p>

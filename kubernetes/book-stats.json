@@ -1,0 +1,184 @@
+[
+  {
+    "id": "00-route",
+    "title": "Kubernetes: от сохранённого намерения до работающего процесса",
+    "words": 1057,
+    "part": "Начало",
+    "number": "•"
+  },
+  {
+    "id": "01-k8s-distribution",
+    "title": "Получить дистрибутив, выбрать среду и собрать офлайн-набор",
+    "words": 712,
+    "part": "Книга I · Получить и сохранить кластер",
+    "number": "1"
+  },
+  {
+    "id": "02-k8s-kubeadm",
+    "title": "Постоянный кластер kubeadm в личных Ubuntu-VM",
+    "words": 1536,
+    "part": "Книга I · Получить и сохранить кластер",
+    "number": "2"
+  },
+  {
+    "id": "03-k8s-kind",
+    "title": "Компактный kind: настоящий API в контейнерных nodes",
+    "words": 468,
+    "part": "Книга I · Получить и сохранить кластер",
+    "number": "3"
+  },
+  {
+    "id": "04-k8s-api",
+    "title": "API server, etcd и смысл принятого объекта",
+    "words": 1309,
+    "part": "Книга II · API и согласование",
+    "number": "4"
+  },
+  {
+    "id": "05-k8s-watch-apply",
+    "title": "List/watch, server-side apply и конфликт владельцев",
+    "words": 1413,
+    "part": "Книга II · API и согласование",
+    "number": "5"
+  },
+  {
+    "id": "06-k8s-controllers",
+    "title": "Controllers, ownerReferences, finalizers и сборка мусора",
+    "words": 526,
+    "part": "Книга II · API и согласование",
+    "number": "6"
+  },
+  {
+    "id": "07-k8s-scheduling",
+    "title": "Scheduler: найти допустимый node, сравнить и назначить",
+    "words": 1312,
+    "part": "Книга II · API и согласование",
+    "number": "7"
+  },
+  {
+    "id": "08-k8s-node",
+    "title": "От назначения Pod до Linux-процесса: kubelet, CRI и CNI",
+    "words": 958,
+    "part": "Книга III · Исполнение программы",
+    "number": "8"
+  },
+  {
+    "id": "09-k8s-lifecycle",
+    "title": "Pod lifecycle, probes, sidecars и завершение Go-сервиса",
+    "words": 900,
+    "part": "Книга III · Исполнение программы",
+    "number": "9"
+  },
+  {
+    "id": "10-k8s-workloads",
+    "title": "Deployment, StatefulSet, DaemonSet и задания: выбрать lifecycle",
+    "words": 1202,
+    "part": "Книга III · Исполнение программы",
+    "number": "10"
+  },
+  {
+    "id": "11-k8s-configuration",
+    "title": "ConfigMap, Secret, ServiceAccount и выпуск конфигурации",
+    "words": 541,
+    "part": "Книга III · Исполнение программы",
+    "number": "11"
+  },
+  {
+    "id": "12-k8s-addressing",
+    "title": "Адреса Pod и Service, EndpointSlice и DNS-имена",
+    "words": 563,
+    "part": "Книга IV · Путь пакета",
+    "number": "12"
+  },
+  {
+    "id": "13-k8s-packet",
+    "title": "Пакет через Calico VXLAN и kube-proxy iptables",
+    "words": 1401,
+    "part": "Книга IV · Путь пакета",
+    "number": "13"
+  },
+  {
+    "id": "14-k8s-dns-policy",
+    "title": "DNS и NetworkPolicy: разрешённый API не доказывает проход пакета",
+    "words": 783,
+    "part": "Книга IV · Путь пакета",
+    "number": "14"
+  },
+  {
+    "id": "15-k8s-edge",
+    "title": "Внешний клиент, source IP, Ingress и Gateway API",
+    "words": 1243,
+    "part": "Книга IV · Путь пакета",
+    "number": "15"
+  },
+  {
+    "id": "16-k8s-storage",
+    "title": "PV/PVC, CSI, attachment и восстановление данных",
+    "words": 1450,
+    "part": "Книга V · Данные и доверие",
+    "number": "16"
+  },
+  {
+    "id": "17-k8s-identity",
+    "title": "kubeconfig, сертификаты, RBAC и границы выдачи прав",
+    "words": 564,
+    "part": "Книга V · Данные и доверие",
+    "number": "17"
+  },
+  {
+    "id": "18-k8s-isolation",
+    "title": "Pod Security, capabilities, seccomp и доверие к node",
+    "words": 525,
+    "part": "Книга V · Данные и доверие",
+    "number": "18"
+  },
+  {
+    "id": "19-k8s-observe",
+    "title": "Диагностика по объекту, процессу и ресурсу",
+    "words": 1134,
+    "part": "Книга VI · Эксплуатация и развитие",
+    "number": "19"
+  },
+  {
+    "id": "20-k8s-capacity",
+    "title": "Доступность, PDB, drain и масштабирование без магических чисел",
+    "words": 1384,
+    "part": "Книга VI · Эксплуатация и развитие",
+    "number": "20"
+  },
+  {
+    "id": "21-k8s-upgrade-backup",
+    "title": "Обновление, deprecation и восстановление control plane",
+    "words": 1223,
+    "part": "Книга VI · Эксплуатация и развитие",
+    "number": "21"
+  },
+  {
+    "id": "22-k8s-failures",
+    "title": "Отказ как расследование: API, node, DNS, storage и программа",
+    "words": 497,
+    "part": "Книга VI · Эксплуатация и развитие",
+    "number": "22"
+  },
+  {
+    "id": "23-k8s-lab",
+    "title": "Сквозной практикум: один кластер, один выпуск и журнал доказательств",
+    "words": 927,
+    "part": "Сквозной практикум",
+    "number": "23"
+  },
+  {
+    "id": "24-k8s-sources",
+    "title": "Источники, версии и границы доказательств",
+    "words": 375,
+    "part": "Источники и справочник",
+    "number": "24"
+  },
+  {
+    "id": "99-glossary",
+    "title": "Словарь · Kubernetes",
+    "words": 2295,
+    "part": "Источники и справочник",
+    "number": "•"
+  }
+]

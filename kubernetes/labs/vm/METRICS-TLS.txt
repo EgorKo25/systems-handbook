@@ -1,0 +1,81 @@
+OPTIONAL · СОБСТВЕННЫЙ SERVING TLS АГРЕГИРУЕМОГО METRICS API
+Рецепт для личного лабораторного кластера; НЕ исполнялся автором.
+Это другая TLS-граница, чем проверка metrics-server→kubelet.
+Upstream components0.9.1 APIService имеет insecureSkipTLSVerify:true.
+Сначала читайте раздел20: временная недоступность metrics останавливает
+некоторые решения HPA; это плановое изменение, не способ скрыть x509 error.
+
+1. На личной административной staging-машине создать приватный каталог.
+Не публиковать CA/private key/Secret. CN не заменяет SAN.
+Первый опыт требует НОВОГО каталога metrics-pki. Если он уже существует,
+сначала исследуйте сохранённые ключи и сертификаты; не генерируйте другую CA
+поверх прежней. Для продления используйте порядок rotation из пункта 3.
+Любой отказ команды останавливает текущий шаг; следующие команды не являются
+автоматическим откатом и не должны скрывать ошибку.
+
+umask 077
+mkdir metrics-pki || exit 1
+cd metrics-pki || exit 1
+openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:3072 -out metrics-ca.key
+openssl req -x509 -new -key metrics-ca.key -sha256 -days 365 -subj '/CN=handbook-metrics-ca' -addext 'basicConstraints=critical,CA:TRUE' -addext 'keyUsage=critical,keyCertSign,cRLSign' -out metrics-ca.crt
+openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:3072 -out metrics-server.key
+openssl req -new -key metrics-server.key -subj '/CN=metrics-server.kube-system.svc' -out metrics-server.csr
+
+В metrics-server.ext сохранить:
+basicConstraints=critical,CA:FALSE
+keyUsage=critical,digitalSignature,keyEncipherment
+extendedKeyUsage=serverAuth
+subjectAltName=DNS:metrics-server.kube-system.svc,DNS:metrics-server.kube-system.svc.cluster.local
+
+Здесь cluster.local совпадает с baseline DNS domain. Для другого домена
+изменить SAN и проверить действительное service DNS агрегатора.
+
+openssl x509 -req -in metrics-server.csr -CA metrics-ca.crt -CAkey metrics-ca.key -CAcreateserial -sha256 -days 90 -extfile metrics-server.ext -out metrics-server.crt
+openssl verify -purpose sslserver -CAfile metrics-ca.crt metrics-server.crt
+openssl x509 -in metrics-server.crt -noout -dates -ext subjectAltName
+
+2. Secret для TLS listener и offline transform точного официального manifest.
+Из каталога labs (подставьте реальные private пути к созданным файлам):
+
+kubectl --context "$LAB_CONTEXT" -n kube-system create secret tls metrics-server-serving --cert=metrics-pki/metrics-server.crt --key=metrics-pki/metrics-server.key
+python3 vm/metrics_tls_patch.py staged/metrics-server-v0.9.1.yaml metrics-pki/metrics-ca.crt staged/metrics-tls
+kubectl --context "$LAB_CONTEXT" apply -f staged/metrics-tls/metrics-deployment-tls.yaml
+kubectl --context "$LAB_CONTEXT" -n kube-system rollout status deployment/metrics-server --timeout=180s
+
+Каталог staged/metrics-tls должен быть новым. Helper отказывается писать в
+уже существующий output: сохранённые артефакты надо сравнить, а для новой
+генерации выбрать другой каталог и согласованно изменить последующие пути.
+Если запись прервалась после первого файла, этот каталог оставляют для
+диагностики; частичный набор не применяют к кластеру.
+
+Transform добавляет --tls-cert-file/--tls-private-key-file, read-only Secret
+mount /serving-tls и fsGroup2000 с mode0440 для чтения non-root процессом.
+Сначала listener готовится с новым сертификатом, пока прежний APIService
+ещё не включает CA verification. Затем узким patch меняется только trust:
+
+kubectl --context "$LAB_CONTEXT" patch apiservice v1beta1.metrics.k8s.io --type=merge --patch-file staged/metrics-tls/metrics-apiservice-ca.json
+kubectl --context "$LAB_CONTEXT" get apiservice v1beta1.metrics.k8s.io -o yaml
+kubectl --context "$LAB_CONTEXT" get --raw='/apis/metrics.k8s.io/v1beta1/nodes'
+kubectl --context "$LAB_CONTEXT" -n lab top pods
+
+Проверить insecureSkipTLSVerify:false, caBundle именно public CA, Availabletrue,
+валидный ответ и samples. При x509: проверить фактически обслуживаемый leaf,
+SAN, expiry и CA. При403 проверить aggregator/front-proxy и delegated auth;
+не возвращать insecure=true для исправления ошибки прав.
+Не применять повторно исходный components.yaml поверх усиленного APIService:
+он вернёт upstream insecureSkipTLSVerify:true. Сохранить hardening как часть
+поддерживаемого desired набора и проверить diff при следующем upgrade.
+
+3. Lifetime и rotation.
+Сертификат90days и CA365days требуют процедуры renewal до истечения.
+Выпустить новый leaf с теми же нужными SAN, обновить Secret, выполнить
+контролируемый rollout и проверить serving cert/APIService. При смене CA
+сначала распространить bundle старой+новой public CA, затем новый leaf,
+проверить всех клиентов и только после перехода убрать старую CA.
+CA private key хранить отдельно; Secret/private key не выводить в --debug,
+логи или публикуемые diffs. Этот рецепт не является full PKI service.
+
+Источник requirements/defaults:
+https://github.com/kubernetes-sigs/metrics-server/blob/v0.9.1/README.md
+https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.9.1/components.yaml
+https://kubernetes.io/docs/tasks/extend-kubernetes/configure-aggregation-layer/

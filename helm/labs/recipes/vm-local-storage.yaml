@@ -1,0 +1,34 @@
+# Owner/admin preparation for the reader's kubeadm VM lab only.
+# Never apply to a shared/production cluster. Directory is prepared on wk1.
+# These objects are independent of Helm and must be backed up/maintained separately.
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: helm-local
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Retain
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: helm-ledger-local
+spec:
+  capacity:
+    storage: 256Mi
+  volumeMode: Filesystem
+  accessModes: [ReadWriteOnce]
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: helm-local
+  claimRef:
+    namespace: helm-lab
+    name: ledger-ledger-api-data
+  local:
+    path: /srv/handbook/helm-ledger-data
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values: [wk1]

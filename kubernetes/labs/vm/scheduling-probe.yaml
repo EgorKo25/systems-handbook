@@ -1,0 +1,39 @@
+# Independent request-accounting exercise; no Service selects these Pods.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scheduling-probe
+  namespace: lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: scheduling-probe
+  template:
+    metadata:
+      labels:
+        app: scheduling-probe
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 15
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: api
+        image: ledger-api:0.1.0
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 8080
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: [ALL]
+        resources:
+          requests: {cpu: "100", memory: 32Mi}
+          limits: {cpu: "100", memory: 128Mi}

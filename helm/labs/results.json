@@ -1,0 +1,103 @@
+{
+  "date": "2026-11-01",
+  "helm": "v4.3.1+gc0d08d0",
+  "test_groups": 19,
+  "results": [
+    {
+      "test": "lint-strict",
+      "status": "PASS"
+    },
+    {
+      "test": "baseline-four-objects-and-label-service-contract",
+      "status": "PASS"
+    },
+    {
+      "test": "byte-reproducible-render",
+      "status": "PASS"
+    },
+    {
+      "test": "file-order-and-map-recursion",
+      "status": "PASS"
+    },
+    {
+      "test": "set-overrides-files",
+      "status": "PASS"
+    },
+    {
+      "test": "five-schema-negative-cases",
+      "status": "PASS"
+    },
+    {
+      "test": "required-and-mutual-exclusion-negative-cases",
+      "status": "PASS"
+    },
+    {
+      "test": "set-file-preserves-newline-base64-and-checksum",
+      "status": "PASS"
+    },
+    {
+      "test": "mixed-set-family-order",
+      "status": "PASS"
+    },
+    {
+      "test": "list-replaced-not-appended",
+      "status": "PASS"
+    },
+    {
+      "test": "escaped-dot-and-protected-selector",
+      "status": "PASS"
+    },
+    {
+      "test": "readiness-path-and-config-rollout-checksum",
+      "status": "PASS"
+    },
+    {
+      "test": "storage-one-replica-and-keep-policy",
+      "status": "PASS"
+    },
+    {
+      "test": "image-digest-precedes-tag",
+      "status": "PASS"
+    },
+    {
+      "test": "template-parse-negative-case",
+      "status": "PASS"
+    },
+    {
+      "test": "local-dependency-lock-build-without-network",
+      "status": "PASS"
+    },
+    {
+      "test": "package-and-rendered-object-equivalence",
+      "status": "PASS"
+    },
+    {
+      "test": "types-default-false-root-and-include",
+      "status": "PASS"
+    },
+    {
+      "test": "go-http-contract-tests",
+      "status": "PASS"
+    }
+  ],
+  "metrics": {
+    "runs": 10,
+    "objects_including_test_hook": 4,
+    "rendered_bytes": 3929,
+    "median_wall_ms": 25.71,
+    "min_wall_ms": 24.6,
+    "max_wall_ms": 30.16,
+    "scope": "CLI process + local render, no API/network; environment-specific"
+  },
+  "cluster_executed": false,
+  "not_executed": [
+    "API admission",
+    "install",
+    "upgrade",
+    "hooks/test Pod execution",
+    "rollback",
+    "PVC binding",
+    "OCI remote push",
+    "binary GPG signature verification"
+  ]
+}

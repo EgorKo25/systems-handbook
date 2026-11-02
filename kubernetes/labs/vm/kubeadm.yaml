@@ -1,0 +1,36 @@
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: InitConfiguration
+localAPIEndpoint:
+  advertiseAddress: 192.168.56.10
+  bindPort: 6443
+nodeRegistration:
+  name: cp1
+  criSocket: unix:///run/containerd/containerd.sock
+  kubeletExtraArgs:
+  - name: node-ip
+    value: 192.168.56.10
+---
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: ClusterConfiguration
+clusterName: handbook
+kubernetesVersion: v1.36.6
+controlPlaneEndpoint: cp1.lab.internal:6443
+apiServer:
+  certSANs: [cp1.lab.internal, 192.168.56.10]
+networking:
+  podSubnet: 10.244.0.0/16
+  serviceSubnet: 10.96.0.0/16
+  dnsDomain: cluster.local
+etcd:
+  local:
+    dataDir: /var/lib/etcd
+---
+apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+cgroupDriver: systemd
+serverTLSBootstrap: true
+failSwapOn: true
+---
+apiVersion: kubeproxy.config.k8s.io/v1alpha1
+kind: KubeProxyConfiguration
+mode: iptables

@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: investigator
+  namespace: lab
+automountServiceAccountToken: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: investigator
+  namespace: lab
+rules:
+- apiGroups: [""]
+  resources: [pods, services, events]
+  verbs: [get, list, watch]
+- apiGroups: [""]
+  resources: [pods/log]
+  verbs: [get]
+- apiGroups: [apps]
+  resources: [deployments, replicasets]
+  verbs: [get, list, watch]
+- apiGroups: [discovery.k8s.io]
+  resources: [endpointslices]
+  verbs: [get, list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: investigator
+  namespace: lab
+subjects:
+- kind: ServiceAccount
+  name: investigator
+  namespace: lab
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: investigator

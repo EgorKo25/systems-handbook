@@ -1,0 +1,109 @@
+<header><h1>Values: типы и порядок объединения</h1><p>Следим за значением от массива аргументов оболочки до структуры Go, схемы, YAML и строки окружения.</p></header>
+
+<h2>Вход проходит несколько языков</h2>
+<p>В <code>helm template ledger ./chart --set config.message=hello</code> оболочка сначала формирует argv — массив строк, переданный процессу. Анализатор strvals разбирает точки как вложенность и значение по правилам Helm. Движок получает отображение ключей в значения, а не кусок исходного YAML. Вспомогательный шаблон печатает MESSAGE через quote; Kubernetes хранит строку в ConfigMap, envFrom передаёт её процессу, Go читает os.Getenv. На каждом переходе важно знать: перед нами байты, строка или структурированное значение.</p>
+<p>YAML — текстовый формат отображений, последовательностей и скаляров, то есть простых значений. JSON — другой текстовый формат объектов, массивов, строк, чисел, логических значений и null. Кавычки YAML фиксируют строку, но после разбора информация о стиле кавычек обычно исчезает. В Go параметры представлены отображениями (map), срезами (slice) и простыми типами. Конкретный числовой тип зависит от пути загрузки и версии анализатора. Для интерфейса надёжнее требование integer в схеме, чем предположение, что каждое число обязательно будет int64.</p>
+<table><thead><tr><th>Вход values</th><th>Тип/смысл</th><th>Следующий шаг</th></tr></thead><tbody>
+<tr><td>replicaCount: 3</td><td>Числовой скаляр, схема integer</td><td>Вывести без quote в spec.replicas</td></tr>
+<tr><td>replicaCount: "3"</td><td>Строка</td><td>Наша схема отвергает</td></tr>
+<tr><td>flag: false</td><td>Логическое значение, значимое выключение</td><td>Функция default с запасным true затрёт выбор</td></tr>
+<tr><td>image.tag: "0012"</td><td>Строковый идентификатор</td><td>Сохранить ведущие нули</td></tr>
+<tr><td>extraEnv: []</td><td>Пустой список</td><td>Заменяет прежний список</td></tr>
+<tr><td>config: null</td><td>Удаление исходного ключа при объединении</td><td>Обязательный интерфейс нарушен</td></tr>
+</tbody></table>
+<h2>Отображения объединяются, списки заменяются</h2>
+<p>Исходные requests содержат cpu:50m и memory:32Mi. Набор переопределений, задающий только requests.cpu:100m, сохраняет память. Следующий набор меняет только явно присутствующие ключи. Новый extraEnv заменяет список целиком, а не объединяется по имени элемента. Объединение параметров не является стратегическим слиянием объектов Kubernetes. Если нужны независимые добавления по имени, проектируйте отображение и стабильный порядок его ключей при выводе; если важна последовательность, оставляйте список с осознанной заменой.</p>
+<pre><code>helm template ledger ./chart --kube-version 1.36.6 \
+  -f fixtures/prod.yaml -f fixtures/last.yaml
+helm template ledger ./chart --kube-version 1.36.6 \
+  -f fixtures/last.yaml -f fixtures/prod.yaml</code></pre>
+<p>Реально проверено: первый Deployment получает одну реплику и сообщение «Last file wins», второй — три и «Production-like lab». Оба сохраняют requests.memory:32Mi и requests.cpu:100m, потому что last.yaml не задаёт CPU. Правило «правый побеждает» относится к конфликтующему ключу и не уничтожает прежнее дерево полностью. Смена отображения на скаляр вызывает предупреждение объединения или отказ схемы; это не точечное удаление вложенного значения.</p>
+<!-- HELM_VALUES_WORKSHEET_V2_BEGIN -->
+<figure id="helm-values-origin" class="hv04-sheet" aria-labelledby="hv04-title">
+<style>
+.hv04-sheet{margin:1.5rem 0;color:var(--text);font-family:var(--sans);max-width:100%}
+.hv04-sheet *{box-sizing:border-box;min-width:0}
+.hv04-sheet figcaption{margin:.75rem 0;color:var(--muted)}
+.hv04-sheet p,.hv04-sheet code{overflow-wrap:anywhere}
+.hv04-sheet code{white-space:normal}
+.hv04-sheet pre{white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;background:var(--soft);color:var(--text);padding:.75rem;line-height:1.5;max-width:100%}
+.hv04-sheet table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:1em}
+.hv04-sheet th,.hv04-sheet td{text-align:start;vertical-align:top;padding:.6rem .45rem;border-bottom:1px solid var(--line);overflow-wrap:anywhere}
+.hv04-sheet thead th{font-weight:700}
+.hv04-sheet .hv04-final th,.hv04-sheet .hv04-final td{border-top:3px double var(--text);border-bottom:3px double var(--text);font-weight:700}
+.hv04-sheet .hv04-mini{display:none}
+.hv04-sheet .hv04-fields{margin:1.2rem 0;border-left:2px solid var(--text);padding-left:1rem}
+.hv04-sheet .hv04-fields dt{font-weight:700;margin:.9rem 0 .35rem}
+.hv04-sheet .hv04-fields dd{margin:0 0 1rem}
+.hv04-sheet .hv04-value{display:inline-block;border-bottom:2px solid var(--accent);padding:.15rem .1rem}
+.hv04-sheet .hv04-namespace{border-top:1px dashed var(--text);padding-top:.7rem}
+@media(max-width:540px){
+.hv04-sheet table,.hv04-sheet tbody{display:block}
+.hv04-sheet thead{display:none}
+.hv04-sheet tr{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 .25rem;border-bottom:1px solid var(--line)}
+.hv04-sheet th[scope=row]{grid-column:1 / -1;border-bottom:0;padding:.6rem .2rem .2rem}
+.hv04-sheet td{border-bottom:0;padding:.4rem .2rem .7rem}
+.hv04-sheet .hv04-mini{display:block;font:600 .9em/1.4 var(--sans);margin-bottom:.3rem}
+.hv04-sheet .hv04-final{border-top:3px double var(--text);border-bottom:3px double var(--text)}
+.hv04-sheet .hv04-final th,.hv04-sheet .hv04-final td{border:0}
+}
+@media print{.hv04-sheet{--text:#000;--muted:#333;--paper:#fff;--soft:#fff;--accent:#000;--line:#888}.hv04-sheet table{break-inside:avoid}.hv04-sheet .hv04-fields{break-inside:auto}}
+</style>
+<span id="helm-values-merge" aria-hidden="true"></span><span id="helm-values-merge-title" aria-hidden="true"></span>
+<h3 id="hv04-title">Три поля от файла до строки манифеста</h3>
+<p>Запускаем команду из <code>helm/labs</code>, где уже есть <code>chart/</code> и <code>fixtures/</code>. Реплики задаёт целое <code>replicaCount</code>, сообщение — строка <code>config.message</code>, порт контейнера — целое <code>service.targetPort</code>. Покажем только эти три поля; остальные параметры чарта продолжают участвовать в проверке и выводе.</p>
+<pre><code>helm template ledger ./chart \
+  --namespace helm-lab --kube-version 1.36.6 \
+  -f fixtures/prod.yaml -f fixtures/last.yaml</code></pre>
+<figcaption>Модель по поставляемым файлам и реализации Helm 4.3.1. <code>template</code> печатает результат локально, <code>ledger</code> задаёт имя релиза, <code>./chart</code> — каталог пакета, <code>-f</code> — очередной файл параметров. <code>--kube-version</code> задаёт версию Kubernetes для возможностей шаблонов, но не подключает настоящий API-сервер. Рендер Helm этим рисунком не исполнялся; ниже вычислено ожидаемое объединение обычных отображений и скаляров выбранных файлов.</figcaption>
+<p>В первых трёх строках таблицы показано содержимое каждого источника отдельно. «—» означает отсутствие ключа в данном файле: это не строковое значение и не <code>null</code>. Последняя строка показывает результат слияния.</p>
+<table role="table" aria-label="Откуда получены три значения">
+<thead role="rowgroup"><tr role="row"><th scope="col">Источник</th><th scope="col">Реплики</th><th scope="col">Сообщение</th><th scope="col">Порт</th></tr></thead>
+<tbody role="rowgroup">
+<tr role="row"><th scope="row"><code>chart/values.yaml</code></th><td role="cell"><span class="hv04-mini">Реплики</span><code>2</code></td><td role="cell"><span class="hv04-mini">Сообщение</span><code>"Hello from Helm"</code></td><td role="cell"><span class="hv04-mini">Порт</span><code>8080</code></td></tr>
+<tr role="row"><th scope="row"><code>fixtures/prod.yaml</code> · первый <code>-f</code></th><td role="cell"><span class="hv04-mini">Реплики</span><code>3</code></td><td role="cell"><span class="hv04-mini">Сообщение</span><code>"Production-like lab"</code></td><td role="cell"><span class="hv04-mini">Порт</span>—</td></tr>
+<tr role="row"><th scope="row"><code>fixtures/last.yaml</code> · второй <code>-f</code></th><td role="cell"><span class="hv04-mini">Реплики</span><code>1</code></td><td role="cell"><span class="hv04-mini">Сообщение</span><code>"Last file wins"</code></td><td role="cell"><span class="hv04-mini">Порт</span>—</td></tr>
+<tr role="row" class="hv04-final"><th scope="row">Итог: дерево <code>.Values</code></th><td role="cell"><span class="hv04-mini">Реплики</span><code>1</code></td><td role="cell"><span class="hv04-mini">Сообщение</span><code>"Last file wins"</code></td><td role="cell"><span class="hv04-mini">Порт</span><code>8080</code></td></tr>
+</tbody></table>
+<p>Скаляр, явно заданный поздним файлом, заменил прежнее значение. Отсутствующий <code>targetPort</code> его не удалил: вложенное отображение <code>service</code> сохранило исходный порт. После объединения схема требует для реплик целое число, для сообщения строку, для порта именно 8080. Успешная проверка этого дерева ещё не проверяет будущие объекты API.</p>
+<dl class="hv04-fields">
+<dt>① <code>.Values.replicaCount</code> → Deployment</dt>
+<dd><code>{{ .Values.replicaCount }}</code> в <code>deployment.yaml</code> выводит <span class="hv04-value"><code>replicas: 1</code></span>. Значение остаётся числом; кавычки превратили бы его в строку YAML.</dd>
+<dt>② <code>.Values.config.message</code> → ConfigMap</dt>
+<dd>Именованный фрагмент <code>ledger.configData</code> находится в <code>_helpers.tpl</code>. Он выводит <code>MESSAGE: {{ .Values.config.message | quote }}</code>; <code>configmap.yaml</code> вставляет этот фрагмент в <code>data</code> с отступом 2. Функция <code>quote</code> добавляет кавычки: <span class="hv04-value"><code>MESSAGE: "Last file wins"</code></span>.</dd>
+<dt>③ <code>.Values.service.targetPort</code> → поле контейнера</dt>
+<dd>В <code>deployment.yaml</code> выражение <code>{{ .Values.service.targetPort }}</code> даёт <span class="hv04-value"><code>containerPort: 8080</code></span>. Сами эти цифры не открывают сокет: процесс приложения должен слушать нужный адрес и порт.</dd>
+</dl>
+<p class="hv04-namespace"><strong>Отдельный вход:</strong> <code>--namespace helm-lab</code> устанавливает <code>.Release.Namespace="helm-lab"</code>, а не добавляет ключ в <code>.Values</code>. Выбранные шаблоны не печатают <code>metadata.namespace</code>. Локальный <code>helm template</code> не создаёт пространство имён и не отправляет объекты в кластер; при установке пространство имён задают самой команде управления релизом.</p>
+<p>Для проверки измените только порядок двух <code>-f</code>: ожидаются реплики <code>3</code>, сообщение <code>"Production-like lab"</code> и прежний порт <code>8080</code>. Строки результатов выше относятся к разным объектам и не составляют отдельный готовый YAML-документ.</p>
+<p class="sources"><a href="https://github.com/helm/helm/blob/v4.3.1/pkg/cli/values/options.go">Порядок файлов Helm 4.3.1</a>; <a href="https://github.com/helm/helm/blob/v4.3.1/pkg/chart/common/util/coalesce.go">слияние значений чарта</a>. Все значения и связи с шаблонами взяты из собственного учебного chart.</p>
+</figure>
+<!-- HELM_VALUES_WORKSHEET_V2_END -->
+
+<h2>Семейства --set</h2>
+<pre><code>helm template ledger ./chart --kube-version 1.36.6 --set replicaCount=3
+helm template ledger ./chart --kube-version 1.36.6 --set-string replicaCount=3</code></pre>
+<p>Первый запуск даёт целое число 3 и проходит. Второй гарантирует строку "3" и завершается ошибкой схемы. Одинарные кавычки оболочки в <code>--set 'replicaCount=3'</code> защищают аргумент, но не делают значение строкой для Helm. Для строкового тега, длинного идентификатора или переменной окружения используйте --set-string либо явно строковый YAML. Анализатор --set принимает true/false как логические значения, а обычные целые числа — в поддерживаемой целочисленной форме; не переносите на него все неявные правила YAML.</p>
+<pre><code>helm template ledger ./chart --kube-version 1.36.6 \
+  --set-json &#x27;extraEnv=[{&quot;name&quot;:&quot;TRACE&quot;,&quot;value&quot;:&quot;true&quot;}]&#x27;
+helm template ledger ./chart --kube-version 1.36.6 \
+  --set-json &#x27;extraEnv=[{&quot;name&quot;:&quot;TRACE&quot;,&quot;value&quot;:true}]&#x27;</code></pre>
+<p>Первый JSON даёт строковое поле value, второй — логическое и отвергается схемой. --set-json удобен для сложных объектов и списков, а в 4.3.1 поддерживает также полный JSON-объект без формы ключ=значение. --set-file читает файл в строку вместе с конечным LF, байтом перевода строки, без разбора YAML. <code>--set-file credentials.token=fixtures/token.txt</code> сохраняет байты учебного токена; b64enc и обратное декодирование в тесте доказывают сохранность LF. --set-literal в выбранном CLI принимает буквальную правую часть с меньшим разбором специальных символов; сложный стабильный интерфейс обычно понятнее в файле.</p>
+<h2>Порядок между семействами флагов</h2>
+<p>Реализация 4.3.1 обрабатывает все -f, затем --set-json, --set, --set-string, --set-file и --set-literal. Внутри семейства действует правый повтор. Поэтому перестановка разных семейств в командной строке не обязана менять приоритет. Это факт конкретной реализации, который стоит повторно проверить при смене основной версии.</p>
+<pre><code>helm template ledger ./chart --kube-version 1.36.6 \
+  --set-string config.message=text --set-json &#x27;config.message=&quot;json&quot;&#x27;
+helm template ledger ./chart --kube-version 1.36.6 \
+  --set-json &#x27;config.message=&quot;json&quot;&#x27; --set-string config.message=text</code></pre>
+<p>Оба проверенных запуска дают MESSAGE:"text". Устраните конфликтующие источники: проверка изменения не должна требовать помнить внутренний порядок анализатора. Для выпуска храните полный файл параметров окружения и отдельное короткое переопределение неизменяемого дайджеста образа. Много перекрывающих флагов затрудняет восстановление: история оболочки недостаточна как журнал конечной конфигурации.</p>
+<h2>Точки, запятые и скобки</h2>
+<pre><code>helm template ledger ./chart --kube-version 1.36.6 \
+  --set &#x27;extraLabels.handbook\.example/owner=reader&#x27;
+helm template ledger ./chart --kube-version 1.36.6 \
+  --set-json &#x27;extraLabels={&quot;handbook.example/owner&quot;:&quot;reader&quot;}&#x27;</code></pre>
+<p>Оба способа создают один ключ метки handbook.example/owner. Обратная косая черта защищает точку от Helm, одинарные кавычки оболочки сохраняют саму черту. Без неё получилось бы вложенное отображение, отвергнутое схемой строковых меток. Запятая strvals разделяет присваивания, квадратные скобки задают индекс; JSON и файлы часто уменьшают число уровней экранирования. Секрет в argv попадает в историю, журнал или наблюдение процессов. --set-file убирает содержимое из argv, но оно по-прежнему может попасть в хранилище релиза и результат рендеринга.</p>
+<h2>False, ноль, nil и отсутствие</h2>
+<p>Отсутствующий ключ, null, пустая строка, 0 и false — разные намерения, но функции empty/default/required сближают их. При объединении null удаляет исходный ключ, а required схемы затем может отказать. Для необязательного логического параметра исходное значение лучше задавать в values.yaml, а схемой проверять тип и наличие. Выражение <code>default true .Values.flag</code> заменит законный false на true; hasKey отличает наличие ключа от истинности по правилу непустоты. Эта ловушка проверена отдельным диагностическим чартом. Основной сервис не использует искусственный READY: его неготовность моделируется неверным путём пробы.</p>
+<p>Большое дерево параметров имеет цену комбинаций. Три независимых логических поля допускают до восьми сочетаний, шесть — до 64. Взаимоисключающие create/existingSecret проверяются явным условием с fail, а не обещанием в README. Измеряйте число поддержанных сочетаний, скорость отрицательной обратной связи и понятность ошибки. Возможность включить всё вместе не означает корректного продукта.</p>
+
+<h2>Первичные источники и версия</h2><p>Проверено 1 ноября 2026; основной CLI Helm 4.3.1, chart API v2. <a href="https://helm.sh/docs/chart_template_guide/values_files/">Values</a>, <a href="https://github.com/helm/helm/blob/v4.3.1/pkg/cli/values/options.go">CLI order source</a>, <a href="https://github.com/helm/helm/blob/v4.3.1/pkg/chart/common/util/coalesce.go">Coalescing</a>, <a href="https://github.com/helm/helm/tree/v4.3.1/pkg/strvals">strvals</a>.</p>

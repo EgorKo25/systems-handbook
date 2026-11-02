@@ -1,0 +1,36 @@
+replicaCount: 2
+image:
+  repository: ledger-api
+  tag: "0.1.0"
+  digest: ""
+  pullPolicy: IfNotPresent
+service:
+  port: 80
+  targetPort: 8080
+config:
+  message: "Hello from Helm"
+probes:
+  readinessPath: /readyz
+credentials:
+  create: false
+  existingSecret: ""
+  token: ""
+resources:
+  requests:
+    cpu: 50m
+    memory: 32Mi
+  limits:
+    cpu: 500m
+    memory: 128Mi
+strategy:
+  maxSurge: 1
+  maxUnavailable: 0
+extraLabels: {}
+extraEnv: []
+persistence:
+  enabled: false
+  size: 1Gi
+  storageClass: ""
+tests:
+  enabled: true
+  image: busybox:1.37.0

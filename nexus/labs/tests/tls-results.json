@@ -1,0 +1,10 @@
+{
+  "scope": "real local certificate recipe only; no Nexus/NGINX/TLS server or trust installation",
+  "openssl": "OpenSSL 3.0.13 30 Jan 2024 (Library: OpenSSL 3.0.13 30 Jan 2024)",
+  "passed": 3,
+  "checks": [
+    "book certificate commands execute",
+    "CA signature + SAN hostname accepted",
+    "different hostname rejected"
+  ]
+}

@@ -1,0 +1,65 @@
+KUBERNETES · ГОТОВ К ИНТЕГРАЦИИ · 1 ноября 2026
+
+Состав редакции 02.11.2026: 25 авторских HTML-глав, 6 внутренних книг,
+маршрут чтения, сквозной практикум, 130 терминов, 37 карточек / 52 флага,
+6 пошаговых моделей / 36 переходов и 3 предметные SVG-иллюстрации.
+Пакетные source-проверки не равны кластерной приёмке. HTML — поддерживаемая точка текста;
+дублирующий авторский генератор удалён, чтобы не перезаписать исправления.
+Есть CONFIG, sources, Go-сервис, реальные YAML, validators/fixtures,
+OpenAPI/CRD subsets с NOTICE/LICENSE, полный VM install и isolated restore.
+
+Профили: kubeadm 1.36.6 / Ubuntu 24.04 / containerd 2.4.2 / runc 1.5.2 /
+Calico 3.33 VXLAN Always / kube-proxy iptables. Компактный kind 0.33 использует
+опубликованный node 1.36.4 по точному digest. Latest Kubernetes был 1.37.2.
+Upstream metrics APIService оставляет insecureSkipTLSVerify=true; это явно
+отделено от проверки kubelet certificates. Optional hardening recipe с
+serving Secret/flags/mount/caBundle,false не объявлен исполненным.
+Optional: metrics-server 0.9.1, Envoy Gateway 1.9.3 с bundled Gateway API 1.6.1
+и явным Envoy Proxy 1.39.6 по security update официального release guide.
+Версии/URL/даты/хеши: sources/verified-sources.json.
+
+Исторические результаты 01.11.2026, не повторный запуск новой редакции:
+Go 1.27.3 race/vet/static build; graceful drain активного HTTP
+request на loopback; 15 основных + 8 optional core API shapes; 4 optional
+Gateway/Envoy CRD shapes; optional metrics TLS artifact preparation; 2 отрицательных примера; YAML; bundle corruption и
+path escape; exact Calico SHA transform и env/probe assertions; source metadata.
+Результаты: labs/verified-results.json, подробности: ПРОВЕРКИ.txt.
+Реальный кластер НЕ создавался. Никаких host installs/services/swap/firewall,
+привилегированных host операций, Docker build/run или покупок облака не было.
+CNI/CSI/Gateway/HPA/drain/upgrade/restore — рецепты с критериями, не результаты.
+
+Исправления независимой проверки Nexus: pin kubelet node-ip отдельно от API
+advertiseAddress и CNI; persisted + active serverTLSBootstrap; executable bit
+kubectl; matching etcd tools, backup dir и полный single-cp1 restore с fencing,
+остановкой реальных static containers, новым data-dir и неизменным mount path.
+
+Действия интегратора:
+- CONFIG.volume='XVII' — временный римский label для совместимости builder.
+  Назначить окончательный номер вместе с остальными томами.
+- Зарегистрировать CONFIG, command_modules и diagram_modules в shared code,
+  собрать в изолированной копии, проверить reader/mobile/themes/navigation,
+  обновить каталог, stats, checksums и экспорт обычным общим способом.
+- Приложение ledger-api 0.1.0: HTTP 8080, /livez /readyz /api/hello,
+  MESSAGE → JSON.message. Helm копирует тот же Go-код и выпуск; namespace
+  helm-lab отличается от lab. Context handbook-admin либо kind-handbook
+  выбирается явно один раз. Не отдавать один Deployment двум владельцам.
+- После связной вычитки исправлены ранняя подготовка приложения, namespace
+в Route-примере, CLI-пути и JSONPath, два разных API-конфликта, формат всех
+8 situations справочника, а также сохранение staged PKI/manifest/data-dir при
+отказах. FIRST-WORKLOAD.txt создаёт один выпуск и объясняет продолжение;
+http_measure.py даёт closed-loop измерение настоящего JSON, не cluster capacity.
+Новый scheduling-probe и два ownership-файла независимы от рабочего Service.
+Статически сверены 15 основных + 11 optional core и 4 CRD-формы, Python AST,
+HTML/ссылки/уникальные якоря, SVG XML, bash -n через stdin и чистые квантили.
+Изменённые CLI, образ, кластер, packet path и restore заново НЕ исполнялись.
+Mobile/темы/печать и production reader ещё требуют приёмки интегратором.
+Подмножества schemas предназначены для офлайн shape validation: Kubernetes
+  CEL, defaulting/admission/RBAC и работа controllers ими не доказываются.
+
+Содержательные границы: capacity и timing — условные расчёты, не benchmark
+домашних 8/16 GiB. Не обещаны HA на одном worker или большой кластер на 8 GiB.
+Optional Gateway/metrics устанавливаются отдельно с учётом бюджета. Основной
+storage lab — честный static local PV без выдуманного CSI provisioning/failover.
+Для cold offline bootstrap и всех VM сценариев нужен собственный стенд читателя.
+Public files не содержат личных home paths, credentials и рабочих адресов.
+Shared scripts/index/catalog не менялись; commit и push не выполнялись.

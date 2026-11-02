@@ -1,0 +1,39 @@
+# Apply only in the reader's helm-lab after explicitly stopping the app.
+# Own standalone Pod, not managed by Helm; delete this Pod before restoring app.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ledger-storage-inspector
+  namespace: helm-lab
+spec:
+  restartPolicy: Never
+  automountServiceAccountToken: false
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 65532
+    fsGroup: 65532
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+    - name: inspect
+      image: busybox:1.37.0
+      command: ["sh", "-c"]
+      args:
+        - |
+          set -eu
+          if [ ! -f /data/marker.txt ]; then
+            cat /proc/sys/kernel/random/uuid > /data/marker.txt
+          fi
+          cat /data/marker.txt
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop: ["ALL"]
+      volumeMounts:
+        - name: data
+          mountPath: /data
+  volumes:
+    - name: data
+      persistentVolumeClaim:
+        claimName: ledger-ledger-api-data

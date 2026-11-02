@@ -1,0 +1,101 @@
+HELM — ПРОТОКОЛ ПРОВЕРОК, 1 ноября 2026
+
+ВЕРСИИ И ПРОИСХОЖДЕНИЕ
+Основной CLI: Helm v4.3.1+gc0d08d0, Linux amd64.
+Официальный архив:
+https://get.helm.sh/helm-v4.3.1-linux-amd64.tar.gz
+Официальный release:
+https://github.com/helm/helm/releases/tag/v4.3.1
+SHA-256:
+0403a88ae20913d11b10a2467b50087721fea7581736da6b9d3992f5357fe54b
+Фактически скачан в приватный временный каталог,сумма совпала с release,
+sha256sum --check сообщил OK,исполняемый файл сообщил указанную версию.
+Системный PATH/установка/службы пользователя не менялись. GPG signature binary
+НЕ проверена;сумма подтверждает байты относительно доверенного official release.
+Chart apiVersion:v2,экспериментальный v3 не используется.
+Kubernetes по контракту соседнего тома:kubeadm1.36.6 либо kind0.33.0/1.36.4.
+Кластер автором этого тома НЕ поднимался. Совместимость API рассматривается
+отдельно от фактической проверки конкретного deployment.
+
+РЕАЛЬНО ВЫПОЛНЕНО
+labs/check.py на официальном Helm4.3.1:19 групп PASS,много отдельных assertions.
+- lint --strict --kube-version1.36.6;
+- template/parsed YAML:4 объекта с учётом test-hook Pod,число replicas,
+  selector Service/Deployment,readiness path;
+- два стабильных рендера побайтно равны;
+- противоположный порядок двух -f,рекурсивное сохранение requests.memory;
+- --set поверх файлов,5 schema negative cases;
+- required пустого токена и взаимоисключающие create/existingSecret;
+- --set-file сохраняет исходный LF,decoded Secret равен файлу,
+  checksum/credentials присутствует;
+- фиксированный порядок разных семейств --set-json/--set-string;
+- замена списка,экранированная точка метки,запрет изменения selector labels;
+- ошибочный path готовности и отдельный config checksum при MESSAGE;
+- optional PVC:replica1,Recreate,keep,классhelm-local,запрос128Mi;
+  статический no-provisioner PV256Mi зарезервирован для нужного claim;
+- image digest имеет приоритет над tag;фиктивный digest только в local render;
+- намеренный parse error на временной копии;
+- library dependency update→lock→удаление charts только временной копии→build
+  без сети;lock bytes и parsed manifests равны;
+- package parsed parity;точные байты member operator-note;отсутствие явно
+  исключённого test-secret.private в архиве временной копии;
+- kindOf bool,default true false,string результата include,корень внутри with;
+- empty пустых/непустых dict/list;int невалидной строки возвращает0;
+  fromYaml неверного YAML даёт Error в отображении,не обязательный отказ;
+- Go HTTP/JSON/readiness,конкурентный счётчик и meaningful graceful shutdown:
+  ephemeral loopback listener,активный запрос удержан,контекст отменён,
+  сервер не вернулся до завершения обработчика,полный ответ получен.
+
+Все изменяемые HELM_CONFIG_HOME/HELM_CACHE_HOME/HELM_DATA_HOME и kubeconfig
+изолированы временным каталогом. Основной chart не сбрасывается.
+Go тесты используют только свой ephemeral loopback listener и прекращают его.
+Исходники service/main.go,main_test.go,go.mod совпадают с Kubernetes-томом.
+Полный машинный отчёт последнего авторского запуска:labs/results.json.
+Отдельный go test -race -count=1 проверен;результат отмечен в READY.txt.
+
+ИЗМЕРЕНИЕ
+10 последовательных CLI+local render без сети/API:4 документа,3929 bytes,
+медиана25.71мс,min24.60мс,max30.16мс в последнем авторском прогоне.
+Это результат конкретной среды,не универсальный порог и не оценка p99.
+Время API/admission/scheduling/image pull/wait/HTTP в кластере не измерялось.
+
+СТАТИЧЕСКИЕ ПРОВЕРКИ
+check_sources.py проверяет интерфейс CONFIG/глав/справочника/схем:
+уникальные chapter IDs с helm,все command.chapter/diagram.chapter,
+форму карточек,состояния узлов и связи схем,локальные ссылки/нет private paths.
+Это не полный HTML-render и не браузерный тест. Общий build.py автором
+не запускался,shared registry/catalog/stats/index/checksums не менялись.
+Независимый рендер в изолированной копии выполняет интегратор.
+
+НЕ ВЫПОЛНЕНО
+- Kubernetes API admission,install/upgrade/wait/test hooks/rollback/uninstall;
+- настоящие forbidden/RBAC и ownership/SSA конфликт;
+- PVC binding/attach/mount,запись marker в реальный localPV,
+  потеря node и восстановление данных;
+- CRD install/update/lifecycle;
+- remote HTTP/OCI publication/authentication и подпись chart своим ключом;
+- GPG signature binary и проверка доверенного key fingerprint;
+- сборка/загрузка/запуск контейнерного image в настоящих nodes.
+Их команды — рецепты личного стенда,не выдуманный журнал исполнения.
+
+МОДЕЛИ
+6 встроенных пошаговых схем:install,merge values,context,частичный upgrade,
+rollback против БД,пакет/доверие. Они не вызывают Helm/API/registry и не
+подменяют локальные fixtures или работающий сервер. Условия указаны внутри.
+
+ГРАНИЦЫ БЕЗОПАСНОСТИ И ДАННЫХ
+Никакие службы/привилегии/сеть хоста,чужой kubeconfig/context/cluster не менялись.
+VM-адаптер static localPV предназначен только собственной wk1 и отдельному
+/srv/handbook/helm-ledger-data;он не использует соседний ledger-local.
+CSI не обязателен для static localPV. Профиль storageClass выбирается до PVC.
+Приложение не пишет в /data и не аутентифицирует API_TOKEN;inspector явно
+пишет учебный marker. Recreate допускает downtime,keep/Retain не делают backup.
+
+РЕДАКЦИЯ SOURCE 2 НОЯБРЯ 2026
+Предыдущие результаты — историческая приёмка, не запуск после новых правок.
+Новый list-флаг исправлен по точным Flags/Global Flags Helm4.3.1,  а не по
+подстроке --all-namespaces. Новый checker сохраняет прежний results.json,
+пишет только явно выбранный новый HELM_CHECK_REPORT и изолирует env overrides.
+Удаление values-модели согласовано с предметной HTML-заменой интегратора.
+Новый local render/19 labs/Go/browser/cluster lifecycle после этой редакции
+не выполнялись. Точные source/AST/help-only результаты передаются отдельно.

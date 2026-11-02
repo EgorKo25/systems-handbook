@@ -1,0 +1,50 @@
+<header><h1>Scheduler: найти допустимый node, сравнить и назначить</h1><p>Планирование использует заявленные потребности и ограничения. Оно не измеряет будущую бизнес-нагрузку и не резервирует отдельное физическое ядро каждому Pod.</p></header>
+<h2>Filter, score, reserve, bind</h2>
+<p>Scheduler наблюдает Pods без spec.nodeName. Scheduling cycle получает снимок cluster state и выполняет фильтры допустимости: ресурсы, selector/affinity, taints, доступность томов и другие plugins. Score ранжирует прошедшие nodes; выбранный node может участвовать в Reserve/Permit и binding cycle. Bind записывает назначение через API, после чего kubelet этого node замечает Pod. Если ни один node не прошёл filter, высокий score не поможет. Pending — фаза Pod, она включает также подготовку после назначения; для точной причины смотрите PodScheduled condition и Events.</p>
+<h2>Requests и limits имеют разные адресаты</h2>
+<p>Request — заявка для планирования и распределения ресурса; limit — верхняя граница исполнения, применяемая runtime/Linux при соответствующем ресурсе. CPU 50m означает 0.05 CPU единицы, где одна CPU примерно соответствует одному логическому ядру доступной машины. Memory 32Mi — 32×2²⁰ байт; 32M — 32×10⁶, это разные величины. Scheduler суммирует requests вместе с накладными расходами и особыми правилами init/sidecars, а не текущий RSS процесса. Allocatable node — доступный workloads бюджет после резервов и ограничений, не вся физическая RAM.</p>
+<p>Пример: node allocatable 1500m CPU и 2 GiB, уже назначено requests 1200m/1.5 GiB. Новый Pod 400m/128Mi не проходит CPU даже при фактической загрузке 5%. Уменьшить request без измерения — риск переподписать CPU; добавить память не решит CPU filter. Limits CPU может приводить к throttling, ограничениям доступного CPU-времени, без перезапуска. Memory limit при невозможности освободить память может привести к OOM kill. Реальное потребление, request и limit надо видеть тремя отдельными рядами.</p>
+<figure style="margin:1.5em 0">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 280" role="img" aria-labelledby="k8s-cpu-budget-title k8s-cpu-budget-desc" style="width:100%;max-width:36rem;height:auto;color:inherit">
+<title id="k8s-cpu-budget-title">Заявки занимают 1200m из 1500m, измеренная работа — 75m</title>
+<desc id="k8s-cpu-budget-desc">Две отдельные шкалы одной и той же мощности узла. Вверху учтённые requests занимают 1200m, свободно 300m. Запрос нового Pod на 400m длиннее остатка на 100m. Внизу измеренная работа занимает только 75m. Этот маленький расход не освобождает заявку для планировщика.</desc>
+<g font-family="system-ui,sans-serif" fill="currentColor" font-size="14">
+<text x="10" y="24" font-size="17" font-weight="700">Один узел: allocatable 1500m</text>
+<text x="10" y="52">Учёт scheduler, не расход CPU</text>
+<rect x="10" y="64" width="330" height="35" fill="none" stroke="currentColor"/>
+<rect x="10" y="64" width="264" height="35" fill="currentColor" fill-opacity=".25"/>
+<path d="M274 64V99" stroke="currentColor" stroke-width="2"/>
+<text x="20" y="87">Заявки 1200m</text><text x="282" y="87">300m</text>
+<rect x="252" y="113" width="88" height="28" fill="none" stroke="currentColor" stroke-dasharray="5 3"/>
+<text x="10" y="133">Новый Pod: 400m</text>
+<text x="10" y="165">Нехватка: 400 − 300 = 100m</text>
+<text x="10" y="200">Независимое измерение за окно</text>
+<rect x="10" y="211" width="330" height="25" fill="none" stroke="currentColor"/>
+<rect x="10" y="211" width="16.5" height="25" fill="currentColor" fill-opacity=".6"/>
+<text x="40" y="229">Usage 75m = 5% от 1500m</text>
+<text x="10" y="265">Низкая работа не снимает старые requests.</text>
+</g></svg>
+<figcaption>Условный бюджет из примера главы, не показания стенда. Одна CPU соответствует 1000m; все ширины масштабированы по одной шкале 1500m. Scheduler сравнивает запросы и allocatable. Значение usage приходит из другого измерения и не заменяет эти два входа.</figcaption>
+<details><summary>Изменить одно условие мысленно</summary><p>Если другая нагрузка освобождает request 100m, остаток становится 400m и новый Pod может пройти именно CPU-фильтр. Если уменьшается только её фактическая работа с 75m до 20m, прежний учёт requests остаётся 1200m и CPU-фильтр продолжает отказывать. Даже пройденный CPU-фильтр не снимает taints, ограничения тома и affinity.</p></details>
+</figure>
+<h2>Affinity, taints и topology</h2>
+<p>nodeSelector требует совпадения labels node. Required node affinity — логическое условие обязательного выбора; preferred — предпочтение при scoring. Pod affinity/anti-affinity выражает отношение к размещению других Pods с учётом topologyKey. Taint помечает node нежелательным/недопустимым для Pods без подходящей toleration. Toleration разрешает терпеть taint, но не направляет Pod именно на этот node. NoSchedule влияет на новые назначения, NoExecute может также эвакуировать уже назначенные Pods по условиям/tolerationSeconds. Control-plane taint оставляем в VM-профиле с worker; не убираем его просто ради доступного места без пересчёта резерва.</p>
+<p>Topology spread constraints задают допустимый skew распределения по доменам, например kubernetes.io/hostname. Два replicas на одном node переживают сбой одного процесса, но не его VM. Required anti-affinity на двух replicas при одном допустимом worker закономерно оставляет один Pending. Называть это «ошибкой Kubernetes» неверно: требования несовместимы с топологией. Для небольшого стенда используйте preferred или второй реальный worker и объясните компромисс. Labels topology — вход доверия: kubelet не должен иметь возможность сам назначить себе защищённую метку изоляции.</p>
+<h2>Preemption и граница исправления</h2>
+<p>Priority определяет относительную важность Pod при очереди и возможной preemption, вытеснении менее приоритетных Pods ради допустимого размещения. Это не мгновенное получение CPU и не гарантированный обход всех constraints. Affinity/volume topology могут оставлять задачу невыполнимой после вытеснения; PDB учитывается best effort при preemption, не даёт абсолютного запрета. Не выдавайте обычному учебному приложению системный priorityClass ради ускорения.</p>
+<pre><code>kubectl --context &quot;$LAB_CONTEXT&quot; describe node wk1
+kubectl --context &quot;$LAB_CONTEXT&quot; -n lab describe pod POD_NAME
+kubectl --context &quot;$LAB_CONTEXT&quot; -n lab get pod POD_NAME -o jsonpath=&#x27;{.spec.nodeName}{&quot;\n&quot;}{.status.conditions}&#x27;</code></pre>
+<p>Для наблюдаемого отказа используется отдельный Deployment из <a href="labs/vm/scheduling-probe.yaml">scheduling-probe.yaml</a>. Он просит 100 CPU, не выбирает системный приоритет и не совпадает с selector рабочего Service. Сначала убедитесь через <code>kubectl --context "$LAB_CONTEXT" get nodes -o custom-columns=NAME:.metadata.name,CPU:.status.allocatable.cpu</code>, что ни один допустимый узел не имеет такого бюджета. Иначе это условие опыта не выполнено: число нельзя считать универсальным способом получить Pending.</p>
+<pre><code>kubectl --context "$LAB_CONTEXT" -n lab create -f vm/scheduling-probe.yaml
+kubectl --context "$LAB_CONTEXT" -n lab get pods -l app=scheduling-probe -o wide
+kubectl --context "$LAB_CONTEXT" -n lab describe deployment scheduling-probe
+# Скопируйте фактическое имя Pod из первой таблицы:
+kubectl --context "$LAB_CONTEXT" -n lab describe pod ACTUAL_PROBE_POD</code></pre>
+<p>В Events ищите <code>FailedScheduling</code> и недостаточный CPU; пустое <code>spec.nodeName</code> и условие <code>PodScheduled=False</code> отличают отсутствие назначения от ошибки загрузки образа после назначения. До запуска контейнер не потребляет запрошенные 100 CPU. Теперь исправьте template контроллера, а не уже созданный Pod:</p>
+<pre><code>kubectl --context "$LAB_CONTEXT" -n lab patch deployment scheduling-probe --type=strategic -p '{"spec":{"template":{"spec":{"containers":[{"name":"api","resources":{"requests":{"cpu":"50m","memory":"32Mi"},"limits":{"cpu":"500m","memory":"128Mi"}}}]}}}}'
+kubectl --context "$LAB_CONTEXT" -n lab rollout status deployment/scheduling-probe --timeout=120s
+kubectl --context "$LAB_CONTEXT" -n lab get pods -l app=scheduling-probe -o wide</code></pre>
+<p>Strategic merge сопоставляет container по имени <code>api</code>. Изменение template создаёт другую ревизию и Pod с другим UID; это не доказательство допустимости произвольной правки полей старого Pod. Если новый экземпляр тоже Pending, исследуйте оставшиеся constraints, а не уменьшайте request вслепую. Для повторения выполните такую же strategic-правку этого Deployment, задав CPU request и limit равными строке <code>"100"</code>; память оставьте прежней. Это снова намеренно сломает только <code>scheduling-probe</code>. Повторный create существующего объекта должен отказать, а не незаметно начать опыт заново. После разбора удаляют именно этот дополнительный Deployment, если надо освободить его 50m и 32Mi, а рабочий <code>ledger-api</code> и namespace оставляют.</p>
+<p>Замерьте отдельно создание Pod → PodScheduled и PodScheduled → ContainersReady. Первая задержка связана с очередью и выбором узла, вторая — с образами, томами, процессом и проверками. Поэтому медленную загрузку image нельзя объяснять одним временем scheduler.</p>
+<p class="source-note">Первоисточники, проверено 01.11.2026: <a href="https://kubernetes.io/docs/concepts/scheduling-eviction/scheduling-framework/">Scheduling framework</a>, <a href="https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/">Resource management</a>, <a href="https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/">Assign Pods</a>, <a href="https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/">Taints</a>.</p>

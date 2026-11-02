@@ -1,0 +1,320 @@
+[
+  {
+    "title": "Download",
+    "url": "https://help.sonatype.com/en/download.html",
+    "checked_on": "2026-11-01",
+    "scope": "CE 3.97.3; опубликованные exact Linux archive и SHA256 URLs. Фактическая загрузка архива не выполнялась."
+  },
+  {
+    "title": "Release notes 3.97",
+    "url": "https://help.sonatype.com/en/sonatype-nexus-repository-3-97-0-release-notes.html",
+    "checked_on": "2026-11-01",
+    "scope": "Даты/patches, Go uppercase prerelease, Docker selector push, аудит и новые requirements."
+  },
+  {
+    "title": "Feature matrix",
+    "url": "https://help.sonatype.com/en/nexus-repository-feature-matrix.html",
+    "checked_on": "2026-11-01",
+    "scope": "Редакционные границы форматов, PostgreSQL и платных возможностей. Не подмена runtime приёмки."
+  },
+  {
+    "title": "Core source README",
+    "url": "https://github.com/sonatype/nexus-public/blob/main/README.md",
+    "checked_on": "2026-11-01",
+    "scope": "Различие Core и бинарной CE; исходное дерево не полная поставка форматов."
+  },
+  {
+    "title": "System requirements",
+    "url": "https://help.sonatype.com/en/sonatype-nexus-repository-system-requirements.html",
+    "checked_on": "2026-11-01",
+    "scope": "Java 21, ресурсы, поддержка DB. Учебный профиль не универсальный минимум."
+  },
+  {
+    "title": "Install",
+    "url": "https://help.sonatype.com/en/install-nexus-repository.html",
+    "checked_on": "2026-11-01",
+    "scope": "Распаковка, каталоги, initial admin.password; сервер не был установлен."
+  },
+  {
+    "title": "Service",
+    "url": "https://help.sonatype.com/en/run-as-a-service.html",
+    "checked_on": "2026-11-01",
+    "scope": "Foreground/launcher и systemd контракт в personal VM."
+  },
+  {
+    "title": "Runtime",
+    "url": "https://help.sonatype.com/en/configuring-the-runtime-environment.html",
+    "checked_on": "2026-11-01",
+    "scope": "vmoptions, data-dir/etc/nexus.properties и HTTP настройки; старые детали не переносятся на SQL blindly."
+  },
+  {
+    "title": "Reverse proxy",
+    "url": "https://help.sonatype.com/en/run-behind-a-reverse-proxy.html",
+    "checked_on": "2026-11-01",
+    "scope": "Forwarded headers, TLS topology и маршрутизация."
+  },
+  {
+    "title": "Database options",
+    "url": "https://help.sonatype.com/en/database-options.html",
+    "checked_on": "2026-11-01",
+    "scope": "H2 standalone vs external PostgreSQL, границы HA."
+  },
+  {
+    "title": "PostgreSQL install",
+    "url": "https://help.sonatype.com/en/install-nexus-repository-with-a-postgresql-database.html",
+    "checked_on": "2026-11-01",
+    "scope": "Ownership и pg_trgm; миграция/БД не исполнялись."
+  },
+  {
+    "title": "Storage guide",
+    "url": "https://help.sonatype.com/en/storage-guide.html",
+    "checked_on": "2026-11-01",
+    "scope": "Assets/components/blobs и связи физического/логического состояния."
+  },
+  {
+    "title": "Blob stores",
+    "url": "https://help.sonatype.com/en/blob-stores.html",
+    "checked_on": "2026-11-01",
+    "scope": "File backend и soft quota не hard write limit."
+  },
+  {
+    "title": "Repository fields",
+    "url": "https://help.sonatype.com/en/configurable-repository-fields.html",
+    "checked_on": "2026-11-01",
+    "scope": "Age/negative cache, deployment/content type policy; форматные отличия требуют приёмки."
+  },
+  {
+    "title": "Go repositories",
+    "url": "https://help.sonatype.com/en/go-repositories.html",
+    "checked_on": "2026-11-01",
+    "scope": "CE/Pro Go proxy/hosted/group; hosted с 3.93, не generic raw."
+  },
+  {
+    "title": "Create Go repository",
+    "url": "https://help.sonatype.com/en/create-a-go-repository.html",
+    "checked_on": "2026-11-01",
+    "scope": "Recipe и отдельный checksum raw proxy; UI-vs-Classic paths."
+  },
+  {
+    "title": "Go configure",
+    "url": "https://help.sonatype.com/en/configure-go-with-nexus.html",
+    "checked_on": "2026-11-01",
+    "scope": "Netrc/GOAUTH и пример sumdb. Не повторяется широкое отключение sums для public modules."
+  },
+  {
+    "title": "Go CLI usage",
+    "url": "https://help.sonatype.com/en/go-cli-usage.html",
+    "checked_on": "2026-11-01",
+    "scope": "PUT hosted ZIP. Опечатка ampersand сопоставлена с обязательным module@version prefix Go и реальным клиентом."
+  },
+  {
+    "title": "Go module reference",
+    "url": "https://go.dev/ref/mod",
+    "checked_on": "2026-11-01",
+    "scope": "Правила module proxy, escaping, private, versions и authentication; дополнены собственными опытами."
+  },
+  {
+    "title": "Go proxy implementation",
+    "url": "https://go.dev/src/cmd/go/internal/modfetch/proxy.go",
+    "checked_on": "2026-11-01",
+    "scope": "Comma/pipe и обработка ошибок; реально подтверждено Go1.27.3."
+  },
+  {
+    "title": "Go fetch implementation",
+    "url": "https://go.dev/src/cmd/go/internal/modfetch/fetch.go",
+    "checked_on": "2026-11-01",
+    "scope": "Загрузка/проверка checksum и cache state."
+  },
+  {
+    "title": "Go sumdb implementation",
+    "url": "https://go.dev/src/cmd/go/internal/modfetch/sumdb.go",
+    "checked_on": "2026-11-01",
+    "scope": "Отдельный sumdb client; exclusions не снимают прежний go.sum."
+  },
+  {
+    "title": "Go dirhash 1.27.3",
+    "url": "https://github.com/golang/go/blob/go1.27.3/src/cmd/vendor/golang.org/x/mod/sumdb/dirhash/hash.go",
+    "checked_on": "2026-11-01",
+    "scope": "Каноническая h1-сводка; пять независимых реальных опытов h1_walk."
+  },
+  {
+    "title": "Go command reference",
+    "url": "https://pkg.go.dev/cmd/go",
+    "checked_on": "2026-11-01",
+    "scope": "Флаги download/tidy/build/version/GOAUTH; actual Go version checked."
+  },
+  {
+    "title": "Go module zip",
+    "url": "https://pkg.go.dev/golang.org/x/mod/zip",
+    "checked_on": "2026-11-01",
+    "scope": "Общий module ZIP должен учитывать больше правил, чем наш allowlist fixture."
+  },
+  {
+    "title": "Raw",
+    "url": "https://help.sonatype.com/en/raw-repositories.html",
+    "checked_on": "2026-11-01",
+    "scope": "Файловая публикация/чтение raw; не module proxy."
+  },
+  {
+    "title": "OCI",
+    "url": "https://help.sonatype.com/en/oci-repositories.html",
+    "checked_on": "2026-11-01",
+    "scope": "Native OCI с3.94 в CE/Pro; состав форматов, manifests/referrers."
+  },
+  {
+    "title": "OCI configure",
+    "url": "https://help.sonatype.com/en/configure-oci-repository.html",
+    "checked_on": "2026-11-01",
+    "scope": "Path/subdomain/port routing и OCI realm; subdomain entitlement не обещан CE."
+  },
+  {
+    "title": "Docker routing",
+    "url": "https://help.sonatype.com/en/docker-registry.html",
+    "checked_on": "2026-11-01",
+    "scope": "Отличие legacy Docker recipe и path addressing без /repository/."
+  },
+  {
+    "title": "OCI spec1.1.1",
+    "url": "https://github.com/opencontainers/distribution-spec/blob/v1.1.1/spec.md",
+    "checked_on": "2026-11-01",
+    "scope": "Manifest/blob/tag и wire protocol boundaries."
+  },
+  {
+    "title": "Privileges",
+    "url": "https://help.sonatype.com/en/privileges.html",
+    "checked_on": "2026-11-01",
+    "scope": "Аддитивные grants, group доступ и action scopes."
+  },
+  {
+    "title": "Content selectors",
+    "url": "https://help.sonatype.com/en/content-selectors.html",
+    "checked_on": "2026-11-01",
+    "scope": "CSEL/path prefix; supported format fields и ограничения upload semantics."
+  },
+  {
+    "title": "Realms",
+    "url": "https://help.sonatype.com/en/realms.html",
+    "checked_on": "2026-11-01",
+    "scope": "Механизмы личности и edition availability."
+  },
+  {
+    "title": "Anonymous",
+    "url": "https://help.sonatype.com/en/anonymous-access.html",
+    "checked_on": "2026-11-01",
+    "scope": "Явная anonymous identity/role вместо универсального открытого чтения."
+  },
+  {
+    "title": "Service account tokens",
+    "url": "https://help.sonatype.com/en/service-account-tokens.html",
+    "checked_on": "2026-11-01",
+    "scope": "3.97 SAT документация маркирована Pro/Pro+/Cloud; CE рецепт local user."
+  },
+  {
+    "title": "Audit",
+    "url": "https://help.sonatype.com/en/auditing.html",
+    "checked_on": "2026-11-01",
+    "scope": "Audit capability, JSON events и log; DB persistence отдельно сверена с notes."
+  },
+  {
+    "title": "Search API",
+    "url": "https://help.sonatype.com/en/search-api.html",
+    "checked_on": "2026-11-01",
+    "scope": "Search assets/components, download redirect и SQL search с3.88."
+  },
+  {
+    "title": "Pagination",
+    "url": "https://help.sonatype.com/en/pagination.html",
+    "checked_on": "2026-11-01",
+    "scope": "Необходимость continuationToken до null."
+  },
+  {
+    "title": "API",
+    "url": "https://help.sonatype.com/en/api-reference.html",
+    "checked_on": "2026-11-01",
+    "scope": "Набор endpoint; точный runtime schema требуется на своём сервере."
+  },
+  {
+    "title": "Cleanup",
+    "url": "https://help.sonatype.com/en/cleanup-policies.html",
+    "checked_on": "2026-11-01",
+    "scope": "Policy/task/soft delete/compact, Pro PostgreSQL retention N; CE availability не выдумана."
+  },
+  {
+    "title": "Tasks",
+    "url": "https://help.sonatype.com/en/tasks.html",
+    "checked_on": "2026-11-01",
+    "scope": "H2 task не blobs; repair по плану и совету поставщика."
+  },
+  {
+    "title": "Prepare backup",
+    "url": "https://help.sonatype.com/en/prepare-a-backup.html",
+    "checked_on": "2026-11-01",
+    "scope": "Согласованный DB+blob+required state набор."
+  },
+  {
+    "title": "H2 backup restore",
+    "url": "https://help.sonatype.com/en/configure-and-run-the-backup-task.html",
+    "checked_on": "2026-11-01",
+    "scope": "Cold backup и restoration paired blobs, node identity."
+  },
+  {
+    "title": "Usage center",
+    "url": "https://help.sonatype.com/en/usage-center.html",
+    "checked_on": "2026-11-01",
+    "scope": "CE 40000 components/100000 requests/day; counts не real-time."
+  },
+  {
+    "title": "Telemetry",
+    "url": "https://help.sonatype.com/en/nexus-repository-telemetry.html",
+    "checked_on": "2026-11-01",
+    "scope": "3.97 required ack, CE 10days grace/read-only, no CE bypass, health JSON meanings."
+  },
+  {
+    "title": "curl manual",
+    "url": "https://curl.se/docs/manpage.html",
+    "checked_on": "2026-11-01",
+    "scope": "Флаги HTTP/вывод/error/redirect/credential; fail-with-body требует соответствующую версию."
+  },
+  {
+    "title": "OpenSSL req3.0",
+    "url": "https://docs.openssl.org/3.0/man1/openssl-req/",
+    "checked_on": "2026-11-01",
+    "scope": "Локальная CA/CSR recipe и флаги; команды реально исполнены в TemporaryDirectory без host trust changes."
+  },
+  {
+    "title": "OpenSSL x5093.0",
+    "url": "https://docs.openssl.org/3.0/man1/openssl-x509/",
+    "checked_on": "2026-11-01",
+    "scope": "Подпись leaf certificate, SAN и inspection; CA chain/hostname и неверное имя проверены реально."
+  },
+  {
+    "title": "Data Repair Tasks",
+    "url": "https://help.sonatype.com/en/verify-and-repair-data-consistency-tasks.html",
+    "checked_on": "2026-11-01",
+    "scope": "Plan/execute вместо legacy reconcile, recovery mode и область восстановления metadata; не выполнялось."
+  },
+  {
+    "title": "Go authentication and verify: repeat review",
+    "url": "https://pkg.go.dev/cmd/go#hdr-GOAUTH_environment_variable",
+    "checked_on": "2026-11-02",
+    "scope": "Go1.27.3 page: NETRC path with GOAUTH=netrc; shell exports are separate from persistent Go configuration."
+  },
+  {
+    "title": "Go mod verify metadata boundary",
+    "url": "https://go.dev/ref/mod#go-mod-verify",
+    "checked_on": "2026-11-02",
+    "scope": "May obtain go.mod for version selection and update go.sum; content verification compares already downloaded cache."
+  },
+  {
+    "title": "Python3.12 selectors",
+    "url": "https://docs.python.org/3.12/library/selectors.html",
+    "checked_on": "2026-11-02",
+    "scope": "Readiness waiting with timeout on Unix pipes; native Linux helper rerun pending, not portable Windows pipe support."
+  },
+  {
+    "title": "systemd unit stop semantics",
+    "url": "https://www.freedesktop.org/software/systemd/man/latest/systemd.kill.html",
+    "checked_on": "2026-11-02",
+    "scope": "KillMode=control-group concerns owned unit processes, not unrelated manually launched JVMs. No live service stop was performed."
+  }
+]

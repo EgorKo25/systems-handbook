@@ -1,0 +1,161 @@
+РЕЦЕПТ ТОЛЬКО ДЛЯ ЛИЧНОЙ UBUNTU24.04 amd64 VM. НЕ ИСПОЛНЯЛСЯ АВТОРОМ.
+Вы должны прочитать главу02, выбрать свои адреса и иметь snapshot чистой VM.
+Команды с sudo меняют VM. Не вставляйте файл целиком как shell script.
+После любого отказа или неуспешной проверки суммы следующий шаг не выполняют.
+На staging-машине и на каждой VM должна быть сохранена своя копия labs:
+K8S_LAB_ROOT указывает на её абсолютный путь. Перед работой проверьте
+существование "$K8S_LAB_ROOT/vm/containerd.toml" и
+"$K8S_LAB_ROOT/vm/kubeadm.yaml". Переход cd staging не переносит туда эти
+файлы автоматически; ниже пути к ним заданы от K8S_LAB_ROOT.
+
+1. На staging машине или VM: создать рабочую папку и скачать фиксированные байты.
+   apt/curl/gpg/tar должны быть получены доверенным способом из Ubuntu.
+
+mkdir -p staging
+cd staging
+curl -fLO https://github.com/containerd/containerd/releases/download/v2.4.2/containerd-2.4.2-linux-amd64.tar.gz
+curl -fLO https://github.com/containerd/containerd/releases/download/v2.4.2/containerd-2.4.2-linux-amd64.tar.gz.sha256sum
+sha256sum -c containerd-2.4.2-linux-amd64.tar.gz.sha256sum
+curl -fLo containerd.service https://raw.githubusercontent.com/containerd/containerd/v2.4.2/containerd.service
+curl -fLO https://github.com/opencontainers/runc/releases/download/v1.5.2/runc.amd64
+curl -fLO https://github.com/opencontainers/runc/releases/download/v1.5.2/runc.sha256sum
+# Verify only the amd64 row; other binaries have not been downloaded:
+printf '%s  runc.amd64\n' 599f6f94ff8c5057241eff0d54c3c74f95c34935b6457b33fe545defc61e9488 | sha256sum -c -
+curl -fLO https://github.com/containernetworking/plugins/releases/download/v1.9.1/cni-plugins-linux-amd64-v1.9.1.tgz
+curl -fLO https://github.com/containernetworking/plugins/releases/download/v1.9.1/cni-plugins-linux-amd64-v1.9.1.tgz.sha256
+sha256sum -c cni-plugins-linux-amd64-v1.9.1.tgz.sha256
+
+Ожидаемый SHA256 containerd tar по release asset API на01.11.2026:
+35880c1dd4627e8ce56526bfabb39c144e83458ffdb197ce6f05d17d94d7d91e
+CNI tar: b98f74a0f8522f0a83867178729c1aa70f2158f90c45a2ca8fa791db1c76b303
+Проверить runc.amd64.asc доверенным upstream release key по runc README,
+если в вашей модели требуется подпись; не импортировать случайный key ID.
+SHA устанавливает соответствие зафиксированным байтам, не самостоятельную
+личность автора. Raw systemd unit также включите в собственный bundle manifest.
+
+2. В каждой личной VM. Проверить, что containerd из другого .deb не владеет
+этими путями. Не держать две конкурирующие установки.
+
+sudo tar -C /usr/local -xzf containerd-2.4.2-linux-amd64.tar.gz
+sudo install -m 0755 runc.amd64 /usr/local/sbin/runc
+sudo mkdir -p /usr/local/lib/systemd/system /etc/containerd /opt/cni/bin
+sudo install -m 0644 containerd.service /usr/local/lib/systemd/system/containerd.service
+# For this kubeadm profile, kubernetes-cni package and Calico own CNI files.
+# Keep the reference archive staged; do not overwrite package paths with it.
+# Install the reviewed labs/vm/containerd.toml from the book:
+sudo install -m 0644 "$K8S_LAB_ROOT/vm/containerd.toml" /etc/containerd/config.toml
+sudo systemctl daemon-reload
+sudo systemctl enable --now containerd
+/usr/local/bin/containerd --version
+/usr/local/sbin/runc --version
+sudo systemctl status containerd --no-pager
+sudo ctr plugins list
+
+unit задаёт ExecStart=/usr/local/bin/containerd. persistent root по умолчанию
+/var/lib/containerd, state /run/containerd. ctr plugins list должен показывать
+нужные CRI plugins без error. Наличие процесса не заменяет crictl info.
+
+3. В VM настройте официальный minor apt source (online путь). Keyring scoped
+Signed-By, а не глобальное apt-key доверие. Это устанавливает пакеты в VM.
+
+sudo apt-get update
+sudo apt-get install -y apt-transport-https ca-certificates curl gpg
+sudo mkdir -p /etc/apt/keyrings
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.36/deb/Release.key -o kubernetes-Release.key
+gpg --show-keys --with-fingerprint kubernetes-Release.key
+# Compare publisher key by official Kubernetes repository instructions.
+sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg kubernetes-Release.key
+printf '%s\n' 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.36/deb/ /' > kubernetes.list
+sudo install -m 0644 kubernetes.list /etc/apt/sources.list.d/kubernetes.list
+sudo apt-get update
+apt-cache madison kubeadm kubelet kubectl
+sudo apt-get install -y kubeadm=1.36.6-1.1 kubelet=1.36.6-1.1 kubectl=1.36.6-1.1
+sudo apt-mark hold kubeadm kubelet kubectl
+sudo systemctl enable kubelet
+kubeadm version -o short
+kubelet --version
+kubectl version --client -o yaml
+dpkg-query -W kubeadm kubelet kubectl kubernetes-cni
+
+1.36.6-1.1 проверен в официальном Packages.gz на01.11.2026 дляamd64.
+Если версия отсутствует, не заменяйте её latest молча: найдите нужный архив
+либо обновите весь согласованный профиль с источниками и проверками.
+Kubelet до kubeadm init/join может restart-loop из-за отсутствия config;
+это не причина вручную создать второй control plane.
+
+4. Офлайн .deb получают на отдельном чистом клоне той же Ubuntu/arch.
+После добавления репозитория, ДО установки Kubernetes:
+
+sudo apt-get --download-only install kubeadm=1.36.6-1.1 kubelet=1.36.6-1.1 kubectl=1.36.6-1.1
+mkdir -p bundle/debs
+cp /var/cache/apt/archives/*.deb bundle/debs/
+# Also stage bootstrap Ubuntu tools, repository Release/InRelease/Packages,
+# keys and their trust record, exact runtime/CNI archives, images and configs.
+
+На clean offline VM скопируйте проверенный bundle, проверьте bundle.json;
+локальный пакетный install с no-download:
+
+sudo apt-get --no-download install ./bundle/debs/*.deb
+
+Полнота зависит от исходного Ubuntu ISO/package state, Recommends и arch.
+Окончательное доказательство — cold install на таком же offline clean clone;
+если apt сообщает missing dependency, исправьте bundle на staging машине,
+а не включайте бесконтрольный upstream fallback.
+
+5. До init вывести образы точного kubeadm config на staging VM:
+
+kubeadm config images list --config "$K8S_LAB_ROOT/vm/kubeadm.yaml" > kubeadm-images.txt
+sudo kubeadm config images pull --config "$K8S_LAB_ROOT/vm/kubeadm.yaml"
+# ctr export требует явных refs; передайте все строки kubeadm-images.txt:
+sudo ctr --namespace k8s.io images export kubeadm-images.tar $(cat kubeadm-images.txt)
+
+Этот substitution допустим только для проверенного списка image refs без
+shell-инструкций. Все refs сформировал свой kubeadm. Для ручного рецепта
+можно передать их как отдельные аргументы. После переноса в каждую node VM:
+
+sudo ctr --namespace k8s.io images import kubeadm-images.tar
+sudo ctr --namespace k8s.io images list
+
+Сделайте то же для images точного Calico manifest, диагностического образа,
+ledger-api и optional metrics/Gateway. Calico3.33 direct manifest использует
+quay.io/calico/calico, quay.io/calico/node, third-party-cni-plugins; извлеките
+ВСЕ реальные image поля из сохранённого YAML, не доверяйте этому перечню
+как будущей универсальной замене manifest. Runtime content namespace k8s.io
+должен совпадать с используемым CRI. Не запускайте ctr под host Docker daemon.
+
+6. Pin private kubelet InternalIP before bootstrap on dual-NIC VMs.
+cp1 uses nodeRegistration.kubeletExtraArgs node-ip=192.168.56.10 in kubeadm.yaml.
+On wk1 only, before the printed kubeadm join, persist the package extra args:
+
+printf '%s\n' 'KUBELET_EXTRA_ARGS=--node-ip=192.168.56.11' > kubelet-wk1.default
+sudo install -m 0644 kubelet-wk1.default /etc/default/kubelet
+sudo systemctl daemon-reload
+# Run the private printed kubeadm join command with its token and CA hash.
+# Then verify both Node.status.addresses use the private VM network:
+kubectl --context handbook-admin get nodes -o wide
+kubectl --context handbook-admin get node wk1 -o jsonpath='{.status.addresses}'
+
+/etc/default/kubelet is read by the package systemd drop-in. Check
+systemctl cat kubelet if your packaging differs; node IP selection must not
+silently fall back to the NAT default route. advertiseAddress only configures
+API endpoint, not automatically every kubelet InternalIP.
+
+7. Matched etcd maintenance tools, staged before backup/recovery.
+Official release v3.6.8 corresponds to selected kubeadm etcd image 3.6.8-0.
+
+curl -fLO https://github.com/etcd-io/etcd/releases/download/v3.6.8/etcd-v3.6.8-linux-amd64.tar.gz
+curl -fLO https://github.com/etcd-io/etcd/releases/download/v3.6.8/SHA256SUMS
+# Check the exact archive row against the trusted official SHA256SUMS file.
+# Do not require unrelated, not downloaded archives to exist.
+printf '%s  etcd-v3.6.8-linux-amd64.tar.gz\n' cf9cfe91a4856cb90eed9c99e6aee4b708db2c7888b88a6f116281f04b0ea693 | sha256sum -c -
+tar -xzf etcd-v3.6.8-linux-amd64.tar.gz
+# Inside the personal control-plane VM only:
+sudo install -m 0755 etcd-v3.6.8-linux-amd64/etcdctl /usr/local/bin/etcdctl
+sudo install -m 0755 etcd-v3.6.8-linux-amd64/etcdutl /usr/local/bin/etcdutl
+etcdctl version
+etcdutl version
+sudo install -d -m 0700 /var/backups/handbook
+
+The etcd server binary from this archive is not installed as a competing
+host service: kubeadm continues running etcd as its static Pod.
+See RECOVERY.txt for the complete isolated single-cp1 restore exercise.

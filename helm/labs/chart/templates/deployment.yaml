@@ -1,0 +1,107 @@
+{{- range $key, $value := .Values.extraLabels }}
+{{- if hasKey (dict "app.kubernetes.io/name" true "app.kubernetes.io/instance" true) $key }}
+{{- fail "extraLabels cannot override selector labels" }}
+{{- end }}
+{{- end }}
+{{- range .Values.extraEnv }}
+{{- if has .name (list "MESSAGE" "LISTEN_ADDR" "LOG_LEVEL" "DATA_DIR" "API_TOKEN") }}
+{{- fail "extraEnv cannot override reserved service environment" }}
+{{- end }}
+{{- end }}
+{{- if .Values.persistence.enabled }}
+{{- if ne (int .Values.replicaCount) 1 }}
+{{- fail "persistence demo requires replicaCount=1; one RWO claim is not shared durable HA" }}
+{{- end }}
+{{- end }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ledger.fullname" . }}
+  labels:
+    {{- include "ledger.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "ledger.selectorLabels" . | nindent 6 }}
+  strategy:
+    {{- if .Values.persistence.enabled }}
+    type: Recreate
+    {{- else }}
+    type: RollingUpdate
+    rollingUpdate:
+      {{- toYaml .Values.strategy | nindent 6 }}
+    {{- end }}
+  template:
+    metadata:
+      labels:
+        {{- include "ledger.selectorLabels" . | nindent 8 }}
+        {{- with .Values.extraLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      annotations:
+        checksum/config: {{ include "ledger.configData" . | sha256sum | quote }}
+        {{- if .Values.credentials.create }}
+        checksum/credentials: {{ .Values.credentials.token | sha256sum | quote }}
+        {{- end }}
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 20
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: api
+          image: {{ if .Values.image.digest }}{{ printf "%s@%s" .Values.image.repository .Values.image.digest | quote }}{{ else }}{{ printf "%s:%s" .Values.image.repository .Values.image.tag | quote }}{{ end }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.targetPort }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "ledger.fullname" . }}
+          env:
+            - name: DATA_DIR
+              value: /data
+            {{- if include "ledger.secretName" . }}
+            - name: API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "ledger.secretName" . }}
+                  key: token
+            {{- end }}
+            {{- with .Values.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.probes.readinessPath | quote }}
+              port: http
+            periodSeconds: 3
+            failureThreshold: 2
+          livenessProbe:
+            httpGet:
+              path: /livez
+              port: http
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "ledger.fullname" . }}-data
+          {{- else }}
+          emptyDir: {}
+          {{- end }}

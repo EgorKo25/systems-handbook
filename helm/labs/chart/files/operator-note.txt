@@ -1,0 +1,1 @@
+This note is packaged as bytes, not executed as a template.

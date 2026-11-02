@@ -1,0 +1,19 @@
+# Add only when 30-policy.yaml already isolates ledger-api ingress.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ledger-from-gateway
+  namespace: lab
+spec:
+  podSelector:
+    matchLabels:
+      app: ledger-api
+  policyTypes: [Ingress]
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: envoy-gateway-system
+    ports:
+    - protocol: TCP
+      port: 8080

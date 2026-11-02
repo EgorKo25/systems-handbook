@@ -1,0 +1,108 @@
+<header><h1>Пакет через Calico VXLAN и kube-proxy iptables</h1><p>Точный сценарий: Linux VM, single-stack IPv4, Calico 3.33 VXLAN Always, eBPF выключен, kube-proxy 1.36 iptables. Для другого стека этот путь нельзя копировать механически.</p></header>
+<h2>Фиксируем наблюдаемый эксперимент</h2>
+<p>Пусть клиент Pod A на cp1 имеет 10.244.1.2:41000, backend Pod B на wk1 — 10.244.2.3:8080, Service S — 10.96.10.20:80. Это условные адреса внутри объявленных подсетей; фактические берите из get pod/service. cp1 и wk1 соединены underlay 192.168.56.10/.11 с MTU 1500. У клиента нет hostNetwork, у Service нет session affinity и специальных traffic policies, выбирается B на другом node. Фиксируем один первый TCP SYN, затем conntrack ведёт это соединение.</p>
+<h2>Pod→Pod без Service</h2>
+<p>Прямой пакет A→B выходит через eth0 Pod к host-side veth. Calico применяет установленные policy/routing правила, node определяет удалённый endpoint. VXLAN, Virtual Extensible LAN, инкапсулирует внутренний Ethernet/IP пакет в UDP между node IP, в данном профиле UDP 4789. Underlay переносит внешний пакет 192.168.56.10→192.168.56.11, а внутренние Pod IP остаются A→B. На wk1 VXLAN decapsulation снимает оболочку и маршрутизация доставляет внутренний пакет к veth B с применимой policy. В той же VM удалённого tunnel hop нет: host routes ведут к peer veth.</p>
+<p>Нельзя заключить из этого, что в любом CNI есть bridge cni0 или что каждый Pod проходит Docker bridge. Calico использует собственные interfaces/routes. VXLAN Always в выбранном pool требует инкапсуляции для межузлового Pod-трафика даже в общей underlay подсети; CrossSubnet имел бы иные условия. BGP/native routing, IPIP и WireGuard изменили бы оболочку/маршруты. Схема описывает логические границы; точные netfilter chain names/порядок подсистем проверяют на реальном node конкретной версии.</p>
+<h2>Service добавляет DNAT и состояние соединения</h2>
+<p>При обращении A→S первый пакет на node клиента попадает в правила Service, установленные kube-proxy. Из готовых endpoints выбирается B, destination NAT, DNAT, меняет destination 10.96.10.20:80 на 10.244.2.3:8080. Для этого внутрикластерного не-hairpin сценария исходный Pod IP обычно сохраняется; специальные masquerade настройки/исключения меняют условия. Затем маршрутизация Calico доставляет пакет к B через VXLAN. Service IP не должен появляться на eth0 Go-процесса как адрес listener: процесс принимает на PodIP:8080/0.0.0.0:8080.</p>
+<p>Conntrack — отслеживание состояния соединений Linux/netfilter — сохраняет соответствие исходного и переведённого tuple. Ответ B→A возвращается по предусмотренному маршруту к node, где применялась трансляция; обратное NAT представляет клиенту ответ от Service IP:80. Если ответ ушёл в обход необходимого stateful узла, асимметрия и filtering могут сломать соединение. TCP keepalive, long-lived соединения и UDP timeouts имеют последствия для удаления endpoint: обновление списка endpoints не переписывает магически все старые соединения.</p>
+<pre><code># Read-only, only on your prepared VM nodes:
+sudo ip -details link show vxlan.calico
+sudo ip route get 10.244.2.3
+sudo iptables-save -t nat
+sudo conntrack -L -p tcp
+sudo tcpdump -ni any &#x27;udp port 4789 or (host 10.244.2.3 and tcp port 8080)&#x27;</code></pre>
+<p>iptables-save читает правила, <code>iptables -F</code> их разрушает и здесь не нужен. Ubuntu iptables может использовать nf_tables backend; это не означает kube-proxy mode=nftables. Узнайте <code>iptables --version</code> и kube-proxy ConfigMap. conntrack/tcpdump требуют средств и прав внутри личной VM; capture содержит данные трафика. Снимайте короткий отрезок и сверяйте четыре tuple: до DNAT, после DNAT, outer VXLAN, обратный ответ. Вывод здесь не подделывается заранее.</p>
+<span id="k8s-packet-vxlan" aria-hidden="true"></span>
+<span id="k8s-packet-vxlan-title" aria-hidden="true"></span>
+<figure class="k8s-packet-cut" style="margin:1.5em 0">
+<style>
+.k8s-packet-cut svg{display:block;width:100%;min-width:0;max-width:480px;height:auto;margin:auto;color:inherit}
+.k8s-packet-cut figcaption,.k8s-packet-cut details{max-width:48rem;margin:.8em auto}
+.k8s-packet-cut summary{min-height:44px;box-sizing:border-box;padding:.6em 0;cursor:pointer}
+@media print{.k8s-packet-cut{--paper:#fff;--text:#000;--muted:#333;--line:#888;--accent:#000;color:#000!important;background:#fff}.k8s-packet-cut svg{width:auto;max-width:100%;max-height:235mm}.k8s-packet-cut details{display:block;background:transparent!important;color:#000!important;border-color:#aaa}.k8s-packet-cut details>*{display:block}.k8s-packet-cut details::details-content{content-visibility:visible!important;block-size:auto!important;height:auto!important}}
+</style>
+<svg style="min-width:0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 1330" role="img" aria-labelledby="k8s-packet-cut-title k8s-packet-cut-desc">
+<title id="k8s-packet-cut-title">Один SYN: Pod A, ClusterIP, VXLAN, Pod B</title>
+<desc id="k8s-packet-cut-desc">Вертикальный разрез двух Linux-узлов. В cp1 пакет выходит из сетевого пространства Pod A через пару veth; правила iptables меняют адрес назначения и порт. Calico добавляет внешние заголовки до wk1. На wk1 оболочка снимается, внутренний пакет доставляется Pod B. Байты показаны только для выбранных полей; полное текстовое описание следует под рисунком.</desc>
+<defs><marker id="k8s-packet-cut-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L8 4L0 8Z" fill="currentColor"/></marker></defs>
+<g fill="currentColor" font-family="system-ui,sans-serif" font-size="15">
+<text x="12" y="22" font-size="18" font-weight="700">Один SYN сверху вниз</text>
+<text x="12" y="45">Адреса условные. SNAT здесь нет.</text>
+<rect x="8" y="62" width="304" height="751" rx="9" fill="none" stroke="currentColor" stroke-width="1.5"/>
+<text x="20" y="87" font-weight="700">Узел cp1 · 192.168.56.10</text>
+<rect x="20" y="105" width="280" height="234" rx="5" fill="none" stroke="currentColor" stroke-dasharray="5 4"/>
+<text x="30" y="129" font-weight="700">Сетевое пространство Pod A</text>
+<text x="30" y="152">client-allowed · TCP SYN</text>
+<rect x="30" y="165" width="260" height="133" fill="currentColor" fill-opacity=".045" stroke="currentColor"/>
+<path d="M30 207H290M30 252H290" fill="none" stroke="currentColor" stroke-opacity=".4"/>
+<text x="40" y="185">Источник: 10.244.1.2 : 41000</text>
+<text x="40" y="202" font-family="monospace">0a f4 01 02 · a0 28</text>
+<text x="40" y="228">IPv4.dst: 10.96.10.20</text>
+<text x="40" y="246" font-family="monospace">0a 60 0a 14</text>
+<text x="40" y="275">TCP.dst: 80</text>
+<text x="40" y="292" font-family="monospace">00 50</text>
+<text x="30" y="323">eth0 — один конец пары veth</text>
+<path d="M53 328V375" stroke="currentColor" stroke-width="2" fill="none" marker-end="url(#k8s-packet-cut-arrow)"/>
+<text x="73" y="357">Граница сетевых пространств</text>
+<text x="30" y="398">Парный veth · пространство узла</text>
+<text x="30" y="422">Ядро: iptables → DNAT</text>
+<text x="30" y="445">Выбран endpoint B; conntrack</text>
+<text x="30" y="465">сохраняет соответствие адресов.</text>
+<path d="M53 477V501" stroke="currentColor" stroke-width="2" fill="none" marker-end="url(#k8s-packet-cut-arrow)"/>
+<rect x="30" y="515" width="260" height="94" fill="currentColor" fill-opacity=".045" stroke="currentColor" stroke-width="2"/>
+<path d="M30 562H290" fill="none" stroke="currentColor" stroke-opacity=".4"/>
+<text x="40" y="536">IPv4.dst: 10.244.2.3</text>
+<text x="40" y="555" font-family="monospace">0a f4 02 03</text>
+<text x="40" y="583">TCP.dst: 8080</text>
+<text x="40" y="602" font-family="monospace">1f 90</text>
+<text x="30" y="633">Источник тот же: A : 41000</text>
+<path d="M53 645V669" stroke="currentColor" stroke-width="2" fill="none" marker-end="url(#k8s-packet-cut-arrow)"/>
+<text x="30" y="694">Маршрут к B → vxlan.calico</text>
+<text x="30" y="716">Ядро добавляет оболочку:</text>
+<path d="M29 734H18V797H29" fill="none" stroke="currentColor" stroke-width="2"/>
+<text x="36" y="751">внешний IPv4 · UDP · VXLAN</text>
+<text x="36" y="774">[ Ethernet · IPv4 · TCP внутри ]</text>
+<text x="36" y="797">Внутри назначение уже B : 8080</text>
+<path d="M53 814V843" stroke="currentColor" stroke-width="2" fill="none" marker-end="url(#k8s-packet-cut-arrow)"/>
+<text x="12" y="866" font-weight="700">Между VM: внешние поля</text>
+<text x="12" y="890">IPv4.src: 192.168.56.10</text>
+<text x="12" y="910" font-family="monospace">c0 a8 38 0a</text>
+<text x="12" y="937">IPv4.dst: 192.168.56.11</text>
+<text x="12" y="957" font-family="monospace">c0 a8 38 0b</text>
+<text x="12" y="984">UDP.dst: 4789 · байты 12 b5</text>
+<path d="M53 998V1027" stroke="currentColor" stroke-width="2" fill="none" marker-end="url(#k8s-packet-cut-arrow)"/>
+<rect x="8" y="1043" width="304" height="278" rx="9" fill="none" stroke="currentColor" stroke-width="1.5"/>
+<text x="20" y="1068" font-weight="700">Узел wk1 · 192.168.56.11</text>
+<text x="20" y="1094">vxlan.calico: снять оболочку</text>
+<text x="20" y="1117">Маршрут и policy → veth B</text>
+<path d="M53 1129V1158" stroke="currentColor" stroke-width="2" fill="none" marker-end="url(#k8s-packet-cut-arrow)"/>
+<rect x="20" y="1174" width="280" height="130" rx="5" fill="none" stroke="currentColor" stroke-dasharray="5 4"/>
+<text x="30" y="1199" font-weight="700">Сетевое пространство Pod B</text>
+<text x="30" y="1223">eth0 · ledger-api</text>
+<text x="30" y="1247">TCP: A : 41000 → B : 8080</text>
+<text x="30" y="1270">SYN получает стек TCP ядра;</text>
+<text x="30" y="1292">Go принимает готовое соединение.</text>
+</g>
+</svg>
+<figcaption>Как <code>10.96.10.20:80</code> превращается в <code>10.244.2.3:8080</code>. Это модель первого SYN в объявленном VM-профиле, а не захват трафика. Показаны байты отдельных адресов и портов в сетевом порядке (старший байт первым), не полный пакет. Схема выделяет логические действия; порядок всех netfilter hooks и Calico policy здесь не реконструируется.</figcaption>
+<details><summary>Текстовое описание и границы схемы</summary>
+<ol>
+<li>У Pod A своё сетевое пространство имён Linux: отдельные интерфейсы, маршруты и сетевые настройки. Это не namespace <code>lab</code> в API Kubernetes. Два конца veth соединяют <code>eth0</code> Pod с сетевым пространством узла cp1. Имя узлового конца берут из реальной VM, а не угадывают.</li>
+<li>До трансляции источник — <code>10.244.1.2:41000</code>, назначение — <code>10.96.10.20:80</code>. Правила iptables, заранее установленные kube-proxy, выбирают готовый backend B. Ядро выполняет DNAT: байты IPv4 назначения <code>0a 60 0a 14</code> заменяются на <code>0a f4 02 03</code>, порт TCP <code>00 50</code> — на <code>1f 90</code>. Исходные IP и порт в этой модели сохраняются; это надо проверить при своих настройках masquerade. kube-proxy не пересылает SYN через свой пользовательский процесс.</li>
+<li>Маршрут Calico ведёт к удалённому B через VXLAN. В UDP-пакете от <code>192.168.56.10</code> к <code>192.168.56.11:4789</code> находится VXLAN-заголовок, затем внутренний Ethernet-кадр с уже переведённым IPv4/TCP-пакетом. UDP source port и VNI берут из настройки и трассы. MAC, TTL, прочие поля и контрольные суммы здесь не заданы; при DNAT соответствующие контрольные суммы корректируются, а маршрутизация также меняет TTL. Внешние заголовки не заменяют внутренние адреса A и B.</li>
+<li>На wk1 ядро снимает VXLAN-оболочку и доставляет внутренний пакет через veth в Pod B с применимой policy. SYN обрабатывает TCP-стек ядра; приложение получает установленное соединение через <code>accept</code> — приём готового соединения. У Go-процесса нет listener на ClusterIP. В ответном направлении conntrack на cp1 обеспечивает обратную трансляцию: ответ <code>B:8080 → A:41000</code> клиент видит как <code>S:80 → A:41000</code>. Ответный маршрут на рисунке не показан.</li>
+</ol>
+<p>Сверяйте поля с короткой трассой в своей VM. Формат оболочки: <a href="https://www.rfc-editor.org/rfc/rfc7348.html#section-5">RFC 7348, раздел 5</a>; трансляция Service: <a href="https://v1-36.docs.kubernetes.io/docs/reference/networking/virtual-ips/#proxy-mode-iptables">kube-proxy iptables, Kubernetes 1.36</a>. Поля и байты на рисунке — проверяемый расчёт из условных адресов главы.</p>
+</details>
+</figure>
+<h2>nftables, IPVS и eBPF — разные реализации</h2>
+<p>В Kubernetes 1.36 nftables proxy mode уже stable (с 1.33), iptables остаётся поддерживаемым; IPVS deprecated с 1.35. Stable не означает default. Наша конфигурация явно pin mode=iptables. Нативный nftables режим использует другие правила/API ядра и имеет отличия NodePort/localhost/firewall; миграция требует проверки kernel/tooling и документации версии. IPVS использует Linux IPVS вместе с другими сетевыми механизмами, но deprecated путь не выбираем для нового учебного стенда. Не смешивайте chain names iptables с maps nftables в одной воображаемой трассе.</p>
+<p>eBPF dataplane может заменить kube-proxy: программы ядра и maps реализуют load balancing и policy, иногда выполняя service translation на другой точке, включая socket-level hook. eBPF, extended Berkeley Packet Filter, — механизм безопасно проверяемых программ в kernel, а не протокол сети. Сравнение с iptables требует выбранной CNI версии/mode, включённых optimizations, conntrack/DSR и измерения. Нельзя обещать «eBPF всегда без NAT и быстрее»; путь и выгода зависят от сценария.</p>
+<h2>MTU, fragments и измерение</h2>
+<p>При underlay 1500 и IPv4 VXLAN overhead около 50 байт внутренний MTU 1450 предотвращает фрагментацию в этом профиле. Внешний IPv6 или дополнительный VPN уменьшают бюджет. Симптом MTU — маленький HTTP работает, большой response/TLS зависает; это отличается от полного отсутствия маршрута. Проверяют path MTU, ICMP Packet Too Big/fragmentation needed и captures, а не только ping по умолчанию. Измеряйте packets/s, bytes/s, retransmits, conntrack occupancy/drops, node softirq CPU и p95 latency при одинаковом числе endpoints. Увеличение Service replicas не исправляет заполненную conntrack table.</p>
+<p class="source-note">Первоисточники, проверено 01.11.2026: <a href="https://v1-36.docs.kubernetes.io/docs/reference/networking/virtual-ips/">Virtual IPs 1.36</a>, <a href="https://docs.tigera.io/calico/latest/networking/configuring/vxlan-ipip">Calico VXLAN</a>, <a href="https://docs.tigera.io/calico/latest/networking/configuring/mtu">Calico MTU</a>, <a href="https://docs.kernel.org/networking/nf_conntrack-sysctl.html">Linux conntrack</a>.</p>
+<h2>Как разместить диагностический клиент на cp1</h2>
+<p>В базовом VM-кластере control-plane taint сохраняется, поэтому обычный application Pod туда не попадёт. <a href="labs/vm/diagnostic.yaml">diagnostic.yaml</a> размещает только client-allowed на cp1 через явные nodeSelector и toleration; это административная подготовка учебного эксперимента, а не снятие taint со всего node. Backend ledger-api остаётся на wk1. Так можно исследовать cross-node путь на двух небольших VM без третьего worker. IP из схемы замените фактическими из get pod -o wide. В kind этот VM-specific файл с cp1 не применяют: имя node и CNI там другие.</p><h2>Названия сетевых механизмов</h2>
+<p>iptables — пользовательский интерфейс управления определёнными netfilter правилами Linux; nftables — другая инфраструктура правил и интерфейс ядра. IPVS (IP Virtual Server) — механизм виртуальных сервисов/балансировки Linux, который использует соответствующий proxy mode. IPIP (IP in IP) помещает IP-пакет в другой IP-пакет и отличается от выбранного VXLAN с UDP. Эти имена описывают разные уровни реализации. Netfilter hooks, routing decisions и CNI policy изучают в заданном стеке, а не через одну универсальную стрелку «Kubernetes network».</p>

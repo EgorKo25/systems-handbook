@@ -1,0 +1,250 @@
+[
+  {
+    "id": "kubernetes-latest",
+    "url": "https://dl.k8s.io/release/stable.txt",
+    "checked": "2026-11-01",
+    "bytes": 7,
+    "sha256": "72fd4b4e60a8fca76519db865f2ad94eeb426aef4b52d2b0c232c93e7b6c613f",
+    "method": "direct HTTPS official source; web search tool returned HTTP 403",
+    "observed_version": "v1.37.2"
+  },
+  {
+    "id": "kubernetes-1.36",
+    "url": "https://dl.k8s.io/release/stable-1.36.txt",
+    "checked": "2026-11-01",
+    "bytes": 7,
+    "sha256": "d0ec8cffc62437dc087b77a3e55fcf8b9784255944f2fe4f677ad5f62da935b9",
+    "method": "direct HTTPS official source; web search tool returned HTTP 403",
+    "observed_version": "v1.36.6"
+  },
+  {
+    "id": "containerd-release",
+    "url": "https://api.github.com/repos/containerd/containerd/releases/latest",
+    "checked": "2026-11-01",
+    "bytes": 46799,
+    "sha256": "572bfe55aee389a9b14b1e331422005fba0edb4cc55e17948da9b1848aa04b4e",
+    "method": "direct HTTPS official source; web search tool returned HTTP 403",
+    "observed_version": "v2.4.2",
+    "published_at": "2026-10-13T22:35:06Z",
+    "release_url": "https://github.com/containerd/containerd/releases/tag/v2.4.2"
+  },
+  {
+    "id": "runc-release",
+    "url": "https://api.github.com/repos/opencontainers/runc/releases/latest",
+    "checked": "2026-11-01",
+    "bytes": 41399,
+    "sha256": "8a19088af981e448f8ba2405c94c78ca95342cf8e171bad93eec7987f8d83a36",
+    "method": "direct HTTPS official source; web search tool returned HTTP 403",
+    "observed_version": "v1.5.2",
+    "published_at": "2026-09-25T21:13:32Z",
+    "release_url": "https://github.com/opencontainers/runc/releases/tag/v1.5.2"
+  },
+  {
+    "id": "cni-release",
+    "url": "https://api.github.com/repos/containernetworking/plugins/releases/latest",
+    "checked": "2026-11-01",
+    "bytes": 43675,
+    "sha256": "d4f28341b40735136f907564c04651eebc68c3f3dafbe58404f2b2d6e67f6513",
+    "method": "direct HTTPS official source; web search tool returned HTTP 403",
+    "observed_version": "v1.9.1",
+    "published_at": "2026-03-16T14:09:11Z",
+    "release_url": "https://github.com/containernetworking/plugins/releases/tag/v1.9.1"
+  },
+  {
+    "id": "calico-release",
+    "url": "https://api.github.com/repos/projectcalico/calico/releases/latest",
+    "checked": "2026-11-01",
+    "bytes": 27604,
+    "sha256": "05503c5463bbed1cb131c8cd1fe291c566759daca58e7ac7e51defd132e2b1bd",
+    "method": "direct HTTPS official source; web search tool returned HTTP 403",
+    "observed_version": "v3.33.0",
+    "published_at": "2026-10-01T23:22:05Z",
+    "release_url": "https://github.com/projectcalico/calico/releases/tag/v3.33.0"
+  },
+  {
+    "id": "kind-release",
+    "url": "https://api.github.com/repos/kubernetes-sigs/kind/releases/latest",
+    "checked": "2026-11-01",
+    "bytes": 19203,
+    "sha256": "89ece50b33ed0ca0da811c21cbf44e5245af8bdea1e5b4d154ded1771c9fc195",
+    "method": "direct HTTPS official source; web search tool returned HTTP 403",
+    "observed_version": "v0.33.0",
+    "published_at": "2026-08-26T21:58:46Z",
+    "release_url": "https://github.com/kubernetes-sigs/kind/releases/tag/v0.33.0"
+  },
+  {
+    "id": "gateway-release",
+    "url": "https://api.github.com/repos/kubernetes-sigs/gateway-api/releases/latest",
+    "checked": "2026-11-01",
+    "bytes": 37417,
+    "sha256": "7fbcec86e86b11af3559df3cc1cb04f0420a77badfb775d3374b2fcefb778014",
+    "method": "direct HTTPS official source; web search tool returned HTTP 403",
+    "observed_version": "v1.7.0",
+    "published_at": "2026-10-29T18:19:26Z",
+    "release_url": "https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.7.0"
+  },
+  {
+    "id": "calico-requirements",
+    "url": "https://docs.tigera.io/calico/latest/getting-started/kubernetes/requirements",
+    "checked": "2026-11-01",
+    "bytes": 69168,
+    "sha256": "25e3fb4cd6d52012ff3c8eb225fae8a0c7983aa7cdb6317d54e8aad7da5a143d",
+    "method": "direct HTTPS official source; web search tool returned HTTP 403"
+  },
+  {
+    "id": "proxy-136",
+    "url": "https://v1-36.docs.kubernetes.io/docs/reference/networking/virtual-ips/",
+    "checked": "2026-11-01",
+    "bytes": 542487,
+    "sha256": "46b213787cf4d43e090e9561530d0f65ccfeb03c86519059fb735527c6aae67e",
+    "method": "direct HTTPS official source; web search tool returned HTTP 403"
+  },
+  {
+    "id": "runtime-136",
+    "url": "https://v1-36.docs.kubernetes.io/docs/setup/production-environment/container-runtimes/",
+    "checked": "2026-11-01",
+    "bytes": 508341,
+    "sha256": "67ab51eecbefb5459213bc2d06114110e4e653e99f2a021b26a93fd94685460a",
+    "method": "direct HTTPS official source; web search tool returned HTTP 403"
+  },
+  {
+    "id": "kubeadm-api",
+    "url": "https://kubernetes.io/docs/reference/config-api/kubeadm-config.v1beta4/",
+    "checked": "2026-11-01",
+    "bytes": 601224,
+    "sha256": "b634a8c19d40e00106121cd6ca812049455625292caf229bd1d2b23f23a1a117",
+    "method": "direct HTTPS official source; web search tool returned HTTP 403"
+  },
+  {
+    "id": "containerd-config",
+    "url": "https://raw.githubusercontent.com/containerd/containerd/v2.4.2/docs/cri/config.md",
+    "checked": "2026-11-01",
+    "bytes": 35779,
+    "sha256": "b2051b2108c287e27ab5300d0bd9b552cb58b64b307ae02a7629eacd025ccb9e",
+    "method": "direct HTTPS official source; web search tool returned HTTP 403"
+  },
+  {
+    "id": "calico-manifest",
+    "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.33.0/manifests/calico.yaml",
+    "checked": "2026-11-01",
+    "bytes": 729395,
+    "sha256": "2de8f47595fb9c41b3f47d7b767a1f8e72ecf84057af834738ff12689a234da5",
+    "method": "direct HTTPS official source; web search tool returned HTTP 403"
+  },
+  {
+    "id": "schema",
+    "url": "https://raw.githubusercontent.com/kubernetes/kubernetes/v1.36.6/api/openapi-spec/swagger.json",
+    "checked": "2026-11-01",
+    "bytes": 4108739,
+    "sha256": "dcede2063da1d7ad62ecb5af8adb6d7fabd0b52385a7fa0048afb491dac90450",
+    "method": "direct HTTPS official source; web search tool returned HTTP 403"
+  },
+  {
+    "id": "eg-install",
+    "url": "https://github.com/envoyproxy/gateway/releases/download/v1.9.3/install.yaml",
+    "checked": "2026-11-01",
+    "bytes": 3999768,
+    "sha256": "ac89b0b564e52c97c97a3f8b4d82bb594a0fbc810431fb2e6ffd91702aabebfb",
+    "method": "direct official HTTPS"
+  },
+  {
+    "id": "metrics-components",
+    "url": "https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.9.1/components.yaml",
+    "checked": "2026-11-01",
+    "bytes": 4330,
+    "sha256": "3c7f57cdbee0f57fb0259a150e8f6d6cb4f29d72d1aa5dce8803151dd6d4c2a1",
+    "method": "direct official HTTPS"
+  },
+  {
+    "id": "eg-yaml-doc",
+    "url": "https://gateway.envoyproxy.io/v1.9/install/install-yaml/",
+    "checked": "2026-11-01",
+    "bytes": 80422,
+    "sha256": "95baa1c4cf8d1f35f3b90f358128a81b9e22f862bbfa23d1ba310f02295fb1dd",
+    "method": "direct official HTTPS"
+  },
+  {
+    "id": "eg-matrix",
+    "url": "https://gateway.envoyproxy.io/news/releases/matrix/",
+    "checked": "2026-11-01",
+    "bytes": 56507,
+    "sha256": "dcc6266affe2d66fdc25e58e1ef347a90318a158a32e38370c4543dc68773e21",
+    "method": "direct official HTTPS"
+  },
+  {
+    "id": "eg-security",
+    "url": "https://gateway.envoyproxy.io/news/releases/notes/v1.9.3/",
+    "checked": "2026-11-01",
+    "bytes": 68712,
+    "sha256": "ab60c347f0661b25dc82fc62eaa7e925b5903558e6f47a88e6f31202ad324a9b",
+    "method": "direct official HTTPS"
+  },
+  {
+    "id": "packages",
+    "url": "https://pkgs.k8s.io/core:/stable:/v1.36/deb/Packages.gz",
+    "checked": "2026-11-01",
+    "bytes": 10673,
+    "sha256": "6623eb7e69af0ce1289e1b04b5eda7e62daa37ef6100b35e49313294c2fce1ec",
+    "method": "direct official HTTPS"
+  },
+  {
+    "id": "etcd-maintenance-tools",
+    "url": "https://api.github.com/repos/etcd-io/etcd/releases/tags/v3.6.8",
+    "checked": "2026-11-01",
+    "sha256": "0a69a57a668e18327495fc9f7997ba4063af7eeae0fccc810a95b5b429113dde",
+    "observed_version": "v3.6.8",
+    "method": "direct official release API"
+  },
+  {
+    "id": "busybox-oci-index",
+    "url": "https://registry-1.docker.io/v2/library/busybox/manifests/1.37.0",
+    "checked": "2026-11-01",
+    "observed_digest": "sha256:a7dbc319b1438115a207e11930dc4bb3e643dcb3ec0bdd694bb36cd8fad289ec",
+    "sha256": "a7dbc319b1438115a207e11930dc4bb3e643dcb3ec0bdd694bb36cd8fad289ec",
+    "bytes": 9535,
+    "method": "anonymous official Docker registry OCI index read; no image executed"
+  },
+  {
+    "id": "gateway-api-license-v1.6.1",
+    "url": "https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.1/LICENSE",
+    "checked": "2026-11-01",
+    "bytes": 11352,
+    "sha256": "20b6dde626f521dbb384f75e6d96c3d16789df3bf878b58bc2810614fb4db07c",
+    "method": "exact upstream license downloaded; copyright notice retained with derived schema"
+  },
+  {
+    "id": "kubectl-can-i-136",
+    "url": "https://v1-36.docs.kubernetes.io/docs/reference/kubectl/generated/kubectl_auth/kubectl_auth_can-i/",
+    "checked": "2026-11-02",
+    "method": "Official versioned documentation read through web tool; no raw-response hash claimed",
+    "scope": "Documentation only; not a cluster execution result"
+  },
+  {
+    "id": "probes-136",
+    "url": "https://v1-36.docs.kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/",
+    "checked": "2026-11-02",
+    "method": "Official versioned documentation read through web tool; no raw-response hash claimed",
+    "scope": "Documentation only; not a cluster execution result"
+  },
+  {
+    "id": "ssa-136",
+    "url": "https://v1-36.docs.kubernetes.io/docs/reference/using-api/server-side-apply/",
+    "checked": "2026-11-02",
+    "method": "Official versioned documentation read through web tool; no raw-response hash claimed",
+    "scope": "Documentation only; not a cluster execution result"
+  },
+  {
+    "id": "local-volume-136",
+    "url": "https://v1-36.docs.kubernetes.io/docs/concepts/storage/volumes/#local",
+    "checked": "2026-11-02",
+    "method": "Official versioned documentation read through web tool; no raw-response hash claimed",
+    "scope": "Documentation only; not a cluster execution result"
+  },
+  {
+    "id": "envoy-namespace-19",
+    "url": "https://gateway.envoyproxy.io/v1.9/tasks/operations/gateway-namespace-mode/",
+    "checked": "2026-11-02",
+    "method": "Official versioned documentation read through web tool; no raw-response hash claimed",
+    "scope": "Documentation only; not a cluster execution result"
+  }
+]

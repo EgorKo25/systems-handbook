@@ -1,0 +1,63 @@
+KUBERNETES · ПРОТОКОЛ ПРОВЕРОК · 1 ноября 2026
+
+РЕАЛЬНО ИСПОЛНЕННЫЕ ЛОКАЛЬНЫЕ ПРОВЕРКИ
+Go 1.27.3 linux/amd64; module stdlib-only, directive go 1.26.0.
+- go test -race -count=1 ./...: PASS. HTTP routes, JSON, readiness отдельно от
+  liveness, 100 concurrent requests/counter; loopback active HTTP request,
+  context cancel, доказано ожидание до release handler, полный response и
+  успешное graceful завершение. Это не кластерная проверка.
+- go vet ./...: PASS без diagnostics.
+- CGO_ENABLED=0 go build -trimpath в temp output: PASS; binary удалён вместе
+  с temp dir. Контейнерный image не собирался и не запускался.
+Python 3.12, уже доступные PyYAML 6.0.1 и jsonschema 4.10.3; installs нет.
+- validate.py: PASS, 15 основных + 8 optional core объектов по subset
+  официального OpenAPI v1.36.6 (252 referenced definitions); string Service
+  port и string replicas отвергнуты. Duplicate YAML keys loader не допускает.
+- 4 GatewayClass/Gateway/HTTPRoute/EnvoyProxy по CRD shape точного Envoy
+  Gateway 1.9.3 install.yaml: PASS. CEL, references, admission и controllers
+  не выполнялись. Дополнительный YAML kubeadm/kind разобран синтаксически.
+- test_bundle.py: PASS round trip, corruption, absolute/parent path rejection.
+  Hash inventory подтверждает совпадение bytes, не provenance издателя.
+- check_sources.py: PASS, 25 глав, 18 948 body words, 116 terms, 37 cards,
+  7 diagrams / 42 steps; CONFIG, IDs, markers, local source links, AST/JSON.
+- customize_calico.py: exact официальный v3.33.0 manifest загружен в temp,
+  проверен закреплённый SHA, создан staged VXLAN manifest. Assertions PASS:
+  pool 10.244/16, VXLAN Always, IPIP Never, private autodetection, BPF false,
+  felix probes без BIRD. На node/CNI ничего не применялось.
+- Optional metrics serving TLS transform: PASS static Deployment shape и
+  args/mount/fsGroup/caBundle assertions с существующей public CA. Private key
+  не создавался, openssl issuance/TLS handshake и cluster changes не выполнялись.
+  Подтверждён upstream APIService insecureSkipTLSVerify:true: serving CSR
+  kubelet не усиливает этот отдельный aggregation-сегмент.
+Точные результаты сохранены в labs/verified-results.json.
+
+ПЕРВИЧНЫЕ ИСТОЧНИКИ
+Проверены 01.11.2026 через официальные HTTPS docs, raw code, release APIs и
+официальный anonymous OCI index read. Основной web-search tool вернул HTTP403;
+это не выдаётся за успешный поиск. URLs, даты, размеры и SHA ответов находятся
+в sources/verified-sources.json; credentials в журнал не записывались.
+Latest Kubernetes 1.37.2; выбранный baseline 1.36.6; kind 0.33/node 1.36.4
+по опубликованному digest; containerd 2.4.2/runc 1.5.2/reference CNI 1.9.1/
+Calico 3.33.0. Optional metrics-server 0.9.1, Envoy Gateway 1.9.3 и его Gateway
+API 1.6.1, Envoy Proxy 1.39.6 по security update; etcd tools 3.6.8.
+BusyBox 1.37.0 OCI index digest также сверён и закреплён в manifests.
+Это опубликованные факты, не наши интеграционные результаты.
+
+МОДЕЛИ И УСЛОВНЫЕ ЧИСЛА
+7 интерактивных схем / 42 шага — фиксированные причинные модели, не API trace,
+не packet capture и не симулятор Kubernetes. IP/RV/capacity/timing имеют явные
+допущения. Измеренной мощности пользовательского компьютера 8/16 GiB нет.
+
+НЕ ИСПОЛНЯЛОСЬ
+Реальный Kubernetes/VM-кластер не создавался. Не выполнялись Docker build/run,
+kind create, kubeadm init/join, systemctl, swap/firewall/routes, privileged host
+операции или покупка облака. Cold offline package/image closure не доказана.
+Не проверялись реальным кластером node IP/CSR approval, API admission/RBAC,
+SSA409/watch410, rollout, CNI packet/MTU/NAT/policy/DNS, local PV mount/write,
+dynamic CSI, HPA/metrics aggregation, Gateway traffic, PDB/drain/node failure,
+upgrade или etcd/application restore. Это отдельные рецепты для личных VM с
+наблюдаемыми критериями. Не заявлены HA на одном worker и failover local disk.
+
+СБОРКА И ПУБЛИКАЦИЯ
+Общий builder из рабочего checkout не запускался, shared files не менялись,
+commit/push не выполнялись. Общий isolated render и UI QA делает интегратор.

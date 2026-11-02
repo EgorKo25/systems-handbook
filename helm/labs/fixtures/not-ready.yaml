@@ -1,0 +1,2 @@
+probes:
+  readinessPath: /missing-readyz

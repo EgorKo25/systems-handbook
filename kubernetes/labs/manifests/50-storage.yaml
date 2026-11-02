@@ -1,0 +1,41 @@
+# Optional VM-only local disk exercise; no CSI driver is implied.
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: lab-local
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Retain
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: ledger-local
+spec:
+  capacity:
+    storage: 256Mi
+  volumeMode: Filesystem
+  accessModes: [ReadWriteOnce]
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: lab-local
+  local:
+    path: /srv/handbook/ledger-data
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values: [wk1]
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ledger-data
+  namespace: lab
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: lab-local
+  resources:
+    requests:
+      storage: 128Mi

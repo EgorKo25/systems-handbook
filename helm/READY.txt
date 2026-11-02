@@ -1,0 +1,86 @@
+HELM — ГОТОВ К ИНТЕГРАЦИИ
+Авторская редакция:1 ноября2026. Файлы заморожены после финальных исправлений.
+
+СОСТАВ
+20 содержательных HTML-глав00–19,плюс генерируемый словарь99-glossary.
+Примерно13.3тыс.слов исходных глав до встроенных схем/словаря/карточек.
+Внутренняя книга по values/типам/Go templates:04–08;книги зависимостей/доставки
+и полного жизненного цикла:09–15;диагностика,практикум,миграция,источники:16–19.
+97 определений,31карточка команд,64группы флагов.
+Исторический набор:6схем/31шаг. В source-пакете повторной вычитки ниже
+оставлены5схем/26шагов: values-merge передан интегратору для замены
+предметной HTML-иллюстрацией в04; сама иллюстрация в этот пакет не входит.
+volume_config.py:CONFIG совместим с общим builder;chapter IDs уникальны
+с helm,command.chapter/diagram.chapter согласованы.
+Временный технический номерXVIII назначен по просьбе координатора только
+для валидного изолированного рендера;окончательный номер задаёт интегратор.
+
+ПРАКТИКУМ
+Один chart ledger-api/release ledger/namespace helm-lab и общий Go-сервис
+Kubernetes-тома. main.go/main_test.go/go.mod побайтно совпадают с соседним
+источником:MESSAGE,JSON.message,/livez /readyz /api/hello,port8080.
+API_TOKEN только демонстрирует доставку Secret,не реализует аутентификацию.
+Рабочая копия и история не сбрасываются между заданиями.
+fixtures/schema/negative cases/check.py,локальная library dependency,
+packaging/helmignore проверки,повторяемость,реальный graceful HTTP-тест.
+Optional localPV для собственного kubeadm:отдельные helm-local/PV
+helm-ledger-local,каталог wk1 /srv/handbook/helm-ledger-data,UID/GID65532,
+256MiPV/128MiPVC,Retain,WFFC,выбор класса до первогоPVC. Не требуетCSI.
+Replica1+Recreate проверены по YAML;данные явно пишет отдельный inspector,
+потому что приложение /data не использует. Keep/Retain не являются backup.
+
+РЕАЛЬНО ПРОВЕРЕНО
+Официальный Helm v4.3.1+gc0d08d0 Linux amd64.
+SHA архива совпала с release:
+0403a88ae20913d11b10a2467b50087721fea7581736da6b9d3992f5357fe54b
+https://github.com/helm/helm/releases/tag/v4.3.1
+Ветка4 текущая;3.22.1 только security fixes до11.11.2026 согласно official EOL.
+Основная линия использует flags4.3.1,chartAPIv2,SSA/wait strategies/
+rollback-on-failure и отдельно объясняет отличия3→4.
+
+labs/check.py:19групп PASS;реальный stdout и метрики labs/results.json.
+Включены пустые/непустые коллекции,мягкий int invalid→0,fromYaml Error,
+--set family order,точные package member bytes/helmignore,staticPV contract.
+Отдельно go test -race -count=1:PASS,включая meaningful active-request shutdown.
+check_sources.py:PASS(20+словарь глав,97терминов,31команда,64группыфлагов,
+6схем/31шаг;формат/ссылки/уникальность/нет private paths).
+Координатор независимо подтвердил binary/checksum,формы31карточки по --help;
+независимый смысловой reviewer подтвердил template/empty/conversions/PVC
+и не оставил открытых замечаний. Детали исполнения разделены в ПРОВЕРКИ.txt.
+
+НЕ ИСПОЛНЯЛОСЬ
+Кластера не было:никаких install/upgrade/rollback/test hooks/uninstall,
+настоящего admission/SSA/RBAC/PVC bind/mount/marker в API не запускалось.
+Не выполнялись remoteOCI/HTTP publication,подпись chart своими ключами,
+GPG signature binary,сборка/загрузка container image в nodes.
+Схемы — фиксированные модели,не настоящий Helm/Kubernetes.
+
+ИНТЕГРАТОРУ
+1. Зарегистрировать CONFIG/command_modules в общих метаданных и дать финальный номер.
+2. Сделать общий рендер только на изолированном snapshot,проверить reader,
+   карточки,все6схем и ссылки соседних томов.
+3. Перенести нужные generated artifacts только после своей проверки;
+   обновить shared каталоги/stats/checksums/export общим процессом.
+Автор общий build.py не запускал,shared scripts/index/catalog/workflow,
+соседние тома не менял. Commit/push не выполнял.
+
+СОДЕРЖАТЕЛЬНЫЕ ГРАНИЦЫ
+Это завершённый самостоятельный базовый том,не готовый production chart.
+Обязательная следующая верификация — настоящий жизненный цикл на личном
+kubeadm/kind;CRD/operator/БД и GitOps имеют отдельные границы.
+Static localPV не даётHA и привязан к дискуwk1;для kind/CSI нужен другой
+явно подготовленный профиль. Образы учебно фиксированы tag;боевой выпуск
+и offline-комплект требуют своих проверенных immutable digests.
+
+РЕДАКТОРСКИЙ SOURCE-ПАКЕТ 2 НОЯБРЯ 2026
+Полностью перечитаны20 HTML,97 терминов,31 карточка/64 группы флагов,
+6 исходных моделей/31шаг и все61 public source/lab files.
+Исправлены list без несуществующего --all, явные scopes примеров,
+одинаковый environment.yaml для review/install, fail-stop сборки,
+namespace prerequisites, release/latest/deployed/rollback/hooks механика,
+сохранение журнала и изоляция отчёта checker. Известная повторяющаяся
+values-модель удалена по поручению интегратора;04исходник сохранён.
+Новая проверка ограничена source replay/AST/pure models и CLI help/version.
+Исторические19 lab PASS выше не означают повторного исполнения изменённого
+checker, нового build/render, Go tests или настоящего кластера. До публикации
+интегратор повторяет их в разрешённой изолированной среде и проверяет reader.

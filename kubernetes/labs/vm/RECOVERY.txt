@@ -1,0 +1,131 @@
+ПОЛНЫЙ РЕЦЕПТ ВОССТАНОВЛЕНИЯ ОДНОГО cp1 В ИЗОЛИРОВАННОМ КЛОНЕ
+Не исполнялся автором. Не инструкция для работающего HA etcd или чужого host.
+После любого отказа остановитесь: следующий раздел не является исправлением
+неудавшейся команды. Особенно нельзя запускать manifests после частичного
+переноса data-dir. Все исходные и частично созданные каталоги сохраняют.
+Это продолжение kubeadm VM baseline. Надо иметь matching etcd tools изINSTALL,
+проверенный snapshot, PKI/конфиги/encryption keys и application backup.
+
+A. Подготовить и проверить backup на исходном личном cp1.
+
+sudo install -d -m 0700 /var/backups/handbook
+sudo etcdctl --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/healthcheck-client.crt --key=/etc/kubernetes/pki/etcd/healthcheck-client.key snapshot save /var/backups/handbook/etcd-before-maintenance.db
+sudo etcdutl snapshot status /var/backups/handbook/etcd-before-maintenance.db -w table
+sudo sha256sum /var/backups/handbook/etcd-before-maintenance.db
+
+Отдельно защищённо сохранить /etc/kubernetes (включает закрытые ключи),
+/var/lib/kubelet/config.yaml, /etc/containerd/config.toml, /etc/default/kubelet,
+версионный inventory, network/hostname contract и encryption keys при наличии.
+Application /srv/handbook/ledger-data сохраняется отдельно с hash и остановкой
+писателя либо native application consistency protocol. Не публиковать архивы.
+
+B. Сделать выключенный clone cp1 в отдельной виртуальной сети.
+Исходный cp1 и исходные workers НЕ должны маршрутизироваться в сеть клона.
+Самый простой fence учебного опыта: original VM выключены и private virtual
+switch клона физически отделён. Clone использует те же hostname/IP, чтобы
+SAN/peer URLs соответствовали PKI, но не конфликтует с исходной сетью.
+Не восстанавливать новый etcd рядом с живым старым в общей сети.
+
+C. Внутри clone cp1 остановить реальное исполнение static Pods.
+Один stop kubelet не гарантирует остановку уже работающих containers.
+
+sudo install -d -m 0700 /var/lib/handbook/manifests-off
+sudo mv /etc/kubernetes/manifests/*.yaml /var/lib/handbook/manifests-off/
+# Wait for kubelet to notice removals; check actual runtime tasks:
+sudo crictl --runtime-endpoint unix:///run/containerd/containerd.sock ps -a
+sudo systemctl stop kubelet
+
+Проверьте, что etcd/kube-apiserver/kube-controller-manager/kube-scheduler
+реально остановлены. Если остались Running, выберите ИХ точные container IDs
+из вывода и остановите каждый на clone:
+
+sudo crictl --runtime-endpoint unix:///run/containerd/containerd.sock stop ACTUAL_ETCD_CONTAINER_ID
+
+ACTUAL_ETCD_CONTAINER_ID — место под фактический ID, не готовый аргумент.
+Не удаляйте все runtime tasks и не выполняйте это на исходном host.
+Containerd остаётся запущен. Manifest backups находятся ВНЕ watched directory:
+дополнительный .bak внутри /etc/kubernetes/manifests мог бы снова запуститься.
+
+D. Restore в новый data-dir, без перезаписи существующей базы.
+Сначала проверьте в manifests-off/etcd.yaml реальные --name, peer URLs,
+--initial-cluster, hostPath и mountPath. Пример ниже применим к cp1 и IP.10
+из baseline. Если фактические значения иные, используйте их согласованно.
+
+restore_stopped_etcd() {
+  # Run ONLY after section C proved the static containers stopped on the clone.
+  # One operator owns these paths; no concurrent filesystem changes.
+  sudo test -d /var/lib/etcd || return 1
+  sudo test ! -L /var/lib/etcd || return 1
+  for path in /var/lib/etcd-restored /var/lib/etcd-before-restore; do
+    sudo test ! -e "$path" || return 1
+    sudo test ! -L "$path" || return 1
+  done
+  sudo etcdutl snapshot restore /var/backups/handbook/etcd-before-maintenance.db --data-dir=/var/lib/etcd-restored --name=cp1 --initial-cluster=cp1=https://192.168.56.10:2380 --initial-advertise-peer-urls=https://192.168.56.10:2380 --initial-cluster-token=handbook-restore-20261101 --bump-revision=150000000 --mark-compacted || return 1
+  sudo test -s /var/lib/etcd-restored/member/snap/db || return 1
+  sudo mv -T -- /var/lib/etcd /var/lib/etcd-before-restore || return 1
+  if ! sudo mv -T -- /var/lib/etcd-restored /var/lib/etcd; then
+    printf 'Data-dir transfer incomplete. Keep all directories; do not start manifests.\n' >&2
+    return 1
+  fi
+}
+restore_stopped_etcd
+
+Выбор bump150000000 имеет явное условие: максимум200 API/etcd revisions/s,
+не больше7days history после snapshot →200*7*86400=120960000; запас до150M.
+Это учебная верхняя оценка, НЕ универсальная константа. Если наблюдаемая
+скорость/интервал больше или bound неизвестен, пересчитайте по recovery guide.
+Revision непрозрачен для API clients, но etcd disaster recovery должен
+инвалидировать старую watch history; --mark-compacted заставляет relist.
+Команда создаёт новую logical cluster/member identity. Не запускайте старые
+members после неё как будто это прежний здоровый quorum.
+
+Функция сначала требует свободные имена для нового и резервного каталога,
+а затем проверяет наличие восстановленной базы. GNU mv -T на Ubuntu трактует
+назначение именно как один путь и не вкладывает исходный каталог внутрь
+существующего. Два переноса не являются общей атомарной операцией: если второй
+не выполнен, исходные данные уже лежат в /var/lib/etcd-before-restore, новые —
+в /var/lib/etcd-restored, а /var/lib/etcd может отсутствовать. В этом состоянии
+НЕ переходят к разделу E и НЕ повторяют функцию с начала. Сохраняют оба
+каталога и выясняют отказ, прежде чем завершать перенос вручную.
+При неопределённом результате restore либо mv также останавливаются.
+Повторный опыт не перезаписывает прежний /var/lib/etcd-before-restore. Проверьте ownership/security context
+в etcd static manifest и соответствующие права каталога. На baseline paths
+hostPath=/var/lib/etcd и container data-dir=/var/lib/etcd остаются прежними,
+поэтому mounts переписывать не надо. Это сознательный перенос нового
+содержимого под уже согласованный mount, не restore поверх живой базы.
+
+E. Поднять сначала etcd, затем API и controllers.
+
+sudo mv /var/lib/handbook/manifests-off/etcd.yaml /etc/kubernetes/manifests/
+sudo systemctl start kubelet
+sudo crictl --runtime-endpoint unix:///run/containerd/containerd.sock ps -a
+# Wait until the restored static etcd is actually healthy; a first immediate
+# invocation may fail while the container is still starting. Retry with a
+# bounded operator wait and inspect kubelet/containerd logs on persistent error.
+sudo etcdctl --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/healthcheck-client.crt --key=/etc/kubernetes/pki/etcd/healthcheck-client.key endpoint health
+sudo mv /var/lib/handbook/manifests-off/kube-apiserver.yaml /etc/kubernetes/manifests/
+sudo mv /var/lib/handbook/manifests-off/kube-controller-manager.yaml /etc/kubernetes/manifests/
+sudo mv /var/lib/handbook/manifests-off/kube-scheduler.yaml /etc/kubernetes/manifests/
+# Likewise wait for API static Pod startup before requiring readyz success.
+kubectl --context handbook-admin get --raw='/readyz?verbose'
+kubectl --context handbook-admin get nodes -o wide
+kubectl --context handbook-admin -n lab get deployment,pod,service,pvc
+
+Если исходный worker отсутствует в clone network, NotReady/Pending — честный
+результат. Для полноценного app restore нужен отдельный isolated clone wk1 с
+сохранённым application dataset и тем же storage topology, никогда не original
+wk1 одновременно в двух кластерах. Проверьте PKI/credentials, image digests,
+PodUID/owners, PVC/backend, DNS, межузловой путь, record hash и /api/hello.
+Никакое Ready само по себе не доказывает восстановление business records.
+
+F. Записать RPO/RTO и судьбу клона.
+Засечь stop→etcdhealthy→APIready→appready→data-integrity. Не подключать clone
+к исходной сети без отдельного migration/fencing plan. Original snapshot и
+before-restore data-dir сохранить защищённо до завершения проверки. Уничтожение
+клона — отдельное явное действие после сохранения результата, не часть обычного
+упражнения и не универсальный rollback исходного кластера.
+
+Официальные первоисточники,01.11.2026:
+https://etcd.io/docs/v3.6/op-guide/recovery/
+https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/
+https://github.com/etcd-io/etcd/releases/tag/v3.6.8

@@ -1,0 +1,39 @@
+<header><h1>Пакет, registry, подпись и offline-доставка</h1><p>Передаём проверенный результат, а не случайный повторный render с похожим именем.</p></header>
+
+<h2>Package не является сборкой Go</h2>
+<pre><code>helm package ./chart --destination ./dist
+helm show chart ./dist/ledger-api-0.1.0.tgz
+helm show values ./dist/ledger-api-0.1.0.tgz
+helm template ledger ./dist/ledger-api-0.1.0.tgz \
+  --namespace helm-lab --kube-version 1.36.6</code></pre>
+<p>Package создаёт архив чарта, не компилирует приложение и не загружает контейнерные образы. Имя архива содержит name/version метаданных. --version меняет версию пакета, --app-version — информативное поле, но ни один не меняет автоматически тег образа шаблона. Каталог назначения вне чарта исключает самовложение архивов. Show читает пакет, template исполняет его. Тесты сравнивают разобранные объекты каталога и tgz, отдельно точные байты включённого файла.</p>
+<h2>HTTP chart repository</h2>
+<p>HTTP-репозиторий чартов — каталог HTTP(S) с index.yaml и архивами по URL. Repo add сохраняет имя и адрес у клиента, repo update скачивает индекс, search repo ищет в локальном индексе. Старый индекс способен показывать устаревшую версию; обновление индекса не доказывает неизменность архива по URL. Такой сервер не является API Kubernetes или хранилищем истории релиза.</p>
+<pre><code>helm repo add handbook https://charts.example.invalid
+helm repo update handbook
+helm search repo handbook/ledger-api --versions
+helm pull handbook/ledger-api --version 0.1.0 --destination ./dist</code></pre>
+<p>Example.invalid — намеренный заполнитель адреса своего сервера, а не рабочее публичное хранилище. --version фиксирует пакет вместо выбора последней подходящей версии. Pull без --untar сохраняет архив, с --untar распаковывает, но доверия не добавляет. Для публикации своего HTTP-репозитория <code>helm repo index ./dist --url https://charts.example.invalid</code> создаёт индекс в личной промежуточной папке; его публикуют согласованно с архивами. --merge существующего индекса не восстанавливает неизвестные версии сервера.</p>
+<h2>OCI registry</h2>
+<p>OCI, Open Container Initiative, — семейство форматов и протоколов артефактов с адресацией по содержимому. Чарт в OCI-реестре хранится артефактом, но не становится запускаемым образом. Дайджест чарта и дайджест образа определяют разные манифесты. Тег удобен как версия, дайджест связывает запрос с содержимым; доверие к издателю остаётся отдельной задачей.</p>
+<pre><code>printf &#x27;%s&#x27; &quot;$REGISTRY_PASSWORD&quot; | \
+  helm registry login registry.example.invalid \
+  --username &quot;$REGISTRY_USER&quot; --password-stdin
+helm push ./dist/ledger-api-0.1.0.tgz \
+  oci://registry.example.invalid/handbook
+helm pull oci://registry.example.invalid/handbook/ledger-api \
+  --version 0.1.0 --destination ./downloaded</code></pre>
+<p>В Helm 4 registry login принимает domain[:port], а не полный URL со схемой и путём. --password-stdin уменьшает утечку в argv, но файл учётных данных надо защищать. Push получает созданный tgz; конечные имя и версия берутся из метаданных, поэтому к адресу назначения не дописывают произвольный тег как у docker push. В 4.x чарт можно установить по OCI-дайджесту: его берут из ответа своего реестра или доверенного описания, а не из учебного фиктивного хеша. --plain-http и --insecure-skip-tls-verify ослабляют транспортную проверку и не исправляют неизвестную причину ошибки TLS.</p>
+<h2>Provenance и доверие</h2>
+<p>Provenance — сведения о происхождении и проверяемая связь подписи с содержимым. Классический .prov — подписанный OpenPGP-документ с метаданными и хешем архива. Проверка связывает подпись с выбранным ключом и байтами; право ключа выпускать боевой пакет задаёт политика доверия. Подпись не анализирует шаблоны, обработчики, полномочия и уязвимости образа.</p>
+<pre><code>helm package ./chart --destination ./signed \
+  --sign --key &#x27;HANDBOOK SIGNER&#x27; --keyring ./private-signing-keyring.gpg
+helm verify ./signed/ledger-api-0.1.0.tgz --keyring ./trusted-public.gpg
+helm pull handbook/ledger-api --version 0.1.0 --verify \
+  --keyring ./trusted-public.gpg --destination ./verified</code></pre>
+<p>Это рецепт со своими подготовленными ключами; подпись редакцией не выполнялась. --verify требует доступного .prov и успешной проверки, а не наличия файла рядом. Закрытый ключ не кладут в чарт, журнал конвейера или переносимую книгу. Подписывающий ключ и доверенное кольцо открытых ключей — разные материалы и права. OCI способен переносить слой происхождения, но поведение конкретного реестра проверяют отдельно: произвольная подпись реестра не обязана поддерживаться helm verify.</p>
+<h2>Комплект offline и журнал promotion</h2>
+<p>Создайте опись комплекта: версия и архитектура Helm, хеш; имя/хеш/подпись чарта и отпечаток ключа; версии и хеши зависимостей; файлы и хеши параметров; образы и неизменяемые дайджесты приложения и тестов; договор Kubernetes API. Саму опись подпишите или доставьте доверенно. Отключённый интернет и успешный template не доказывают наличие образов, CNI, DNS и хранилища на узлах. Для kind загрузите свой образ локально, для VM доставьте в личный реестр или CRI по соседнему тому.</p>
+<p>Продвижение релиза переносит тот же чарт и содержимое образа между окружениями с явно различными параметрами. Не пересобирайте приложение после теста под тем же тегом. Хеш параметров и итоговые манифесты сохраняйте защищённо вместе с временем, пространством имён, контекстом и ревизией. Сеть измеряют по реальным переданным байтам и попаданиям в кэш: локальная упаковка за 20 мс не определяет передачу 2GiB образа нескольким узлам.</p>
+
+<h2>Первичные источники и версия</h2><p>Проверено 1 ноября 2026; основной CLI Helm 4.3.1, chart API v2. <a href="https://helm.sh/docs/helm/helm_package/">Package</a>, <a href="https://helm.sh/docs/topics/chart_repository/">Chart repository</a>, <a href="https://helm.sh/docs/topics/registries/">OCI registry</a>, <a href="https://helm.sh/docs/topics/provenance/">Provenance</a>, <a href="https://helm.sh/docs/overview/">Helm 4 migration</a>.</p>

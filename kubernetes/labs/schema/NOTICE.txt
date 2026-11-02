@@ -1,0 +1,23 @@
+Subset derived from Kubernetes v1.36.6 api/openapi-spec/swagger.json.
+Source: https://github.com/kubernetes/kubernetes/blob/v1.36.6/api/openapi-spec/swagger.json
+Upstream license: Apache License 2.0, https://github.com/kubernetes/kubernetes/blob/v1.36.6/LICENSE
+Original fetched SHA-256: dcede2063da1d7ad62ecb5af8adb6d7fabd0b52385a7fa0048afb491dac90450
+Derived subset retains 252 referenced definitions and their original descriptions.
+The subset supports authored core lab manifests, not every Kubernetes kind or CRD.
+OpenAPI shape validation is not API admission, authorization, defaulting or execution.
+
+Additional gateway-envoy-v1.9.3.json is a derived structural schema subset of
+https://github.com/envoyproxy/gateway/releases/download/v1.9.3/install.yaml
+SHA256 ac89b0b564e52c97c97a3f8b4d82bb594a0fbc810431fb2e6ffd91702aabebfb.
+It contains Gateway API v1.6.1 and EnvoyProxy CRD schemas for the four authored
+optional resources; descriptions/examples were removed, constraints retained.
+Upstream projects Envoy Gateway and Kubernetes SIG Network Gateway API use
+Apache License 2.0. The exact license text is included beside this notice as
+LICENSE.txt. JSON Schema checking does not execute Kubernetes CEL rules or
+validate controller references/conformance/defaulting.
+
+Gateway API v1.6.1 copyright notice, retained from its exact upstream license:
+Copyright 2020 The Kubernetes Authors
+Exact upstream license is included as GATEWAY-API-LICENSE.txt.
+Source: https://github.com/kubernetes-sigs/gateway-api/blob/v1.6.1/LICENSE
+The shared Apache 2.0 text in LICENSE.txt does not replace this attribution.

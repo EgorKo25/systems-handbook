@@ -1,0 +1,6 @@
+replicaCount: 3
+config:
+  message: "Production-like lab"
+resources:
+  requests:
+    cpu: 100m

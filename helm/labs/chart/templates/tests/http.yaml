@@ -1,0 +1,30 @@
+{{- if .Values.tests.enabled }}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ include "ledger.fullname" . }}-test
+  labels:
+    {{- include "ledger.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: test
+    helm.sh/hook-weight: "0"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  restartPolicy: Never
+  automountServiceAccountToken: false
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 65532
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+    - name: http
+      image: {{ .Values.tests.image | quote }}
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop: ["ALL"]
+      command: ["wget"]
+      args: ["-q", "-O", "-", {{ printf "http://%s:%v/api/hello" (include "ledger.fullname" .) .Values.service.port | quote }}]
+{{- end }}

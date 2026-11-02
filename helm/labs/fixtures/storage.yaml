@@ -1,0 +1,6 @@
+# Optional, explicitly prepared kubeadm VM profile. Select before first PVC.
+replicaCount: 1
+persistence:
+  enabled: true
+  size: 128Mi
+  storageClass: helm-local

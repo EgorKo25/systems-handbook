@@ -1,0 +1,79 @@
+<header><h1>Метаданные, component, asset и blob: где живёт выпуск</h1><p>Один URL связывает логическую координату с физическими байтами</p></header>
+<h2>Четыре разных объекта</h2>
+<p><strong>Coordinate, координата</strong> — идентичность в правилах конкретного формата. Для Go это module path и version, для Maven — groupId/artifactId/version с дополнительными типом и classifier, для raw — выбранный путь файла. <strong>Component, компонент</strong> — логическая единица формата, например версия модуля с несколькими файлами представления. <strong>Asset, ресурс</strong> — адресуемое содержимое, например <code>v1.0.0.mod</code> либо конкретный ZIP. <strong>Blob, двоичный объект</strong> — сохранённые байты с внутренней идентичностью хранилища. Один component не обязан соответствовать одному asset; количество HTTP-запросов тоже не равно количеству component.</p>
+<p>При чтении <code>.../ledger/@v/v1.0.0.zip</code> сервер сначала выбирает repository и формат, проверяет доступ, разрешает логический путь и находит metadata asset. Запись связывает repository/path/форматные поля с blob reference — ссылкой на объект выбранного blob store. Затем хранилище возвращает поток байтов. В БД находятся метаданные и конфигурация, в blob store — содержимое. Это причинная модель уровня продукта; точные SQL table/column и layout bucket не являются публичным договором для ручного редактирования.</p>
+<p>У файлового backend в data-dir видны служебные каталоги, файлы содержимого и свойств. Имена не следует трактовать как прямое отображение публичного URL. Файловый менеджер не знает транзакций Nexus, индексов и связей. Копирование ZIP непосредственно в папку blobs не публикует Go-модуль. Ручное удаление файла не выполняет корректное удаление asset и может оставить dangling reference, висячую ссылку из метаданных.</p>
+<p>Например, логическая запись raw asset описывает repository <code>raw-candidates</code>, path <code>pulse/1.0.0/linux-amd64/manifest.json</code>, размер N bytes, checksum и непрозрачную ссылку B1 на содержимое. N считается по сохранённым байтам, а не по числу символов JSON: русская буква в UTF-8 может занимать больше одного байта. Другой asset <code>pulse-linux-amd64</code> имеет свой размер, checksum и ссылку B2. Это пример связей, а не опубликованная SQL-схема Nexus: поле с именем B1 нельзя искать как файл <code>blobs/B1</code>. Когда GET находит metadata, но B2 утрачен, список может по-прежнему показывать выпуск, однако серверу нечем заполнить тело ответа. Обратная ситуация, B2 без metadata, оставляет байты на диске без доступного клиенту прежнего пути.</p>
+<figure id="nexus-blob-figure" style="margin:2rem auto;max-width:26rem;width:100%">
+<style>#nexus-blob-figure code{white-space:normal;overflow-wrap:anywhere}@media print{#nexus-blob-figure{--paper:#fff;--text:#000;--muted:#333;--accent:#000;--line:#888;max-width:18rem;break-inside:avoid;color:#000;background:#fff}}</style>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 860" role="img" aria-labelledby="nexus-blob-title nexus-blob-desc" style="display:block;width:100%;height:auto;color:inherit;font-family:inherit;font-size:16px">
+<title id="nexus-blob-title">Один ZIP: от записи каталога до окончательного удаления байтов</title>
+<desc id="nexus-blob-desc">Учебная карта: component ledger версии v1.0.0 связан с assets info, mod и zip. Запись zip содержит ссылку на blob B. B — условное обозначение, не хеш или имя файла. После мягкого удаления blob обычное чтение прекращено, но байты остаются. Отдельная успешная compaction может убрать их после окна удержания.</desc>
+<defs><marker id="nexus-blob-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8Z" fill="currentColor"/></marker></defs>
+<g fill="currentColor">
+<text x="12" y="24" font-weight="700">Карта одного ZIP</text>
+</g>
+<path d="M12 44H324L348 68V246H12Z M324 44V68H348 M24 88H336" fill="none" stroke="currentColor" stroke-width="1.5"/>
+<g fill="currentColor">
+<text x="24" y="72" font-weight="700">Метаданные · go-internal</text>
+<text x="24" y="112">component: версия v1.0.0</text>
+<text x="24" y="136">example.invalid/Acme/ledger</text>
+<text x="58" y="168">asset: @v/v1.0.0.info</text>
+<text x="58" y="194">asset: @v/v1.0.0.mod</text>
+<text x="58" y="220" font-weight="700">asset: @v/v1.0.0.zip</text>
+</g>
+<path d="M34 146V216H48 M34 164H48 M34 190H48 M180 229V316" fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#nexus-blob-arrow)"/>
+<path d="M12 266H160 M200 266H348" stroke="currentColor" stroke-dasharray="4 4"/>
+<g fill="currentColor">
+<text x="202" y="292">ссылка на B</text>
+<text x="12" y="292">Blob store</text>
+</g>
+<path d="M48 340V416C48 440 312 440 312 416V340 M48 340C48 316 312 316 312 340C312 364 48 364 48 340Z" fill="none" stroke="currentColor" stroke-width="1.5"/>
+<g fill="currentColor" text-anchor="middle">
+<text x="180" y="346" font-weight="700">B · внутренний blob</text>
+<text x="180" y="386">Байты v1.0.0.zip</text>
+<text x="180" y="410">и служебные свойства</text>
+</g>
+<path d="M12 458H348 M30 510V822" fill="none" stroke="currentColor" stroke-width="1.5"/>
+<g fill="currentColor"><text x="12" y="486" font-weight="700">Публикация и удаление байтов</text></g>
+<g fill="none" stroke="currentColor" stroke-width="1.5">
+<circle cx="30" cy="520" r="9"/><circle cx="30" cy="642" r="9"/><circle cx="30" cy="772" r="9"/>
+<path d="M24 642H36 M24 772L36 772 M30 766V778"/>
+</g>
+<g fill="currentColor">
+<text x="54" y="526" font-weight="700">1. Файл опубликован</text>
+<text x="54" y="552">asset → B; GET читает ZIP.</text>
+<text x="54" y="578">Байты B занимают место.</text>
+<text x="54" y="648" font-weight="700">2. Blob мягко удалён</text>
+<text x="54" y="674">Обычное чтение прекращено.</text>
+<text x="54" y="700">Байты B всё ещё на диске.</text>
+<text x="54" y="778" font-weight="700">3. Отдельная compaction</text>
+<text x="54" y="804">Окно удержания истекло;</text>
+<text x="54" y="830">задание убирает байты B.</text>
+</g>
+</svg>
+<figcaption><strong>Что связывает URL и место на диске.</strong> Показан будущий учебный модуль <code>example.invalid/Acme/ledger@v1.0.0</code>; полный путь ZIP в repository: <code>example.invalid/!acme/ledger/@v/v1.0.0.zip</code>. Это карта связей, а не схема SQL-таблиц. B — условная метка внутреннего объекта; SHA-256 скачанного ZIP проверяет его содержимое, но не задаёт имя blob-файла. Другие assets показаны для различения component и asset; их внутреннее размещение здесь не развёрнуто.</figcaption>
+</figure>
+<p><strong>Как читать переходы.</strong> Сначала поддержанная операция удаления меняет состояние каталога; форматные задачи могут отдельно находить больше не нужные assets. На рисунке второй момент уже предполагает, что <em>сам blob</em> отмечен к удалению. Удаление одной ссылки само по себе этого не доказывает: например, у Docker/OCI надо учитывать связи manifests и слоёв. Для File backend физические байты убирает отдельное успешно выполненное <code>Admin - Compact blob store</code> выбранного хранилища, когда прошёл заданный период <code>Blobs Older Than</code>. Ноль убирает дополнительное окно ожидания, но не запускает задачу автоматически. Ни отсутствие URL, ни пропажа строки поиска не измеряют освобождённое место.</p>
+<p>У этой схемы нет действия «восстановить»: мягкое удаление не заменяет проверенный резерв. Как подготовить согласованные метаданные и blobs, разобрано в <a href="#14-nexus-recovery">главе о восстановлении</a>, а выбор удаления и редакционные ограничения — в <a href="#12-nexus-cleanup">главе об очистке</a>. Основа рисунка: <a href="https://help.sonatype.com/en/storage-guide.html">Storage Guide</a> и <a href="https://help.sonatype.com/en/cleanup-policies.html">Cleanup Policies</a>, сверены 2 ноября 2026. Это объяснение механизма, не результат выполненной очистки сервера.</p>
+<h2>Карта сохраняющегося экземпляра</h2>
+<table><thead><tr><th>Область</th><th>Содержит</th><th>Последствие потери</th></tr></thead><tbody>
+<tr><td>install-dir</td><td>Версионный launcher, библиотеки, комплект JVM и defaults</td><td>Можно заменить тем же проверенным дистрибутивом; нужны сохранённые настройки</td></tr>
+<tr><td>data-dir/etc</td><td>Постоянная конфигурация приложения</td><td>Неправильный адрес, путь, поведение и внешние зависимости</td></tr>
+<tr><td>data-dir/db</td><td>H2 со связанным состоянием экземпляра</td><td>Байты без прежней карты пользователей, repository и assets не равны восстановленному сервису</td></tr>
+<tr><td>Файловые blob stores</td><td>Артефакты, связанные с metadata</td><td>Каталог БД может обещать файл, который скачать нельзя</td></tr>
+<tr><td>keystores, secrets, node identity</td><td>Материал доверия/идентичности согласно конфигурации</td><td>Может нарушиться расшифровка сохранённых credential, TLS или учёт blobs</td></tr>
+<tr><td>logs и временные файлы</td><td>Наблюдения и незавершённая работа</td><td>Труднее расследовать; временный файл не подменяет завершённую публикацию</td></tr>
+</tbody></table>
+<p>Разделение <code>lab-hosted</code> и <code>lab-cache</code> даёт понятные политики ёмкости и резерва. Потерянный public proxy cache иногда можно заново наполнить из upstream; собственный единственный hosted release из интернета не вернётся. Но и кэш может содержать исчезнувшую публичную версию: «можно скачать снова» — предположение, которое проверяют условиями upstream. Разделение каталогов не обеспечивает резерв автоматически и не позволяет безусловно терять metadata.</p>
+<h2>Загрузка как несколько эффектов</h2>
+<p>Предположим CI отправил raw-файл. TLS и аутентификация проходят до принятия действия. Сервер проверяет repository policy, путь, media type — тип содержимого HTTP, и ограничения формата. Поток записывается в blob store, рассчитываются контрольные значения, обновляются metadata. Затем запрос завершается HTTP-ответом. Это логические фазы, а не обещание одной общей ACID-транзакции файловой системы и БД. Разрыв соединения на последнем шаге допускает неоднозначность: сервер мог сохранить объект, а клиент не получить подтверждение.</p>
+<p>Поэтому повтор после timeout начинается с чтения координаты и сравнения ожидаемого хеша. Если файл уже существует и совпадает, действие могло завершиться. Если политика Disable Redeploy запрещает повтор, 400/409 либо иной документированный форматный ответ не стоит лечить включением перезаписи на всём repository. Сначала выясняют состояние. Фактический код точной версии фиксируют приёмкой. Для учебного release повтор того же имени с другими байтами должен отвергаться политикой и процессом публикации.</p>
+<h2>Поиск и скачивание дают разные свидетельства</h2>
+<p>Следующий запрос пригодится после создания <code>raw-candidates</code> и публикации файла в главе raw. Сейчас repository ещё может отсутствовать. Для него нужна личность с чтением candidates: в нашем процессе это <code>release-promoter</code>, а не обычный reader, которому candidates закрыты. Файл <code>promoter.netrc</code> готовится по рецепту клиентских учётных данных ниже; здесь сначала разберём смысл запроса. 401, пустой список до публикации и отказ reader не являются потерей blob.</p>
+<pre><code>curl --cacert "$lab_root/lab-secrets/ca-bundle.pem" --netrc-file "$lab_root/lab-secrets/promoter.netrc" --fail --show-error --get \
+  --data-urlencode repository=raw-candidates \
+  https://nexus.lab.example/service/rest/v1/search/assets</code></pre>
+<p><code>--get</code> помещает параметры в query string, <code>--data-urlencode</code> кодирует значение безопаснее ручной конкатенации. Ответ <code>items</code> содержит assets и <code>continuationToken</code>; ненулевой token требует следующего запроса с теми же критериями и этим token, пока не вернётся null. Первая страница не полный инвентарь. Asset ID — непрозрачная строка API, не имя blob-файла и не идентификатор, который переносим между восстановленными экземплярами. Поиск зависит от прав и состояния metadata; отсутствие строки не доказывает отсутствие байтов.</p>
+<p>Приёмка конкретного release использует известный прямой download URL, размер и SHA-256 из доверенного manifest. GET должен вернуть ожидаемые байты. Ответ 200 HTML login page или страница прокси вместо бинарника обнаруживается проверкой размера/хеша и content type. MIME, Multipurpose Internet Mail Extensions — соглашение о типе содержимого — помогает интерпретации, но строка <code>application/octet-stream</code> сама не доказывает корректность программы. Хеш вычисляется по реально загруженному файлу.</p>
+<p>Первичные источники, проверка 1 ноября 2026: <a href="https://help.sonatype.com/en/storage-guide.html">Storage Guide</a>, <a href="https://help.sonatype.com/en/blob-stores.html">Blob Stores</a>, <a href="https://help.sonatype.com/en/prepare-a-backup.html">Prepare a Backup</a>, <a href="https://help.sonatype.com/en/search-api.html">Search API</a>. Не используйте устаревшие инструкции редактирования OrientDB для выбранной H2.</p>

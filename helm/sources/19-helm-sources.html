@@ -1,0 +1,20 @@
+<header><h1>Источники, проверенные факты и дальнейшие границы</h1><p>Текст и лаборатория авторские; версии и механика сверены с документацией и исходниками фиксированного выпуска.</p></header>
+
+<h2>Как читать источники</h2>
+<p>Ссылки в конце каждой главы привязаны к её механизму. Страницы официальной документации были проверены с индикатором 4.3.1 1 ноября 2026; ссылки source закреплены tag v4.3.1 и позволяют отличить фактическую реализацию от общей строки help. Если будущая документация по тому же URL показывает новую версию, повторно проверьте флаг своего binary через help. Ни текущая ветка main, ни поисковый snippet не заменяют выбранный release source.</p>
+<h2>Ключевые факты</h2>
+<ul>
+<li>Официальный release4.3.1 и SHA Linux amd64 — <a href="https://github.com/helm/helm/releases/tag/v4.3.1">release page</a>; реально скачанный executable сообщил v4.3.1+gc0d08d0.</li>
+<li>Текущая major4 и срок security-only ветки 3 — <a href="https://helm.sh/docs/overview/">overview</a> и <a href="https://helm.sh/blog/helm-v3-end-of-life/">EOL</a>.</li>
+<li>Порядок семейств --set — <a href="https://github.com/helm/helm/blob/v4.3.1/pkg/cli/values/options.go">MergeValues</a>, дополнительно реальный fixture.</li>
+<li>Условия reset/reuse/default upgrade — <a href="https://github.com/helm/helm/blob/v4.3.1/pkg/action/upgrade.go">reuseValues</a>; cluster upgrade не выполнялся.</li>
+<li>Граница install dry-run — <a href="https://github.com/helm/helm/blob/v4.3.1/pkg/action/install.go">RunWithContext</a>; возврат до изменения обычных ресурсов объяснён отдельно.</li>
+<li>JSON→gzip→base64 release storage — <a href="https://github.com/helm/helm/blob/v4.3.1/pkg/storage/driver/util.go">encoding source</a>; кодирование не названо шифрованием.</li>
+<li>Контекст языка — <a href="https://pkg.go.dev/text/template">спецификация text/template</a>, расширения — <a href="https://github.com/helm/helm/tree/v4.3.1/pkg/engine">engine Helm</a>.</li>
+</ul>
+<h2>Что не доказано этой редакцией</h2>
+<p>Реального Kubernetes-кластера не было: не исполнены admission, install/upgrade, wait watcher на настоящих workloads, запуск hooks, rollback, PVC binding/attach и lifecycle CRD. Не выполнены remote OCI push/login, подпись chart собственным key и GPG-проверка binary. Их рецепты имеют явные входы и критерии, но не выдуманный журнал успеха. Полный список выполненного и ограничений — в <a href="ПРОВЕРКИ.txt">ПРОВЕРКИ.txt</a> и <a href="labs/results.json">машинном отчёте</a>.</p>
+<h2>Разумное продолжение</h2>
+<p>Первый следующий эксперимент — тот же ledger release на личном kind/kubeadm по соседнему тому: последовательно установить, нарушить readiness, исправить, проверить test hook и rollback. Только после этих наблюдений стоит добавлять operator, CRD, admission policies или непростую БД. GitOps-controller позже может вызывать Helm render и иметь собственную историю применения; такая история не автоматически равна обычному release storage Helm. Это отдельная модель ownership и согласования состояния, а не дополнительный флаг текущего CLI.</p>
+
+<h2>Первичные источники и версия</h2><p>Проверено 1 ноября 2026; основной CLI Helm 4.3.1, chart API v2. <a href="https://github.com/helm/helm/releases">Helm releases</a>, <a href="https://helm.sh/docs/">Official docs</a>, <a href="https://github.com/helm/helm/tree/v4.3.1">Helm source tag4.3.1</a>.</p>

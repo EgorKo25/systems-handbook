@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ledger.fullname" . }}
+  labels:
+    {{- include "ledger.labels" . | nindent 4 }}
+data:
+  {{- include "ledger.configData" . | nindent 2 }}
+  operator-note.txt: |-
+    {{- .Files.Get "files/operator-note.txt" | nindent 4 }}

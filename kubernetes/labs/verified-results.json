@@ -1,0 +1,73 @@
+{
+  "checked": "2026-11-01",
+  "environment": {
+    "go": "1.27.3 linux/amd64",
+    "python": "3.12",
+    "PyYAML": "6.0.1",
+    "jsonschema": "4.10.3"
+  },
+  "checks": [
+    {
+      "check": "go test -race -count=1 ./...",
+      "exit_code": 0,
+      "output": "ok example.invalid/handbook/ledger-api 1.085s",
+      "scope": "stdlib handlers, concurrent counter, real loopback active-request graceful drain; not Kubernetes execution"
+    },
+    {
+      "check": "go vet ./...",
+      "exit_code": 0,
+      "output": ""
+    },
+    {
+      "check": "validate.py",
+      "exit_code": 0,
+      "output": "PASS: 4 optional Gateway/Envoy resources match pinned CRD shape; 8 optional core resources validated; CEL/admission/controller behavior NOT tested\nPASS: 15 authored Kubernetes objects match v1.36.6 OpenAPI subset; two negative cases rejected; API admission and cluster execution NOT tested"
+    },
+    {
+      "check": "test_bundle.py",
+      "exit_code": 0,
+      "output": "PASS: bundle round trip, corruption, absolute and parent path rejection"
+    },
+    {
+      "check": "check_sources.py",
+      "exit_code": 0,
+      "output": "PASS: 25 authored chapters, 18948 body words, 116 terms, 37 cards, 7 diagrams/42 steps; source links and IDs checked"
+    },
+    {
+      "check": "go static Linux build",
+      "exit_code": 0,
+      "output": ""
+    },
+    {
+      "check": "exact Calico offline transform",
+      "exit_code": 0,
+      "output": ""
+    },
+    {
+      "check": "Calico output invariants",
+      "exit_code": 0,
+      "output": "VXLAN Always, IPIP Never, explicit pool, private autodetection, eBPF false, matching --felix probe flags; cluster not executed"
+    },
+    {
+      "check": "optional metrics serving TLS artifact preparation",
+      "exit_code": 0,
+      "output": "Exact upstream APIService insecureSkipTLSVerify=true confirmed; transformed Deployment matches OpenAPI shape, TLS args/mount/fsGroup and caBundle,false assertions pass using an existing public CA. No private key created and no cluster install/TLS handshake executed."
+    }
+  ],
+  "not_executed": [
+    "Kubernetes cluster",
+    "kubeadm/kind bootstrap",
+    "container image build/run",
+    "privileged VM recipes",
+    "CNI/CSI/Gateway/metrics-server/HPA/drain/upgrade/restore"
+  ],
+  "schema": {
+    "kubernetes_source": "v1.36.6",
+    "referenced_definitions": 252,
+    "main_objects": 15,
+    "optional_core_objects": 8,
+    "gateway_crd_objects": 4,
+    "negative_cases": 2,
+    "limits": "JSON Schema shape; no Kubernetes CEL/defaulting/admission/authz/controller execution"
+  }
+}

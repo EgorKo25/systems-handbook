@@ -1,0 +1,17 @@
+[Unit]
+Description=Personal Nexus Repository lab
+After=network.target
+
+[Service]
+Type=forking
+User=nexus
+Group=nexus
+WorkingDirectory=/opt/sonatype/nexus
+LimitNOFILE=65536
+ExecStart=/opt/sonatype/nexus/bin/nexus start
+ExecStop=/opt/sonatype/nexus/bin/nexus stop
+Restart=on-abort
+TimeoutSec=600
+
+[Install]
+WantedBy=multi-user.target

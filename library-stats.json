@@ -58,7 +58,7 @@
   {
     "slug": "jenkins",
     "title": "Jenkins: от установки и плагинов до устройства и эксплуатации Pipeline",
-    "volume": "XII",
+    "volume": "XIII",
     "words": 30240,
     "chapters": 16,
     "terms": 88
@@ -66,7 +66,7 @@
   {
     "slug": "gitlab",
     "title": "GitLab: платформа, исполнение CI и эксплуатация",
-    "volume": "XIII",
+    "volume": "XIV",
     "words": 24553,
     "chapters": 18,
     "terms": 167
@@ -74,7 +74,7 @@
   {
     "slug": "practicum",
     "title": "Практикум: от своей сети до эксплуатации продукта",
-    "volume": "XIV",
+    "volume": "XVII",
     "words": 39953,
     "chapters": 26,
     "terms": 38
@@ -110,5 +110,29 @@
     "words": 86008,
     "chapters": 38,
     "terms": 268
+  },
+  {
+    "slug": "nexus",
+    "title": "Nexus Repository: артефакты, Go-модули и сохранение состояния",
+    "volume": "XII",
+    "words": 21858,
+    "chapters": 19,
+    "terms": 94
+  },
+  {
+    "slug": "kubernetes",
+    "title": "Kubernetes: от API до процесса, пакета и восстановления",
+    "volume": "XV",
+    "words": 26298,
+    "chapters": 26,
+    "terms": 130
+  },
+  {
+    "slug": "helm",
+    "title": "Helm: типы, шаблоны, пакеты и жизненный цикл релиза",
+    "volume": "XVI",
+    "words": 18365,
+    "chapters": 21,
+    "terms": 97
   }
 ]

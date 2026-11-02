@@ -1,0 +1,99 @@
+ГОТОВО К ИНТЕГРАЦИИ · NEXUS REPOSITORY · 1 ноября 2026
+
+СОСТАВ
+volume_config.py CONFIG: временный номер XIX, окончательный решает интегратор.
+18 HTML исходников,19 reader chapters с автоматическим словарём: маршрут,
+четыре внутренние книги, сквозной практикум N0–N8 и primary source map.
+sources/reference.py:91 авторский термин,17 зарегистрированных уникальных
+карточек Nexus launcher/lab/API (6 флагов своих lab helpers). Общие curl/Go
+флаги подробно объясняются в тексте и открываются существующей справкой.
+sources/diagrams.py:6 пошаговых автономных моделей,36 шагов: miss/hit,
+публикация module, auth в двух направлениях, client fallback, paired restore,
+promotion тех же bytes. Встроены по уникальным marker в объяснение.
+sources/source-ledger.json:49 первичных источников, дата2026-11-01.
+labs/: свой module ledger, HTTP-service pulse, module ZIP/manifest verifier,
+реальные Go/HTTP/file и byte-level h1 tests; VM конфиги отдельно.
+ПРОВЕРКИ.txt: фактическое выполнение vs статический разбор vs VM-рецепты.
+
+ПРОВЕРЕННЫЕ ВЕРСИИ И ГРАНИЦЫ
+Nexus CE3.97.3-01 (release27.10.2026): published links, Java21,
+Go hosted c3.93 CE/Pro и proxy/group, OCI c3.94, current usage/telemetry.
+Это выбранная поддержанная линия; archive не скачивался и сервер не запускался.
+H2+File standalone выбран явно; Pro/HA/backend/API не обещаются всем tiers.
+Обязательная telemetry3.97 и CE10days grace/read-only объяснены;
+нет предложений обхода, покупки облака или подмены неподдержанной старой версией.
+CE40000components/100000requests/day отделены от hardware capacity.
+SAT/Pro user tokens и Pro+PostgreSQL N-version retention не обещаются CE.
+Базовая CE cleanup availability по неоднозначным docs отмечена честно;
+практикум не зависит от скрытого наличия этой функции.
+VM профиль16GiB требует host с запасом сверх этого; для домашних8–16GiB
+есть реальная локальная Go-часть, без обещания полного сервера на малой RAM.
+
+РЕАЛЬНО ВЫПОЛНЕНО
+Go1.27.3 Linux/amd64 + Python3.12.3 stdlib:
+- labs/tests/results.json:20/20 (source test, real HTTP escaping/endpoints,
+  clean/warm client, отсутствующий upstream fixture,10 comma/pipe status cases,
+  go.sum tamper rejection, real HTTP service, symlink/corruption/restore).
+- labs/tests/h1-results.json:5/5 (независимые канонические bytes совпали с Go;
+  ZIP repack сохраняетh1; прежняя сумма отвергает новые bytes; first trust
+  без прежней суммы принимает; rename меняетh1).
+- labs/tests/tls-results.json:3/3, OpenSSL3.0.13: точный openssl fragment
+  исполнен только во временном каталоге, CA+SAN проверены, чужое имя отвергнуто.
+  Никакой host trust/service/DNS/ports не изменены.
+- labs/tests/source-results.json: source contracts и настоящий shared builder
+  в TemporaryDirectory PASS. Рендер не запускался в рабочем репозитории.
+Координатор независимо проверил snapshot всей библиотеки и reader search:
+Nexus ошибок/коллизий нет; его внешняя сводка не подменяет PROVERKI.
+
+НЕ ИСПОЛНЯЛОСЬ
+Nexus установка/процесс, actual Go hosted/raw/registry API, реальные роли,
+server caching/TTL/invalidation, DB+blob restore, cleanup/repair/upgrade,
+PostgreSQL/HA/object storage, telemetry acknowledgement, server load.
+Модели не выдаются за engine, raw не подменяет Go module proxy.
+Browser/touch/темы визуально здесь не проверялись.
+
+ДЕЙСТВИЯ ИНТЕГРАТОРА
+1. Назначить окончательный номер, зарегистрировать CONFIG в общем каталоге,
+   сохранить command_modules=['reference'], term_modules/diagram_modules.
+2. НЕ регистрировать sources/context-command-notes.py. Это только редакционные
+   заметки Go/curl/rsync/journalctl с flag-bearing names; добавление как COMMANDS
+   сломает longest-prefix lookup общих карточек. Полезный контекст можно позже
+   слить в существующую base card отдельным осмысленным shared изменением.
+3. Chapter IDs уже уникальны nexus (кроме00-route/99-glossary); соседние
+   maintained volumes/общие builders не менялись.
+4. После обычной интеграционной сборки проверить reader/navigation/поиск/
+   схемы в браузере, общий export/checksums/site в вашей области ответственности.
+   Самостоятельного build.py wrapper не добавлял, чтобы исключить запуск home.
+5. Исполнить VM-рецепт на подходящем личном стенде до заявления server-tested.
+
+Commit/push, общая регистрация/stats/home/catalog/workflow/checksums не делались.
+Владение соблюдено: изменён только nexus/. Нет секретов и личного пути Go.
+
+ДОПОЛНЕНИЕ К ИСТОРИЧЕСКОЙ СДАЧЕ · 2 ноября 2026
+Текущая source-only вычитка охватила все18 HTML в CONFIG-порядке,
+весь glossary/reference/context notes, все6 моделей36 шагов и все labs/config.
+Старые четыре results JSON сохранены без изменения как historical evidence.
+Новые helper ветви не объявляются повторно исполненными native тестами.
+
+Уточнены рабочий корень, local/VM paths, начало HTTPS/credential подготовки,
+NETRC и общее окружение Go-сессии, промежуточная граница go mod verify,
+права release-verifier, создание Raw и manifest до upload.
+Упаковщик получает --source/--version, сохраняет прежние версии и list;
+manifest явно получает --input-version и не перезаписывает output.
+Добавлен холодный backup с явными guard каждого stop/copy шага, retained
+INCOMPLETE state и ограничением одним выбранным H2/File экземпляром.
+Wait LISTEN читает неблокирующий pipe с deadline, EOF/exit/length проверками;
+cleanup обращается только к Popen собственного pulse. Hard reap deadline
+для процесса в неотзывном состоянии ядра не обещается.
+
+Справочник после дополнения:94 термина,18 собственных карточек,14 флагов.
+Сценарии карточек имеют reader-формат problem/explanation/solution.
+Прежние18 HTML/6моделей и anchors сохранены; общие renderer/registry не менялись.
+Предметную Nexus03 иллюстрацию координатор переносит отдельным guarded пакетом.
+
+Проверки этой передачи: только replay точных replacements, Python AST,
+HTML/source contracts, Bash syntax через stdin, pure in-memory helper/stub
+модели. Числа реального старого Go/HTTP/TLS прогона не переносятся на новую
+версию helper без повторного выполнения. Новый native Linux local_client,
+module multi-version + manifest output, cold_backup/restore и production
+reader/browser/mobile/print ещё нужно проверить в разрешённой среде.

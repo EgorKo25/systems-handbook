@@ -1,0 +1,105 @@
+{
+  "scope": "real Go + loopback HTTP + files; NOT Nexus server",
+  "checks": [
+    {
+      "name": "own source module tests",
+      "passed": true
+    },
+    {
+      "name": "uppercase module escape",
+      "passed": true,
+      "escaped": "example.invalid/!acme/ledger"
+    },
+    {
+      "name": "clean HTTP client reads actual module proxy layout",
+      "passed": true,
+      "requests": [
+        "/example.invalid/%21acme/ledger/@v/v1.0.0.zip",
+        "/example.invalid/%21acme/ledger/@v/v1.0.0.mod",
+        "/example.invalid/%21acme/ledger/@v/v1.0.0.info"
+      ],
+      "elapsed_ms": 39.47
+    },
+    {
+      "name": "warm client succeeds after HTTP upstream disappears",
+      "passed": true
+    },
+    {
+      "name": "clean client cannot resolve missing upstream with GOPROXY=off",
+      "passed": true
+    },
+    {
+      "name": "GOPROXY 404 ,",
+      "passed": true,
+      "fallback": true
+    },
+    {
+      "name": "GOPROXY 404 |",
+      "passed": true,
+      "fallback": true
+    },
+    {
+      "name": "GOPROXY 410 ,",
+      "passed": true,
+      "fallback": true
+    },
+    {
+      "name": "GOPROXY 410 |",
+      "passed": true,
+      "fallback": true
+    },
+    {
+      "name": "GOPROXY 401 ,",
+      "passed": true,
+      "fallback": false
+    },
+    {
+      "name": "GOPROXY 401 |",
+      "passed": true,
+      "fallback": true
+    },
+    {
+      "name": "GOPROXY 403 ,",
+      "passed": true,
+      "fallback": false
+    },
+    {
+      "name": "GOPROXY 403 |",
+      "passed": true,
+      "fallback": true
+    },
+    {
+      "name": "GOPROXY 500 ,",
+      "passed": true,
+      "fallback": false
+    },
+    {
+      "name": "GOPROXY 500 |",
+      "passed": true,
+      "fallback": true
+    },
+    {
+      "name": "existing go.sum rejects altered module source even with private sumdb exemption",
+      "passed": true
+    },
+    {
+      "name": "built binary serves real HTTP health/version/hello",
+      "passed": true,
+      "size_bytes": 8649118
+    },
+    {
+      "name": "manifest rejects symlink artifact",
+      "passed": true
+    },
+    {
+      "name": "same-size corruption rejected by manifest before execution",
+      "passed": true
+    },
+    {
+      "name": "local file backup restoration returns identical artifact",
+      "passed": true
+    }
+  ],
+  "go_version": "go version go1.27.3 linux/amd64",
+  "passed": 20
+}

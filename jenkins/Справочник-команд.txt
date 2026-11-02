@@ -5863,3 +5863,1995 @@ sonar-scanner -X
 Когда: Осмысленно переопределить настройку текущего анализа без постоянного изменения UI.
 sonar-scanner -Dsonar.projectKey=handbook-service
 Результат: Выбран ключ; аргумент имеет приоритет обычного файла проекта и не доказывает существования/прав проекта.
+
+/opt/sonatype/nexus/bin/nexus run
+Запустить Nexus foreground от выделенного пользователя. Меняет data-dir и может выполнять подготовку/миграцию БД; не запускать параллельно другому процессу с тем же состоянием.
+/opt/sonatype/nexus/bin/nexus run
+
+
+/opt/sonatype/nexus/bin/nexus status
+Исследовать состояние launcher/process выбранной установки. Не подтверждает успешный Go download или целостность всех blobs.
+/opt/sonatype/nexus/bin/nexus status
+
+
+/opt/sonatype/nexus/bin/nexus start
+Запустить фоновую службу выбранного standalone. В unit согласуется с Type=forking; успешный возврат ещё не приёмка приложения.
+/opt/sonatype/nexus/bin/nexus start
+
+
+/opt/sonatype/nexus/bin/nexus stop
+Запросить штатную остановку, прежде чем копировать H2 и соответствующие blobs. Проверить фактическое завершение JVM.
+/opt/sonatype/nexus/bin/nexus stop
+
+
+python3 labs/artifacts.py module
+Создать ZIP и статические proxy fixtures только нашего allowlist модуля. Это локальные файлы, не Go hosted Nexus.
+python3 labs/artifacts.py module --output КАТАЛОГ [--source КАТАЛОГ] [--version v1.MINOR.PATCH]
+--output <каталог> — Создать форматные файлы новой версии; list сохраняет прежние версии.
+Когда: Подготовка своего нового fixture.
+python3 labs/artifacts.py module --output lab-work/proxy
+Результат: Существующие .zip/.mod/.info этой версии отвергаются; частичный вывод сохраняется при ошибке.
+--source <каталог> — Прочитать go.mod, ledger.go и ledger_test.go из выбранной обычной директории.
+Когда: Отдельная копия исправленной библиотеки.
+python3 labs/artifacts.py module --source lab-work/ledger-v1.0.1 --version v1.0.1 --output lab-work/proxy
+Результат: Проверяются обычные файлы и исходный module path; чужой модуль этим allowlist не упаковывается.
+--version <v1.MINOR.PATCH> — Выбрать новую числовую major-v1 версию, prefix ZIP и имена протокола.
+Когда: Опубликовать исправление без изменения прошлой версии.
+python3 labs/artifacts.py module --version v1.0.1 --source lab-work/ledger-v1.0.1 --output lab-work/proxy
+Результат: По умолчанию v1.0.0; prerelease/pseudo-version этот ограниченный helper не поддерживает.
+-u — Отключить обычную буферизацию stdout/stderr Python.
+Когда: Уменьшить задержку сообщений в конвейере.
+python3 -u worker.py
+Результат: Записи не ждут обычного заполнения буфера Python; буферы следующей программы остаются отдельными.
+-B — Не записывать .pyc при импортах.
+Когда: Не оставлять новые кеши байткода в автономном комплекте.
+python3 -B linux_labs.py 01
+Результат: Лаборатория выполнится без обычной записи новых .pyc её импортов.
+
+python3 artifacts.py manifest
+Записать manifest выбранного Linux/amd64 бинарника с размером/SHA-256 и известными inputs. Версия/toolchain должны соответствовать реальности.
+python3 artifacts.py manifest --binary ФАЙЛ --version ВЕРСИЯ --toolchain СТРОКА --output ФАЙЛ [--input-version v1.MINOR.PATCH]
+--binary <файл> — Прочитать обычный файл результата и вычислить его размер и SHA-256.
+Когда: После сборки нашего pulse.
+python3 labs/artifacts.py manifest --binary labs/service/dist/pulse-linux-amd64 --version 1.0.0 --toolchain "go version go1.27.3 linux/amd64" --output labs/service/dist/manifest.json
+Результат: Symlink отвергается; содержимое не исполняется.
+--version <строка> — Записать сообщённую версию службы.
+Когда: Зафиксировать идентичность выпуска.
+python3 labs/artifacts.py manifest --binary labs/service/dist/pulse-linux-amd64 --version 1.0.0 --toolchain "go1.27.3 linux/amd64" --output labs/service/dist/manifest.json
+Результат: Helper не сверяет строку с исполняемым -version; это отдельная приёмка.
+--toolchain <строка> — Записать переданное описание toolchain.
+Когда: После фактического go version в том же окружении.
+python3 labs/artifacts.py manifest --binary labs/service/dist/pulse-linux-amd64 --version 1.0.0 --toolchain "$(go version)" --output labs/service/dist/manifest.json
+Результат: Строка не обнаруживается из бинарника; сравните go version -m отдельно.
+--input-version <v1.MINOR.PATCH> — Записать известную версию ledger в inputs.
+Когда: Когда служба действительно собиралась с обновлённой библиотекой.
+python3 labs/artifacts.py manifest --binary labs/service/dist/pulse-linux-amd64 --version 1.0.1 --toolchain "$(go version)" --input-version v1.0.1 --output labs/service/dist/manifest.json
+Результат: По умолчанию v1.0.0; выбранный module graph этот флаг не меняет.
+--output <файл> — Создать новый UTF-8 manifest, отличный от бинарника.
+Когда: Сохранить запись до upload.
+python3 labs/artifacts.py manifest --binary labs/service/dist/pulse-linux-amd64 --version 1.0.0 --toolchain "$(go version)" --output labs/service/dist/manifest.json
+Результат: Существующий output не перезаписывается; его отсутствие или новый каталог проверяют заранее.
+-u — Отключить обычную буферизацию stdout/stderr Python.
+Когда: Уменьшить задержку сообщений в конвейере.
+python3 -u worker.py
+Результат: Записи не ждут обычного заполнения буфера Python; буферы следующей программы остаются отдельными.
+-B — Не записывать .pyc при импортах.
+Когда: Не оставлять новые кеши байткода в автономном комплекте.
+python3 -B linux_labs.py 01
+Результат: Лаборатория выполнится без обычной записи новых .pyc её импортов.
+
+python3 artifacts.py verify
+Проверить ограниченный trusted manifest: basename, regular file, размер и SHA-256 до исполнения. Нет защиты от гонки с посторонним writer.
+python3 artifacts.py verify --manifest ФАЙЛ --directory КАТАЛОГ
+--manifest <файл> — Прочитать ожидаемые значения из доверенной записи.
+Когда: Проверка download/promotion/restore собственного artifact.
+python3 artifacts.py verify --manifest service/dist/manifest.json --directory service/dist
+Результат: Порча/unsafe name/symlink отвергаются; подлинность свободно заменяемого manifest не создаётся.
+--directory <каталог> — Искать basename из manifest только в данном bundle.
+Когда: Проверка отдельной download-копии.
+python3 labs/artifacts.py verify --manifest labs/service/dist/manifest.json --directory labs/service/dist
+Результат: Сравниваются тип, размер и SHA-256; защиты от параллельного постороннего writer нет.
+-u — Отключить обычную буферизацию stdout/stderr Python.
+Когда: Уменьшить задержку сообщений в конвейере.
+python3 -u worker.py
+Результат: Записи не ждут обычного заполнения буфера Python; буферы следующей программы остаются отдельными.
+-B — Не записывать .pyc при импортах.
+Когда: Не оставлять новые кеши байткода в автономном комплекте.
+python3 -B linux_labs.py 01
+Результат: Лаборатория выполнится без обычной записи новых .pyc её импортов.
+
+python3 labs/tests/local_client.py
+Выполнить настоящие Go/loopback HTTP/file проверки в собственном TemporaryDirectory. Не запускает Nexus и не меняет пользовательский go env.
+python3 labs/tests/local_client.py --go ПУТЬ [--report ФАЙЛ]
+--go <путь> — Выбрать подготовленный executable Go.
+Когда: Не скачивать/устанавливать toolchain внутри опыта.
+python3 labs/tests/local_client.py --go /path/to/prepared/go
+Результат: Placeholder заменяют своим путём; версия записывается в report.
+--report <файл> — Сохранить JSON результатов отдельно от stdout.
+Когда: Сохранить фактически выполненные checks.
+python3 labs/tests/local_client.py --go /path/to/prepared/go --report local-results.json
+Результат: Записывается только этот отчёт; timings loopback не sizing Nexus.
+-u — Отключить обычную буферизацию stdout/stderr Python.
+Когда: Уменьшить задержку сообщений в конвейере.
+python3 -u worker.py
+Результат: Записи не ждут обычного заполнения буфера Python; буферы следующей программы остаются отдельными.
+-B — Не записывать .pyc при импортах.
+Когда: Не оставлять новые кеши байткода в автономном комплекте.
+python3 -B linux_labs.py 01
+Результат: Лаборатория выполнится без обычной записи новых .pyc её импортов.
+
+python3 labs/h1_walk.py
+Пройти h1 до сводки bytes и сравнить с реальным Go: repack, mismatch, first trust и rename.
+python3 labs/h1_walk.py --go ПУТЬ [--output ФАЙЛ]
+--output <файл> — Сохранить реальные hashes/проверки fixture.
+Когда: Независимо повторить byte-level опыт.
+python3 labs/h1_walk.py --go /path/to/prepared/go --output h1-results.json
+Результат: Файлы создаются во временной области; никакой внешний sumdb или Nexus не проверялся.
+--go <путь> — Выбрать подготовленный исполняемый Go.
+Когда: Повтор byte-level опыта с записанной версией.
+python3 labs/h1_walk.py --go /path/to/prepared/go
+Результат: Placeholder заменяется реальным путём; toolchain автоматически не скачивается.
+-u — Отключить обычную буферизацию stdout/stderr Python.
+Когда: Уменьшить задержку сообщений в конвейере.
+python3 -u worker.py
+Результат: Записи не ждут обычного заполнения буфера Python; буферы следующей программы остаются отдельными.
+-B — Не записывать .pyc при импортах.
+Когда: Не оставлять новые кеши байткода в автономном комплекте.
+python3 -B linux_labs.py 01
+Результат: Лаборатория выполнится без обычной записи новых .pyc её импортов.
+
+systemctl stop nexus
+Остановить только свою службу в personal VM перед H2 backup. Нужны полномочия администратора этой VM.
+sudo systemctl stop nexus
+status — Действие: краткое состояние и доступные последние сообщения.
+Когда: Начать расследование службы.
+systemctl status example.service --no-pager
+Результат: Появятся состояние и PID; ненулевой статус может отражать неактивную единицу.
+cat — Действие: показать файлы единицы и дополнения.
+Когда: Найти ExecStart и drop-in.
+systemctl cat example.service
+Результат: Будет конфигурационный текст, а не все вычисленные свойства менеджера.
+show — Действие: показать свойства единицы у менеджера.
+Когда: Прочитать эффективные значения.
+systemctl show example.service -p MainPID -p WorkingDirectory
+Результат: Появятся пары свойство=значение для выбранных имён.
+-p ИМЯ — Выбрать свойство для поддерживающего действия, например show.
+Когда: Не просматривать весь список свойств.
+systemctl show example.service -p MainPID
+Результат: Появится выбранное свойство; -p можно повторять.
+--no-pager — Не запускать постраничный просмотрщик.
+Когда: Получить обычный поток вывода.
+systemctl --no-pager status example.service
+Результат: Вывод пойдёт непосредственно в терминал или перенаправление.
+
+systemctl start nexus
+Запустить настроенную службу своей VM и затем провести прикладную приёмку.
+sudo systemctl start nexus
+status — Действие: краткое состояние и доступные последние сообщения.
+Когда: Начать расследование службы.
+systemctl status example.service --no-pager
+Результат: Появятся состояние и PID; ненулевой статус может отражать неактивную единицу.
+cat — Действие: показать файлы единицы и дополнения.
+Когда: Найти ExecStart и drop-in.
+systemctl cat example.service
+Результат: Будет конфигурационный текст, а не все вычисленные свойства менеджера.
+show — Действие: показать свойства единицы у менеджера.
+Когда: Прочитать эффективные значения.
+systemctl show example.service -p MainPID -p WorkingDirectory
+Результат: Появятся пары свойство=значение для выбранных имён.
+-p ИМЯ — Выбрать свойство для поддерживающего действия, например show.
+Когда: Не просматривать весь список свойств.
+systemctl show example.service -p MainPID
+Результат: Появится выбранное свойство; -p можно повторять.
+--no-pager — Не запускать постраничный просмотрщик.
+Когда: Получить обычный поток вывода.
+systemctl --no-pager status example.service
+Результат: Вывод пойдёт непосредственно в терминал или перенаправление.
+
+GET /service/rest/v1/search/assets
+Протокольная операция поиска assets, не команда shell. Требует read/browse/search grants согласно версии; pagination обязательна до null.
+GET /service/rest/v1/search/assets?repository=raw-releases
+
+
+GET /service/rest/v1/status/check
+Получить зарегистрированные health checks своей установки. HTTP200 не гарантирует healthy каждого результата.
+GET /service/rest/v1/status/check
+
+
+GET /service/rest/metrics/data
+Прочитать JSON метрик актуальной ветки Nexus с нужными полномочиями. Не универсальный Prometheus endpoint.
+GET /service/rest/metrics/data
+
+
+DELETE /service/rest/v1/assets
+Удалить точно выбранный disposable asset ID через API собственной VM. Изменяющее действие; не dry-run и не rm в blobs.
+DELETE /service/rest/v1/assets/{id}
+
+
+PUT /repository/go-internal/v1.0.0.zip
+Публикация нового модуля в Go hosted CE3.97.3. Название repository — договор этого стенда, ZIP содержит original module@version prefix.
+PUT /repository/go-internal/v1.0.0.zip [body: module ZIP]
+
+
+PUT /repository/raw-candidates
+Отдельный HTTP PUT файла raw candidate. Несколько файлов не становятся одной атомарной транзакцией.
+PUT /repository/raw-candidates/pulse/1.0.0/linux-amd64/{file}
+
+
+bash cold_backup.sh
+Оригинальный рецепт только нашей H2/File VM. После проверенного stop последовательно копирует data, install, unit, NGINX и TLS; INCOMPLETE сохраняется при отказе.
+sudo bash cold_backup.sh snap-NNN
+-n — Проверить синтаксис без обычного выполнения.
+Когда: Раннее обнаружение незакрытых конструкций.
+bash -n task.sh
+Результат: Нулевой статус подтверждает разбор, но не существование команд и правильность алгоритма.
+-c ТЕКСТ — Прочитать программу из аргумента.
+Когда: Постоянная короткая программа с отдельными параметрами.
+bash -c 'printf "%s\n" "$1"' bash 'two words'
+Результат: Слово bash становится $0; значение two words — $1.
+--noprofile — Не читать файлы входа /etc/profile и первый подходящий ~/.bash_profile, ~/.bash_login или ~/.profile.
+Когда: Контролируемый запуск входной оболочки: интерактивной или с --login. Для обычной bash -c эти профили и так не читаются.
+bash --noprofile --login -c 'printf ready'
+Результат: Печатает ready без чтения профилей входа. Не очищает окружение и не запрещает BASH_ENV в неинтерактивной Bash. Файл завершения ~/.bash_logout этим флагом не отключается.
+--norc — Не читать файл настройки интерактивной невходной Bash: ~/.bashrc или выбранный --rcfile. Системный bashrc, если он включён в сборку дистрибутива, также подавляется.
+Когда: Создать интерактивную учебную оболочку без этих настроек. Флаг не заменяет --noprofile для входной оболочки.
+HISTFILE=/dev/null bash --norc -ic 'printf ready'
+Результат: Печатает ready; HISTFILE=/dev/null не сохраняет историю в личный файл. При запуске без терминала возможны сообщения управления заданиями в stderr. Для неинтерактивной bash -c флаг не отключает BASH_ENV; это отдельный механизм.
+--login — Режим чтения файлов входа.
+Когда: Изучить профиль и способ создания сеанса.
+bash --login
+Результат: Не является новой аутентификацией и не меняет права пользователя.
+
+kubectl
+Клиент API. Явно выбирает endpoint/identity/context; успех subcommand означает конкретную операцию, не работу приложения.
+kubectl [GLOBAL_FLAGS] COMMAND [ARGS]
+--context NAME — Выбрать context из kubeconfig.
+Когда: Каждая cluster команда практикума.
+kubectl --context "$LAB_CONTEXT" get nodes
+Результат: Использованы cluster/user выбранной связки; flag не добавляет прав.
+--namespace NAME, -n NAME — Выбрать namespace для namespaced операции.
+Когда: Отделить lab от helm-lab.
+kubectl --context "$LAB_CONTEXT" -n lab get pods
+Результат: Не влияет на cluster-scoped Node/CRD; -A у list имеет другой смысл.
+--kubeconfig FILE — Выбрать файл конфигурации клиента.
+Когда: Частный ограниченный клиент.
+kubectl --context "$LAB_CONTEXT" --kubeconfig ./private-investigator.conf -n lab get pods
+Результат: Файл может содержать keys/exec plugin; до использования проверить доверие.
+--request-timeout DURATION — Ограничить ожидание одного server request.
+Когда: Отличить зависшее соединение от долгого rollout.
+kubectl --request-timeout=10s --context "$LAB_CONTEXT" get nodes
+Результат: Не является общим deadline всех действий сложной команды.
+
+kubectl version
+Показать client/server versions. --client не обращается за версией сервера.
+kubectl version [--client] [-o yaml]
+--client — Показать только клиент.
+Когда: Проверка скачанного binary без кластера.
+kubectl --context "$LAB_CONTEXT" version --client -o yaml
+Результат: Не доказывает server version; сравнить с kubectl version на принятом cluster.
+--context NAME — Выбрать context из kubeconfig.
+Когда: Каждая cluster команда практикума.
+kubectl --context "$LAB_CONTEXT" get nodes
+Результат: Использованы cluster/user выбранной связки; flag не добавляет прав.
+--namespace NAME, -n NAME — Выбрать namespace для namespaced операции.
+Когда: Отделить lab от helm-lab.
+kubectl --context "$LAB_CONTEXT" -n lab get pods
+Результат: Не влияет на cluster-scoped Node/CRD; -A у list имеет другой смысл.
+--kubeconfig FILE — Выбрать файл конфигурации клиента.
+Когда: Частный ограниченный клиент.
+kubectl --context "$LAB_CONTEXT" --kubeconfig ./private-investigator.conf -n lab get pods
+Результат: Файл может содержать keys/exec plugin; до использования проверить доверие.
+--request-timeout DURATION — Ограничить ожидание одного server request.
+Когда: Отличить зависшее соединение от долгого rollout.
+kubectl --request-timeout=10s --context "$LAB_CONTEXT" get nodes
+Результат: Не является общим deadline всех действий сложной команды.
+
+kubectl config
+Управлять локальными kubeconfig contexts, не менять privileges cluster.
+kubectl config SUBCOMMAND
+current-context — Показать текущее локальное имя.
+Когда: Контроль перед операцией.
+kubectl --context "$LAB_CONTEXT" config current-context
+Результат: Имя само не доказывает правильность endpoint.
+view --minify — Показать текущую связку.
+Когда: Проверить server/namespace без лишних contexts.
+kubectl --context "$LAB_CONTEXT" config view --minify
+Результат: Не добавляйте --raw в публикуемый вывод: возможны credentials.
+rename-context OLD NEW — Переименовать локальный context.
+Когда: Назначить handbook-admin один раз.
+kubectl --context "$LAB_CONTEXT" config rename-context kubernetes-admin@handbook handbook-admin
+Результат: Cluster и user на сервере не меняются.
+--context NAME — Выбрать context из kubeconfig.
+Когда: Каждая cluster команда практикума.
+kubectl --context "$LAB_CONTEXT" get nodes
+Результат: Использованы cluster/user выбранной связки; flag не добавляет прав.
+--namespace NAME, -n NAME — Выбрать namespace для namespaced операции.
+Когда: Отделить lab от helm-lab.
+kubectl --context "$LAB_CONTEXT" -n lab get pods
+Результат: Не влияет на cluster-scoped Node/CRD; -A у list имеет другой смысл.
+--kubeconfig FILE — Выбрать файл конфигурации клиента.
+Когда: Частный ограниченный клиент.
+kubectl --context "$LAB_CONTEXT" --kubeconfig ./private-investigator.conf -n lab get pods
+Результат: Файл может содержать keys/exec plugin; до использования проверить доверие.
+--request-timeout DURATION — Ограничить ожидание одного server request.
+Когда: Отличить зависшее соединение от долгого rollout.
+kubectl --request-timeout=10s --context "$LAB_CONTEXT" get nodes
+Результат: Не является общим deadline всех действий сложной команды.
+
+kubectl get
+Читать API objects; формат влияет на объём и пригодность анализа.
+kubectl get RESOURCE [NAME] [FLAGS]
+-o wide — Добавить удобные поля.
+Когда: Увидеть node/IP Pods.
+kubectl --context "$LAB_CONTEXT" -n lab get pods -o wide
+Результат: Краткая таблица не содержит всех conditions и не фиксирует историю.
+-o yaml, -o json — Получить структурированный server object.
+Когда: UID/resourceVersion/status/managedFields.
+kubectl --context "$LAB_CONTEXT" -n lab get deployment ledger-api -o yaml
+Результат: Может раскрывать чувствительные значения; export не равен чистому desired manifest.
+-l SELECTOR — Отфильтровать по labels.
+Когда: Сопоставить Service selector.
+kubectl --context "$LAB_CONTEXT" -n lab get pods -l app=ledger-api
+Результат: Labels не ownerReferences и не самостоятельная auth identity.
+--watch, -w — Продолжить наблюдение.
+Когда: Увидеть переходы вместо repeated list.
+kubectl --context "$LAB_CONTEXT" -n lab get pods -l app=ledger-api -w
+Результат: Ctrl+C закрывает watch; не durable event queue.
+--show-managed-fields — Включить managedFields в output.
+Когда: Расследовать SSA conflict.
+kubectl --context "$LAB_CONTEXT" -n lab get configmap ownership-demo -o yaml --show-managed-fields
+Результат: Объём больше; это ownership полей, не полный журнал значений.
+--context NAME — Выбрать context из kubeconfig.
+Когда: Каждая cluster команда практикума.
+kubectl --context "$LAB_CONTEXT" get nodes
+Результат: Использованы cluster/user выбранной связки; flag не добавляет прав.
+--namespace NAME, -n NAME — Выбрать namespace для namespaced операции.
+Когда: Отделить lab от helm-lab.
+kubectl --context "$LAB_CONTEXT" -n lab get pods
+Результат: Не влияет на cluster-scoped Node/CRD; -A у list имеет другой смысл.
+--kubeconfig FILE — Выбрать файл конфигурации клиента.
+Когда: Частный ограниченный клиент.
+kubectl --context "$LAB_CONTEXT" --kubeconfig ./private-investigator.conf -n lab get pods
+Результат: Файл может содержать keys/exec plugin; до использования проверить доверие.
+--request-timeout DURATION — Ограничить ожидание одного server request.
+Когда: Отличить зависшее соединение от долгого rollout.
+kubectl --request-timeout=10s --context "$LAB_CONTEXT" get nodes
+Результат: Не является общим deadline всех действий сложной команды.
+
+kubectl describe
+Собрать подробности и Events по объекту. Не полный исторический журнал.
+kubectl describe RESOURCE NAME
+--context NAME — Выбрать context из kubeconfig.
+Когда: Каждая cluster команда практикума.
+kubectl --context "$LAB_CONTEXT" get nodes
+Результат: Использованы cluster/user выбранной связки; flag не добавляет прав.
+--namespace NAME, -n NAME — Выбрать namespace для namespaced операции.
+Когда: Отделить lab от helm-lab.
+kubectl --context "$LAB_CONTEXT" -n lab get pods
+Результат: Не влияет на cluster-scoped Node/CRD; -A у list имеет другой смысл.
+--kubeconfig FILE — Выбрать файл конфигурации клиента.
+Когда: Частный ограниченный клиент.
+kubectl --context "$LAB_CONTEXT" --kubeconfig ./private-investigator.conf -n lab get pods
+Результат: Файл может содержать keys/exec plugin; до использования проверить доверие.
+--request-timeout DURATION — Ограничить ожидание одного server request.
+Когда: Отличить зависшее соединение от долгого rollout.
+kubectl --request-timeout=10s --context "$LAB_CONTEXT" get nodes
+Результат: Не является общим deadline всех действий сложной команды.
+
+kubectl explain
+Показать schema поля от доступного API discovery.
+kubectl explain RESOURCE.FIELD [--recursive]
+--recursive — Развернуть nested поля.
+Когда: Исследовать небольшую ветвь schema.
+kubectl --context "$LAB_CONTEXT" explain deployment.spec.strategy --recursive
+Результат: Не объясняет все runtime defaults и не гарантирует readiness.
+--context NAME — Выбрать context из kubeconfig.
+Когда: Каждая cluster команда практикума.
+kubectl --context "$LAB_CONTEXT" get nodes
+Результат: Использованы cluster/user выбранной связки; flag не добавляет прав.
+--namespace NAME, -n NAME — Выбрать namespace для namespaced операции.
+Когда: Отделить lab от helm-lab.
+kubectl --context "$LAB_CONTEXT" -n lab get pods
+Результат: Не влияет на cluster-scoped Node/CRD; -A у list имеет другой смысл.
+--kubeconfig FILE — Выбрать файл конфигурации клиента.
+Когда: Частный ограниченный клиент.
+kubectl --context "$LAB_CONTEXT" --kubeconfig ./private-investigator.conf -n lab get pods
+Результат: Файл может содержать keys/exec plugin; до использования проверить доверие.
+--request-timeout DURATION — Ограничить ожидание одного server request.
+Когда: Отличить зависшее соединение от долгого rollout.
+kubectl --request-timeout=10s --context "$LAB_CONTEXT" get nodes
+Результат: Не является общим deadline всех действий сложной команды.
+
+kubectl apply
+Передать declarative intent; создать/изменить objects и ownership по выбранному режиму.
+kubectl apply -f FILE [FLAGS]
+-f FILE — Прочитать manifests из файла/каталога.
+Когда: Контролируемый набор исходников.
+kubectl --context "$LAB_CONTEXT" -n lab apply -f manifests/10-app.yaml
+Результат: Multi-document apply не одна атомарная транзакция; часть могла примениться до отказа.
+--server-side — Выполнить SSA на server.
+Когда: Управлять полями с ownership.
+kubectl --context "$LAB_CONTEXT" -n lab apply --server-side --field-manager=handbook -f manifests/10-app.yaml
+Результат: Conflict требует согласования владельцев, не автоматического force.
+--field-manager NAME — Назвать manager полей.
+Когда: Стабильное авторство intent.
+kubectl --context "$LAB_CONTEXT" apply --server-side --field-manager=handbook -f manifests/10-app.yaml
+Результат: Не новая server identity/RBAC роль.
+--dry-run=server — Проверить серверный путь без сохранения.
+Когда: Schema/admission проверки перед write.
+kubectl --context "$LAB_CONTEXT" apply --dry-run=server --server-side -f manifests/10-app.yaml
+Результат: Не запускает Pods. В отличие от client dry-run использует server checks.
+--dry-run=client — Ограничить dry-run клиентской обработкой.
+Когда: Получить manifest/generator output.
+kubectl --context "$LAB_CONTEXT" create configmap demo --from-literal=a=b --dry-run=client -o yaml
+Результат: Не доказывает принятие API; некоторые операции всё ещё требуют discovery.
+--force-conflicts — Принудительно перенять конфликтующие поля SSA.
+Когда: Только осознанная передача ownership на отдельном demo.
+kubectl --context "$LAB_CONTEXT" apply --server-side --field-manager=bookB --force-conflicts -f vm/ownership-b.yaml
+Результат: Изменяет ownership/значения; следующая запись старого manager может конфликтовать.
+--context NAME — Выбрать context из kubeconfig.
+Когда: Каждая cluster команда практикума.
+kubectl --context "$LAB_CONTEXT" get nodes
+Результат: Использованы cluster/user выбранной связки; flag не добавляет прав.
+--namespace NAME, -n NAME — Выбрать namespace для namespaced операции.
+Когда: Отделить lab от helm-lab.
+kubectl --context "$LAB_CONTEXT" -n lab get pods
+Результат: Не влияет на cluster-scoped Node/CRD; -A у list имеет другой смысл.
+--kubeconfig FILE — Выбрать файл конфигурации клиента.
+Когда: Частный ограниченный клиент.
+kubectl --context "$LAB_CONTEXT" --kubeconfig ./private-investigator.conf -n lab get pods
+Результат: Файл может содержать keys/exec plugin; до использования проверить доверие.
+--request-timeout DURATION — Ограничить ожидание одного server request.
+Когда: Отличить зависшее соединение от долгого rollout.
+kubectl --request-timeout=10s --context "$LAB_CONTEXT" get nodes
+Результат: Не является общим deadline всех действий сложной команды.
+
+kubectl diff
+Сравнить live и предполагаемый desired; не применяет изменение.
+kubectl diff [-f FILE] [--server-side]
+--server-side — Сравнить через server-side apply path.
+Когда: Перед тем же SSA apply.
+kubectl --context "$LAB_CONTEXT" diff --server-side --field-manager=handbook -f manifests/10-app.yaml
+Результат: Exit0 нет diff,1 есть diff,>1 ошибка; секреты могут попасть в вывод.
+--context NAME — Выбрать context из kubeconfig.
+Когда: Каждая cluster команда практикума.
+kubectl --context "$LAB_CONTEXT" get nodes
+Результат: Использованы cluster/user выбранной связки; flag не добавляет прав.
+--namespace NAME, -n NAME — Выбрать namespace для namespaced операции.
+Когда: Отделить lab от helm-lab.
+kubectl --context "$LAB_CONTEXT" -n lab get pods
+Результат: Не влияет на cluster-scoped Node/CRD; -A у list имеет другой смысл.
+--kubeconfig FILE — Выбрать файл конфигурации клиента.
+Когда: Частный ограниченный клиент.
+kubectl --context "$LAB_CONTEXT" --kubeconfig ./private-investigator.conf -n lab get pods
+Результат: Файл может содержать keys/exec plugin; до использования проверить доверие.
+--request-timeout DURATION — Ограничить ожидание одного server request.
+Когда: Отличить зависшее соединение от долгого rollout.
+kubectl --request-timeout=10s --context "$LAB_CONTEXT" get nodes
+Результат: Не является общим deadline всех действий сложной команды.
+
+kubectl patch
+Изменить часть объекта по явно выбранной patch semantics.
+kubectl patch RESOURCE NAME --type TYPE -p PATCH
+--type=merge — JSON Merge Patch semantics.
+Когда: Небольшой ConfigMap map update.
+kubectl --context "$LAB_CONTEXT" -n lab patch configmap ledger-config --type=merge -p '{"data":{"MESSAGE":"second"}}'
+Результат: Списки заменяются по merge semantics; не путать со strategic merge.
+--type=json — JSON Patch operations.
+Когда: Точный path на заранее проверенной форме.
+kubectl --context "$LAB_CONTEXT" -n lab patch deployment ledger-api --type=json -p '[{"op":"replace","path":"/spec/template/spec/containers/0/readinessProbe/httpGet/path","value":"/missing-readyz"}]'
+Результат: Индекс0 хрупок при изменении списка; сначала проверьте container.name.
+--context NAME — Выбрать context из kubeconfig.
+Когда: Каждая cluster команда практикума.
+kubectl --context "$LAB_CONTEXT" get nodes
+Результат: Использованы cluster/user выбранной связки; flag не добавляет прав.
+--namespace NAME, -n NAME — Выбрать namespace для namespaced операции.
+Когда: Отделить lab от helm-lab.
+kubectl --context "$LAB_CONTEXT" -n lab get pods
+Результат: Не влияет на cluster-scoped Node/CRD; -A у list имеет другой смысл.
+--kubeconfig FILE — Выбрать файл конфигурации клиента.
+Когда: Частный ограниченный клиент.
+kubectl --context "$LAB_CONTEXT" --kubeconfig ./private-investigator.conf -n lab get pods
+Результат: Файл может содержать keys/exec plugin; до использования проверить доверие.
+--request-timeout DURATION — Ограничить ожидание одного server request.
+Когда: Отличить зависшее соединение от долгого rollout.
+kubectl --request-timeout=10s --context "$LAB_CONTEXT" get nodes
+Результат: Не является общим deadline всех действий сложной команды.
+
+kubectl replace
+Отправить полную замену object; stale resourceVersion вызывает409.
+kubectl replace -f FILE
+--context NAME — Выбрать context из kubeconfig.
+Когда: Каждая cluster команда практикума.
+kubectl --context "$LAB_CONTEXT" get nodes
+Результат: Использованы cluster/user выбранной связки; flag не добавляет прав.
+--namespace NAME, -n NAME — Выбрать namespace для namespaced операции.
+Когда: Отделить lab от helm-lab.
+kubectl --context "$LAB_CONTEXT" -n lab get pods
+Результат: Не влияет на cluster-scoped Node/CRD; -A у list имеет другой смысл.
+--kubeconfig FILE — Выбрать файл конфигурации клиента.
+Когда: Частный ограниченный клиент.
+kubectl --context "$LAB_CONTEXT" --kubeconfig ./private-investigator.conf -n lab get pods
+Результат: Файл может содержать keys/exec plugin; до использования проверить доверие.
+--request-timeout DURATION — Ограничить ожидание одного server request.
+Когда: Отличить зависшее соединение от долгого rollout.
+kubectl --request-timeout=10s --context "$LAB_CONTEXT" get nodes
+Результат: Не является общим deadline всех действий сложной команды.
+
+kubectl delete
+Удалить API object по выбранному lifecycle. Может запустить finalizers/garbage collection.
+kubectl delete RESOURCE NAME [FLAGS]
+--cascade=background — Удалить owner, затем dependents асинхронно.
+Когда: Изучение графа на своих ресурсах.
+kubectl --context "$LAB_CONTEXT" -n lab delete deployment demo --cascade=background
+Результат: Не удаляет все одноимённые Secret/данные автоматически.
+--cascade=orphan — Сохранить dependents.
+Когда: Осознанный отдельный owner lifecycle experiment.
+kubectl --context "$LAB_CONTEXT" -n lab delete deployment demo --cascade=orphan
+Результат: Оставшиеся Pods/ReplicaSet продолжают существовать; нужен план дальнейшего владельца.
+--force --grace-period=0 — Удалить запись без обычного ожидания завершения.
+Когда: Только при доказанном fencing и восстановлении.
+kubectl --context "$LAB_CONTEXT" -n lab delete pod isolated-demo --force --grace-period=0
+Результат: Не доказывает остановку процесса на недоступном node; опасно для stateful identity.
+--context NAME — Выбрать context из kubeconfig.
+Когда: Каждая cluster команда практикума.
+kubectl --context "$LAB_CONTEXT" get nodes
+Результат: Использованы cluster/user выбранной связки; flag не добавляет прав.
+--namespace NAME, -n NAME — Выбрать namespace для namespaced операции.
+Когда: Отделить lab от helm-lab.
+kubectl --context "$LAB_CONTEXT" -n lab get pods
+Результат: Не влияет на cluster-scoped Node/CRD; -A у list имеет другой смысл.
+--kubeconfig FILE — Выбрать файл конфигурации клиента.
+Когда: Частный ограниченный клиент.
+kubectl --context "$LAB_CONTEXT" --kubeconfig ./private-investigator.conf -n lab get pods
+Результат: Файл может содержать keys/exec plugin; до использования проверить доверие.
+--request-timeout DURATION — Ограничить ожидание одного server request.
+Когда: Отличить зависшее соединение от долгого rollout.
+kubectl --request-timeout=10s --context "$LAB_CONTEXT" get nodes
+Результат: Не является общим deadline всех действий сложной команды.
+
+kubectl logs
+Читать доступные container logs через API/kubelet; не восстанавливает потерянный node disk.
+kubectl logs POD [-c CONTAINER] [FLAGS]
+-c NAME — Выбрать container.
+Когда: Отделить api от init/sidecar.
+kubectl --context "$LAB_CONTEXT" -n lab logs POD_NAME -c api
+Результат: Требуется pods/log access, не pods/exec.
+--previous — Читать предыдущий доступный экземпляр container.
+Когда: CrashLoop диагностика.
+kubectl --context "$LAB_CONTEXT" -n lab logs POD_NAME -c api --previous --tail=100
+Результат: Отличается от текущего logs; не архив всех revisions.
+--since DURATION --timestamps — Ограничить время и добавить stamps.
+Когда: Корреляция с Events.
+kubectl --context "$LAB_CONTEXT" -n lab logs POD_NAME -c api --since=10m --timestamps
+Результат: Ротация/потеря старых bytes остаётся; чувствительные данные защитить.
+--follow, -f — Продолжать чтение потока.
+Когда: Короткое наблюдение своего запроса.
+kubectl --context "$LAB_CONTEXT" -n lab logs POD_NAME -c api -f
+Результат: Нужен выходCtrl+C; новый Pod UID не та же бесконечная история.
+--context NAME — Выбрать context из kubeconfig.
+Когда: Каждая cluster команда практикума.
+kubectl --context "$LAB_CONTEXT" get nodes
+Результат: Использованы cluster/user выбранной связки; flag не добавляет прав.
+--namespace NAME, -n NAME — Выбрать namespace для namespaced операции.
+Когда: Отделить lab от helm-lab.
+kubectl --context "$LAB_CONTEXT" -n lab get pods
+Результат: Не влияет на cluster-scoped Node/CRD; -A у list имеет другой смысл.
+--kubeconfig FILE — Выбрать файл конфигурации клиента.
+Когда: Частный ограниченный клиент.
+kubectl --context "$LAB_CONTEXT" --kubeconfig ./private-investigator.conf -n lab get pods
+Результат: Файл может содержать keys/exec plugin; до использования проверить доверие.
+--request-timeout DURATION — Ограничить ожидание одного server request.
+Когда: Отличить зависшее соединение от долгого rollout.
+kubectl --request-timeout=10s --context "$LAB_CONTEXT" get nodes
+Результат: Не является общим deadline всех действий сложной команды.
+
+kubectl rollout status
+Ждать статуса rollout конкретного workload.
+kubectl rollout status deployment/NAME --timeout=DURATION
+--timeout DURATION — Ограничить client ожидание.
+Когда: Не зависать при broken readiness.
+kubectl --context "$LAB_CONTEXT" -n lab rollout status deployment/ledger-api --timeout=120s
+Результат: Timeout не откатывает Deployment; status/Events объясняют сохранённое состояние.
+--context NAME — Выбрать context из kubeconfig.
+Когда: Каждая cluster команда практикума.
+kubectl --context "$LAB_CONTEXT" get nodes
+Результат: Использованы cluster/user выбранной связки; flag не добавляет прав.
+--namespace NAME, -n NAME — Выбрать namespace для namespaced операции.
+Когда: Отделить lab от helm-lab.
+kubectl --context "$LAB_CONTEXT" -n lab get pods
+Результат: Не влияет на cluster-scoped Node/CRD; -A у list имеет другой смысл.
+--kubeconfig FILE — Выбрать файл конфигурации клиента.
+Когда: Частный ограниченный клиент.
+kubectl --context "$LAB_CONTEXT" --kubeconfig ./private-investigator.conf -n lab get pods
+Результат: Файл может содержать keys/exec plugin; до использования проверить доверие.
+--request-timeout DURATION — Ограничить ожидание одного server request.
+Когда: Отличить зависшее соединение от долгого rollout.
+kubectl --request-timeout=10s --context "$LAB_CONTEXT" get nodes
+Результат: Не является общим deadline всех действий сложной команды.
+
+kubectl rollout restart
+Изменить template annotation для пересоздания Pods.
+kubectl rollout restart deployment/NAME
+--context NAME — Выбрать context из kubeconfig.
+Когда: Каждая cluster команда практикума.
+kubectl --context "$LAB_CONTEXT" get nodes
+Результат: Использованы cluster/user выбранной связки; flag не добавляет прав.
+--namespace NAME, -n NAME — Выбрать namespace для namespaced операции.
+Когда: Отделить lab от helm-lab.
+kubectl --context "$LAB_CONTEXT" -n lab get pods
+Результат: Не влияет на cluster-scoped Node/CRD; -A у list имеет другой смысл.
+--kubeconfig FILE — Выбрать файл конфигурации клиента.
+Когда: Частный ограниченный клиент.
+kubectl --context "$LAB_CONTEXT" --kubeconfig ./private-investigator.conf -n lab get pods
+Результат: Файл может содержать keys/exec plugin; до использования проверить доверие.
+--request-timeout DURATION — Ограничить ожидание одного server request.
+Когда: Отличить зависшее соединение от долгого rollout.
+kubectl --request-timeout=10s --context "$LAB_CONTEXT" get nodes
+Результат: Не является общим deadline всех действий сложной команды.
+
+kubectl rollout history
+Показать доступные revisions workload.
+kubectl rollout history deployment/NAME [--revision=N]
+--context NAME — Выбрать context из kubeconfig.
+Когда: Каждая cluster команда практикума.
+kubectl --context "$LAB_CONTEXT" get nodes
+Результат: Использованы cluster/user выбранной связки; flag не добавляет прав.
+--namespace NAME, -n NAME — Выбрать namespace для namespaced операции.
+Когда: Отделить lab от helm-lab.
+kubectl --context "$LAB_CONTEXT" -n lab get pods
+Результат: Не влияет на cluster-scoped Node/CRD; -A у list имеет другой смысл.
+--kubeconfig FILE — Выбрать файл конфигурации клиента.
+Когда: Частный ограниченный клиент.
+kubectl --context "$LAB_CONTEXT" --kubeconfig ./private-investigator.conf -n lab get pods
+Результат: Файл может содержать keys/exec plugin; до использования проверить доверие.
+--request-timeout DURATION — Ограничить ожидание одного server request.
+Когда: Отличить зависшее соединение от долгого rollout.
+kubectl --request-timeout=10s --context "$LAB_CONTEXT" get nodes
+Результат: Не является общим deadline всех действий сложной команды.
+
+kubectl rollout undo
+Вернуть старую Pod template revision.
+kubectl rollout undo deployment/NAME --to-revision=N
+--to-revision N — Явно выбрать сохранённую revision.
+Когда: Контролируемый template rollback.
+kubectl --context "$LAB_CONTEXT" -n lab rollout undo deployment/ledger-api --to-revision=1
+Результат: Не откатывает mutable ConfigMap content, БД или внешние side effects.
+--context NAME — Выбрать context из kubeconfig.
+Когда: Каждая cluster команда практикума.
+kubectl --context "$LAB_CONTEXT" get nodes
+Результат: Использованы cluster/user выбранной связки; flag не добавляет прав.
+--namespace NAME, -n NAME — Выбрать namespace для namespaced операции.
+Когда: Отделить lab от helm-lab.
+kubectl --context "$LAB_CONTEXT" -n lab get pods
+Результат: Не влияет на cluster-scoped Node/CRD; -A у list имеет другой смысл.
+--kubeconfig FILE — Выбрать файл конфигурации клиента.
+Когда: Частный ограниченный клиент.
+kubectl --context "$LAB_CONTEXT" --kubeconfig ./private-investigator.conf -n lab get pods
+Результат: Файл может содержать keys/exec plugin; до использования проверить доверие.
+--request-timeout DURATION — Ограничить ожидание одного server request.
+Когда: Отличить зависшее соединение от долгого rollout.
+kubectl --request-timeout=10s --context "$LAB_CONTEXT" get nodes
+Результат: Не является общим deadline всех действий сложной команды.
+
+kubectl scale
+Изменить scale target replicas; не создаёт machines.
+kubectl scale deployment/NAME --replicas=N
+--replicas N — Желаемое число экземпляров.
+Когда: Ручной опыт при отключённом HPA.
+kubectl --context "$LAB_CONTEXT" -n lab scale deployment/ledger-api --replicas=2
+Результат: HPA или следующий apply могут изменить replicas снова; требуется capacity.
+--context NAME — Выбрать context из kubeconfig.
+Когда: Каждая cluster команда практикума.
+kubectl --context "$LAB_CONTEXT" get nodes
+Результат: Использованы cluster/user выбранной связки; flag не добавляет прав.
+--namespace NAME, -n NAME — Выбрать namespace для namespaced операции.
+Когда: Отделить lab от helm-lab.
+kubectl --context "$LAB_CONTEXT" -n lab get pods
+Результат: Не влияет на cluster-scoped Node/CRD; -A у list имеет другой смысл.
+--kubeconfig FILE — Выбрать файл конфигурации клиента.
+Когда: Частный ограниченный клиент.
+kubectl --context "$LAB_CONTEXT" --kubeconfig ./private-investigator.conf -n lab get pods
+Результат: Файл может содержать keys/exec plugin; до использования проверить доверие.
+--request-timeout DURATION — Ограничить ожидание одного server request.
+Когда: Отличить зависшее соединение от долгого rollout.
+kubectl --request-timeout=10s --context "$LAB_CONTEXT" get nodes
+Результат: Не является общим deadline всех действий сложной команды.
+
+kubectl port-forward
+Прокинуть локальный TCP порт через API/kubelet к выбранному Pod.
+kubectl port-forward service/NAME LOCAL:REMOTE [FLAGS]
+--address 127.0.0.1 — Ограничить listener loopback.
+Когда: Локальная проверка без публикации в LAN.
+kubectl --context "$LAB_CONTEXT" -n lab port-forward service/ledger-api 18080:80 --address=127.0.0.1
+Результат: Не доказывает Service dataplane/NetworkPolicy. --address=0.0.0.0 расширил бы доступ к listener и требует отдельного решения.
+--context NAME — Выбрать context из kubeconfig.
+Когда: Каждая cluster команда практикума.
+kubectl --context "$LAB_CONTEXT" get nodes
+Результат: Использованы cluster/user выбранной связки; flag не добавляет прав.
+--namespace NAME, -n NAME — Выбрать namespace для namespaced операции.
+Когда: Отделить lab от helm-lab.
+kubectl --context "$LAB_CONTEXT" -n lab get pods
+Результат: Не влияет на cluster-scoped Node/CRD; -A у list имеет другой смысл.
+--kubeconfig FILE — Выбрать файл конфигурации клиента.
+Когда: Частный ограниченный клиент.
+kubectl --context "$LAB_CONTEXT" --kubeconfig ./private-investigator.conf -n lab get pods
+Результат: Файл может содержать keys/exec plugin; до использования проверить доверие.
+--request-timeout DURATION — Ограничить ожидание одного server request.
+Когда: Отличить зависшее соединение от долгого rollout.
+kubectl --request-timeout=10s --context "$LAB_CONTEXT" get nodes
+Результат: Не является общим deadline всех действий сложной команды.
+
+kubectl exec
+Запустить команду в контейнере через API/runtime. Меняющие команды меняют приложение/файлы.
+kubectl exec POD -c NAME -- COMMAND [ARGS]
+-- — Завершить kubectl options, далее argv процесса.
+Когда: Не спутать флаг программы с kubectl.
+kubectl --context "$LAB_CONTEXT" -n lab exec client-allowed -c tools -- cat /etc/resolv.conf
+Результат: Scratch api не содержит cat/sh; это не неисправность exec API.
+-i -t — Открыть stdin и terminal.
+Когда: После создания client-allowed из vm/diagnostic.yaml в VM-профиле; в этом контейнере есть sh.
+kubectl --context "$LAB_CONTEXT" -n lab exec -it client-allowed -- sh
+Результат: Требуются отдельные права pods/exec; investigator их не имеет.
+--context NAME — Выбрать context из kubeconfig.
+Когда: Каждая cluster команда практикума.
+kubectl --context "$LAB_CONTEXT" get nodes
+Результат: Использованы cluster/user выбранной связки; flag не добавляет прав.
+--namespace NAME, -n NAME — Выбрать namespace для namespaced операции.
+Когда: Отделить lab от helm-lab.
+kubectl --context "$LAB_CONTEXT" -n lab get pods
+Результат: Не влияет на cluster-scoped Node/CRD; -A у list имеет другой смысл.
+--kubeconfig FILE — Выбрать файл конфигурации клиента.
+Когда: Частный ограниченный клиент.
+kubectl --context "$LAB_CONTEXT" --kubeconfig ./private-investigator.conf -n lab get pods
+Результат: Файл может содержать keys/exec plugin; до использования проверить доверие.
+--request-timeout DURATION — Ограничить ожидание одного server request.
+Когда: Отличить зависшее соединение от долгого rollout.
+kubectl --request-timeout=10s --context "$LAB_CONTEXT" get nodes
+Результат: Не является общим deadline всех действий сложной команды.
+
+kubectl debug
+Добавить ephemeral container либо создать debug среду по выбранному режиму.
+kubectl debug POD --image=IMAGE [FLAGS]
+--target NAME — Попросить процессный target container.
+Когда: Исследовать scratch при поддержке runtime.
+kubectl --context "$LAB_CONTEXT" -n lab debug POD_NAME --image=TRUSTED_DEBUG_IMAGE --target=api
+Результат: Image ref должен быть реальным; новые privileges/admission рассматриваются отдельно. Не guarantees namespace visibility.
+--context NAME — Выбрать context из kubeconfig.
+Когда: Каждая cluster команда практикума.
+kubectl --context "$LAB_CONTEXT" get nodes
+Результат: Использованы cluster/user выбранной связки; flag не добавляет прав.
+--namespace NAME, -n NAME — Выбрать namespace для namespaced операции.
+Когда: Отделить lab от helm-lab.
+kubectl --context "$LAB_CONTEXT" -n lab get pods
+Результат: Не влияет на cluster-scoped Node/CRD; -A у list имеет другой смысл.
+--kubeconfig FILE — Выбрать файл конфигурации клиента.
+Когда: Частный ограниченный клиент.
+kubectl --context "$LAB_CONTEXT" --kubeconfig ./private-investigator.conf -n lab get pods
+Результат: Файл может содержать keys/exec plugin; до использования проверить доверие.
+--request-timeout DURATION — Ограничить ожидание одного server request.
+Когда: Отличить зависшее соединение от долгого rollout.
+kubectl --request-timeout=10s --context "$LAB_CONTEXT" get nodes
+Результат: Не является общим deadline всех действий сложной команды.
+
+kubectl auth can-i
+Проверить authorization конкретной операции.
+kubectl auth can-i VERB RESOURCE [-n NS] [--as USER]
+--as USER — Имперсонировать указанную identity при наличии соответствующего права.
+Когда: Администраторская проверка ограниченного ServiceAccount.
+kubectl --context "$LAB_CONTEXT" auth can-i get secrets -n lab --as=system:serviceaccount:lab:investigator
+Результат: Ожидаемыйno зависит от всех bindings; это не authentication обычного клиента без credentials.
+--subresource NAME — Проверить отдельный подресурс, например log или exec, а не основной Pod.
+Когда: Различить чтение объекта, чтение логов и запуск команды.
+kubectl --context "$LAB_CONTEXT" auth can-i create pods --subresource=exec --as=system:serviceaccount:lab:investigator -n lab
+Результат: Ожидается no при отсутствии дополнительных разрешений. Ответ касается авторизации запроса, а не существования файла sh и не admission.
+--context NAME — Выбрать context из kubeconfig.
+Когда: Каждая cluster команда практикума.
+kubectl --context "$LAB_CONTEXT" get nodes
+Результат: Использованы cluster/user выбранной связки; flag не добавляет прав.
+--namespace NAME, -n NAME — Выбрать namespace для namespaced операции.
+Когда: Отделить lab от helm-lab.
+kubectl --context "$LAB_CONTEXT" -n lab get pods
+Результат: Не влияет на cluster-scoped Node/CRD; -A у list имеет другой смысл.
+--kubeconfig FILE — Выбрать файл конфигурации клиента.
+Когда: Частный ограниченный клиент.
+kubectl --context "$LAB_CONTEXT" --kubeconfig ./private-investigator.conf -n lab get pods
+Результат: Файл может содержать keys/exec plugin; до использования проверить доверие.
+--request-timeout DURATION — Ограничить ожидание одного server request.
+Когда: Отличить зависшее соединение от долгого rollout.
+kubectl --request-timeout=10s --context "$LAB_CONTEXT" get nodes
+Результат: Не является общим deadline всех действий сложной команды.
+
+kubectl top
+Читать resource metrics API, если установлен подходящий provider.
+kubectl top pods -n NS [--containers]
+--containers — Показать расход отдельных containers.
+Когда: Отличить sidecar от api.
+kubectl --context "$LAB_CONTEXT" -n lab top pods --containers
+Результат: Не исторический мониторинг; требует metrics-server/APIService и валидных samples.
+--context NAME — Выбрать context из kubeconfig.
+Когда: Каждая cluster команда практикума.
+kubectl --context "$LAB_CONTEXT" get nodes
+Результат: Использованы cluster/user выбранной связки; flag не добавляет прав.
+--namespace NAME, -n NAME — Выбрать namespace для namespaced операции.
+Когда: Отделить lab от helm-lab.
+kubectl --context "$LAB_CONTEXT" -n lab get pods
+Результат: Не влияет на cluster-scoped Node/CRD; -A у list имеет другой смысл.
+--kubeconfig FILE — Выбрать файл конфигурации клиента.
+Когда: Частный ограниченный клиент.
+kubectl --context "$LAB_CONTEXT" --kubeconfig ./private-investigator.conf -n lab get pods
+Результат: Файл может содержать keys/exec plugin; до использования проверить доверие.
+--request-timeout DURATION — Ограничить ожидание одного server request.
+Когда: Отличить зависшее соединение от долгого rollout.
+kubectl --request-timeout=10s --context "$LAB_CONTEXT" get nodes
+Результат: Не является общим deadline всех действий сложной команды.
+
+kubectl wait
+Ждать условие/удаление API resource, не проверять arbitrary business correctness.
+kubectl wait --for=condition=CONDITION RESOURCE/NAME --timeout=DURATION
+--for=condition=complete — Ждать Job completion condition.
+Когда: После writer Job.
+kubectl --context "$LAB_CONTEXT" -n lab wait --for=condition=complete job/ledger-write-once --timeout=120s
+Результат: JobFailed требует отдельной проверки; complete не заменяет hash/record integrity.
+--context NAME — Выбрать context из kubeconfig.
+Когда: Каждая cluster команда практикума.
+kubectl --context "$LAB_CONTEXT" get nodes
+Результат: Использованы cluster/user выбранной связки; flag не добавляет прав.
+--namespace NAME, -n NAME — Выбрать namespace для namespaced операции.
+Когда: Отделить lab от helm-lab.
+kubectl --context "$LAB_CONTEXT" -n lab get pods
+Результат: Не влияет на cluster-scoped Node/CRD; -A у list имеет другой смысл.
+--kubeconfig FILE — Выбрать файл конфигурации клиента.
+Когда: Частный ограниченный клиент.
+kubectl --context "$LAB_CONTEXT" --kubeconfig ./private-investigator.conf -n lab get pods
+Результат: Файл может содержать keys/exec plugin; до использования проверить доверие.
+--request-timeout DURATION — Ограничить ожидание одного server request.
+Когда: Отличить зависшее соединение от долгого rollout.
+kubectl --request-timeout=10s --context "$LAB_CONTEXT" get nodes
+Результат: Не является общим deadline всех действий сложной команды.
+
+kubectl cordon
+Пометить node unschedulable для новых обычных назначений.
+kubectl cordon NODE
+--context NAME — Выбрать context из kubeconfig.
+Когда: Каждая cluster команда практикума.
+kubectl --context "$LAB_CONTEXT" get nodes
+Результат: Использованы cluster/user выбранной связки; flag не добавляет прав.
+--namespace NAME, -n NAME — Выбрать namespace для namespaced операции.
+Когда: Отделить lab от helm-lab.
+kubectl --context "$LAB_CONTEXT" -n lab get pods
+Результат: Не влияет на cluster-scoped Node/CRD; -A у list имеет другой смысл.
+--kubeconfig FILE — Выбрать файл конфигурации клиента.
+Когда: Частный ограниченный клиент.
+kubectl --context "$LAB_CONTEXT" --kubeconfig ./private-investigator.conf -n lab get pods
+Результат: Файл может содержать keys/exec plugin; до использования проверить доверие.
+--request-timeout DURATION — Ограничить ожидание одного server request.
+Когда: Отличить зависшее соединение от долгого rollout.
+kubectl --request-timeout=10s --context "$LAB_CONTEXT" get nodes
+Результат: Не является общим deadline всех действий сложной команды.
+
+kubectl drain
+Организовать эвакуацию node с учётом разрешений/PDB/вида Pods.
+kubectl drain NODE [FLAGS]
+--ignore-daemonsets — Продолжить при DaemonSet Pods, не удаляя DaemonSet навсегда.
+Когда: Плановое обслуживание своей VM.
+kubectl --context "$LAB_CONTEXT" drain wk1 --ignore-daemonsets --timeout=180s
+Результат: PDB/capacity/local data всё ещё требуют решения.
+--delete-emptydir-data — Разрешить удаление Pods с emptyDir data.
+Когда: Только если потеря этих bytes осознанно допустима.
+kubectl --context "$LAB_CONTEXT" drain isolated-worker --ignore-daemonsets --delete-emptydir-data
+Результат: Это разрешение потери локальных данных, а не безопасный универсальный flag.
+--timeout DURATION — Ограничить ожидание drain.
+Когда: Не скрывать блокирующий PDB.
+kubectl --context "$LAB_CONTEXT" drain wk1 --ignore-daemonsets --timeout=180s
+Результат: Timeout не отменяет уже выполненные evictions/cordon; исследуйте фактическое состояние.
+--context NAME — Выбрать context из kubeconfig.
+Когда: Каждая cluster команда практикума.
+kubectl --context "$LAB_CONTEXT" get nodes
+Результат: Использованы cluster/user выбранной связки; flag не добавляет прав.
+--namespace NAME, -n NAME — Выбрать namespace для namespaced операции.
+Когда: Отделить lab от helm-lab.
+kubectl --context "$LAB_CONTEXT" -n lab get pods
+Результат: Не влияет на cluster-scoped Node/CRD; -A у list имеет другой смысл.
+--kubeconfig FILE — Выбрать файл конфигурации клиента.
+Когда: Частный ограниченный клиент.
+kubectl --context "$LAB_CONTEXT" --kubeconfig ./private-investigator.conf -n lab get pods
+Результат: Файл может содержать keys/exec plugin; до использования проверить доверие.
+--request-timeout DURATION — Ограничить ожидание одного server request.
+Когда: Отличить зависшее соединение от долгого rollout.
+kubectl --request-timeout=10s --context "$LAB_CONTEXT" get nodes
+Результат: Не является общим deadline всех действий сложной команды.
+
+kubectl uncordon
+Разрешить обычное планирование на обслуженном node.
+kubectl uncordon NODE
+--context NAME — Выбрать context из kubeconfig.
+Когда: Каждая cluster команда практикума.
+kubectl --context "$LAB_CONTEXT" get nodes
+Результат: Использованы cluster/user выбранной связки; flag не добавляет прав.
+--namespace NAME, -n NAME — Выбрать namespace для namespaced операции.
+Когда: Отделить lab от helm-lab.
+kubectl --context "$LAB_CONTEXT" -n lab get pods
+Результат: Не влияет на cluster-scoped Node/CRD; -A у list имеет другой смысл.
+--kubeconfig FILE — Выбрать файл конфигурации клиента.
+Когда: Частный ограниченный клиент.
+kubectl --context "$LAB_CONTEXT" --kubeconfig ./private-investigator.conf -n lab get pods
+Результат: Файл может содержать keys/exec plugin; до использования проверить доверие.
+--request-timeout DURATION — Ограничить ожидание одного server request.
+Когда: Отличить зависшее соединение от долгого rollout.
+kubectl --request-timeout=10s --context "$LAB_CONTEXT" get nodes
+Результат: Не является общим deadline всех действий сложной команды.
+
+kubectl certificate approve
+Одобрить конкретный CSR после проверки signer/requester/SAN.
+kubectl certificate approve CSR_NAME
+--context NAME — Выбрать context из kubeconfig.
+Когда: Каждая cluster команда практикума.
+kubectl --context "$LAB_CONTEXT" get nodes
+Результат: Использованы cluster/user выбранной связки; flag не добавляет прав.
+--namespace NAME, -n NAME — Выбрать namespace для namespaced операции.
+Когда: Отделить lab от helm-lab.
+kubectl --context "$LAB_CONTEXT" -n lab get pods
+Результат: Не влияет на cluster-scoped Node/CRD; -A у list имеет другой смысл.
+--kubeconfig FILE — Выбрать файл конфигурации клиента.
+Когда: Частный ограниченный клиент.
+kubectl --context "$LAB_CONTEXT" --kubeconfig ./private-investigator.conf -n lab get pods
+Результат: Файл может содержать keys/exec plugin; до использования проверить доверие.
+--request-timeout DURATION — Ограничить ожидание одного server request.
+Когда: Отличить зависшее соединение от долгого rollout.
+kubectl --request-timeout=10s --context "$LAB_CONTEXT" get nodes
+Результат: Не является общим deadline всех действий сложной команды.
+
+kubeadm config images list
+Перечислить ожидаемые images точной bootstrap config без pull.
+kubeadm config images list --config FILE
+--config FILE — Взять version/imageRepository и другие параметры из согласованного файла.
+Когда: Офлайн inventory.
+kubeadm config images list --config vm/kubeadm.yaml
+Результат: Список не доказывает bytes на node; сравнить с images pull/import.
+
+kubeadm init
+Bootstrap control plane в своей подготовленной VM, создаёт PKI/config/static manifests.
+sudo kubeadm init --config FILE
+--config FILE — Выбрать проверенный versioned bootstrap contract.
+Когда: Первое созданиеcp1 один раз.
+sudo kubeadm init --config vm/kubeadm.yaml
+Результат: Меняет VM/cluster; не выполнять повторно как repair и не на рабочем host.
+
+kubeadm token create
+Выпустить временный bootstrap credential для своего cluster.
+sudo kubeadm token create --print-join-command
+--print-join-command — Показать join с token и CA hash.
+Когда: Присоединениеwk1 по защищённому каналу.
+sudo kubeadm token create --print-join-command
+Результат: Вывод содержит credential, не публикуется и не сохраняется в public evidence.
+
+kubeadm upgrade plan
+Проверить допустимое обновление и показать план. Не выполняет весь upgrade.
+sudo kubeadm upgrade plan
+
+
+crictl
+Клиент CRI для read-only диагностики sandbox/container/image/runtime в node VM.
+sudo crictl --runtime-endpoint SOCKET SUBCOMMAND
+--runtime-endpoint SOCKET — Явно выбрать CRI runtime.
+Когда: Не полагаться на перебор старых defaults.
+sudo crictl --runtime-endpoint unix:///run/containerd/containerd.sock ps -a
+Результат: Нужны node socket privileges; не KubernetesRBAC. inspect/logs могут раскрыть данные.
+
+ctr
+Низкоуровневый клиент containerd. Ручное task mutation обходит Kubernetes lifecycle.
+sudo ctr --namespace k8s.io SUBCOMMAND
+--namespace k8s.io — Выбрать metadata namespace CRI content.
+Когда: Импорт офлайн image в личный node.
+sudo ctr --namespace k8s.io images import ledger-api.tar
+Результат: Не lab namespace. Import bytes не создаёт Pod и не проверяет readiness.
+
+kind create cluster
+Создать container-node cluster из pinned config один раз.
+kind create cluster --config FILE --wait DURATION
+--config FILE — Выбрать images/nodes/networking.
+Когда: Фиксированныйhandbook профиль.
+kind create cluster --config vm/kind.yaml --wait 180s
+Результат: Требует личный engine; общий kernel и engine storage остаются ограничениями.
+
+kind load docker-image
+Передать уже собранный engine image в nodes своего kind cluster.
+kind load docker-image IMAGE --name CLUSTER
+--name CLUSTER — Указать существующий cluster.
+Когда: Доставка одного0.1.0 release.
+kind load docker-image ledger-api:0.1.0 --name handbook
+Результат: Не registry publish; tag должен соответствовать сохранённым bytes и pull policy.
+
+etcdctl snapshot save
+Получить consistent etcd snapshot с TLS credentials своего control plane.
+sudo etcdctl --endpoints URL --cacert FILE --cert FILE --key FILE snapshot save FILE
+
+
+etcdutl snapshot restore
+Восстановить новый etcd data-dir/cluster identity из snapshot при disaster recovery.
+etcdutl snapshot restore FILE [RECOVERY_FLAGS]
+--bump-revision N --mark-compacted — Поднять revision и завершить старые watch histories по matching guide.
+Когда: Kubernetes disaster recovery после fencing.
+etcdutl snapshot restore backup.db --data-dir ./new-etcd --bump-revision CALCULATED_INCREMENT --mark-compacted
+Результат: CALCULATED_INCREMENT — явно не готовое число/команда. Рассчитать от возможной истории; не restore поверх живого member.
+
+helm
+Клиент Helm; полномочия и каталог задаются для конкретного вызова. В основной линии только версия4.3.1.
+helm [ГЛОБАЛЬНЫЕ_ФЛАГИ] КОМАНДА
+--kubeconfig <файл> — Выбрать отдельный файл доступа.
+Когда: Каждое кластерное действие личного стенда.
+helm status ledger --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Не меняет общий current-context; файл может запускать credential plugin.
+--kube-context <имя> — Явно выбрать контекст из указанного kubeconfig.
+Когда: Не полагаться на значение по умолчанию.
+helm list --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Endpoint и личность определены явно; ошибочный контекст остаётся опасным.
+--namespace <имя> / -n <имя> — Выбрать пространство имён запроса и истории релиза.
+Когда: Одинаковый release может существовать в разных namespaces.
+helm history ledger --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Это не ограничивает chart от cluster-scoped ресурсов.
+--debug — Добавить диагностический контекст.
+Когда: Короткое расследование с защищённым выводом.
+helm template ledger ./chart --kube-version 1.36.6 --debug --namespace helm-lab
+Результат: Вывод может содержать секретные значения и пути; это не дополнительная проверка здоровья.
+--qps <число> — Ограничить частоту клиентских запросов к API.
+Когда: Только после измерения задержки и throttling.
+helm status ledger --qps 5 --burst-limit 10 --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Не увеличивает серверную ёмкость и не ускоряет scheduling автоматически.
+
+helm version
+Показать версию фактически запущенного executable.
+helm version [ФЛАГИ]
+--short — Сократить представление версии.
+Когда: Приёмка проверенного binary.
+helm version --short
+Результат: Ожидаемая ветка4.3.1; это не проверка доступности Kubernetes.
+--kubeconfig <файл> — Выбрать отдельный файл доступа.
+Когда: Каждое кластерное действие личного стенда.
+helm status ledger --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Не меняет общий current-context; файл может запускать credential plugin.
+--kube-context <имя> — Явно выбрать контекст из указанного kubeconfig.
+Когда: Не полагаться на значение по умолчанию.
+helm list --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Endpoint и личность определены явно; ошибочный контекст остаётся опасным.
+--namespace <имя> / -n <имя> — Выбрать пространство имён запроса и истории релиза.
+Когда: Одинаковый release может существовать в разных namespaces.
+helm history ledger --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Это не ограничивает chart от cluster-scoped ресурсов.
+--debug — Добавить диагностический контекст.
+Когда: Короткое расследование с защищённым выводом.
+helm template ledger ./chart --kube-version 1.36.6 --debug --namespace helm-lab
+Результат: Вывод может содержать секретные значения и пути; это не дополнительная проверка здоровья.
+--qps <число> — Ограничить частоту клиентских запросов к API.
+Когда: Только после измерения задержки и throttling.
+helm status ledger --qps 5 --burst-limit 10 --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Не увеличивает серверную ёмкость и не ускоряет scheduling автоматически.
+
+helm env
+Показать пути и переменные среды клиента без установки кластера.
+helm env
+--kubeconfig <файл> — Выбрать отдельный файл доступа.
+Когда: Каждое кластерное действие личного стенда.
+helm status ledger --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Не меняет общий current-context; файл может запускать credential plugin.
+--kube-context <имя> — Явно выбрать контекст из указанного kubeconfig.
+Когда: Не полагаться на значение по умолчанию.
+helm list --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Endpoint и личность определены явно; ошибочный контекст остаётся опасным.
+--namespace <имя> / -n <имя> — Выбрать пространство имён запроса и истории релиза.
+Когда: Одинаковый release может существовать в разных namespaces.
+helm history ledger --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Это не ограничивает chart от cluster-scoped ресурсов.
+--debug — Добавить диагностический контекст.
+Когда: Короткое расследование с защищённым выводом.
+helm template ledger ./chart --kube-version 1.36.6 --debug --namespace helm-lab
+Результат: Вывод может содержать секретные значения и пути; это не дополнительная проверка здоровья.
+--qps <число> — Ограничить частоту клиентских запросов к API.
+Когда: Только после измерения задержки и throttling.
+helm status ledger --qps 5 --burst-limit 10 --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Не увеличивает серверную ёмкость и не ускоряет scheduling автоматически.
+
+helm plugin list
+Показать установленные плагины выбранной пользовательской среды.
+helm plugin list
+--kubeconfig <файл> — Выбрать отдельный файл доступа.
+Когда: Каждое кластерное действие личного стенда.
+helm status ledger --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Не меняет общий current-context; файл может запускать credential plugin.
+--kube-context <имя> — Явно выбрать контекст из указанного kubeconfig.
+Когда: Не полагаться на значение по умолчанию.
+helm list --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Endpoint и личность определены явно; ошибочный контекст остаётся опасным.
+--namespace <имя> / -n <имя> — Выбрать пространство имён запроса и истории релиза.
+Когда: Одинаковый release может существовать в разных namespaces.
+helm history ledger --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Это не ограничивает chart от cluster-scoped ресурсов.
+--debug — Добавить диагностический контекст.
+Когда: Короткое расследование с защищённым выводом.
+helm template ledger ./chart --kube-version 1.36.6 --debug --namespace helm-lab
+Результат: Вывод может содержать секретные значения и пути; это не дополнительная проверка здоровья.
+--qps <число> — Ограничить частоту клиентских запросов к API.
+Когда: Только после измерения задержки и throttling.
+helm status ledger --qps 5 --burst-limit 10 --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Не увеличивает серверную ёмкость и не ускоряет scheduling автоматически.
+
+helm lint
+Проверить структуру, schema и исполнимость chart, не устанавливая workloads.
+helm lint ПУТЬ [ФЛАГИ]
+--strict — Считать предупреждения ошибками.
+Когда: Стабильная локальная приёмка.
+helm lint ./chart --strict --kube-version 1.36.6
+Результат: Успех lint не доказывает admission или запуск Pod.
+-f, --values <файл> — Добавить параметры для проверки.
+Когда: Проверить именно окружение выпуска.
+helm lint ./chart --strict -f fixtures/wrong-replicas.yaml
+Результат: Отрицательный пример отвергает строковую replicaCount.
+--kube-version <версия> — Задать моделируемую версию Kubernetes.
+Когда: Проверка kubeVersion chart и ветвей шаблона.
+helm lint ./chart --strict --kube-version 1.36.6
+Результат: Не обращается к выбранному кластеру для доказательства API.
+--kubeconfig <файл> — Выбрать отдельный файл доступа.
+Когда: Каждое кластерное действие личного стенда.
+helm status ledger --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Не меняет общий current-context; файл может запускать credential plugin.
+--kube-context <имя> — Явно выбрать контекст из указанного kubeconfig.
+Когда: Не полагаться на значение по умолчанию.
+helm list --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Endpoint и личность определены явно; ошибочный контекст остаётся опасным.
+--namespace <имя> / -n <имя> — Выбрать пространство имён запроса и истории релиза.
+Когда: Одинаковый release может существовать в разных namespaces.
+helm history ledger --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Это не ограничивает chart от cluster-scoped ресурсов.
+--debug — Добавить диагностический контекст.
+Когда: Короткое расследование с защищённым выводом.
+helm template ledger ./chart --kube-version 1.36.6 --debug --namespace helm-lab
+Результат: Вывод может содержать секретные значения и пути; это не дополнительная проверка здоровья.
+--qps <число> — Ограничить частоту клиентских запросов к API.
+Когда: Только после измерения задержки и throttling.
+helm status ledger --qps 5 --burst-limit 10 --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Не увеличивает серверную ёмкость и не ускоряет scheduling автоматически.
+
+helm template
+Локально получить манифесты; в клиентском режиме не доказывает API и readiness.
+helm template ИМЯ CHART [ФЛАГИ]
+-f, --values <файл> — Объединять файлы слева направо; последний конфликтующий ключ важнее.
+Когда: Сравнение окружений.
+helm template ledger ./chart --kube-version 1.36.6 -f fixtures/prod.yaml -f fixtures/last.yaml --namespace helm-lab
+Результат: Реплик1; при обратном порядке3; memory default сохраняется.
+--set <ключ=значение> — Разобрать strvals с выводом поддерживаемых типов.
+Когда: Целочисленные replicas и bool.
+helm template ledger ./chart --kube-version 1.36.6 --set replicaCount=3 --namespace helm-lab
+Результат: Число3 проходит schema, в отличие от --set-string.
+--set-string <ключ=строка> — Принудительно передать строку.
+Когда: Теги/идентификаторы, где число теряет смысл.
+helm template ledger ./chart --kube-version 1.36.6 --set-string replicaCount=3 --namespace helm-lab
+Результат: Намеренный schema failure: replicaCount должен быть integer.
+--set-json <JSON> — Разобрать объекты/списки/скаляры JSON.
+Когда: Список объектов env без индексной записи.
+helm template ledger ./chart --kube-version 1.36.6 --set-json 'extraEnv=[{"name":"TRACE","value":"true"}]' --namespace helm-lab
+Результат: Env.value остаётся string; JSON true без кавычек отвергается.
+--set-file <ключ=файл> — Прочитать точные bytes файла как строку.
+Когда: Dummy token или многострочная конфигурация.
+helm template ledger ./chart --kube-version 1.36.6 --set credentials.create=true --set-file credentials.token=fixtures/token.txt --namespace helm-lab
+Результат: Сохранён конечный LF; выход содержит Secret и требует защиты.
+--set-literal <ключ=строка> — Принять буквальную правую часть по правилам выбранного CLI.
+Когда: Когда обычный RHS strvals нежелателен.
+helm template ledger ./chart --kube-version 1.36.6 --set-literal config.message=a,b --namespace helm-lab
+Результат: MESSAGE содержит запятую; для большого интерфейса предпочтителен файл.
+--kube-version <версия> — Задать модель KubeVersion.
+Когда: Локальный render стабильного API.
+helm template ledger ./chart --kube-version 1.36.6 --namespace helm-lab
+Результат: CRD/контроллеры этим не устанавливаются.
+--api-versions <API> — Добавить моделируемую возможность API.
+Когда: Проверка условного ветвления шаблона.
+helm template ledger ./chart --kube-version 1.36.6 --api-versions example.invalid/v1/Widget --namespace helm-lab
+Результат: Не доказывает наличие API у сервера.
+--show-only <путь> — Печатать выбранный manifest после исполнения chart.
+Когда: Сократить исследуемый output.
+helm template ledger ./chart --kube-version 1.36.6 --show-only templates/configmap.yaml --namespace helm-lab
+Результат: Другой сломанный шаблон всё ещё может сорвать общий render.
+--is-upgrade — Задать контекст IsUpgrade для локальной проверки ветвей.
+Когда: Сравнить условные шаблоны без revision кластера.
+helm template ledger ./chart --kube-version 1.36.6 --is-upgrade --namespace helm-lab
+Результат: Не читает реальную историю release и не моделирует весь upgrade.
+--include-crds — Включить CRD-документы в локальный output.
+Когда: Инвентаризация пакета с CRD.
+helm template ledger ./chart --kube-version 1.36.6 --include-crds --namespace helm-lab
+Результат: В нашем chart CRD нет; вывод не равен их успешной установке.
+--kubeconfig <файл> — Выбрать отдельный файл доступа.
+Когда: Каждое кластерное действие личного стенда.
+helm status ledger --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Не меняет общий current-context; файл может запускать credential plugin.
+--kube-context <имя> — Явно выбрать контекст из указанного kubeconfig.
+Когда: Не полагаться на значение по умолчанию.
+helm list --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Endpoint и личность определены явно; ошибочный контекст остаётся опасным.
+--namespace <имя> / -n <имя> — Выбрать пространство имён запроса и истории релиза.
+Когда: Одинаковый release может существовать в разных namespaces.
+helm history ledger --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Это не ограничивает chart от cluster-scoped ресурсов.
+--debug — Добавить диагностический контекст.
+Когда: Короткое расследование с защищённым выводом.
+helm template ledger ./chart --kube-version 1.36.6 --debug --namespace helm-lab
+Результат: Вывод может содержать секретные значения и пути; это не дополнительная проверка здоровья.
+--qps <число> — Ограничить частоту клиентских запросов к API.
+Когда: Только после измерения задержки и throttling.
+helm status ledger --qps 5 --burst-limit 10 --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Не увеличивает серверную ёмкость и не ускоряет scheduling автоматически.
+
+helm install
+Создать новый именованный релиз из chart и выбранных values.
+helm install ИМЯ CHART [ФЛАГИ]
+--dry-run <client|server> — Подготовить действие без штатного сохранения; server требует API.
+Когда: Разделить локальный render и discovery/lookup.
+helm install ledger ./chart --namespace helm-lab --dry-run=client --hide-secret --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Не устанавливает; точная граница server описана по install.go, admission не обещан.
+--hide-secret — Скрыть Secret-документы при dry-run.
+Когда: Защитить диагностический output частично.
+helm install ledger ./chart --namespace helm-lab --dry-run=client --hide-secret --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Чувствительные строки в NOTES/ConfigMap/ошибках всё ещё возможны.
+--wait <strategy> — Выбрать watcher, hookOnly или legacy.
+Когда: Нужна наблюдаемая готовность workloads.
+helm install ledger ./chart --namespace helm-lab --wait=watcher --timeout 180s --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: С --wait без значения watcher; без флага hookOnly; HTTP business contract отдельно.
+--timeout <duration> — Ограничить конкретные ожидания Kubernetes.
+Когда: Диагностированный бюджет rollout/hooks.
+helm install ledger ./chart --namespace helm-lab --wait=watcher --timeout 180s --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Это не общий deadline всех фаз и не лечение неверного readiness path.
+--rollback-on-failure — Попытаться удалить неуспешную установку.
+Когда: Осознанная компенсирующая политика.
+helm install ledger ./chart --namespace helm-lab --rollback-on-failure --timeout 180s --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: При default hookOnly включает watcher; внешние side effects могут сохраниться.
+--server-side <bool> — Выбрать серверное применение для нового release.
+Когда: Явно контролировать SSA.
+helm install ledger ./chart --namespace helm-lab --server-side=true --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: В4.3.1 default true; нужны полномочия apply/наблюдения.
+--create-namespace — Создать namespace при отсутствии.
+Когда: Только если владелец стенда выдал соответствующее право.
+helm install ledger ./chart --namespace helm-lab --create-namespace --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Cluster-scoped create namespaces; не создаёт безопасную роль автоматически.
+--verify — Требовать корректную классическую provenance.
+Когда: Доверенно полученный подписанный chart.
+helm install ledger ./dist/ledger-api-0.1.0.tgz --verify --keyring ./trusted-public.gpg --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Нужен .prov и доверенный key; содержимое chart всё равно проходит review.
+--kubeconfig <файл> — Выбрать отдельный файл доступа.
+Когда: Каждое кластерное действие личного стенда.
+helm status ledger --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Не меняет общий current-context; файл может запускать credential plugin.
+--kube-context <имя> — Явно выбрать контекст из указанного kubeconfig.
+Когда: Не полагаться на значение по умолчанию.
+helm list --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Endpoint и личность определены явно; ошибочный контекст остаётся опасным.
+--namespace <имя> / -n <имя> — Выбрать пространство имён запроса и истории релиза.
+Когда: Одинаковый release может существовать в разных namespaces.
+helm history ledger --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Это не ограничивает chart от cluster-scoped ресурсов.
+--debug — Добавить диагностический контекст.
+Когда: Короткое расследование с защищённым выводом.
+helm template ledger ./chart --kube-version 1.36.6 --debug --namespace helm-lab
+Результат: Вывод может содержать секретные значения и пути; это не дополнительная проверка здоровья.
+--qps <число> — Ограничить частоту клиентских запросов к API.
+Когда: Только после измерения задержки и throttling.
+helm status ledger --qps 5 --burst-limit 10 --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Не увеличивает серверную ёмкость и не ускоряет scheduling автоматически.
+
+helm upgrade
+Создать следующую ревизию существующего release и применить целевые объекты.
+helm upgrade ИМЯ CHART [ФЛАГИ]
+--reset-values — Использовать defaults нового chart и новые явно переданные параметры.
+Когда: Полный versioned environment file.
+helm upgrade ledger ./chart --reset-values -f environment.yaml --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Старый user config игнорируется; приоритет над reuse.
+--reuse-values — Наследовать старое coalesced дерево и наложить новые параметры.
+Когда: Явное сохранение старой настройки с пониманием потери новых defaults.
+helm upgrade ledger ./chart --reuse-values --set replicaCount=2 --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Новые defaults chart могут не войти; reset-values имеет приоритет.
+--reset-then-reuse-values — Новый chart default → прежний user config → новые overrides.
+Когда: Нужны новые defaults и старые пользовательские выборы.
+helm upgrade ledger ./chart --reset-then-reuse-values --set replicaCount=2 --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Игнорируется при reset-values или reuse-values.
+--install — Установить release, если его нет.
+Когда: Автоматизация с явным разрешением первичной установки.
+helm upgrade ledger ./chart --install --reset-values -f environment.yaml --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Первый install и последующий upgrade имеют разные lifecycle hooks/SSA defaults.
+--rollback-on-failure — Попытаться вернуться к предыдущему успешному релизу при ошибке.
+Когда: Обратимые изменения workloads с отдельным планом данных.
+helm upgrade ledger ./chart --reset-values -f environment.yaml --namespace helm-lab --rollback-on-failure --timeout 180s --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Компенсация может тоже отказать; БД автоматически не возвращается.
+--cleanup-on-fail — Разрешить удалить новые ресурсы неудачного upgrade.
+Когда: Понятна судьба созданных объектов.
+helm upgrade ledger ./chart --reset-values -f environment.yaml --namespace helm-lab --cleanup-on-fail --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Не отменяет внешние эффекты hooks и не стирает все изменения.
+--history-max <число> — Ограничить число сохраняемых ревизий.
+Когда: Контроль metadata size и срока хранения секретных values.
+helm upgrade ledger ./chart --namespace helm-lab --reset-values -f environment.yaml --history-max 20 --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: 0 означает без лимита; отличается от history --max.
+--server-side <true|false|auto> — Выбрать метод apply либо унаследовать прежний.
+Когда: Миграция Helm3 release или осознанный SSA.
+helm upgrade ledger ./chart --namespace helm-lab --server-side=auto --reset-values -f environment.yaml --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Default auto сохраняет предыдущий метод, а не безусловно включает SSA.
+--force-conflicts — Разрешить SSA отнять конфликтующие поля у другого manager.
+Когда: Только после review managedFields и владельца.
+helm upgrade ledger ./chart --namespace helm-lab --server-side=true --force-conflicts --dry-run=server --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Это изменение ownership, не обычная починка любого отказа.
+--force-replace — Применять замену ресурса вместо обычного обновления.
+Когда: Осознанная операция с планом outage/data.
+helm upgrade ledger ./chart --namespace helm-lab --force-replace --dry-run=server --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Может изменить UID/доступность; dry-run не доказывает безопасную миграцию.
+--take-ownership — Обойти Helm-проверку принадлежности существующего ресурса.
+Когда: Только согласованный перенос конкретного объекта.
+helm upgrade ledger ./chart --namespace helm-lab --take-ownership --dry-run=server --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Будущий uninstall может удалить принятый ресурс; это не SSA force-conflicts.
+--wait-for-jobs — Добавить ожидание обычных Jobs при включённом wait.
+Когда: Chart действительно содержит конечные Jobs.
+helm upgrade ledger ./chart --namespace helm-lab --wait=watcher --wait-for-jobs --timeout 180s --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Hook Job имеет собственную фазу; приложение HTTP проверяется отдельно.
+--kubeconfig <файл> — Выбрать отдельный файл доступа.
+Когда: Каждое кластерное действие личного стенда.
+helm status ledger --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Не меняет общий current-context; файл может запускать credential plugin.
+--kube-context <имя> — Явно выбрать контекст из указанного kubeconfig.
+Когда: Не полагаться на значение по умолчанию.
+helm list --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Endpoint и личность определены явно; ошибочный контекст остаётся опасным.
+--namespace <имя> / -n <имя> — Выбрать пространство имён запроса и истории релиза.
+Когда: Одинаковый release может существовать в разных namespaces.
+helm history ledger --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Это не ограничивает chart от cluster-scoped ресурсов.
+--debug — Добавить диагностический контекст.
+Когда: Короткое расследование с защищённым выводом.
+helm template ledger ./chart --kube-version 1.36.6 --debug --namespace helm-lab
+Результат: Вывод может содержать секретные значения и пути; это не дополнительная проверка здоровья.
+--qps <число> — Ограничить частоту клиентских запросов к API.
+Когда: Только после измерения задержки и throttling.
+helm status ledger --qps 5 --burst-limit 10 --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Не увеличивает серверную ёмкость и не ускоряет scheduling автоматически.
+
+helm rollback
+Применить manifest выбранной ревизии как новую ревизию.
+helm rollback ИМЯ [РЕВИЗИЯ] [ФЛАГИ]
+--wait <strategy> — Дождаться состояния возвращённых ресурсов.
+Когда: После осознанного выбора target history.
+helm rollback ledger 1 --namespace helm-lab --wait=watcher --timeout 180s --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Новый номер ревизии; данные не возвращаются автоматически.
+--no-hooks — Пропустить rollback hooks.
+Когда: Только если внешний протокол допускает пропуск.
+helm rollback ledger 1 --namespace helm-lab --no-hooks --dry-run=server --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Меняет семантику восстановления, не ускоряет тот же сценарий.
+--kubeconfig <файл> — Выбрать отдельный файл доступа.
+Когда: Каждое кластерное действие личного стенда.
+helm status ledger --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Не меняет общий current-context; файл может запускать credential plugin.
+--kube-context <имя> — Явно выбрать контекст из указанного kubeconfig.
+Когда: Не полагаться на значение по умолчанию.
+helm list --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Endpoint и личность определены явно; ошибочный контекст остаётся опасным.
+--namespace <имя> / -n <имя> — Выбрать пространство имён запроса и истории релиза.
+Когда: Одинаковый release может существовать в разных namespaces.
+helm history ledger --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Это не ограничивает chart от cluster-scoped ресурсов.
+--debug — Добавить диагностический контекст.
+Когда: Короткое расследование с защищённым выводом.
+helm template ledger ./chart --kube-version 1.36.6 --debug --namespace helm-lab
+Результат: Вывод может содержать секретные значения и пути; это не дополнительная проверка здоровья.
+--qps <число> — Ограничить частоту клиентских запросов к API.
+Когда: Только после измерения задержки и throttling.
+helm status ledger --qps 5 --burst-limit 10 --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Не увеличивает серверную ёмкость и не ускоряет scheduling автоматически.
+
+helm uninstall
+Удалить управляемые обычные ресурсы release с указанной политикой истории.
+helm uninstall ИМЯ [ФЛАГИ]
+--keep-history — Сохранить историю с состоянием uninstalled.
+Когда: Финальная очистка с аудитом.
+helm uninstall ledger --namespace helm-lab --keep-history --wait=watcher --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Приложение удаляется; namespace, CRD, keep PVC и часть hooks могут остаться.
+--cascade <background|foreground|orphan> — Выбрать распространение удаления Kubernetes dependents.
+Когда: Согласовать ownerReferences/finalizers.
+helm uninstall ledger --namespace helm-lab --cascade foreground --wait=watcher --timeout 180s --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Foreground с wait позволяет наблюдать полное удаление зависимых ресурсов; внешние данные отдельно.
+--ignore-not-found — Считать отсутствие release успехом.
+Когда: Явная повторяемая финальная очистка своего стенда.
+helm uninstall ledger --namespace helm-lab --ignore-not-found --dry-run --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Может скрыть ошибку имени/context, поэтому нужны явные входы.
+--kubeconfig <файл> — Выбрать отдельный файл доступа.
+Когда: Каждое кластерное действие личного стенда.
+helm status ledger --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Не меняет общий current-context; файл может запускать credential plugin.
+--kube-context <имя> — Явно выбрать контекст из указанного kubeconfig.
+Когда: Не полагаться на значение по умолчанию.
+helm list --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Endpoint и личность определены явно; ошибочный контекст остаётся опасным.
+--namespace <имя> / -n <имя> — Выбрать пространство имён запроса и истории релиза.
+Когда: Одинаковый release может существовать в разных namespaces.
+helm history ledger --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Это не ограничивает chart от cluster-scoped ресурсов.
+--debug — Добавить диагностический контекст.
+Когда: Короткое расследование с защищённым выводом.
+helm template ledger ./chart --kube-version 1.36.6 --debug --namespace helm-lab
+Результат: Вывод может содержать секретные значения и пути; это не дополнительная проверка здоровья.
+--qps <число> — Ограничить частоту клиентских запросов к API.
+Когда: Только после измерения задержки и throttling.
+helm status ledger --qps 5 --burst-limit 10 --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Не увеличивает серверную ёмкость и не ускоряет scheduling автоматически.
+
+helm status
+Показать сведения текущей или указанной ревизии release. Не заменяет HTTP-проверку.
+helm status ИМЯ [ФЛАГИ]
+--revision <число> — Читать указанную историческую ревизию.
+Когда: Исследовать предыдущий успех/ошибку.
+helm status ledger --namespace helm-lab --revision 1 --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Только чтение; состояние кластера назад не переносится.
+--kubeconfig <файл> — Выбрать отдельный файл доступа.
+Когда: Каждое кластерное действие личного стенда.
+helm status ledger --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Не меняет общий current-context; файл может запускать credential plugin.
+--kube-context <имя> — Явно выбрать контекст из указанного kubeconfig.
+Когда: Не полагаться на значение по умолчанию.
+helm list --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Endpoint и личность определены явно; ошибочный контекст остаётся опасным.
+--namespace <имя> / -n <имя> — Выбрать пространство имён запроса и истории релиза.
+Когда: Одинаковый release может существовать в разных namespaces.
+helm history ledger --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Это не ограничивает chart от cluster-scoped ресурсов.
+--debug — Добавить диагностический контекст.
+Когда: Короткое расследование с защищённым выводом.
+helm template ledger ./chart --kube-version 1.36.6 --debug --namespace helm-lab
+Результат: Вывод может содержать секретные значения и пути; это не дополнительная проверка здоровья.
+--qps <число> — Ограничить частоту клиентских запросов к API.
+Когда: Только после измерения задержки и throttling.
+helm status ledger --qps 5 --burst-limit 10 --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Не увеличивает серверную ёмкость и не ускоряет scheduling автоматически.
+
+helm history
+Показать историю действий release.
+helm history ИМЯ [ФЛАГИ]
+--max <число> — Ограничить число выводимых записей.
+Когда: Краткая диагностика.
+helm history ledger --namespace helm-lab --max 20 --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Не меняет history-max сохраняемых ревизий.
+--kubeconfig <файл> — Выбрать отдельный файл доступа.
+Когда: Каждое кластерное действие личного стенда.
+helm status ledger --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Не меняет общий current-context; файл может запускать credential plugin.
+--kube-context <имя> — Явно выбрать контекст из указанного kubeconfig.
+Когда: Не полагаться на значение по умолчанию.
+helm list --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Endpoint и личность определены явно; ошибочный контекст остаётся опасным.
+--namespace <имя> / -n <имя> — Выбрать пространство имён запроса и истории релиза.
+Когда: Одинаковый release может существовать в разных namespaces.
+helm history ledger --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Это не ограничивает chart от cluster-scoped ресурсов.
+--debug — Добавить диагностический контекст.
+Когда: Короткое расследование с защищённым выводом.
+helm template ledger ./chart --kube-version 1.36.6 --debug --namespace helm-lab
+Результат: Вывод может содержать секретные значения и пути; это не дополнительная проверка здоровья.
+--qps <число> — Ограничить частоту клиентских запросов к API.
+Когда: Только после измерения задержки и throttling.
+helm status ledger --qps 5 --burst-limit 10 --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Не увеличивает серверную ёмкость и не ускоряет scheduling автоматически.
+
+helm list
+Показать releases в выбранной области доступа.
+helm list [ФЛАГИ]
+--failed / --pending / --uninstalled — Ограничить вывод состояниями: failed — неуспешный выпуск, pending — незавершённое действие, uninstalled — удалённый релиз с сохранённой историей.
+Когда: Найти ошибки и незавершённые действия; несколько фильтров объединяются как ИЛИ.
+helm list --namespace helm-lab --failed --pending --uninstalled --output json --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: В 4.3.1 без фильтров выбраны все состояния; явные фильтры сужают набор. Это актуальные записи релизов, а не вся история ревизий.
+--output <table|json|yaml> — Выбрать формат данных.
+Когда: Сохранить структурированный журнал.
+helm list --namespace helm-lab --output json --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Формат не меняет выбор состояний. Helm status и готовность рабочих нагрузок проверяют отдельно.
+--kubeconfig <файл> — Выбрать отдельный файл доступа.
+Когда: Каждое кластерное действие личного стенда.
+helm status ledger --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Не меняет общий current-context; файл может запускать credential plugin.
+--kube-context <имя> — Явно выбрать контекст из указанного kubeconfig.
+Когда: Не полагаться на значение по умолчанию.
+helm list --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Endpoint и личность определены явно; ошибочный контекст остаётся опасным.
+--namespace <имя> / -n <имя> — Выбрать пространство имён запроса и истории релиза.
+Когда: Одинаковый release может существовать в разных namespaces.
+helm history ledger --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Это не ограничивает chart от cluster-scoped ресурсов.
+--debug — Добавить диагностический контекст.
+Когда: Короткое расследование с защищённым выводом.
+helm template ledger ./chart --kube-version 1.36.6 --debug --namespace helm-lab
+Результат: Вывод может содержать секретные значения и пути; это не дополнительная проверка здоровья.
+--qps <число> — Ограничить частоту клиентских запросов к API.
+Когда: Только после измерения задержки и throttling.
+helm status ledger --qps 5 --burst-limit 10 --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Не увеличивает серверную ёмкость и не ускоряет scheduling автоматически.
+
+helm get values
+Получить user config либо вычисленные values из истории; вывод может раскрывать Secret.
+helm get values ИМЯ [ФЛАГИ]
+--all — Добавить defaults и вычисленные значения.
+Когда: Сравнить с user config.
+helm get values ledger --namespace helm-lab --all --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Без --all видны переданные overrides; оба вывода защищают.
+--revision <число> — Выбрать историческую запись.
+Когда: Восстановить входы конкретного действия.
+helm get values ledger --namespace helm-lab --revision 1 --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Не равен чтению live ConfigMap/Secret.
+--kubeconfig <файл> — Выбрать отдельный файл доступа.
+Когда: Каждое кластерное действие личного стенда.
+helm status ledger --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Не меняет общий current-context; файл может запускать credential plugin.
+--kube-context <имя> — Явно выбрать контекст из указанного kubeconfig.
+Когда: Не полагаться на значение по умолчанию.
+helm list --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Endpoint и личность определены явно; ошибочный контекст остаётся опасным.
+--namespace <имя> / -n <имя> — Выбрать пространство имён запроса и истории релиза.
+Когда: Одинаковый release может существовать в разных namespaces.
+helm history ledger --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Это не ограничивает chart от cluster-scoped ресурсов.
+--debug — Добавить диагностический контекст.
+Когда: Короткое расследование с защищённым выводом.
+helm template ledger ./chart --kube-version 1.36.6 --debug --namespace helm-lab
+Результат: Вывод может содержать секретные значения и пути; это не дополнительная проверка здоровья.
+--qps <число> — Ограничить частоту клиентских запросов к API.
+Когда: Только после измерения задержки и throttling.
+helm status ledger --qps 5 --burst-limit 10 --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Не увеличивает серверную ёмкость и не ускоряет scheduling автоматически.
+
+helm get manifest
+Прочитать сохранённые manifests релиза, включая возможные Secret bytes.
+helm get manifest ИМЯ [ФЛАГИ]
+--revision <число> — Читать manifest конкретной ревизии.
+Когда: Сопоставить цель rollback.
+helm get manifest ledger --namespace helm-lab --revision 1 --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Не является полным live snapshot объектов API.
+--kubeconfig <файл> — Выбрать отдельный файл доступа.
+Когда: Каждое кластерное действие личного стенда.
+helm status ledger --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Не меняет общий current-context; файл может запускать credential plugin.
+--kube-context <имя> — Явно выбрать контекст из указанного kubeconfig.
+Когда: Не полагаться на значение по умолчанию.
+helm list --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Endpoint и личность определены явно; ошибочный контекст остаётся опасным.
+--namespace <имя> / -n <имя> — Выбрать пространство имён запроса и истории релиза.
+Когда: Одинаковый release может существовать в разных namespaces.
+helm history ledger --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Это не ограничивает chart от cluster-scoped ресурсов.
+--debug — Добавить диагностический контекст.
+Когда: Короткое расследование с защищённым выводом.
+helm template ledger ./chart --kube-version 1.36.6 --debug --namespace helm-lab
+Результат: Вывод может содержать секретные значения и пути; это не дополнительная проверка здоровья.
+--qps <число> — Ограничить частоту клиентских запросов к API.
+Когда: Только после измерения задержки и throttling.
+helm status ledger --qps 5 --burst-limit 10 --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Не увеличивает серверную ёмкость и не ускоряет scheduling автоматически.
+
+helm get hooks
+Прочитать сохранённые шаблоны обработчиков релиза.
+helm get hooks ИМЯ
+--kubeconfig <файл> — Выбрать отдельный файл доступа.
+Когда: Каждое кластерное действие личного стенда.
+helm status ledger --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Не меняет общий current-context; файл может запускать credential plugin.
+--kube-context <имя> — Явно выбрать контекст из указанного kubeconfig.
+Когда: Не полагаться на значение по умолчанию.
+helm list --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Endpoint и личность определены явно; ошибочный контекст остаётся опасным.
+--namespace <имя> / -n <имя> — Выбрать пространство имён запроса и истории релиза.
+Когда: Одинаковый release может существовать в разных namespaces.
+helm history ledger --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Это не ограничивает chart от cluster-scoped ресурсов.
+--debug — Добавить диагностический контекст.
+Когда: Короткое расследование с защищённым выводом.
+helm template ledger ./chart --kube-version 1.36.6 --debug --namespace helm-lab
+Результат: Вывод может содержать секретные значения и пути; это не дополнительная проверка здоровья.
+--qps <число> — Ограничить частоту клиентских запросов к API.
+Когда: Только после измерения задержки и throttling.
+helm status ledger --qps 5 --burst-limit 10 --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Не увеличивает серверную ёмкость и не ускоряет scheduling автоматически.
+
+helm test
+Запустить chart test hooks на настоящем развернутом релизе.
+helm test ИМЯ [ФЛАГИ]
+--logs — Получить логи тестовых Pod до предусмотренной очистки.
+Когда: Диагностировать HTTP/DNS тест.
+helm test ledger --namespace helm-lab --logs --timeout 60s --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Это реальные Pod/API операции; лог может раскрывать данные.
+--filter <name=...> — Выбрать тесты по поддерживаемому атрибуту.
+Когда: Повторить конкретный тест.
+helm test ledger --namespace helm-lab --filter name=ledger-ledger-api-test --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Имя должно совпасть с фактическим hook; это не локальный unit test.
+--kubeconfig <файл> — Выбрать отдельный файл доступа.
+Когда: Каждое кластерное действие личного стенда.
+helm status ledger --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Не меняет общий current-context; файл может запускать credential plugin.
+--kube-context <имя> — Явно выбрать контекст из указанного kubeconfig.
+Когда: Не полагаться на значение по умолчанию.
+helm list --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Endpoint и личность определены явно; ошибочный контекст остаётся опасным.
+--namespace <имя> / -n <имя> — Выбрать пространство имён запроса и истории релиза.
+Когда: Одинаковый release может существовать в разных namespaces.
+helm history ledger --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Это не ограничивает chart от cluster-scoped ресурсов.
+--debug — Добавить диагностический контекст.
+Когда: Короткое расследование с защищённым выводом.
+helm template ledger ./chart --kube-version 1.36.6 --debug --namespace helm-lab
+Результат: Вывод может содержать секретные значения и пути; это не дополнительная проверка здоровья.
+--qps <число> — Ограничить частоту клиентских запросов к API.
+Когда: Только после измерения задержки и throttling.
+helm status ledger --qps 5 --burst-limit 10 --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Не увеличивает серверную ёмкость и не ускоряет scheduling автоматически.
+
+helm dependency update
+Разрешить версии dependencies и обновить charts/ и lock.
+helm dependency update CHART
+--kubeconfig <файл> — Выбрать отдельный файл доступа.
+Когда: Каждое кластерное действие личного стенда.
+helm status ledger --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Не меняет общий current-context; файл может запускать credential plugin.
+--kube-context <имя> — Явно выбрать контекст из указанного kubeconfig.
+Когда: Не полагаться на значение по умолчанию.
+helm list --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Endpoint и личность определены явно; ошибочный контекст остаётся опасным.
+--namespace <имя> / -n <имя> — Выбрать пространство имён запроса и истории релиза.
+Когда: Одинаковый release может существовать в разных namespaces.
+helm history ledger --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Это не ограничивает chart от cluster-scoped ресурсов.
+--debug — Добавить диагностический контекст.
+Когда: Короткое расследование с защищённым выводом.
+helm template ledger ./chart --kube-version 1.36.6 --debug --namespace helm-lab
+Результат: Вывод может содержать секретные значения и пути; это не дополнительная проверка здоровья.
+--qps <число> — Ограничить частоту клиентских запросов к API.
+Когда: Только после измерения задержки и throttling.
+helm status ledger --qps 5 --burst-limit 10 --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Не увеличивает серверную ёмкость и не ускоряет scheduling автоматически.
+
+helm dependency build
+Восстановить dependencies из Chart.lock; без lock может заново разрешить набор.
+helm dependency build CHART
+--kubeconfig <файл> — Выбрать отдельный файл доступа.
+Когда: Каждое кластерное действие личного стенда.
+helm status ledger --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Не меняет общий current-context; файл может запускать credential plugin.
+--kube-context <имя> — Явно выбрать контекст из указанного kubeconfig.
+Когда: Не полагаться на значение по умолчанию.
+helm list --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Endpoint и личность определены явно; ошибочный контекст остаётся опасным.
+--namespace <имя> / -n <имя> — Выбрать пространство имён запроса и истории релиза.
+Когда: Одинаковый release может существовать в разных namespaces.
+helm history ledger --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Это не ограничивает chart от cluster-scoped ресурсов.
+--debug — Добавить диагностический контекст.
+Когда: Короткое расследование с защищённым выводом.
+helm template ledger ./chart --kube-version 1.36.6 --debug --namespace helm-lab
+Результат: Вывод может содержать секретные значения и пути; это не дополнительная проверка здоровья.
+--qps <число> — Ограничить частоту клиентских запросов к API.
+Когда: Только после измерения задержки и throttling.
+helm status ledger --qps 5 --burst-limit 10 --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Не увеличивает серверную ёмкость и не ускоряет scheduling автоматически.
+
+helm dependency list
+Показать объявленные dependencies и их состояние.
+helm dependency list CHART
+--kubeconfig <файл> — Выбрать отдельный файл доступа.
+Когда: Каждое кластерное действие личного стенда.
+helm status ledger --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Не меняет общий current-context; файл может запускать credential plugin.
+--kube-context <имя> — Явно выбрать контекст из указанного kubeconfig.
+Когда: Не полагаться на значение по умолчанию.
+helm list --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Endpoint и личность определены явно; ошибочный контекст остаётся опасным.
+--namespace <имя> / -n <имя> — Выбрать пространство имён запроса и истории релиза.
+Когда: Одинаковый release может существовать в разных namespaces.
+helm history ledger --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Это не ограничивает chart от cluster-scoped ресурсов.
+--debug — Добавить диагностический контекст.
+Когда: Короткое расследование с защищённым выводом.
+helm template ledger ./chart --kube-version 1.36.6 --debug --namespace helm-lab
+Результат: Вывод может содержать секретные значения и пути; это не дополнительная проверка здоровья.
+--qps <число> — Ограничить частоту клиентских запросов к API.
+Когда: Только после измерения задержки и throttling.
+helm status ledger --qps 5 --burst-limit 10 --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Не увеличивает серверную ёмкость и не ускоряет scheduling автоматически.
+
+helm package
+Упаковать chart; не собирает Go и контейнерные образы.
+helm package CHART [ФЛАГИ]
+--destination <каталог> — Записать tgz вне исходного chart.
+Когда: Избежать повторного вложения artifacts.
+helm package ./chart --destination ./dist
+Результат: Имя пакета зависит от Chart.yaml name/version.
+--version <SemVer> — Задать chart version пакета.
+Когда: Осознанная новая версия интерфейса.
+helm package ./chart --version 0.2.0 --destination ./dist
+Результат: Не изменяет автоматически image tag/application bytes.
+--sign — Создать classic .prov с подготовленным ключом.
+Когда: Свой процесс доверенной публикации.
+helm package ./chart --destination ./signed --sign --key "HANDBOOK SIGNER" --keyring ./private-signing-keyring.gpg
+Результат: Рецепт требует своих ключей; в редакции подпись chart не выполнялась.
+--kubeconfig <файл> — Выбрать отдельный файл доступа.
+Когда: Каждое кластерное действие личного стенда.
+helm status ledger --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Не меняет общий current-context; файл может запускать credential plugin.
+--kube-context <имя> — Явно выбрать контекст из указанного kubeconfig.
+Когда: Не полагаться на значение по умолчанию.
+helm list --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Endpoint и личность определены явно; ошибочный контекст остаётся опасным.
+--namespace <имя> / -n <имя> — Выбрать пространство имён запроса и истории релиза.
+Когда: Одинаковый release может существовать в разных namespaces.
+helm history ledger --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Это не ограничивает chart от cluster-scoped ресурсов.
+--debug — Добавить диагностический контекст.
+Когда: Короткое расследование с защищённым выводом.
+helm template ledger ./chart --kube-version 1.36.6 --debug --namespace helm-lab
+Результат: Вывод может содержать секретные значения и пути; это не дополнительная проверка здоровья.
+--qps <число> — Ограничить частоту клиентских запросов к API.
+Когда: Только после измерения задержки и throttling.
+helm status ledger --qps 5 --burst-limit 10 --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Не увеличивает серверную ёмкость и не ускоряет scheduling автоматически.
+
+helm verify
+Проверить classic provenance архива по доверенному public keyring.
+helm verify АРХИВ --keyring ФАЙЛ
+--keyring <файл> — Выбрать доверенное кольцо открытых ключей.
+Когда: Проверка конкретного издателя.
+helm verify ./dist/ledger-api-0.1.0.tgz --keyring ./trusted-public.gpg
+Результат: Не анализирует опасные полномочия и hooks пакета.
+--kubeconfig <файл> — Выбрать отдельный файл доступа.
+Когда: Каждое кластерное действие личного стенда.
+helm status ledger --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Не меняет общий current-context; файл может запускать credential plugin.
+--kube-context <имя> — Явно выбрать контекст из указанного kubeconfig.
+Когда: Не полагаться на значение по умолчанию.
+helm list --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Endpoint и личность определены явно; ошибочный контекст остаётся опасным.
+--namespace <имя> / -n <имя> — Выбрать пространство имён запроса и истории релиза.
+Когда: Одинаковый release может существовать в разных namespaces.
+helm history ledger --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Это не ограничивает chart от cluster-scoped ресурсов.
+--debug — Добавить диагностический контекст.
+Когда: Короткое расследование с защищённым выводом.
+helm template ledger ./chart --kube-version 1.36.6 --debug --namespace helm-lab
+Результат: Вывод может содержать секретные значения и пути; это не дополнительная проверка здоровья.
+--qps <число> — Ограничить частоту клиентских запросов к API.
+Когда: Только после измерения задержки и throttling.
+helm status ledger --qps 5 --burst-limit 10 --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Не увеличивает серверную ёмкость и не ускоряет scheduling автоматически.
+
+helm pull
+Скачать chart archive для проверки или распаковки.
+helm pull CHART [ФЛАГИ]
+--version <версия> — Выбрать конкретный chart version.
+Когда: Воспроизводимая доставка.
+helm pull handbook/ledger-api --version 0.1.0 --destination ./dist
+Результат: Версия пакета отличается от image digest.
+--verify — Требовать .prov и корректную подпись.
+Когда: Classic provenance с доверенными ключами.
+helm pull handbook/ledger-api --version 0.1.0 --verify --keyring ./trusted-public.gpg
+Результат: Просто наличие файла .prov недостаточно.
+--untar — Распаковать пакет.
+Когда: Исследование исходников в отдельном каталоге.
+helm pull handbook/ledger-api --version 0.1.0 --untar --untardir ./inspection
+Результат: Распаковка не добавляет доверия или проверки workloads.
+--kubeconfig <файл> — Выбрать отдельный файл доступа.
+Когда: Каждое кластерное действие личного стенда.
+helm status ledger --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Не меняет общий current-context; файл может запускать credential plugin.
+--kube-context <имя> — Явно выбрать контекст из указанного kubeconfig.
+Когда: Не полагаться на значение по умолчанию.
+helm list --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Endpoint и личность определены явно; ошибочный контекст остаётся опасным.
+--namespace <имя> / -n <имя> — Выбрать пространство имён запроса и истории релиза.
+Когда: Одинаковый release может существовать в разных namespaces.
+helm history ledger --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Это не ограничивает chart от cluster-scoped ресурсов.
+--debug — Добавить диагностический контекст.
+Когда: Короткое расследование с защищённым выводом.
+helm template ledger ./chart --kube-version 1.36.6 --debug --namespace helm-lab
+Результат: Вывод может содержать секретные значения и пути; это не дополнительная проверка здоровья.
+--qps <число> — Ограничить частоту клиентских запросов к API.
+Когда: Только после измерения задержки и throttling.
+helm status ledger --qps 5 --burst-limit 10 --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Не увеличивает серверную ёмкость и не ускоряет scheduling автоматически.
+
+helm push
+Публиковать уже созданный chart tgz в свой OCI registry.
+helm push АРХИВ oci://РЕЕСТР/ПУТЬ
+--kubeconfig <файл> — Выбрать отдельный файл доступа.
+Когда: Каждое кластерное действие личного стенда.
+helm status ledger --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Не меняет общий current-context; файл может запускать credential plugin.
+--kube-context <имя> — Явно выбрать контекст из указанного kubeconfig.
+Когда: Не полагаться на значение по умолчанию.
+helm list --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Endpoint и личность определены явно; ошибочный контекст остаётся опасным.
+--namespace <имя> / -n <имя> — Выбрать пространство имён запроса и истории релиза.
+Когда: Одинаковый release может существовать в разных namespaces.
+helm history ledger --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Это не ограничивает chart от cluster-scoped ресурсов.
+--debug — Добавить диагностический контекст.
+Когда: Короткое расследование с защищённым выводом.
+helm template ledger ./chart --kube-version 1.36.6 --debug --namespace helm-lab
+Результат: Вывод может содержать секретные значения и пути; это не дополнительная проверка здоровья.
+--qps <число> — Ограничить частоту клиентских запросов к API.
+Когда: Только после измерения задержки и throttling.
+helm status ledger --qps 5 --burst-limit 10 --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Не увеличивает серверную ёмкость и не ускоряет scheduling автоматически.
+
+helm registry login
+Сохранить авторизацию Helm для своего OCI registry; в4.x аргумент domain[:port].
+helm registry login РЕЕСТР [ФЛАГИ]
+--password-stdin — Прочитать пароль из stdin вместо argv.
+Когда: Подготовленная переменная секрета своего registry.
+printf '%s' "$REGISTRY_PASSWORD" | helm registry login registry.example.invalid --username "$REGISTRY_USER" --password-stdin
+Результат: Credential file защищают; это не imagePullSecret Kubernetes.
+--kubeconfig <файл> — Выбрать отдельный файл доступа.
+Когда: Каждое кластерное действие личного стенда.
+helm status ledger --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Не меняет общий current-context; файл может запускать credential plugin.
+--kube-context <имя> — Явно выбрать контекст из указанного kubeconfig.
+Когда: Не полагаться на значение по умолчанию.
+helm list --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Endpoint и личность определены явно; ошибочный контекст остаётся опасным.
+--namespace <имя> / -n <имя> — Выбрать пространство имён запроса и истории релиза.
+Когда: Одинаковый release может существовать в разных namespaces.
+helm history ledger --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Это не ограничивает chart от cluster-scoped ресурсов.
+--debug — Добавить диагностический контекст.
+Когда: Короткое расследование с защищённым выводом.
+helm template ledger ./chart --kube-version 1.36.6 --debug --namespace helm-lab
+Результат: Вывод может содержать секретные значения и пути; это не дополнительная проверка здоровья.
+--qps <число> — Ограничить частоту клиентских запросов к API.
+Когда: Только после измерения задержки и throttling.
+helm status ledger --qps 5 --burst-limit 10 --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Не увеличивает серверную ёмкость и не ускоряет scheduling автоматически.
+
+helm repo add
+Зарегистрировать имя HTTP(S) chart repository в личной среде клиента.
+helm repo add ИМЯ URL
+--kubeconfig <файл> — Выбрать отдельный файл доступа.
+Когда: Каждое кластерное действие личного стенда.
+helm status ledger --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Не меняет общий current-context; файл может запускать credential plugin.
+--kube-context <имя> — Явно выбрать контекст из указанного kubeconfig.
+Когда: Не полагаться на значение по умолчанию.
+helm list --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Endpoint и личность определены явно; ошибочный контекст остаётся опасным.
+--namespace <имя> / -n <имя> — Выбрать пространство имён запроса и истории релиза.
+Когда: Одинаковый release может существовать в разных namespaces.
+helm history ledger --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Это не ограничивает chart от cluster-scoped ресурсов.
+--debug — Добавить диагностический контекст.
+Когда: Короткое расследование с защищённым выводом.
+helm template ledger ./chart --kube-version 1.36.6 --debug --namespace helm-lab
+Результат: Вывод может содержать секретные значения и пути; это не дополнительная проверка здоровья.
+--qps <число> — Ограничить частоту клиентских запросов к API.
+Когда: Только после измерения задержки и throttling.
+helm status ledger --qps 5 --burst-limit 10 --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Не увеличивает серверную ёмкость и не ускоряет scheduling автоматически.
+
+helm repo update
+Скачать свежий индекс указанных зарегистрированных repositories.
+helm repo update [ИМЯ]
+--kubeconfig <файл> — Выбрать отдельный файл доступа.
+Когда: Каждое кластерное действие личного стенда.
+helm status ledger --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Не меняет общий current-context; файл может запускать credential plugin.
+--kube-context <имя> — Явно выбрать контекст из указанного kubeconfig.
+Когда: Не полагаться на значение по умолчанию.
+helm list --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Endpoint и личность определены явно; ошибочный контекст остаётся опасным.
+--namespace <имя> / -n <имя> — Выбрать пространство имён запроса и истории релиза.
+Когда: Одинаковый release может существовать в разных namespaces.
+helm history ledger --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Это не ограничивает chart от cluster-scoped ресурсов.
+--debug — Добавить диагностический контекст.
+Когда: Короткое расследование с защищённым выводом.
+helm template ledger ./chart --kube-version 1.36.6 --debug --namespace helm-lab
+Результат: Вывод может содержать секретные значения и пути; это не дополнительная проверка здоровья.
+--qps <число> — Ограничить частоту клиентских запросов к API.
+Когда: Только после измерения задержки и throttling.
+helm status ledger --qps 5 --burst-limit 10 --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Не увеличивает серверную ёмкость и не ускоряет scheduling автоматически.
+
+helm repo index
+Создать index.yaml для собственной staging-папки chart repository.
+helm repo index КАТАЛОГ [ФЛАГИ]
+--url <URL> — Задать базовый адрес публикуемых archives.
+Когда: Подготовка своего HTTP chart repository.
+helm repo index ./dist --url https://charts.example.invalid
+Результат: Само индексирование не публикует сервер и не подписывает archives.
+--kubeconfig <файл> — Выбрать отдельный файл доступа.
+Когда: Каждое кластерное действие личного стенда.
+helm status ledger --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Не меняет общий current-context; файл может запускать credential plugin.
+--kube-context <имя> — Явно выбрать контекст из указанного kubeconfig.
+Когда: Не полагаться на значение по умолчанию.
+helm list --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Endpoint и личность определены явно; ошибочный контекст остаётся опасным.
+--namespace <имя> / -n <имя> — Выбрать пространство имён запроса и истории релиза.
+Когда: Одинаковый release может существовать в разных namespaces.
+helm history ledger --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Это не ограничивает chart от cluster-scoped ресурсов.
+--debug — Добавить диагностический контекст.
+Когда: Короткое расследование с защищённым выводом.
+helm template ledger ./chart --kube-version 1.36.6 --debug --namespace helm-lab
+Результат: Вывод может содержать секретные значения и пути; это не дополнительная проверка здоровья.
+--qps <число> — Ограничить частоту клиентских запросов к API.
+Когда: Только после измерения задержки и throttling.
+helm status ledger --qps 5 --burst-limit 10 --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Не увеличивает серверную ёмкость и не ускоряет scheduling автоматически.
+
+helm search repo
+Искать по сохранённым локально индексам repositories.
+helm search repo ЗАПРОС [ФЛАГИ]
+--versions — Показать доступные версии из индекса.
+Когда: Перед фиксацией chart version.
+helm search repo handbook/ledger-api --versions
+Результат: Устаревший index может отличаться от текущего сервера.
+--kubeconfig <файл> — Выбрать отдельный файл доступа.
+Когда: Каждое кластерное действие личного стенда.
+helm status ledger --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Не меняет общий current-context; файл может запускать credential plugin.
+--kube-context <имя> — Явно выбрать контекст из указанного kubeconfig.
+Когда: Не полагаться на значение по умолчанию.
+helm list --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Endpoint и личность определены явно; ошибочный контекст остаётся опасным.
+--namespace <имя> / -n <имя> — Выбрать пространство имён запроса и истории релиза.
+Когда: Одинаковый release может существовать в разных namespaces.
+helm history ledger --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Это не ограничивает chart от cluster-scoped ресурсов.
+--debug — Добавить диагностический контекст.
+Когда: Короткое расследование с защищённым выводом.
+helm template ledger ./chart --kube-version 1.36.6 --debug --namespace helm-lab
+Результат: Вывод может содержать секретные значения и пути; это не дополнительная проверка здоровья.
+--qps <число> — Ограничить частоту клиентских запросов к API.
+Когда: Только после измерения задержки и throttling.
+helm status ledger --qps 5 --burst-limit 10 --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Не увеличивает серверную ёмкость и не ускоряет scheduling автоматически.
+
+helm show chart
+Прочитать метаданные пакета без создания release.
+helm show chart CHART
+--kubeconfig <файл> — Выбрать отдельный файл доступа.
+Когда: Каждое кластерное действие личного стенда.
+helm status ledger --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Не меняет общий current-context; файл может запускать credential plugin.
+--kube-context <имя> — Явно выбрать контекст из указанного kubeconfig.
+Когда: Не полагаться на значение по умолчанию.
+helm list --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Endpoint и личность определены явно; ошибочный контекст остаётся опасным.
+--namespace <имя> / -n <имя> — Выбрать пространство имён запроса и истории релиза.
+Когда: Одинаковый release может существовать в разных namespaces.
+helm history ledger --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Это не ограничивает chart от cluster-scoped ресурсов.
+--debug — Добавить диагностический контекст.
+Когда: Короткое расследование с защищённым выводом.
+helm template ledger ./chart --kube-version 1.36.6 --debug --namespace helm-lab
+Результат: Вывод может содержать секретные значения и пути; это не дополнительная проверка здоровья.
+--qps <число> — Ограничить частоту клиентских запросов к API.
+Когда: Только после измерения задержки и throttling.
+helm status ledger --qps 5 --burst-limit 10 --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Не увеличивает серверную ёмкость и не ускоряет scheduling автоматически.
+
+helm show values
+Прочитать исходные defaults пакета, не effective config release.
+helm show values CHART
+--kubeconfig <файл> — Выбрать отдельный файл доступа.
+Когда: Каждое кластерное действие личного стенда.
+helm status ledger --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Не меняет общий current-context; файл может запускать credential plugin.
+--kube-context <имя> — Явно выбрать контекст из указанного kubeconfig.
+Когда: Не полагаться на значение по умолчанию.
+helm list --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" --namespace helm-lab
+Результат: Endpoint и личность определены явно; ошибочный контекст остаётся опасным.
+--namespace <имя> / -n <имя> — Выбрать пространство имён запроса и истории релиза.
+Когда: Одинаковый release может существовать в разных namespaces.
+helm history ledger --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Это не ограничивает chart от cluster-scoped ресурсов.
+--debug — Добавить диагностический контекст.
+Когда: Короткое расследование с защищённым выводом.
+helm template ledger ./chart --kube-version 1.36.6 --debug --namespace helm-lab
+Результат: Вывод может содержать секретные значения и пути; это не дополнительная проверка здоровья.
+--qps <число> — Ограничить частоту клиентских запросов к API.
+Когда: Только после измерения задержки и throttling.
+helm status ledger --qps 5 --burst-limit 10 --namespace helm-lab --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT"
+Результат: Не увеличивает серверную ёмкость и не ускоряет scheduling автоматически.

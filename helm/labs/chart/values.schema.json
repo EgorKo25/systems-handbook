@@ -1,0 +1,248 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": [
+    "replicaCount",
+    "image",
+    "service",
+    "config",
+    "resources",
+    "strategy",
+    "persistence",
+    "tests",
+    "credentials",
+    "extraEnv",
+    "extraLabels",
+    "probes"
+  ],
+  "properties": {
+    "replicaCount": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 6
+    },
+    "image": {
+      "type": "object",
+      "required": [
+        "repository",
+        "tag",
+        "digest",
+        "pullPolicy"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "repository": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tag": {
+          "type": "string",
+          "minLength": 1
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^(|sha256:[a-f0-9]{64})$"
+        },
+        "pullPolicy": {
+          "enum": [
+            "Always",
+            "IfNotPresent",
+            "Never"
+          ]
+        }
+      }
+    },
+    "service": {
+      "type": "object",
+      "required": [
+        "port",
+        "targetPort"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "targetPort": {
+          "const": 8080
+        }
+      }
+    },
+    "config": {
+      "type": "object",
+      "required": [
+        "message"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "message": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "credentials": {
+      "type": "object",
+      "required": [
+        "create",
+        "existingSecret",
+        "token"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "create": {
+          "type": "boolean"
+        },
+        "existingSecret": {
+          "type": "string"
+        },
+        "token": {
+          "type": "string"
+        }
+      }
+    },
+    "extraLabels": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "extraEnv": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "value"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[A-Z_][A-Z0-9_]*$"
+          },
+          "value": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "resources": {
+      "type": "object",
+      "required": [
+        "requests",
+        "limits"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "requests": {
+          "type": "object",
+          "required": [
+            "cpu",
+            "memory"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "cpu": {
+              "type": "string",
+              "minLength": 1
+            },
+            "memory": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "limits": {
+          "type": "object",
+          "required": [
+            "cpu",
+            "memory"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "cpu": {
+              "type": "string",
+              "minLength": 1
+            },
+            "memory": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    },
+    "strategy": {
+      "type": "object",
+      "required": [
+        "maxSurge",
+        "maxUnavailable"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "maxSurge": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3
+        },
+        "maxUnavailable": {
+          "const": 0
+        }
+      }
+    },
+    "persistence": {
+      "type": "object",
+      "required": [
+        "enabled",
+        "size",
+        "storageClass"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "size": {
+          "type": "string",
+          "minLength": 1
+        },
+        "storageClass": {
+          "type": "string"
+        }
+      }
+    },
+    "tests": {
+      "type": "object",
+      "required": [
+        "enabled",
+        "image"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "image": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "probes": {
+      "type": "object",
+      "required": [
+        "readinessPath"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "readinessPath": {
+          "type": "string",
+          "pattern": "^/"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,3 @@
+Release {{ .Release.Name }} in namespace {{ .Release.Namespace }}.
+Inspect deployment {{ include "ledger.fullname" . }} and its EndpointSlices.
+Rendering NOTES is not an HTTP success check. Run the explicit lab checks.

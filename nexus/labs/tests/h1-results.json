@@ -1,0 +1,47 @@
+{
+  "scope": "actual Go client, private file:// fixtures; no Nexus, HTTP or public checksum lookup",
+  "module": "example.invalid/bytes/lab",
+  "version": "v1.0.0",
+  "checks": [
+    {
+      "name": "own canonical calculation matches real Go Sum and GoModSum",
+      "passed": true
+    },
+    {
+      "name": "different ZIP bytes and order accepted with the same trusted go.sum",
+      "passed": true
+    },
+    {
+      "name": "known go.sum rejects changed content even with GONOSUMDB exemption",
+      "passed": true
+    },
+    {
+      "name": "no known sum and no external private checksum trust accepts first received content",
+      "passed": true
+    },
+    {
+      "name": "filenames participate in the canonical hash",
+      "passed": true
+    }
+  ],
+  "go_version": "go version go1.27.3 linux/amd64",
+  "module_h1": "h1:7WKrdRtFSF2meIj8osij3sbHmCEeLUaVlF+YlHBJ8dE=",
+  "go_mod_h1": "h1:UQlMCAh2EnFYrq3F/83ATd8bFMfx8DSuczv6vSHAQ6I=",
+  "changed_h1": "h1:iIz1I9ANBKL2r7gctUp6G2qM1RIrLkW5rjbauSkxgu4=",
+  "canonical_summary_utf8": "620c264d1538a90b3f4c27536399e5886f558ab8709eae0bf64dda6d6538ed6d  example.invalid/bytes/lab@v1.0.0/answer.go\n456732f081ccefc9344a62431f7fd18c588cc485f389ca46b46b26c650b41c7b  example.invalid/bytes/lab@v1.0.0/go.mod\n",
+  "go_mod_summary_utf8": "456732f081ccefc9344a62431f7fd18c588cc485f389ca46b46b26c650b41c7b  go.mod\n",
+  "archive_a": {
+    "sha256": "4c6cd2c79dd40ab2bc1567dab8fe132a6ffbc6cf83b005e25fe4e9ec277ecddd",
+    "bytes": 409
+  },
+  "archive_b": {
+    "sha256": "c3d5a6d830d5a77fef97c748db37c291766817c8be43d1a44abe7794971e5b04",
+    "bytes": 413
+  },
+  "passed": 5,
+  "limitations": [
+    "Not a module ZIP validator for arbitrary inputs",
+    "Nexus and remote checksum database not executed",
+    "Checksums establish consistency against trusted expectations, not source code safety"
+  ]
+}

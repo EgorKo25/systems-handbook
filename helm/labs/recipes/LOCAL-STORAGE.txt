@@ -1,0 +1,52 @@
+СТАТИЧЕСКИЙ LOCAL PV ДЛЯ HELM — НЕ УСТАНОВКА CSI
+Это отдельный адаптер личного kubeadm-стенда Kubernetes-тома.
+Ничего из этого автор на host/VM пользователя не исполнял.
+Узел wk1, каталог/данные отличны от lab/ledger-data соседнего практикума.
+
+ВЛАДЕЛЕЦ ЛИЧНОЙ VM wk1:
+Убедиться, что это именно своя учебная VM и каталог ещё не содержит чужих данных.
+  sudo install -d -o 65532 -g 65532 -m 0750 /srv/handbook/helm-ledger-data
+Проверить свободный диск. PV capacity256Mi — объявленная ёмкость,а не автоматическая
+дисковая квота каталога; за реальным использованием следит владелец VM.
+
+ВЛАДЕЛЕЦ КЛАСТЕРА с правами create StorageClass/PV:
+Явный LAB_KUBECONFIG/LAB_CONTEXT должен указывать на свой kubeadm lab,не kind.
+  kubectl --kubeconfig "$LAB_KUBECONFIG" --context "$LAB_CONTEXT" get node wk1 --show-labels
+  kubectl --kubeconfig "$LAB_KUBECONFIG" --context "$LAB_CONTEXT" apply --dry-run=server -f recipes/vm-local-storage.yaml
+  kubectl --kubeconfig "$LAB_KUBECONFIG" --context "$LAB_CONTEXT" apply -f recipes/vm-local-storage.yaml
+Namespace helm-lab заранее создан. Класс helm-local использует no-provisioner:
+никакой dynamic provisioner не устанавливается. PV helm-ledger-local,Retain,
+256Mi,local path /srv/handbook/helm-ledger-data,nodeAffinity wk1 и claimRef
+зарезервированы только для helm-lab/ledger-ledger-api-data.
+Это не PVC lab/ledger-data и не PV ledger-local соседней лаборатории.
+
+ВЛАДЕЛЕЦ РЕЛИЗА:
+Выбрать этот профиль ДО первого создания PVC. storageClassName существующего
+claim обычно неизменяем;не пытайтесь поменять её случайным upgrade.
+  helm upgrade ledger ./chart --reset-values -f environment.yaml -f fixtures/storage.yaml --kubeconfig "$LAB_KUBECONFIG" --kube-context "$LAB_CONTEXT" -n helm-lab --wait=watcher --timeout 180s
+Запрос128Mi <= PV256Mi. Replica1+Recreate допускают downtime.
+  kubectl --kubeconfig "$LAB_KUBECONFIG" --context "$LAB_CONTEXT" -n helm-lab get pvc ledger-ledger-api-data
+  kubectl --kubeconfig "$LAB_KUBECONFIG" --context "$LAB_CONTEXT" get pv helm-ledger-local
+  kubectl --kubeconfig "$LAB_KUBECONFIG" --context "$LAB_CONTEXT" -n helm-lab get pod -o wide
+WaitForFirstConsumer допускает Pending до появления потребителя и планирования.
+Ожидается Bound,volume=helm-ledger-local,Pod на wk1. Если Pending — describe PVC,
+Pod и PV: class,size,claimRef,node label,доступный путь/права и scheduling events.
+Настоящий binding/mount не проверен локальным template.
+
+MARKER:
+Приложение /data не пишет. Сначала явно scale deployment replicas0 и дождаться
+удаления его Pod;это осознанный drift,позже исправляется тем же Helm upgrade.
+Применить storage-inspector.yaml,дождаться Succeeded,сохранить вывод logs.
+Удалить только inspector Pod,создать повторно,сравнить тот же UUID marker.
+Удалить inspector и повторить storage upgrade для восстановления replica1.
+Не удалять PVC/PV/каталог между двумя чтениями — это уже другой эксперимент.
+
+ПРЕДЕЛЫ И ВОССТАНОВЛЕНИЕ:
+Статический localPV не требует CSI,но привязывает данные к диску wk1.
+Потеря wk1 не лечится переносом Pod на wk2:nodeAffinity запрещает такой запуск.
+Нужны отдельный резерв согласованных файлов и проверка восстановления.
+Retain и helm keep не являются резервом и не очищают каталог сами.
+Если claim уже создан с другой class,сначала сохранить данные/историю и выбрать
+план миграции в новый claim;не удалять его ради прохождения упражнения.
+Для kind/CSI это ДРУГОЙ профиль с реально подготовленным backend и отдельными
+параметрами,а не надежда на default provisioner. Эти команды не создают его.

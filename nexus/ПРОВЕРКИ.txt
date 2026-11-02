@@ -1,0 +1,103 @@
+NEXUS REPOSITORY · границы проверки · 1 ноября 2026
+
+Готовые авторские исходники отдельного тома; версия учебного сервера
+Sonatype Nexus Repository CE 3.97.3-01, standalone H2 + File blob stores.
+Номер XIX в CONFIG ВРЕМЕННЫЙ; окончательный номер назначает интегратор.
+
+ВЕРСИОННЫЕ ПЕРВОИСТОЧНИКИ
+Официальная Download публикует exact Linux x86-64 archive и SHA256 URLs
+для 3.97.3-01; release notes датируют 3.97.3 27 октября 2026. Ссылки/области
+в sources/source-ledger.json и главе98, дата2026-11-01. Сам архив Nexus
+не загружался, checksum архива не вычислялась, распаковка не выполнялась.
+По опубликованным первоисточникам: Java21, Go CE proxy/hosted/group
+(hosted c3.93), OCI c3.94, CE limits, telemetry3.97 и grace/read-only,
+ограничения SAT/Pro user tokens, N-version retention Pro+PostgreSQL.
+Не обещаются всем редакциям HA/backend/API. Неполные данные документации
+о CE cleanup отмечены явно: основной CE практикум не зависит от этой feature.
+
+РЕАЛЬНЫЕ ЛОКАЛЬНЫЕ ПРОЦЕССЫ
+Go version фактически проверена: go version go1.27.3 linux/amd64.
+Python3 stdlib, временные каталоги, loopback HTTP; host services/install нет.
+labs/tests/results.json —20/20 проверок:
+- собственный source module тестируется;
+- uppercase escaping example.invalid/!acme/ledger, реальные HTTP requests
+  %21acme и endpoints .zip/.mod/.info;
+- чистый клиент получает module через protocol fixture, без replace;
+- тёплый client cache работает после исчезновения fixture; clean cache с
+  GOPROXY=off отказывает (не выдаётся за Nexus server cache test);
+- HTTP404/410/401/403/500 × comma/pipe —10 случаев, реальные обращения
+  ко второму HTTP endpoint, ожидаемые успехи/отказы;
+- trusted go.sum отвергает изменённый source ZIP при GONOSUMDB private;
+- настоящий build pulse, запуск и HTTP healthz/version/hello;
+- manifest отвергает symlink и порчу bytes при сохранённом размере;
+- файловая backup copy возвращает исходный бинарник и версию.
+Длительность loopback и размер файла относятся только к этому запуску.
+
+labs/tests/h1-results.json —5/5 независимых реальных Go проверок:
+- Python canonical bytes →h1 совпадает с Go Sum и GoModSum;
+- другой ZIP order/timestamp/compression меняет archive SHA256, сохраняетh1;
+- изменённые source bytes отвергаются при прежнем trusted go.sum;
+- при первом получении без прежней суммы и с private sumdb exemption другие
+  bytes принимаются (граница исходного доверия, не разрешение подмены);
+- rename файла меняетh1. При fatal checksum mismatch -json не гарантирует
+  JSON stdout; проверены stderr и ненулевойexit.
+
+labs/tests/tls-results.json —3/3 реальных локальных проверок OpenSSL3.0.13:
+исполнен точный certificate generation fragment из главы02 во временном
+каталоге, подтверждена цепочкаCA+SAN hostname, другое имя отвергнуто.
+Ключи удалены вместе с TemporaryDirectory; CA trust не устанавливался,
+порты/NGINX/Nexus не запускались. Это не тест действительного HTTPS-входа.
+
+СТАТИКА/РЕНДЕР
+labs/tests/check_sources.py проверяет только nexus: CONFIG/order, HTML
+nesting/header, уникальные IDs, ссылки local, glossary/card schemas,
+diagram graph/steps/marker, source ledger и отсутствие личных publish paths.
+С --render вызывает настоящий shared scripts/build_volume.py только в новой
+TemporaryDirectory с копиями нужных readers/dependencies и локальной
+регистрацией nexus. Общие scripts/config/catalog/stats репозитория не меняет.
+Сводка результата: labs/tests/source-results.json. Выход временной сборки
+не выдаётся за опубликованный том. Browser UI визуально не проверялся;
+JSON/HTML контракт и генерация не доказывают touch/темы в живом браузере.
+
+НЕ ИСПОЛНЯЛОСЬ
+Установка/запуск Nexus/JVM, systemd/NGINX/HTTPS-службы на host или VM; реальные роли,
+Go hosted PUT/group download Nexus, raw PUT/DELETE, registry push/pull,
+Nexus cache TTL/invalidation/missing upstream, H2/PostgreSQL restore,
+cleanup/compaction/repair, миграция/upgrade/downgrade, HA, object storage,
+телеметрия/ack API и нагрузочное измерение действительного сервера.
+Все эти шаги явно помечены как VM-рецепты/модели и требуют личного стенда.
+Ни local fixtures, ни заранее написанная диаграмма не симулируют Nexus.
+
+ПУБЛИКАЦИЯ/ПРИВАТНОСТЬ
+Менялся только nexus/. Нет host installs, privileged execution, cloud costs,
+общих builders/home/catalog/workflows/checksums, commit/push. В исходниках
+нет реальных credentials, рабочих адресов и личного пути Go toolchain.
+
+ДОПОЛНЕНИЕ К ИСТОРИЧЕСКОЙ СДАЧЕ · 2 ноября 2026
+Текущая source-only вычитка охватила все18 HTML в CONFIG-порядке,
+весь glossary/reference/context notes, все6 моделей36 шагов и все labs/config.
+Старые четыре results JSON сохранены без изменения как historical evidence.
+Новые helper ветви не объявляются повторно исполненными native тестами.
+
+Уточнены рабочий корень, local/VM paths, начало HTTPS/credential подготовки,
+NETRC и общее окружение Go-сессии, промежуточная граница go mod verify,
+права release-verifier, создание Raw и manifest до upload.
+Упаковщик получает --source/--version, сохраняет прежние версии и list;
+manifest явно получает --input-version и не перезаписывает output.
+Добавлен холодный backup с явными guard каждого stop/copy шага, retained
+INCOMPLETE state и ограничением одним выбранным H2/File экземпляром.
+Wait LISTEN читает неблокирующий pipe с deadline, EOF/exit/length проверками;
+cleanup обращается только к Popen собственного pulse. Hard reap deadline
+для процесса в неотзывном состоянии ядра не обещается.
+
+Справочник после дополнения:94 термина,18 собственных карточек,14 флагов.
+Сценарии карточек имеют reader-формат problem/explanation/solution.
+Прежние18 HTML/6моделей и anchors сохранены; общие renderer/registry не менялись.
+Предметную Nexus03 иллюстрацию координатор переносит отдельным guarded пакетом.
+
+Проверки этой передачи: только replay точных replacements, Python AST,
+HTML/source contracts, Bash syntax через stdin, pure in-memory helper/stub
+модели. Числа реального старого Go/HTTP/TLS прогона не переносятся на новую
+версию helper без повторного выполнения. Новый native Linux local_client,
+module multi-version + manifest output, cold_backup/restore и production
+reader/browser/mobile/print ещё нужно проверить в разрешённой среде.

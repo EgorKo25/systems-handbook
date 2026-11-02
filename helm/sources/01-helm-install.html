@@ -1,0 +1,58 @@
+<header><h1>Клиент, версия и доступ к своему кластеру</h1><p>Устанавливаем происхождение исполняемых байтов и отделяем файлы Helm от полномочий Kubernetes.</p></header>
+
+<h2>Версию выбирают явно</h2>
+<p>На дату проверки текущая основная ветка — Helm 4, стабильный выпуск 4.3.1 от 15 октября 2026. Параллельная Helm 3.22.1 находится в режиме исправлений безопасности до 11 ноября 2026; обычные bug fixes закончились 8 июля. Helm 2 с Tiller не является моделью этой книги. Фиксация версии делает опыт воспроизводимым, но не отменяет последующее обновление исправлений.</p>
+<p>Основная линия использует CLI 4.3.1 и стабильный chart API v2. Экспериментальный chart API v3 не включаем. В четвёртой ветке новый install по умолчанию применяет server-side apply, ожидание принимает стратегию, а <code>--rollback-on-failure</code> заменяет имя <code>--atomic</code>. Старые флаги могут распознаваться с deprecation warning; новая автоматизация использует актуальные имена. Отдельная глава объясняет миграцию существующего релиза Helm 3.</p>
+<h2>Скачивание и проверка binary</h2>
+<p>На официальной странице release выбирают ОС и архитектуру; Linux amd64 и arm64 содержат разные машинные инструкции. CLI не устанавливает кластер или службу. Следующие команды предназначены для личной VM или отдельного каталога пользователя; root и глобальная смена PATH не нужны.</p>
+<pre><code>prepare_helm_client() (
+    os="$(uname -s)" || exit 1
+    arch="$(uname -m)" || exit 1
+    test "$os" = Linux || exit 1
+    test "$arch" = x86_64 || exit 1
+    mkdir -p "$HOME/handbook-tools" || exit 1
+    mkdir "$HOME/handbook-tools/helm-4.3.1" || exit 1
+    cd "$HOME/handbook-tools/helm-4.3.1" || exit 1
+    curl --fail --location --proto '=https' --tlsv1.2 \
+      https://get.helm.sh/helm-v4.3.1-linux-amd64.tar.gz \
+      --output helm-v4.3.1-linux-amd64.tar.gz || exit 1
+    printf '%s  %s\n' \
+      0403a88ae20913d11b10a2467b50087721fea7581736da6b9d3992f5357fe54b \
+      helm-v4.3.1-linux-amd64.tar.gz &gt; expected.sha256 || exit 1
+    sha256sum --check expected.sha256 || exit 1
+    tar -tzf helm-v4.3.1-linux-amd64.tar.gz || exit 1
+    tar -xzf helm-v4.3.1-linux-amd64.tar.gz || exit 1
+)
+prepare_helm_client &amp;&amp;
+export HELM_BIN="$HOME/handbook-tools/helm-4.3.1/linux-amd64/helm" &amp;&amp;
+"$HELM_BIN" version --short
+</code></pre>
+<p>Это только профиль Linux x86_64 и первая установка в новый каталог. Для другой ОС или архитектуры выбирают соответствующую официальную поставку и её сумму. Существующий каталог вызывает отказ: при следующем занятии используйте уже проверенный бинарник, не перезаписывайте его этой процедурой. Каждый отказ останавливает подготовку до следующего действия; повреждённая частичная папка остаётся для осмотра. Функция выполняется в дочерней оболочке, поэтому текущий каталог пользователя не меняется. HELM_BIN задаётся только после успеха подготовки.</p>
+<p><code>curl --fail</code> возвращает ненулевой код на HTTP-ошибке, --location следует redirect, --output выбирает файл. Это скачивание, не запуск shell с сайта. Ожидаемая SHA-256 выше сверена с official release для конкретного Linux amd64 архива. Реальный опыт дал OK и <code>v4.3.1+gc0d08d0</code>. SHA-256 — хеш содержимого, не доказательство личности издателя сам по себе. Архив и заменяемая рядом сумма могли бы быть подменены вместе; доверенное получение ожидаемой суммы остаётся условием проверки.</p>
+<p>Release публикует GPG signatures. Команда <code>gpg --verify АРХИВ.asc АРХИВ</code> проверяет подпись после установления доверенного fingerprint ключа выпускающего. Импорт произвольного ключа с того же зеркала доверия не добавляет. В этой редакции действительно сопоставлены SHA и official release; GPG-проверка binary не выполнялась. Подпись chart — другой объект и отдельный процесс.</p>
+<p>Дальше короткое имя helm предполагает выбранный проверенный executable. В своей текущей оболочке можно определить <code>helm() { "$HELM_BIN" "$@"; }</code>; функция не меняет системную установку. Архив распаковывайте в пустой частный каталог после просмотра tar -t.</p>
+<h2>Каталоги и процессы</h2>
+<pre><code>helm env
+helm version
+helm plugin list</code></pre>
+<p><code>helm env</code> показывает фактические пути. HELM_CONFIG_HOME хранит, например, repositories.yaml и registry credentials; HELM_CACHE_HOME — скачанные индексы и кэш; HELM_DATA_HOME — пользовательские данные/плагины. Пути зависят от ОС и XDG. Наличие кэша не доказывает готовность офлайн. Клиент живёт во время команды, сам не держит постоянно слушающий порт и по HTTPS обращается к API. Port-forward позже создаёт отдельный процесс kubectl с локальным портом.</p>
+<h2>Kubeconfig и context</h2>
+<p>Kubeconfig связывает clusters, users и contexts. Context выбирает endpoint, личность и namespace по умолчанию. Exec credential plugin из файла способен запускать программу, поэтому kubeconfig должен быть доверенным. Здесь используется отдельный учебный файл, который не меняет current-context пользователя. Отсутствие доступа диагностируют как endpoint/TLS/authn/authz, а не лечат отключением проверки сертификата.</p>
+<pre><code>export LAB_KUBECONFIG=&quot;$HOME/handbook-lab/kubeconfig&quot;
+export LAB_CONTEXT=handbook-admin
+export LAB_NAMESPACE=helm-lab
+kubectl --kubeconfig &quot;$LAB_KUBECONFIG&quot; config get-contexts
+kubectl --kubeconfig &quot;$LAB_KUBECONFIG&quot; --context &quot;$LAB_CONTEXT&quot; version
+kubectl --kubeconfig &quot;$LAB_KUBECONFIG&quot; --context &quot;$LAB_CONTEXT&quot; \
+  auth can-i create deployments.apps --namespace &quot;$LAB_NAMESPACE&quot;</code></pre>
+<p>Для kind выбирают kind-handbook. Флаги Helm: <code>--kubeconfig</code>, <code>--kube-context</code>, <code>--namespace</code>; kubectl использует --context. Namespace создаёт владелец кластера заранее. Роль должна разрешать chart resources, чтение для wait, создание тестовых Pod и чтение/запись release Secrets. Create namespaces — отдельное cluster-scoped право, требуемое --create-namespace. Не выдавайте cluster-admin ради forbidden: установите конкретные resource/verb/namespace и личность запроса.</p>
+<p>Значения выше — входы, которые нужно сверить со своим стендом: файл kubeconfig должен уже существовать, context должен присутствовать именно в нём, а namespace helm-lab должен быть создан владельцем кластера. Проверка ниже ничего не создаёт и не переключает общий current-context. Если какой-либо запрос отказал, установку не продолжают: NotFound пространства имён, TLS-ошибка и Forbidden требуют разных исправлений.</p>
+<pre><code>test -f "$LAB_KUBECONFIG" || exit 1
+kubectl --kubeconfig "$LAB_KUBECONFIG" --context "$LAB_CONTEXT" get namespace "$LAB_NAMESPACE" &amp;&amp;
+kubectl --kubeconfig "$LAB_KUBECONFIG" --context "$LAB_CONTEXT" --namespace "$LAB_NAMESPACE" auth can-i create secrets
+</code></pre>
+<p>Последняя команда проверяет только create Secrets. Она не заменяет проверку чтения, обновления и списка release Secrets, операций над ресурсами чарта, чтения/watch для ожидания и прав тестового Pod. Если namespace ещё нет, владелец своего кластера создаёт его отдельно командой <code>kubectl --kubeconfig "$LAB_KUBECONFIG" --context "$LAB_CONTEXT" create namespace helm-lab</code>, затем повторяет проверку. Релизный пользователь не получает cluster-admin от того, что умеет читать это пространство имён.</p>
+<h2>Совместимость и offline</h2>
+<p>Helm 4.3.1 собран с Kubernetes client libraries 0.37.1; политика поддержки Kubernetes проверяется отдельно от API chart. Выбранная 1.36 находится в поддерживаемом диапазоне этого клиента. Объект с удалённым apiVersion не станет допустимым от одного нового Helm. Для офлайна нужны binary+сумма+доверенные signature keys, полный chart с dependency archives, values, все workload/hook images для нужной архитектуры и способ загрузки в registry/nodes. Локальный render без сети подтверждает лишь часть этого перечня.</p>
+
+<h2>Первичные источники и версия</h2><p>Проверено 1 ноября 2026; основной CLI Helm 4.3.1, chart API v2. <a href="https://github.com/helm/helm/releases/tag/v4.3.1">Release 4.3.1</a>, <a href="https://helm.sh/blog/helm-v3-end-of-life/">Helm 3 EOL</a>, <a href="https://helm.sh/docs/intro/install/">Установка</a>, <a href="https://helm.sh/docs/topics/version_skew/">Support policy</a>, <a href="https://github.com/helm/helm/blob/v4.3.1/go.mod">go.mod</a>.</p>

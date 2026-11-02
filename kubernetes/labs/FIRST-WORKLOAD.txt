@@ -1,0 +1,139 @@
+ПЕРВЫЙ ЗАПУСК И ПРОДОЛЖЕНИЕ ОДНОГО СТЕНДА
+Рецепт для собственного принятого кластера. Автором на кластере не исполнялся.
+Читайте по шагам; это не скрипт для установки Kubernetes на рабочий компьютер.
+
+0. Что уже должно быть.
+Одна сохранённая копия labs, Go >= 1.26, Python для локальных проверок,
+личный container engine и готовый kubeadm либо kind. K8S_LAB_ROOT указывает
+на вашу папку labs. LAB_CONTEXT — handbook-admin либо kind-handbook.
+Перед каждой группой команд проверьте обе переменные и адрес выбранного API:
+  : "${K8S_LAB_ROOT:?Задайте путь к сохранённым labs}"
+  : "${LAB_CONTEXT:?Выберите context своего кластера}"
+  cd "$K8S_LAB_ROOT" || exit 1
+  test -f service/main.go && test -f manifests/10-app.yaml
+  kubectl --context "$LAB_CONTEXT" config view --minify
+  kubectl --context "$LAB_CONTEXT" get nodes -o wide
+Не продолжайте при ошибке или чужом endpoint. Здесь не используется --raw:
+private keys и tokens не нужны в журнале. Посмотрите архитектуру узлов:
+  kubectl --context "$LAB_CONTEXT" get nodes -o custom-columns=NAME:.metadata.name,OS:.status.nodeInfo.operatingSystem,ARCH:.status.nodeInfo.architecture
+Дальше выбран Linux/amd64, как в основном VM-профиле. Для Linux/arm64 меняют
+GOARCH и доставляют соответствующий образ; смешанная архитектура требует
+отдельных образов либо корректного multi-platform index.
+
+Если lab/ledger-api уже работает, перейдите сразу к шагу 4. Не применяйте
+исходный ConfigMap поверх результатов упражнения только ради проверки.
+После частичного прошлого запуска сначала исследуйте сохранившиеся файлы,
+объекты и ошибки. Удалять namespace для повторения не требуется.
+
+1. Собрать один сохраняемый выпуск.
+Образ — архив файлов и конфигурация запуска. Dockerfile использует scratch,
+то есть пустую основу: в image попадёт наш бинарник, а shell, curl и Go
+toolchain туда не копируются. CGO_ENABLED=0 устраняет динамическую зависимость
+от libc для этой stdlib-программы; GOOS/GOARCH выбирают платформу узла,
+а не компьютера, на котором вы запускаете сборку.
+Перед этим выполните локальные тесты README. Race проверка требует
+подготовленного C-компилятора и поддерживаемой платформы; это отдельное
+требование инструментов тестирования.
+
+Следующая функция останавливается на первом отказе, сохраняя артефакты.
+Каталог release-0.1.0 должен быть новым. Не подменяйте уже доставленные
+байты другой сборкой под прежним тегом: для новой программы нужен новый выпуск.
+  build_ledger_release() {
+    cd "$K8S_LAB_ROOT" || return 1
+    mkdir -p evidence || return 1
+    mkdir evidence/release-0.1.0 || return 1
+    (
+      cd service || exit 1
+      GOTOOLCHAIN=local go version || exit 1
+      GOTOOLCHAIN=local CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -o ledger-api . || exit 1
+      sha256sum ledger-api
+    ) > evidence/release-0.1.0/build.txt || return 1
+    docker build --platform linux/amd64 -t ledger-api:0.1.0 service || return 1
+    docker image inspect ledger-api:0.1.0 --format '{{.Id}}' > evidence/release-0.1.0/image-id.txt || return 1
+    docker image save --output evidence/release-0.1.0/ledger-api.tar ledger-api:0.1.0 || return 1
+    (
+      cd evidence/release-0.1.0 || exit 1
+      sha256sum ledger-api.tar > ledger-api.tar.sha256
+    ) || return 1
+  }
+  build_ledger_release
+При любом ненулевом результате остановитесь и прочтите ошибку. Скрипт не
+удаляет каталог неудавшейся сборки. В build.txt записаны версия Go и hash
+бинарника; рядом сохраните revision своего source. Image ID из Docker —
+digest конфигурации image, а не автоматически registry manifest digest.
+У локального образа RepoDigests может быть пустым. Hash tar подтверждает
+перенос архива; он также не заменяет доверие к исходникам.
+
+2. Передать образ в runtime узлов.
+kind на том же личном engine:
+  kind load docker-image ledger-api:0.1.0 --name handbook
+Эта команда должна завершиться успешно до apply.
+
+В kubeadm-профиле передайте ledger-api.tar и ledger-api.tar.sha256 в отдельный
+каталог на КАЖДОЙ VM, где разрешено исполнять приложение. Сначала cd в этот
+каталог и sha256sum -c ledger-api.tar.sha256; при ошибке ничего не импортируют.
+Затем именно на каждой node VM:
+  sudo ctr --namespace k8s.io images import ledger-api.tar
+  sudo ctr --namespace k8s.io images list
+Не запускайте это на произвольном host daemon. k8s.io здесь — область metadata
+containerd; namespace lab будет объектом API Kubernetes. Имя ledger-api:0.1.0
+нормализуется runtime как docker.io/library/ledger-api:0.1.0: проверьте, что
+такая ссылка присутствует. Наличие tar на ноутбуке не означает наличия image
+на wk1. IfNotPresent в нашем YAML допускает сетевой pull, если локального
+образа нет; в офлайн-стенде это проявится как отказ загрузки, а не создаст
+образ автоматически. Не заменяйте эти сведения вымышленным digest.
+
+3. Создать namespace и применить исходные четыре объекта.
+ServiceAccount задаёт identity workload, но token ему не монтируется.
+ConfigMap ledger-config содержит MESSAGE. Deployment поддерживает один Pod;
+Service выбирает app=ledger-api и переводит свой порт 80 в именованный http,
+который у контейнера равен 8080. Namespace lab помечен Pod Security Restricted;
+наш template заранее задаёт non-root UID 65532, seccomp и ограничения прав.
+
+  first_ledger_apply() {
+    cd "$K8S_LAB_ROOT" || return 1
+    kubectl --context "$LAB_CONTEXT" apply --server-side --field-manager=handbook -f manifests/00-namespace.yaml || return 1
+    local code
+    if kubectl --context "$LAB_CONTEXT" -n lab diff --server-side --field-manager=handbook -f manifests/10-app.yaml; then
+      code=0
+    else
+      code=$?
+    fi
+    case "$code" in
+      0) printf 'Изменений не показано.\n' ;;
+      1) printf 'Прочтите показанные изменения перед следующим apply.\n' ;;
+      *) printf 'Diff не выполнен: код %s. Apply остановлен.\n' "$code" >&2; return "$code" ;;
+    esac
+  }
+  first_ledger_apply
+Этот шаг только показывает diff и НЕ применяет приложение. После чтения
+вывода, если изменения соответствуют выбранному личному стенду:
+  kubectl --context "$LAB_CONTEXT" -n lab apply --server-side --field-manager=handbook -f manifests/10-app.yaml
+При ошибке остановитесь: четыре документа не одна общая транзакция и часть
+объектов могла сохраниться. Не переходите к выводу об успехе всех четырёх.
+
+4. Приёмка либо продолжение прошлого занятия.
+  kubectl --context "$LAB_CONTEXT" -n lab rollout status deployment/ledger-api --timeout=120s
+  kubectl --context "$LAB_CONTEXT" -n lab get deployment ledger-api -o wide
+  kubectl --context "$LAB_CONTEXT" -n lab get replicaset,pod -l app=ledger-api -o wide
+  kubectl --context "$LAB_CONTEXT" -n lab get service ledger-api -o yaml
+  kubectl --context "$LAB_CONTEXT" -n lab get endpointslices -l kubernetes.io/service-name=ledger-api -o yaml
+При timeout изменение не отменяется. Смотрите describe, условия и Events:
+Pending до назначения отличается от ImagePullBackOff, а Running не равно Ready.
+Запишите UID Pod, имя node, containerID/imageID, Ready и адрес готового endpoint.
+
+В отдельной оболочке с тем же LAB_CONTEXT оставьте tunnel на переднем плане:
+  kubectl --context "$LAB_CONTEXT" -n lab port-forward service/ledger-api 18080:80 --address=127.0.0.1
+На той же административной машине в другом терминале:
+  curl --max-time 3 -fsS http://127.0.0.1:18080/api/hello
+Ожидаем JSON с service=ledger-api и message из ConfigMap. Если порт 18080 уже
+занят вашей прежней Go/Prometheus-лабораторией, не завершайте найденный процесс
+вслепую: выберите свободный локальный порт, например 18081, и одинаково измените
+LOCAL_PORT в port-forward и URL клиента. Это локальный конец туннеля, не порт
+контейнера. Ctrl+C останавливает только tunnel, не приложение и не кластер.
+Port-forward проходит через API/kubelet и не доказывает путь Service IP, CNI
+или NetworkPolicy. Их отдельно исследуют в сетевых главах из diagnostic Pod.
+
+Дальше сохраняются namespace, Deployment, ConfigMap, image и журнал.
+В следующем занятии повторяют шаг 0 и чтение шага 4; заново init/create cluster,
+удаление namespace и восстановление чистого snapshot не являются продолжением.
