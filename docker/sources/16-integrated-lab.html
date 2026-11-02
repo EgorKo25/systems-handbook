@@ -3,34 +3,195 @@
 <p>Установите Engine по первой главе в собственной Linux-VM, выберите context study и запишите паспорт. Найдите официальные источники Go-образа и вспомогательного инструмента, выберите версии и закрепите digest. Заранее получите нужные образы и зависимости, сохраните их для переноса и проверьте без сети. Скачивание нельзя откладывать до рабочего места без интернета.</p>
 <p>Каталог labs/echo содержит реальные исходники, Dockerfile и Compose. Engine и эти файлы автоматически книгой не запускаются. На машине с 8–16 ГБ памяти достаточно начать с одного небольшого Go-сервиса; тяжёлые платформы могут быть остановлены с сохранением их состояния. На рабочей Windows реальные опыты требуют разрешённой установленной среды либо доступа к своей VM; само открытие HTML запускает только браузерные модели.</p>
 <h2>Первый образ и первый запрос</h2>
-<p>Из каталога тома выполните сборку главы Go с выбранным GO_IMAGE и платформой своего сервера. Сохраните журнал build и результат inspect. Для первого опыта запустите один контейнер study-echo без APP_DATA_DIR, с --pull=never и публикацией 127.0.0.1:18080:8080. Имя и порт должны быть свободны на выбранном Engine; если вы ранее запускали пример, сначала установите его действительное состояние и назначение.</p>
-<pre><code>docker --context study run -d --name study-echo --pull=never \
-  --publish 127.0.0.1:18080:8080 study/echo:lesson1
-curl --fail --silent --show-error http://127.0.0.1:18080/health
-curl --fail --silent --show-error http://127.0.0.1:18080/version
-curl --silent --show-error --include http://127.0.0.1:18080/counter</code></pre>
-<p>Curl-команды выполняются на Docker-хосте либо через подготовленный туннель. Ожидаются ok, lesson1 и HTTP 503 для ненастроенного counter. <code>--fail</code> превращает ошибочные HTTP-статусы в ошибку команды; в последнем запросе его намеренно нет, чтобы увидеть диагностический ответ вместе с <code>--include</code>, печатающим заголовки. Запишите различие живого процесса и готовности конкретной операции.</p>
+<p>Сборка и первое обращение к службе уже выполнены в <a href="#09-go-image">главе 09</a>. Здесь мы передаём тот же образ и существующий счётчик под управление Compose. Это программа, которая читает описание служб из YAML и создаёт или запускает соответствующие контейнеры. Compose не получает права автоматически пересоздать данные. В <code>labs/echo/compose.yaml</code> поле <code>external: true</code> требует уже существующий том <code>study-data</code>; отсутствие этого тома — ошибка подготовки.</p>
+<p>Откройте Bash в каталоге тома Docker, где видны <code>labs/echo/compose.yaml</code> и <code>labs/echo/out/image09/image.id</code>. Используем тот же локальный rootful Engine в context <code>study</code>, без userns-remap, что в главе 08. Из главы 07 отдельные rootless-каталог и <code>security-echo</code> сюда не переносятся. На Docker-хосте должны быть подготовленные Python 3, curl и Compose plugin; Python здесь только проверяет JSON и число, не управляет Engine. Для удалённого клиента сначала выберите объяснённый ранее туннель; этот конкретный рецепт проверяет локальный endpoint.</p>
+<p>В <code>image09/image.id</code> сохранён ID исследованного образа. Тег <code>study/echo:lesson1</code> может уже указывать на другую сборку; поэтому его здесь не читаем. <code>DATA_RECORD</code> — путь к прежнему каталогу <code>session.…</code> из главы 08, а не новая пустая папка. Там находятся <code>image.id</code> и <code>tools.id</code>. В этом переходе образ главы 08 должен совпасть с сохранённым ID главы 09. При различии сначала пройдите осознанное обновление и проверку совместимости в главе 15; подмена ID или возврат к тегу скрыли бы смену программы.</p>
 <h2>Остановка и правильный адрес</h2>
-<p>Изучите inspect, logs и результат <code>docker stop --timeout 15 study-echo</code>. В штатном журнале ожидается stopped. Затем start того же объекта и повторный health. Изменение APP_ADDR в уже существующем shell клиента не меняет environment сохранённого объекта; этот отрицательный опыт отделяет клиентскую переменную от конфигурации процесса.</p>
-<p>Для сетевого опыта используйте отдельное явно названное временное имя и другой внешний порт либо осознанно пересоздайте основной объект с сохранённым паспортом. Вариант с APP_ADDR=127.0.0.1:8080 покажет различие локальной внутренней проверки и доступа через IP контейнера. Сначала предскажите результат по маршруту, затем проверьте. В scratch нет shell; используйте встроенный /echo check и заранее подготовленный диагностический образ в соответствующей сети.</p>
+<p>До Compose выясните, какой процесс сейчас пишет в <code>study-data</code>. В обычном продолжении 08 это <code>data08-echo</code> на 18088; после незавершённого сравнения версий — <code>data08-echo-v2</code>. Глава 14 после резерва снова запускает выбранный основной контейнер, поэтому успешный архив не означает, что писатель до сих пор остановлен. При повторе этого перехода писателем может быть уже контейнер Compose. Имя и полный ID видны в <code>docker --context study ps -a --no-trunc</code>; назначение подтверждает inspect с томом <code>study-data</code> в <code>/data</code>.</p>
+<p>В той же оболочке укажите <code>DATA_RECORD</code> и <code>MAIN_CONTAINER</code>: присвойте им свой сохранённый путь и фактическое имя либо полный ID основного контейнера. Не копируйте чужой путь из примера. Ниже проверяются образ, пользователь, mount, окружение и принадлежность к известным упражнениям; чужой объект с похожим именем процедуру не пройдёт. Если на томе уже два активных контейнера, блок откажется <em>до остановки</em>. Сначала разберите их происхождение и сохраните inspect: два отдельных Go-процесса имеют разные мьютексы и могут оба превратить N в N+1, потеряв одно увеличение.</p>
+<p>Отдельный <code>study-echo</code> главы 09 без данных может занимать 18080. Блок останавливает его только после проверки точного образа, отсутствия mounts и включённого счётчика. Саму запись контейнера не удаляет. У <code>data08-echo</code> другой внешний порт; освобождение 18080 само по себе никогда не доказывает, что прежний писатель остановлен.</p>
 <h2>Подключить постоянные данные</h2>
-<p>Создайте study-data. На новом пустом томе подготовьте владельца UID/GID 10001 с административным TOOLS_IMAGE, предоставив ему только этот volume, сеть none и необходимые для операции полномочия. Перед пересозданием остановите прежнюю службу, сохраните inspect и удалите только прежний объект без постоянных данных. Это адресная смена конфигурации, а не сброс среды.</p>
-<pre><code>docker --context study volume create study-data
-docker --context study run --rm --network none --user 0:0 \
-  --mount type=volume,src=study-data,dst=/data \
-  "$TOOLS_IMAGE" chown 10001:10001 /data
-
-docker --context study stop --timeout 15 study-echo
-docker --context study rm study-echo
-export APP_IMAGE=study/echo:lesson1
-docker --context study compose -f labs/echo/compose.yaml config
-docker --context study compose -f labs/echo/compose.yaml up -d</code></pre>
-<p>Если том уже существует, chown и инициализацию не повторяют вслепую: проверяют его владельца и содержимое. Compose использует этот external volume. Запрос GET /counter сначала возвращает 0, каждый успешный POST увеличивает на единицу. Выполните несколько, запишите подтверждённое число, затем stop/start сервиса. Число должно сохраниться. После пересоздания контейнера с тем же volume оно также сохраняется.</p>
+<p>У тома уже есть владелец 10001:10001 и сохранённое число N. Повторять <code>volume create</code>, chown, инициализацию или удаление контейнеров сейчас не нужно. Переход сначала сохраняет проверки в новом журнале <code>compose16.…</code> внутри вашего <code>DATA_RECORD</code>, затем останавливает выбранный полный ID, требует <code>exited 0 false</code> и отсутствие активных контейнеров с этим volume. Служебный образ читает только существующий <code>counter</code> через mount readonly от UID 10001. Это актуальное холодное N, а не старое число из резервной копии и не неподтверждённый ответ POST. Нулём оно бывает только у действительно сохранённого нулевого состояния.</p>
+<p>Выполняйте блок целиком. Скобки запускают дочернюю оболочку; <code>set -euo pipefail</code> прекращает её при ошибке команды, отсутствующей переменной или неуспешной части конвейера. Уже выполненные остановки при этом не отменяются. В течение перехода не допускайте других операторов, автоматических запусков и запросов записи: проверка списка контейнеров — наблюдение в момент времени, а не блокировка Engine и не поиск любого процесса на хосте, открывшего каталог данных.</p>
+<pre data-shell="bash" data-handoff16="retained-world"><code>(
+  set -euo pipefail
+  : &quot;${DATA_RECORD:?Укажите существующий журнал главы 08}&quot;
+  : &quot;${MAIN_CONTAINER:?Выберите текущего писателя study-data по inspect}&quot;
+  test -d &quot;$DATA_RECORD&quot;
+  APP_IMAGE=&quot;$(cat labs/echo/out/image09/image.id)&quot;
+  DATA_IMAGE=&quot;$(cat &quot;$DATA_RECORD/image.id&quot;)&quot;
+  TOOLS_IMAGE=&quot;$(cat &quot;$DATA_RECORD/tools.id&quot;)&quot;
+  export APP_IMAGE
+  for image in &quot;$APP_IMAGE&quot; &quot;$DATA_IMAGE&quot; &quot;$TOOLS_IMAGE&quot;; do
+    [[ &quot;$image&quot; =~ ^sha256:[0-9a-f]{64}$ ]]
+    docker --context study image inspect &quot;$image&quot; &gt;/dev/null
+  done
+  # Смена версии и совместимость данных — отдельная процедура главы 15.
+  test &quot;$APP_IMAGE&quot; = &quot;$DATA_IMAGE&quot;
+  endpoint=&quot;$(docker context inspect study --format &#x27;{{.Endpoints.docker.Host}}&#x27;)&quot;
+  case &quot;$endpoint&quot; in
+    unix:///var/run/docker.sock|unix:///run/docker.sock) ;;
+    *) printf &#x27;%s\n&#x27; &#x27;Нужен прежний локальный rootful Engine.&#x27; &gt;&amp;2; exit 1 ;;
+  esac
+  security=&quot;$(docker --context study info --format &#x27;{{json .SecurityOptions}}&#x27;)&quot;
+  case &quot;$security&quot; in
+    *name=rootless*|*name=userns*) printf &#x27;%s\n&#x27; &#x27;Выбрана другая карта UID.&#x27; &gt;&amp;2; exit 1 ;;
+  esac
+  HANDOFF_RECORD=&quot;$(mktemp -d &quot;$DATA_RECORD/compose16.XXXXXX&quot;)&quot;
+  printf &#x27;Журнал перехода: %s\n&#x27; &quot;$HANDOFF_RECORD&quot;
+  printf &#x27;%s\n&#x27; &quot;$APP_IMAGE&quot; &gt; &quot;$HANDOFF_RECORD/image.id&quot;
+  docker --context study volume inspect study-data &gt; &quot;$HANDOFF_RECORD/volume.json&quot;
+  docker --context study container inspect &quot;$MAIN_CONTAINER&quot; &gt; &quot;$HANDOFF_RECORD/main.before.json&quot;
+  docker --context study ps -a --format &#x27;{{.Names}}&#x27; &gt; &quot;$HANDOFF_RECORD/names.txt&quot;
+  if grep -Fx -- study-echo &quot;$HANDOFF_RECORD/names.txt&quot; &gt;/dev/null; then
+    docker --context study container inspect study-echo &gt; &quot;$HANDOFF_RECORD/port.before.json&quot;
+  else
+    printf &#x27;[]\n&#x27; &gt; &quot;$HANDOFF_RECORD/port.before.json&quot;
+  fi
+  docker --context study compose -p study-docker -f labs/echo/compose.yaml \
+    config --format json &gt; &quot;$HANDOFF_RECORD/compose.json&quot;
+  previous_compose=&quot;$(docker --context study compose -p study-docker -f labs/echo/compose.yaml \
+    ps -a -q --no-trunc echo)&quot;
+  if test -n &quot;$previous_compose&quot;; then
+    [[ &quot;$previous_compose&quot; =~ ^[0-9a-f]{64}$ ]]
+    docker --context study container inspect &quot;$previous_compose&quot; &gt; &quot;$HANDOFF_RECORD/compose.before.json&quot;
+  else
+    printf &#x27;[]\n&#x27; &gt; &quot;$HANDOFF_RECORD/compose.before.json&quot;
+  fi
+  # Проверки завершаются ДО первой остановки. Ошибка inspect не равна отсутствию.
+  python3 - &quot;$HANDOFF_RECORD&quot; &quot;$APP_IMAGE&quot; &lt;&lt;&#x27;CHECK&#x27;
+import json, re, sys
+from pathlib import Path
+r, image = Path(sys.argv[1]), sys.argv[2]
+def load(name):
+    return json.loads((r/name).read_text())
+def require(ok, why):
+    if not ok:
+        raise SystemExit(why)
+def one(rows):
+    require(isinstance(rows, list) and len(rows) == 1, &#x27;Нужен ровно один объект inspect&#x27;)
+    return rows[0]
+def identity(c):
+    require(bool(re.fullmatch(r&#x27;[0-9a-f]{64}&#x27;, c[&#x27;Id&#x27;])), &#x27;Нужен полный container ID&#x27;)
+    require(c[&#x27;Image&#x27;] == image, &#x27;Образ контейнера отличается от сохранённого ID&#x27;)
+    require(c[&#x27;Config&#x27;][&#x27;User&#x27;] == &#x27;10001:10001&#x27;, &#x27;Другая учётная запись приложения&#x27;)
+    s = c[&#x27;State&#x27;]
+    require(s[&#x27;Status&#x27;] in (&#x27;running&#x27;, &#x27;exited&#x27;), &#x27;Контейнер paused/restarting/не готов к переходу&#x27;)
+    require(s[&#x27;Status&#x27;] != &#x27;exited&#x27; or (s[&#x27;ExitCode&#x27;] == 0 and not s[&#x27;OOMKilled&#x27;]),
+            &#x27;Сначала расследуйте прежнее аварийное завершение&#x27;)
+    return c[&#x27;Id&#x27;]
+def data_writer(c):
+    cid = identity(c)
+    name = c[&#x27;Name&#x27;].lstrip(&#x27;/&#x27;)
+    labels = c[&#x27;Config&#x27;].get(&#x27;Labels&#x27;) or {}
+    known = name in (&#x27;data08-echo&#x27;, &#x27;data08-echo-v2&#x27;, &#x27;study-echo&#x27;) or (
+        labels.get(&#x27;com.docker.compose.project&#x27;) == &#x27;study-docker&#x27; and
+        labels.get(&#x27;com.docker.compose.service&#x27;) == &#x27;echo&#x27;)
+    require(known, &#x27;Этот объект не относится к продолжению нашего упражнения&#x27;)
+    env = [x for x in c[&#x27;Config&#x27;].get(&#x27;Env&#x27;, []) if x.startswith(&#x27;APP_DATA_DIR=&#x27;)]
+    require(env == [&#x27;APP_DATA_DIR=/data&#x27;], &#x27;Нужен один APP_DATA_DIR=/data&#x27;)
+    mounts = [m for m in c[&#x27;Mounts&#x27;] if m[&#x27;Destination&#x27;] == &#x27;/data&#x27; or
+              m[&#x27;Destination&#x27;].startswith(&#x27;/data/&#x27;)]
+    require(len(mounts) == 1 and mounts[0][&#x27;Destination&#x27;] == &#x27;/data&#x27; and
+            mounts[0][&#x27;Type&#x27;] == &#x27;volume&#x27; and mounts[0].get(&#x27;Name&#x27;) == &#x27;study-data&#x27; and
+            mounts[0][&#x27;RW&#x27;], &#x27;Другой mount данных&#x27;)
+    return cid
+v = one(load(&#x27;volume.json&#x27;))
+require(v[&#x27;Name&#x27;] == &#x27;study-data&#x27; and v[&#x27;Driver&#x27;] == &#x27;local&#x27; and not v.get(&#x27;Options&#x27;),
+        &#x27;Нужен существующий обычный local volume главы 08&#x27;)
+cfg = load(&#x27;compose.json&#x27;)
+require(cfg[&#x27;services&#x27;][&#x27;echo&#x27;][&#x27;image&#x27;] == image and
+        cfg[&#x27;services&#x27;][&#x27;echo&#x27;][&#x27;environment&#x27;][&#x27;APP_DATA_DIR&#x27;] == &#x27;/data&#x27; and
+        cfg[&#x27;volumes&#x27;][&#x27;counter&#x27;][&#x27;name&#x27;] == &#x27;study-data&#x27; and cfg[&#x27;volumes&#x27;][&#x27;counter&#x27;][&#x27;external&#x27;],
+        &#x27;Compose выбрал не те образ или данные&#x27;)
+main = one(load(&#x27;main.before.json&#x27;))
+main_id = data_writer(main)
+old_compose = load(&#x27;compose.before.json&#x27;)
+if old_compose:
+    c = one(old_compose)
+    data_writer(c)
+    labels = c[&#x27;Config&#x27;].get(&#x27;Labels&#x27;) or {}
+    require(labels.get(&#x27;com.docker.compose.project&#x27;) == &#x27;study-docker&#x27; and
+            labels.get(&#x27;com.docker.compose.service&#x27;) == &#x27;echo&#x27;, &#x27;Другой экземпляр Compose&#x27;)
+port_rows = load(&#x27;port.before.json&#x27;)
+port_id = &#x27;&#x27;
+if port_rows:
+    port = one(port_rows)
+    if port[&#x27;Id&#x27;] != main_id:
+        # Отдельная служба главы 09 без данных занимает 18080.
+        port_id = identity(port)
+        require(port[&#x27;Name&#x27;] == &#x27;/study-echo&#x27;, &#x27;Неожиданное имя объекта порта&#x27;)
+        require(not port[&#x27;Mounts&#x27;] and not any(
+            x.startswith(&#x27;APP_DATA_DIR=&#x27;) and x != &#x27;APP_DATA_DIR=&#x27;
+            for x in port[&#x27;Config&#x27;].get(&#x27;Env&#x27;, [])), &#x27;study-echo тоже хранит данные: остановитесь&#x27;)
+(r/&#x27;main.id&#x27;).write_text(main_id+&#x27;\n&#x27;)
+(r/&#x27;port.id&#x27;).write_text(port_id+&#x27;\n&#x27;)
+CHECK
+  MAIN_ID=&quot;$(cat &quot;$HANDOFF_RECORD/main.id&quot;)&quot;
+  PORT_ID=&quot;$(cat &quot;$HANDOFF_RECORD/port.id&quot;)&quot;
+  active=&quot;$(docker --context study ps --no-trunc --filter volume=study-data --format &#x27;{{.ID}}&#x27;)&quot;
+  test -z &quot;$active&quot; || test &quot;$active&quot; = &quot;$MAIN_ID&quot;
+  stop_clean() {
+    docker --context study stop --timeout 15 &quot;$1&quot;
+    state=&quot;$(docker --context study container inspect &quot;$1&quot; \
+      --format &#x27;{{.State.Status}} {{.State.ExitCode}} {{.State.OOMKilled}}&#x27;)&quot;
+    test &quot;$state&quot; = &#x27;exited 0 false&#x27;
+  }
+  stop_clean &quot;$MAIN_ID&quot;
+  if test -n &quot;$PORT_ID&quot;; then stop_clean &quot;$PORT_ID&quot;; fi
+  docker --context study container inspect &quot;$MAIN_ID&quot; &gt; &quot;$HANDOFF_RECORD/main.stopped.json&quot;
+  active=&quot;$(docker --context study ps --no-trunc --filter volume=study-data --format &#x27;{{.ID}}&#x27;)&quot;
+  test -z &quot;$active&quot;
+  # Читаем холодное состояние: нет fallback с отсутствующего файла на 0.
+  docker --context study run --rm --pull=never --network none --read-only \
+    --user 10001:10001 --cap-drop ALL --security-opt no-new-privileges:true \
+    --mount type=volume,src=study-data,dst=/data,readonly,volume-nocopy \
+    &quot;$TOOLS_IMAGE&quot; sh -ceu &#x27;
+      test -f /data/counter &amp;&amp; test ! -L /data/counter
+      n=$(wc -c &lt; /data/counter)
+      test &quot;$n&quot; -ge 2 &amp;&amp; test &quot;$n&quot; -le 21
+      cat /data/counter
+    &#x27; &gt; &quot;$HANDOFF_RECORD/counter.expected&quot;
+  python3 - &quot;$HANDOFF_RECORD/counter.expected&quot; &lt;&lt;&#x27;COUNT&#x27;
+import re, sys
+from pathlib import Path
+b = Path(sys.argv[1]).read_bytes()
+if not re.fullmatch(rb&#x27;(0|[1-9][0-9]{0,19})\n&#x27;, b) or int(b) &gt; 2**64-1:
+    raise SystemExit(&#x27;counter не является сохранённым uint64 с переводом строки&#x27;)
+print(&#x27;Холодное значение:&#x27;, int(b))
+COUNT
+  docker --context study compose -p study-docker -f labs/echo/compose.yaml \
+    up -d --no-build --pull never --no-recreate --wait --wait-timeout 60 echo
+  COMPOSE_ID=&quot;$(docker --context study compose -p study-docker -f labs/echo/compose.yaml \
+    ps -q --no-trunc echo)&quot;
+  [[ &quot;$COMPOSE_ID&quot; =~ ^[0-9a-f]{64}$ ]]
+  docker --context study container inspect &quot;$COMPOSE_ID&quot; &gt; &quot;$HANDOFF_RECORD/compose.after.json&quot;
+  python3 - &quot;$HANDOFF_RECORD/compose.after.json&quot; &quot;$APP_IMAGE&quot; &lt;&lt;&#x27;AFTER&#x27;
+import json, sys
+c, = json.load(open(sys.argv[1]))
+m = [m for m in c[&#x27;Mounts&#x27;] if m[&#x27;Destination&#x27;] == &#x27;/data&#x27;]
+l = c[&#x27;Config&#x27;].get(&#x27;Labels&#x27;) or {}
+if not (c[&#x27;Image&#x27;] == sys.argv[2] and c[&#x27;State&#x27;][&#x27;Status&#x27;] == &#x27;running&#x27; and
+        c[&#x27;Config&#x27;][&#x27;User&#x27;] == &#x27;10001:10001&#x27; and
+        l.get(&#x27;com.docker.compose.project&#x27;) == &#x27;study-docker&#x27; and
+        l.get(&#x27;com.docker.compose.service&#x27;) == &#x27;echo&#x27; and len(m) == 1 and
+        m[0][&#x27;Type&#x27;] == &#x27;volume&#x27; and m[0].get(&#x27;Name&#x27;) == &#x27;study-data&#x27; and m[0][&#x27;RW&#x27;]):
+    raise SystemExit(&#x27;Фактический объект Compose не прошёл проверку&#x27;)
+AFTER
+  active=&quot;$(docker --context study ps --no-trunc --filter volume=study-data --format &#x27;{{.ID}}&#x27;)&quot;
+  test &quot;$active&quot; = &quot;$COMPOSE_ID&quot;
+  curl --fail --silent --show-error --max-time 5 --noproxy &#x27;*&#x27; \
+    http://127.0.0.1:18080/counter &gt; &quot;$HANDOFF_RECORD/counter.after&quot;
+  cmp &quot;$HANDOFF_RECORD/counter.expected&quot; &quot;$HANDOFF_RECORD/counter.after&quot;
+  printf &#x27;Переход завершён; один писатель %s, данные сохранены.\n&#x27; &quot;$COMPOSE_ID&quot;
+)</code></pre>
+<p><code>-p study-docker</code> фиксирует прежний проект независимо от имени каталога и <code>COMPOSE_PROJECT_NAME</code>. Явный <code>-f</code> выбирает один проверенный YAML. <code>--no-build --pull never</code> исключают неявную сборку и получение иной версии; <code>--no-recreate</code> сохраняет уже созданный экземпляр при повторе. Переход не предназначен для обновления его конфигурации. Если существующий контейнер имеет другой образ, проверка откажет ещё до остановки и запуска; исправление выполняется по главе 15. После up образ и mount проверяются снова по фактическому объекту. <code>--wait</code> ограниченно ждёт готовности, но health сам по себе проверяет только HTTP. Поэтому отдельно сравниваем GET <code>/counter</code> с сохранённым холодным файлом; POST в переходе вообще нет.</p>
+<p>При успехе старый контейнер остался существовать, но остановлен; у <code>study-data</code> один активный контейнер Compose, а GET возвращает прежнее N. Сохраните напечатанный путь журнала. При ошибке остановитесь на первом отказе, прочтите stderr, inspect и файлы попытки. Ошибка stop, аварийный exit, пустой/повреждённый counter или отсутствующий образ не разрешают продолжать up. Ошибка up может оставить созданный либо запущенный объект: выясните его состояние и при повторе выберите фактического писателя в <code>MAIN_CONTAINER</code>. Состояния <code>created</code>, <code>paused</code>, перезапуск и аварийный exit блок здесь намеренно не исправляет: сначала разберите причину и состояние по главам 11 и 15, не выдавая никогда не запущенный процесс за штатно остановленный. Новая попытка создаёт новый журнал и не переписывает старый. Не запускайте прежний <code>data08-echo</code>, пока Compose ещё пишет в этот том. Для возврата сначала адресно остановите проверенный Compose ID, подтвердите чистый exit и отсутствие активных держателей тома, затем запускайте прежний сохранённый ID; данные при этом не восстанавливаются поверх текущего N.</p>
 <h2>Проверить ограничения и цену операции</h2>
 <p>Сравните HostConfig с Compose: лимит 256 МиБ, CPU 1, pids 128, read-only корень и отдельный writable /data. Проверьте нормальные запросы. Повторите короткую серию GET health и POST counter при известной интенсивности, фиксируя время клиента, ошибки и вывод stats. Цель первого опыта — различить путь без дисковой записи и путь с fsync, а не объявить производительность сервера по десяти запросам.</p>
 <p>Меняйте один бюджет за раз и возвращайте прежнее значение после записи результата, сохраняя историю конфигурации в Git. Не создавайте искусственный OOM на общей машине. Для риска используйте отдельную ограниченную VM с резервом. Если приложение неожиданно завершилось, сначала соберите State, журнал и данные cgroup; повторный up без расследования может скрыть причину.</p>
 <h2>Резерв и отдельное восстановление</h2>
-<p>Пройдите процедуру главы резервирования: остановить писателя, архивировать volume, запустить основной сервис, проверить архив и вторую копию. Восстановите в study-restore-data и проверьте на порту 18081. Контрольное число в резерве соответствует моменту остановки; основная служба после этого может продвинуться дальше. Различие чисел тогда ожидаемо и должно быть объяснено временем копии.</p>
+<p>Пройдите процедуру главы резервирования: остановить писателя, архивировать volume, запустить основной сервис, проверить архив и вторую копию. Восстановите в отдельный новый том по главе 14 и проверьте на порту 18081. Там имена <code>RESTORE_NAME</code> и <code>RESTORE_VOLUME</code> вычисляются из нового уникального журнала восстановления; не заменяйте их прежним фиксированным именем и не подключайте основной <code>study-data</code> в качестве цели. Контрольное число в резерве соответствует моменту остановки; основная служба после этого может продвинуться дальше. Различие чисел тогда ожидаемо и должно быть объяснено временем копии.</p>
 <p>Отрицательные опыты выполняйте только на восстановленной цели: неправильный UID, повреждённая строка, не тот образ, отсутствие нужного тома. Для каждого предскажите, на каком этапе появится отказ. Исходный мир не сбрасывайте и основной архив не перезаписывайте повреждённой копией. Результат практики — способность доказать, какая версия и какие данные реально восстановлены.</p>
 <h2>Связь с остальными томами</h2>
 <p>Дальше можно поместить в образ собственный Go-сервис из <a href="../practicum/index.html#P09-go-service">сквозного практикума</a>, затем связать с уже установленным PostgreSQL и кэшем по их паспортам. У каждого экземпляра сохраняются прежние данные и правила доступа. Подключение сети Docker не должно незаметно создавать новую БД вместо той, которую вы уже научились обслуживать.</p>

@@ -12,6 +12,7 @@ CONFIG = dict(
         ('Продолжаемый стенд', ['16-integrated-lab']),
         ('Справочник', ['99-glossary']),
     ], term_modules=['reference'], diagram_modules=['diagrams', 'diagrams_network', 'diagrams_security'], command_modules=['reference'], base_terms=[],
+    illustration_links=[{'id': 'docker-durable-counter', 'title': 'Запись счётчика: файл, имя и подтверждение', 'label': 'write · fsync · rename'}, {'id': 'docker-storage-mount-cutaway', 'title': 'Как mount меняет видимые файлы', 'label': '5 состояний'}, {'id': 'goimage09-elf', 'title': 'Исполняемый файл Go внутри образа', 'label': 'разрез ELF64'}, {'id': 'oci10-byte-cutaway', 'title': 'OCI: манифесты, хеши и байты слоёв', 'label': 'разрез объектов'}, {'id': 'docker-recovery-separate-target', 'title': 'Копия и восстановленная ветвь истории', 'label': 'временная шкала'}],
     blurb='Официальная установка → образ и процесс → изоляция, сеть и данные → Go и Compose → измерение, резерв и обновление.',
     revision='1 ноября 2026',
 )

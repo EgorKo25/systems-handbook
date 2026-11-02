@@ -48,6 +48,8 @@ jobs:
       - name: Check container models and analysis report contracts
         run: |
           python3 -m unittest discover -s docker/labs -p 'test_*.py' -v
+          python3 -B docker/labs/distribution_objects.py --check
+          python3 -B docker/labs/backup14/test_bundle.py
           python3 docker/labs/check-static.py --reader docker/index.html
           python3 -m unittest discover -s sonarqube/labs -p 'test_*.py' -v
       - name: Check PostgreSQL lab failure handling without a server

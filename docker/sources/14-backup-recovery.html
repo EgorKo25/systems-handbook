@@ -1,43 +1,323 @@
-<header><h1>Резерв и восстановление: образ, конфигурация и согласованные данные</h1><p>Архив полезен, когда из него можно получить проверенное состояние на отдельной цели. Разделим идентичность программы, постоянные данные, конфигурацию и допустимую потерю времени.</p></header>
-<h2>Сначала определить договор восстановления</h2>
-<p>RPO, recovery point objective, — допустимая потеря истории данных по времени. RTO, recovery time objective, — целевое время возврата нужной функции. Если копия сделана в 12:00, а последняя запись перед отказом — в 12:17, восстановление только этой копии может потерять 17 минут. RTO включает получение среды, файлов и секретов, восстановление, запуск и проверки, а не одну длительность распаковки tar.</p>
-<p>Для нашего счётчика определим простой договор: копия содержит все подтверждённые записи до остановки единственного писателя. После восстановления GET /counter возвращает сохранённое значение, одна новая запись увеличивает его на единицу, /version соответствует записанному образу. Такой набор сильнее проверки наличия файла, но не является тестом любой будущей схемы приложения.</p>
-<h2>Какие части сохраняют отдельно</h2>
-<p>Образ сохраняет исполняемые файлы и настройки по умолчанию. Compose и паспорт задают runtime-конфигурацию: environment, mounts, порты, лимиты, политику запуска. Volume содержит постоянные данные. Ключи и пароли хранят отдельно с соответствующими правами и резервом. Наконец, процедура восстановления определяет порядок и критерии. Потеря любого обязательного элемента может сделать остальные архивы бесполезными.</p>
-<p>Полная копия VM может быть удобной точкой возврата, если VM корректно остановлена либо применяется согласованный механизм снимка. Но она не заменяет понимание прикладной копии: может оказаться слишком большой, несовместимой с новой платформой или содержащей ненужные секреты. Восстановление одной службы из её данных требует меньшего объёма и даёт отдельное доказательство.</p>
-<h2>Подготовить инструменты и каталог назначения</h2>
-<p>Для примера нужен заранее полученный доверенный TOOLS_IMAGE с sh, GNU tar и средствами назначения владельцев. Его выбирают, закрепляют по digest и проверяют до автономного дня. Это вспомогательный административный образ, а не скрытая зависимость scratch-службы. Для каждого поколения выбирают новый каталог внутри <code>/srv/study/docker-world/backups</code>, например с зафиксированным временем копии, и создают его на daemon-хосте в своей VM; в удалённом context локальный каталог клиента не подставляется автоматически.</p>
-<p>BACKUP_DIR ниже содержит абсолютный путь на этом сервере, TOOLS_IMAGE — закреплённый административный образ. Сначала убедитесь, что оба значения относятся к вашему стенду. Если используется Compose, останавливают через него именно сервис echo, чтобы не перепутать с похожим контейнером. Для запуска из команд предыдущих глав применяют эквивалентную остановку конкретного имени.</p>
-<pre><code>docker --context study compose -f labs/echo/compose.yaml stop echo
-
-docker --context study run --rm --network none --user 0:0 \
-  --mount type=volume,src=study-data,dst=/data,readonly \
-  --mount type=bind,src="$BACKUP_DIR",dst=/backup \
-  "$TOOLS_IMAGE" sh -ceu \
-  'test ! -e /backup/counter.tar; cd /data; tar --numeric-owner -cf /backup/counter.tar .'
-
-docker --context study compose -f labs/echo/compose.yaml start echo</code></pre>
-<p>Перед архивированием писатель остановлен, поэтому копируемый набор не меняется от штатной работы. Источник смонтирован readonly, сеть вспомогательному процессу не предоставляется. Административный UID нужен для сохранения нужных метаданных; приложению эти права не выдаются. <code>sh -c</code> выполняет строку, <code>-e</code> прекращает цепочку при ошибке, <code>-u</code> считает обращение к незаданной переменной ошибкой. У tar <code>-c</code> создаёт архив, <code>-f</code> задаёт файл. Предварительное test требует отсутствия прежнего counter.tar, сохраняя хорошую копию от случайной перезаписи. Про GNU tar и другой tar нельзя обещать одинаковые опции без проверки.</p>
-<p>Архив образуется на сервере через bind mount. Его проверяют там: список записей, размер, контрольная сумма и возможность чтения. Затем копируют во второе независимое место, сохраняя доверенную ожидаемую сумму. Единственная копия рядом с томом на том же диске не защищает от потери этого диска. Конкретный перенос по SSH выполняют на уровне отдельного защищённого канала.</p>
-<h2>Восстановить на другую цель</h2>
-<pre><code>docker --context study volume create study-restore-data
-
-docker --context study run --rm --network none --user 0:0 \
-  --mount type=volume,src=study-restore-data,dst=/data \
-  --mount type=bind,src="$BACKUP_DIR",dst=/backup,readonly \
-  "$TOOLS_IMAGE" sh -ceu \
-  'cd /data; tar --numeric-owner -xpf /backup/counter.tar'
-
-docker --context study run -d --name study-restore-check \
-  --pull=never --env APP_DATA_DIR=/data \
-  --mount type=volume,src=study-restore-data,dst=/data \
-  --publish 127.0.0.1:18081:8080 "$APP_IMAGE"</code></pre>
-<p>Целевой том должен быть новым и пустым именно для этой проверки; существующее содержимое не смешивают с архивом. Флаг tar <code>-x</code> извлекает, <code>-p</code> восстанавливает права, numeric-owner опирается на числовые идентификаторы. Восстанавливают только собственный проверенный архив: распаковка произвольного чужого tar административным процессом добавляет риски путей и метаданных.</p>
-<p>Основная служба продолжает использовать study-data, проверочная — study-restore-data и другой внешний порт 18081. Запросы выполняют с Docker-хоста либо через заранее настроенный SSH-туннель. Сверяют /version, начальный GET /counter и следующий POST. Полученные при проверке изменения относятся только к восстановленной цели. Записывают длительность всей процедуры и отклонение от договора RPO/RTO.</p>
-<h2>Проверить отрицательные варианты</h2>
-<p>Нечисловое содержимое, пустой файл или число вне диапазона uint64 обнаруживаются при старте, а не молча обнуляют историю. Изменение допустимого числа 12 на 13 синтаксически корректно; приложение без собственного контрольного эталона его не распознаёт. Для такого случая нужна сверка с доверенной записью и проверка целостности копии. Неправильный владелец может позволить чтение и запретить последующую запись; поэтому одной проверки GET мало. Не тот image может успешно стартовать, но читать другой формат. Запуск в другой context способен показать пустой объект с тем же именем. Каждому такому варианту соответствует проверка идентичности, прав или данных.</p>
-<p>Нельзя тренировать повреждение на единственном основном томе: копия для негативного опыта имеет собственное имя и паспорт. Это не автоматический сброс продолжаемого стенда — основное состояние сохраняется, а отдельный опыт намеренно изолирует предмет проверки. Проверочный контейнер после записи результата можно остановить; удаление вспомогательных объектов выполняется адресно после подтверждения, что они больше не нужны.</p>
-<h2>Если внутри PostgreSQL</h2>
-<p>Для работающей БД приведённая копия произвольного каталога недостаточна. Используют согласованный pg_dump либо физический backup с непрерывным набором WAL в соответствии с целью. Сохраняют необходимые роли и параметры доступа; при физическом восстановлении учитывают совместимость версии и формат данных. Volume решает размещение, а PostgreSQL — протокол согласованности и восстановления. Эти границы разобраны в отдельном томе.</p>
-<p>Если несколько сервисов должны восстановиться к общему логическому состоянию, два корректных отдельных дампа ещё не гарантируют согласованную пару. Нужна определённая точка остановки операций, журнал, идемпотентное повторение либо иной договор приложения. Формулировка «все контейнеры поднялись» не является конечным критерием возврата системы.</p>
-<p class="sources">Первичные источники: <a href="https://docs.docker.com/engine/storage/volumes/#back-up-restore-or-migrate-data-volumes">копии volumes</a>, <a href="https://www.gnu.org/software/tar/manual/">GNU tar</a>, <a href="../postgres/index.html#18-recovery">прикладное и физическое восстановление PostgreSQL</a>.</p>
+<header><h1>Резерв Docker: сохранить поколение и восстановить свою службу</h1><p>После главы 08 основной counter лежит в study-data. Удаление контейнера его не стирает, но ошибка оператора или потеря диска способны затронуть весь том. Создадим отдельный комплект файлов, вернём основной процесс к работе, затем восстановим сохранённое число в другом томе. Проверочный POST изменит только восстановленную историю.</p></header>
+<h2 id="14-backup-recovery-section-1">Какую часть истории возвращает копия</h2>
+<p>Резервная копия должна пережить тот отказ, ради которого её делают. Второй каталог рядом со study-data на том же диске защищает от некоторых ошибочных изменений приложения, но теряется вместе с диском. Поэтому ниже отдельно появляются <em>поколение</em> — законченный набор файлов одной копии — и его второе, проверенное размещение. Следующая копия получает новое имя; прежнюю не перезаписываем.</p>
+<p>Пусть в момент остановки сохранён counter=42, затем основная служба продолжила работу до 45. Из поколения с 42 восстановится 42. Три последующих увеличения в нём отсутствуют. <strong>RPO</strong>, recovery point objective, задаёт допустимую потерю последних данных по времени. Если включённая в копию последняя запись относится к 12:00, а последняя запись перед предполагаемым отказом — к 12:17, интервал возможной потери достигает 17 минут. Время завершения tar в 12:02 не передвигает точку данных к 12:02: в эти две минуты писатель стоял.</p>
+<p><strong>RTO</strong>, recovery time objective, задаёт допустимое время возврата нужной функции. Если проблему обнаружили в 12:17, среду подготовили к 12:19, восстановили и проверили запись в 12:21, прошло 4 минуты. Это условные часы, не результат нашего измерения. Время одного tar -x не включает обнаружение, доступ к копии, установку Engine, получение инструментов и проверку приложения. В учебном опыте основной экземпляр сохраняется; измеряем длительность восстановительной процедуры, не выдавая её за полный RTO любого реального происшествия.</p>
+<p>Само число не распознаёт повторы запросов. Счётчик мог сохранить 43, но ответ POST потерялся. После восстановления 42 повтор того пользовательского намерения может быть нужен, а при сохранённом 43 — дать 44. В нашем коде нет идентификатора операции, по которому сервер распознаёт повтор. Поэтому отдельно записывают подтверждённые действия и неопределённые исходы; наличие backup не превращает повтор POST в безопасную операцию. Ошибку после rename и старое значение в RAM мы уже проследили в 08.</p>
+<h2 id="14-backup-recovery-section-2">Что потребуется кроме counter.tar</h2>
+<p>Контейнер — созданный объект Engine, образ — исполняемые файлы с конфигурацией, а volume — другой объект с текущими данными. <code>docker image save</code> сохраняет образ, его слои и предусмотренные теги; в этот файл не попадает текущий study-data. <code>docker image load</code> возвращает образы и теги из такого архива. Для автономного восстановления нужны и данные, и тот же image ID, и образ с инструментами, способными их распаковать.</p>
+<p>В нашем поколении будут два независимых вида tar: <code>counter.tar</code> с прикладными файлами и <code>app-image.tar</code>/<code>tools-image.tar</code> для Engine. Архив образа не распаковывают командой tar прямо в volume, а данные не загружают через image load. Файлы image.id и tools.id содержат полные идентификаторы sha256; platform.txt — выбранную Linux-платформу. <code>version.expected</code> хранит ответ своего /version. <code>runtime.txt</code> содержит только выбранные параметры запуска, container.id — ID исходного контейнера, stopped.at — время остановки UTC, counter.expected — число из остановленного источника.</p>
+<p><code>manifest.json</code> свяжет эти файлы с длиной в байтах и SHA-256 каждого. Контрольная сумма позволяет обнаружить изменение относительно известного значения. Когда злоумышленник может заменить и архив, и лежащую рядом сумму, одна сумма его не остановит. Ожидаемый SHA-256 manifest сохраните отдельно: например, в своей защищённой записи вне диска основного Engine. Для недоверенного хранилища понадобятся аутентифицированные подписи и защита ключей; приложенная учебная программа их не реализует.</p>
+<p>Секреты настоящей службы требуют отдельного защищённого переноса. Не сохраняем весь environment, полный inspect или .env в публичные материалы. Наш собственный echo использует известные APP_ADDR/APP_DATA_DIR и не требует пароля. Для другой программы список необходимых конфигураций составляют по её реальному запуску. Полная холодная копия VM дополнительно сохраняет ОС и установленные программы, но также может включать лишние данные и секреты. В этой главе восстанавливаем конкретную службу, а не загружаемый диск VM.</p>
+<h2 id="14-backup-recovery-section-3">Подготовиться до отсутствия интернета</h2>
+<p>Основной опыт продолжается в Bash <strong>в той же личной Ubuntu-VM</strong>, с локальным context study, rootful Engine без userns-remap и UID 10001:10001 из 08. Rootless security-echo из 07 использует другой daemon и рассчитанные внешние UID: этот рецепт не переносит туда права числом 10001 наугад. Рабочий каталог — каталог тома docker в вашей копии книги. Образы и сеть уже подготовлены в 04/06; здесь сеть контейнера-помощника отключена.</p>
+<p>Нужен работающий основной экземпляр с созданным counter. Если он стоит после неисследованного отказа, сначала пройдите разбор 08: не запускайте его только для красивого результата копии. Посмотрите конкретные имена. Если вы остановились на 08, это data08-echo либо его v2; после 11 это контейнер сервиса echo проекта study-docker. Оба варианта используют study-data, но одновременно писать в него должен только один процесс. Мы выбираем реальный контейнер, не создаём новый основной.</p>
+<pre data-shell="bash"><code>docker --context study ps -a --filter volume=study-data --format &#x27;{{.ID}} {{.Names}} {{.Status}} {{.Ports}}&#x27;
+read -r -p &#x27;Имя или ID своего основного контейнера: &#x27; MAIN_CONTAINER
+read -r -p &#x27;Его loopback-порт (в 08: 18088, в Compose: 18080): &#x27; MAIN_PORT
+TOOLS_IMAGE=&quot;$(cat labs/network06/diag-image.id)&quot;
+export MAIN_CONTAINER MAIN_PORT TOOLS_IMAGE
+command -v python3 curl sha256sum cmp cp findmnt sync
+python3 --version
+python3 -B labs/backup14/bundle.py --help</code></pre>
+<p>Python 3 здесь запускает приложенный <a href="labs/backup14/bundle.py">bundle.py</a>, проверку собственных файлов. Он не вызывает Docker, не открывает сеть и не распаковывает архив на диск. При seal он проверяет набор и один раз создаёт manifest, при verify только читает и сверяет. Если Python 3 отсутствует на выбранной минимальной VM, получите его заранее из пакетов своей Ubuntu: после проверки источников обновите индекс пакетов и установите пакет python3. На рабочем компьютере ничего ради этого рецепта не устанавливают. Наличие HTML-книги, app-image.tar и Docker CLI само по себе не предоставляет Engine, ОС или интерпретатор.</p>
+<p>Создадим новое поколение в домашней учебной папке VM. <code>mktemp -d</code> создаёт уникальный каталог с ограниченным доступом; окончание gen.XXXXXX становится именем поколения. Папка не является data-root Docker. Все старые поколения остаются рядом. Путь BACKUP_DIR на этом сервере одновременно доступен CLI и daemon, потому что выбран локальный Unix-socket; для удалённого context это было бы неверно.</p>
+<pre data-shell="bash"><code>BACKUP_ROOT=&quot;$HOME/handbook-labs/docker-backups&quot;
+install -d -m 0700 &quot;$BACKUP_ROOT&quot;
+BACKUP_DIR=&quot;$(mktemp -d &quot;$BACKUP_ROOT/gen.XXXXXX&quot;)&quot;
+BACKUP_UID=&quot;$(id -u)&quot;
+BACKUP_GID=&quot;$(id -g)&quot;
+export BACKUP_ROOT BACKUP_DIR BACKUP_UID BACKUP_GID
+printf &#x27;%s\n&#x27; &quot;$BACKUP_DIR&quot;</code></pre>
+<p>Следующий читающий блок проверяет выбранную среду и инструменты до остановки службы. Требуем именно текущий rootful-сокет, владельца процесса 10001, прежний volume в /data и выбранную loopback-публикацию порта 8080. Проверка образа с инструментами происходит с --pull=never: отсутствующие образы получают или строят до отъезда, а не подменяют свежим latest. <code>df</code> проверяет место и inode на цели; его вывод относится ко всей обслуживающей файловой системе.</p>
+<pre data-shell="bash"><code>(
+  set -euo pipefail
+  : &quot;${MAIN_CONTAINER:?Выберите свой контейнер}&quot;
+  [[ &quot;$MAIN_PORT&quot; =~ ^[1-9][0-9]{0,4}$ ]]
+  (( MAIN_PORT &lt;= 65535 ))
+  test -n &quot;$TOOLS_IMAGE&quot;
+  endpoint=&quot;$(docker context inspect study --format &#x27;{{.Endpoints.docker.Host}}&#x27;)&quot;
+  case &quot;$endpoint&quot; in unix:///var/run/docker.sock|unix:///run/docker.sock) ;; *) exit 1 ;; esac
+  security=&quot;$(docker --context study info --format &#x27;{{json .SecurityOptions}}&#x27;)&quot;
+  case &quot;$security&quot; in *name=rootless*|*name=userns*) exit 1 ;; esac
+  test &quot;$(docker --context study inspect &quot;$MAIN_CONTAINER&quot; --format &#x27;{{.State.Status}}&#x27;)&quot; = running
+  test &quot;$(docker --context study inspect &quot;$MAIN_CONTAINER&quot; --format &#x27;{{.Config.User}}&#x27;)&quot; = 10001:10001
+  docker --context study container inspect "$MAIN_CONTAINER" |
+    python3 -c '
+import json, sys
+c, = json.load(sys.stdin)
+env = [v for v in (c["Config"].get("Env") or []) if v.startswith("APP_DATA_DIR=")]
+mounts = [v for v in c["Mounts"]
+          if v["Destination"] == "/data" or v["Destination"].startswith("/data/")]
+if not (env == ["APP_DATA_DIR=/data"] and len(mounts) == 1 and
+        mounts[0]["Destination"] == "/data" and mounts[0]["Type"] == "volume" and
+        mounts[0].get("Name") == "study-data" and mounts[0]["RW"]):
+    raise SystemExit("Нужны APP_DATA_DIR=/data и только study-data rw без вложенных mounts")
+'
+  test &quot;$(docker --context study port &quot;$MAIN_CONTAINER&quot; 8080/tcp)&quot; = &quot;127.0.0.1:$MAIN_PORT&quot;
+  docker --context study inspect &quot;$MAIN_CONTAINER&quot; --format &#x27;{{.Id}}&#x27; &gt; &quot;$BACKUP_DIR/container.id&quot;
+  docker --context study inspect &quot;$MAIN_CONTAINER&quot; --format &#x27;{{.Image}}&#x27; &gt; &quot;$BACKUP_DIR/image.id&quot;
+  printf &#x27;%s\n&#x27; &quot;$TOOLS_IMAGE&quot; &gt; &quot;$BACKUP_DIR/tools.id&quot;
+  docker --context study image inspect &quot;$(cat &quot;$BACKUP_DIR/image.id&quot;)&quot; --format &#x27;{{.Os}}/{{.Architecture}}&#x27; &gt; &quot;$BACKUP_DIR/platform.txt&quot;
+  test &quot;$(docker --context study image inspect &quot;$TOOLS_IMAGE&quot; --format &#x27;{{.Os}}/{{.Architecture}}&#x27;)&quot; = &quot;$(cat &quot;$BACKUP_DIR/platform.txt&quot;)&quot;
+  docker --context study inspect &quot;$MAIN_CONTAINER&quot; --format &#x27;image={{.Image}} user={{.Config.User}} readonly={{.HostConfig.ReadonlyRootfs}} ports={{json .HostConfig.PortBindings}} restart={{json .HostConfig.RestartPolicy}}&#x27; &gt; &quot;$BACKUP_DIR/runtime.txt&quot;
+  curl --connect-timeout 2 --max-time 5 --noproxy &#x27;*&#x27; --fail --silent --show-error &quot;http://127.0.0.1:$MAIN_PORT/version&quot; &gt; &quot;$BACKUP_DIR/version.expected&quot;
+  docker --context study volume inspect study-data
+  docker --context study run --rm --pull=never --network none --read-only --cap-drop ALL &quot;$TOOLS_IMAGE&quot; \
+    sh -ec &#x27;command -v sh tar find stat chmod chown cat mv; tar --version; stat --version&#x27;
+  df -h &quot;$BACKUP_DIR&quot;
+  df -i &quot;$BACKUP_DIR&quot;
+)</code></pre>
+<p>Если проверка прекратилась, исправляют выбранный порт, context, образ или исходные данные; основной процесс ещё не остановлен. В volume inspect ожидаем local без дополнительных driver options из 08 и отсутствие вложенных mount под /data. При NFS или другой схеме хранения сначала выясняют её семантику. Не добавляйте к рецепту обход проверок, чтобы он продолжил работу на другом объекте.</p>
+<p>Сохраним образы, пока основной процесс ещё работает. Образ неизменяем по ID, поэтому останавливать службу ради его копирования не требуется. --output направляет архив в свой новый файл. Суффикс .partial обозначает незавершённую попытку; только успешный save переименовывает его в окончательное имя. Успешный save приложения и неуспешный save tools не образуют полный автономный комплект.</p>
+<pre data-shell="bash"><code>(
+  set -euo pipefail
+  test ! -e &quot;$BACKUP_DIR/app-image.tar&quot;
+  test ! -e &quot;$BACKUP_DIR/app-image.tar.partial&quot;
+  test ! -e &quot;$BACKUP_DIR/tools-image.tar&quot;
+  test ! -e &quot;$BACKUP_DIR/tools-image.tar.partial&quot;
+  docker --context study image save --output &quot;$BACKUP_DIR/app-image.tar.partial&quot; &quot;$(cat &quot;$BACKUP_DIR/image.id&quot;)&quot;
+  mv -T -- &quot;$BACKUP_DIR/app-image.tar.partial&quot; &quot;$BACKUP_DIR/app-image.tar&quot;
+  docker --context study image save --output &quot;$BACKUP_DIR/tools-image.tar.partial&quot; &quot;$TOOLS_IMAGE&quot;
+  mv -T -- &quot;$BACKUP_DIR/tools-image.tar.partial&quot; &quot;$BACKUP_DIR/tools-image.tar&quot;
+  stat -c &#x27;%n bytes=%s&#x27; &quot;$BACKUP_DIR/app-image.tar&quot; &quot;$BACKUP_DIR/tools-image.tar&quot;
+)</code></pre>
+<p>Экспорт образов создаёт нагрузку на диск и занимает место даже при работающей службе. На небольшом компьютере выбирают спокойный период и наблюдают задержку приложения. Размер в image inspect и размер полученного tar описывают разные представления: для переноса считаем фактические байты файлов. Полный комплект с теми же образами в каждом поколении прост для отдельного восстановления, но расходует больше места; оптимизация через общий неизменяемый архив образов потребует сохранять и проверять ссылки на него, а не просто удалять повторяющиеся файлы.</p><p>Во время создания и проверки поколения один оператор владеет его каталогом: никто параллельно не подменяет файлы или ссылки. Проверка имён в bundle.py не является защитой от другого процесса, который может изменять те же пути между проверкой и открытием. Для чужого архива сначала проверяют происхождение и держат его вне доступа посторонних писателей.</p>
+<h2 id="backup14-stop">Остановить одного писателя и получить неподвижный источник</h2>
+<p>Остановку и архивирование выполняем одним прерывающимся блоком. У <code>set -e</code> здесь конкретная задача: отказ stop или inspect запрещает последующий run с tar. Дополнительно требуем тот же container.id, состояние exited, код 0 и отсутствие OOM. Если процесс убит по тайм-ауту, это повод исследовать незавершённые запросы, а не объявить штатную копию. Пустой список running-потребителей study-data проверяется после stop; фильтр Engine не обнаруживает сторонний процесс на сервере, поэтому этот опыт выполняет один оператор без параллельного compose up.</p>
+<p>Помощник чтения под UID 10001 читает уже остановленный counter. Это фактическая точка данных, которая может включать изменение с потерянным HTTP-ответом. Успешный stop означает остановленный процесс, а не автоматическое знание результата каждого запроса клиента. Текст числа и время записываются в поколение до tar. Ни старый контейнер, ни study-data не удаляются.</p>
+<pre data-shell="bash"><code>(
+  set -euo pipefail
+  test &quot;$(docker --context study inspect &quot;$MAIN_CONTAINER&quot; --format &#x27;{{.Id}}&#x27;)&quot; = &quot;$(cat &quot;$BACKUP_DIR/container.id&quot;)&quot;
+  docker --context study stop --timeout 15 &quot;$MAIN_CONTAINER&quot;
+  test &quot;$(docker --context study inspect &quot;$MAIN_CONTAINER&quot; --format &#x27;{{.State.Status}} {{.State.ExitCode}} {{.State.OOMKilled}}&#x27;)&quot; = &#x27;exited 0 false&#x27;
+  running=&quot;$(docker --context study ps --filter volume=study-data --format &#x27;{{.ID}}&#x27;)&quot;
+  test -z &quot;$running&quot;
+  date -u +%Y-%m-%dT%H:%M:%SZ &gt; &quot;$BACKUP_DIR/stopped.at&quot;
+  docker --context study run --rm --pull=never --network none --read-only --user 10001:10001 --cap-drop ALL \
+    --mount type=volume,source=study-data,target=/data,readonly,volume-nocopy \
+    &quot;$TOOLS_IMAGE&quot; cat /data/counter &gt; &quot;$BACKUP_DIR/counter.expected&quot;
+  test ! -e &quot;$BACKUP_DIR/counter.tar&quot;
+  test ! -e &quot;$BACKUP_DIR/counter.tar.partial&quot;
+  docker --context study run --rm --pull=never --network none --read-only \
+    --user 0:0 --cap-drop ALL --cap-add DAC_OVERRIDE --cap-add CHOWN \
+    --security-opt no-new-privileges=true \
+    --env BACKUP_UID=&quot;$BACKUP_UID&quot; --env BACKUP_GID=&quot;$BACKUP_GID&quot; \
+    --mount type=volume,source=study-data,target=/data,readonly,volume-nocopy \
+    --mount type=bind,source=&quot;$BACKUP_DIR&quot;,target=/backup \
+    &quot;$TOOLS_IMAGE&quot; sh -ec &#x27;
+      umask 077
+      test ! -e /backup/counter.tar
+      test ! -e /backup/counter.tar.partial
+      tar --numeric-owner --format=ustar --create --file=/backup/counter.tar.partial --directory=/data .
+      chmod 0600 /backup/counter.tar.partial
+      chown &quot;$BACKUP_UID:$BACKUP_GID&quot; /backup/counter.tar.partial
+      mv /backup/counter.tar.partial /backup/counter.tar
+    &#x27;
+  python3 -B labs/backup14/bundle.py seal &quot;$BACKUP_DIR&quot;
+)</code></pre>
+<p>Источник подключён readonly и volume-nocopy. Readonly ограничивает запись помощника; неподвижным набор сделал остановленный единственный писатель. Административный контейнер-помощник видит только этот источник и каталог своего поколения, без Docker socket и сети. DAC_OVERRIDE позволяет root читать каталог 10001/0700 и файл 0600, а также создавать архив в папке обычного оператора. CHOWN передаёт только созданный архив BACKUP_UID:BACKUP_GID, чтобы оператор мог читать и переносить его. Приложение этих полномочий не получает. При rootless/re-map внешние UID и доступ к bind будут другими, потому профиль выбран заранее.</p>
+<p>Tar получает <code>--directory=/data</code>, поэтому корнем списка становится «.», а не абсолютный /data сервера. Create создаёт архив, file задаёт выход, numeric-owner сохраняет числовые идентификаторы. USTAR — стандартизованный в POSIX.1-1988 вариант tar с фиксированными полями заголовка. Явный <code>--format=ustar</code> достаточен для наших коротких имён и чисел. Здесь не обещано сохранение ACL, расширенных атрибутов, SELinux-меток или наносекундных mtime: USTAR и этот помощник выбраны для простого Go-каталога. Для другой службы эти свойства могут быть необходимыми и потребуют другого формата и проверки восстановления.</p>
+<p>Seal проверяет число в counter.tar против counter.expected, UID/GID 10001 и режимы 0700/0600, типы и имена членов, затем считает длины и SHA-256 файлов. Он допускает корень, counter и обычные оставшиеся .counter-&lt;цифры&gt;; не выбирает временный файл вместо counter. Ссылки, устройства, абсолютные пути, «..», повторы имён и необычные метаданные отклоняются до административного извлечения. Это узкая проверка именно нашего приложения: максимум 128 членов, 1 MiB суммарных данных и 16 MiB самого counter.tar, а не универсальная программа проверки архивов БД. Собственный Go-код записывает обычные десятичные цифры без ведущих нулей и один перевод строки; именно это представление проверяет bundle.py. Само приложение допускает при чтении и некоторые другие записи числа. Отказ узкой проверки после ручного изменения — повод сохранить и разобрать файл, а не объявить любые отличающиеся байты повреждёнными.</p>
+<p>Перед созданием manifest программа bundle.py запрашивает fsync экспортированных файлов, затем сохраняет и синхронизирует manifest, каталог поколения и его родительский каталог на Linux. Синхронизация родителя относится к новому имени gen.XXXXXX: сохранить файлы внутри недостаточно, если после отказа пропала сама запись о поколении. Верхняя учебная папка должна быть подготовлена заранее; это не установка нового хранилища. Это запрос сохранения локальному хранилищу с разобранными в 08 условиями. Он не создаёт второй диск. При отказе tar, chown, проверки или синхронизации останутся файлы попытки; .partial и неполный manifest не объявляются готовым поколением. Seal не переписывает уже существующий manifest. Для нового успешного поколения после разбора создают новый каталог, сохраняя проблемный для исследования.</p>
+<h2 id="backup14-bytes">Почему три байта счётчика занимают 10 KiB архива</h2>
+<p>Вычислим отдельный маленький пример: каталог содержит только counter с байтами <code>34 32 0a</code>, то есть «42» и перевод строки. USTAR хранит перед данными 512-байтный заголовок. Для корня «.» нужен один заголовок, для counter — ещё один; три байта файла занимают следующий блок 512 с дополнением нулями. Конец обозначается двумя нулевыми блоками. Получается 5×512=2560 байт полезной структуры; GNU tar с обычным коэффициентом блокирования 20 дополняет запись до 20×512=10240 байт. Фактический размер проверяют stat: другой состав, формат и blocking factor дадут другой результат.</p>
+<table><thead><tr><th>Поле заголовка USTAR</th><th>Положение и размер</th><th>Что восстанавливается</th></tr></thead><tbody>
+<tr><td>name; при необходимости prefix</td><td>0:100;345:155 байт</td><td>Относительное имя. В нашем наборе «.» или «./counter»; абсолютный путь к Docker data-root не нужен</td></tr>
+<tr><td>mode, uid, gid</td><td>100:8,108:8,116:8 байт</td><td>Восьмеричная текстовая запись прав и числовых владельцев; для файла 0600,10001,10001</td></tr>
+<tr><td>size, mtime</td><td>124:12,136:12 байт</td><td>Размер данных файла и время изменения с секундной точностью в выбранном формате</td></tr>
+<tr><td>checksum, typeflag</td><td>148:8,156:1 байт</td><td>Проверка самого заголовка и тип объекта: обычный файл, каталог или иной тип</td></tr>
+<tr><td>linkname, magic, version</td><td>157:100,257:6,263:2 байт</td><td>Цель ссылки, признак USTAR и версия. Наша проверка отвергает ссылки, а не следует за ними</td></tr>
+</tbody></table>
+<p>Запись «124:12» означает 12 байт начиная со смещения 124, а не интервал времени. Таблица показывает используемые здесь поля, не все байты заголовка. Его checksum и SHA-256 всего counter.tar проверяют разные объекты: изменение данных файла может оставить заголовок тем же. При вычислении checksum восемь байт самого этого поля временно считают ASCII-пробелами с кодом 32, затем складывают значения байтов заголовка. Данные counter в эту сумму не входят. UID 10001 в десятичной системе записывается в восьмеричном поле как цифры 0023421 и нулевой завершающий байт; это текстовые ASCII-цифры, а не бинарное 32-битное число. Поэтому одного успешного tar --list недостаточно. Также время mtime файла не равно времени остановки и не заменяет stopped.at: источник мог не изменяться часами.</p>
+<h2 id="backup14-resume">Проверить первое поколение и продолжить основной мир</h2>
+<p>После успешного seal сохраним SHA manifest. Читающий verify повторно сверит каждый заявленный файл и содержимое counter.tar. Только затем запускаем прежний контейнер, предварительно ещё раз проверив его ID. Поколение после этого не меняется. Если start или HTTP откажут, продолжаем исследовать этот контейнер и study-data; автоматического отката данных к 42 не происходит.</p>
+<pre data-shell="bash"><code>KNOWN_MANIFEST_SHA=&quot;$(sha256sum -- &quot;$BACKUP_DIR/manifest.json&quot; | cut -d &#x27; &#x27; -f 1)&quot;
+export KNOWN_MANIFEST_SHA
+printf &#x27;%s\n&#x27; &quot;$KNOWN_MANIFEST_SHA&quot;
+(
+  set -euo pipefail
+  python3 -B labs/backup14/bundle.py verify &quot;$BACKUP_DIR&quot; --expected-manifest &quot;$KNOWN_MANIFEST_SHA&quot;
+  test &quot;$(docker --context study inspect &quot;$MAIN_CONTAINER&quot; --format &#x27;{{.Id}}&#x27;)&quot; = &quot;$(cat &quot;$BACKUP_DIR/container.id&quot;)&quot;
+  docker --context study start &quot;$MAIN_CONTAINER&quot;
+)
+curl --connect-timeout 2 --max-time 5 --noproxy &#x27;*&#x27; --fail --silent --show-error &quot;http://127.0.0.1:$MAIN_PORT/counter&quot;</code></pre>
+<p>Без новых запросов ожидается N из counter.expected. После возобновления клиентов основной counter может стать больше: это новая история после копии. Любое ранее потерянное подтверждение POST разбирают отдельно, не повторяя увеличение ради совпадения чисел. Не запускайте одновременно остановленный старый data08-echo и его v2, а также отдельный Compose-писатель. Start возвращает процесс именно в выбранный прежний контейнер.</p>
+<p>Если tar или seal закончились ошибкой, не переходите к команде получения SHA как будто поколение готово. Основной процесс может всё ещё стоять. Посмотрите состояние, журнал, файлы .partial и причину. При подтверждённой остановке и сохранённом корректном counter можно вернуть тот же основной экземпляр в работу, явно записав «копия этой попытки не принята». Неполное новое поколение не стирает старое пригодное. Отказ копирования не является поводом удалять study-data или менять его владельца.</p>
+<h2 id="backup14-second-copy">Сделать второе размещение и проверить его после переноса</h2>
+<p>Вторую цель выбирают на уже подготовленном собственном носителе, который переживает потерю диска VM. Папка на другом разделе того же физического диска не переживёт его отказ; общий каталог виртуальной машины может всё ещё находиться на том же диске хоста. <code>findmnt -T</code> показывает обслуживающее монтирование, но сам по себе не доказывает независимость накопителей. Мы не форматируем и не подключаем устройства этой процедурой.</p>
+<p>Следующий пример предназначен для своей доступной Linux-файловой системы с сохранением обычных прав. --reflink=never запрашивает отдельное копирование байтов, а не общий набор экстентов файловой системы; даже это не превращает один физический диск в два. cp -a сохраняет предусмотренные атрибуты каталога и файлов. При отказе назначения прав, например на неподходящем носителе, блок прекращается; неполный второй каталог не объявляется принятой копией.</p>
+<pre data-shell="bash"><code>read -r -p &#x27;Существующий каталог своего второго носителя: &#x27; SECOND_ROOT
+SECOND_DIR=&quot;$SECOND_ROOT/$(basename &quot;$BACKUP_DIR&quot;)&quot;
+export SECOND_ROOT SECOND_DIR
+(
+  set -euo pipefail
+  test -d &quot;$SECOND_ROOT&quot;
+  test -w &quot;$SECOND_ROOT&quot;
+  test ! -e &quot;$SECOND_DIR&quot;
+  findmnt -T &quot;$SECOND_ROOT&quot;
+  cp -a --reflink=never -- &quot;$BACKUP_DIR&quot; &quot;$SECOND_DIR&quot;
+  sync -f &quot;$SECOND_DIR&quot;
+  python3 -B labs/backup14/bundle.py verify &quot;$SECOND_DIR&quot; --expected-manifest &quot;$KNOWN_MANIFEST_SHA&quot;
+)</code></pre>
+<p>sync -f запрашивает синхронизацию обслуживающей файловой системы, а не только этого одного файла; на ней могут находиться и другие записи. Проверка сразу после cp способна читать кэш. Для переносного носителя штатно завершите его использование средствами ОС, затем заново подключите и повторите verify с независимо сохранённым ожидаемым SHA. Это проверка чтения после переноса, не испытание внезапного обесточивания. Условия накопителя и нижнего хранилища остаются существенными.</p>
+<p>Для FAT/exFAT или переноса через Windows нельзя обещать одинаковое сохранение внешних Unix-прав. Числовые UID и права прикладных файлов находятся внутри counter.tar, однако доступ к самим архивам тоже надо защитить. Выберите предусмотренный формат переноса и проверьте его отдельно; не принимайте stderr от cp за несущественное украшение. Данные книги на флэшке и рабочие файлы не являются автоматически выбранной целью. На рабочей Windows этот текст читается без запуска Engine; реальные действия требуют своей разрешённой VM.</p>
+<figure class="backup-history" id="docker-recovery-separate-target">
+<style>
+.backup-history{margin:2rem 0;padding:1rem 0;border-block:1px solid var(--line);color:var(--text)}.backup-history svg{display:block;width:100%;max-width:480px;height:auto;margin:auto}.backup-history text{font-family:var(--sans);font-size:20px;fill:var(--text)}.backup-history .bh-small{font-size:19px;fill:var(--muted)}.backup-history .bh-detail{font-size:18px}.backup-history .bh-alias{display:block;height:0;overflow:hidden}.backup-history .bh-number{font-family:var(--mono);font-size:23px;font-weight:700}.backup-history .bh-bg,.backup-history .bh-paper{fill:var(--paper)}.backup-history .bh-track{fill:none;stroke:var(--accent);stroke-width:4}.backup-history .bh-copy{fill:none;stroke:var(--muted);stroke-width:2;stroke-dasharray:5 5}.backup-history .bh-point{fill:var(--paper);stroke:var(--accent);stroke-width:3}.backup-history .bh-paper{stroke:var(--accent);stroke-width:2}.backup-history .bh-rule{stroke:var(--line);stroke-width:1}.backup-history figcaption{font-size:.92em;color:var(--muted)}
+@media print{.backup-history{--paper:#fff;--text:#111;--muted:#444;--accent:#333;--line:#bbb;break-inside:avoid}.backup-history svg{max-width:390px}}
+</style>
+<span class="bh-alias" id="docker-recovery-separate-target-title" aria-hidden="true"></span>
+<svg viewBox="0 0 360 640" role="img" aria-labelledby="bh14-title bh14-desc"><title id="bh14-title">Три сохранённые истории: основной 45, копия 42, проверочная 43</title><desc id="bh14-desc">В 12:00 основной процесс остановлен на 42. В 12:02 готово поколениеB1 с 42 и основной возобновлён. К 12:17 основной достиг 45. В 12:20 из B1 получена новая цель 42; её один POST в 12:21 получает 43. Копия остаётся 42, основной 45 этим не переписывается. Условные часы и числа, не измерение Engine.</desc>
+<rect class="bh-bg" width="360" height="640" />
+<text x="94" y="32" text-anchor="middle" class="bh-detail">Основной</text><text x="195" y="32" text-anchor="middle" class="bh-detail">Копия B1</text><text x="295" y="32" text-anchor="middle" class="bh-detail">Цель R1</text>
+<text class="bh-small bh-detail" x="94" y="55" text-anchor="middle">study-data</text><text class="bh-small bh-detail" x="195" y="55" text-anchor="middle">counter.tar</text><text class="bh-small bh-detail" x="295" y="55" text-anchor="middle">другой том</text>
+<path class="bh-rule" d="M62 110H352M62 230H352M62 350H352M62 440H352M62 550H352" />
+<text class="bh-small bh-detail" x="2" y="115">12:00</text><text class="bh-small bh-detail" x="2" y="235">12:02</text><text class="bh-small bh-detail" x="2" y="355">12:17</text><text class="bh-small bh-detail" x="2" y="445">12:20</text><text class="bh-small bh-detail" x="2" y="555">12:21</text>
+<path class="bh-track" d="M94 110V134M94 168V249M94 283V366M94 404V580" /><circle class="bh-point" cx="94" cy="110" r="23" /><text class="bh-number" x="94" y="118" text-anchor="middle">42</text><text class="bh-small" x="94" y="155" text-anchor="middle">остановлен</text>
+<circle class="bh-point" cx="94" cy="230" r="23" /><text class="bh-number" x="94" y="238" text-anchor="middle">42</text><text class="bh-small" x="94" y="270" text-anchor="middle">снова пишет</text>
+<circle class="bh-point" cx="94" cy="350" r="23" /><text class="bh-number" x="94" y="358" text-anchor="middle">45</text><text class="bh-small" x="94" y="390" text-anchor="middle">ещё 3 записи</text>
+<circle class="bh-point" cx="94" cy="550" r="23" /><text class="bh-number" x="94" y="558" text-anchor="middle">45</text><text class="bh-small" x="94" y="595" text-anchor="middle"><tspan x="94" dy="0">не</tspan> <tspan x="94" dy="23">меняется</tspan></text>
+<path class="bh-copy" d="M118 110H195V200" /><path class="bh-paper" d="M155 199H217L235 217V271H155Z" /><path class="bh-rule" d="M217 199V217H235" /><text class="bh-number" x="195" y="242" text-anchor="middle">42</text><text class="bh-small" x="195" y="295" text-anchor="middle">сохранено</text>
+<path class="bh-copy" d="M195 272V275M195 309V580" /><rect class="bh-paper" x="171" y="526" width="48" height="48" rx="4" /><text class="bh-number" x="195" y="558" text-anchor="middle">42</text><text class="bh-small" x="195" y="595" text-anchor="middle"><tspan x="195" dy="0">то</tspan> <tspan x="195" dy="23">же B1</tspan></text>
+<path class="bh-copy" d="M195 405H295V416" /><path class="bh-rule" d="M289 411L295 419L301 411" /><text class="bh-small" x="245" y="395" text-anchor="middle">извлечение</text>
+<path class="bh-track" d="M295 440V463M295 502V580" /><circle class="bh-point" cx="295" cy="440" r="23" /><text class="bh-number" x="295" y="448" text-anchor="middle">42</text><text class="bh-small" x="295" y="489" text-anchor="middle">сначала GET</text>
+<circle class="bh-point" cx="295" cy="550" r="23" /><text class="bh-number" x="295" y="558" text-anchor="middle">43</text><text class="bh-small" x="295" y="595" text-anchor="middle"><tspan x="295" dy="0">один</tspan> <tspan x="295" dy="23">POST</tspan></text>
+</svg>
+<figcaption>Время идёт сверху вниз. Это вычисляемый пример с 42, а не просьба поменять ваш N. Вертикали принадлежат разным объектам; единственное извлечение идёт из B1 в новую цель. Даже после проверочного POST B1 не меняется.</figcaption>
+</figure>
+<table><thead><tr><th>Момент модели</th><th>Основной study-data</th><th>Поколение B1</th><th>Новый восстановленный том</th></tr></thead><tbody><tr><td>12:00</td><td>42, писатель остановлен</td><td>ещё не готово</td><td>нет</td></tr><tr><td>12:02</td><td>42, работа возобновлена</td><td>42, сохраняется без изменений</td><td>нет</td></tr><tr><td>12:17</td><td>45 после трёх новых действий</td><td>42</td><td>нет</td></tr><tr><td>12:20–12:21</td><td>45; опыт его не переписывает</td><td>по-прежнему 42</td><td>42 после извлечения,43 после одного POST</td></tr></tbody></table>
+<h2 id="14-backup-recovery-section-4">Восстановить поколение в новый volume</h2>
+<p>Проверим именно второе размещение. Уже заданный BUNDLE сохраняется; иначе блок берёт SECOND_DIR из текущего терминала либо запрашивает путь. Если KNOWN_MANIFEST_SHA не задан, он отдельно запрашивает сохранённую ожидаемую сумму. В новом терминале сначала вернитесь в каталог тома docker, задайте BUNDLE существующим путём к перенесённому поколению и введите сохранённый отдельно SHA manifest. Не вычисляйте «ожидаемую» сумму из неизвестного повреждённого manifest на этой же цели. Путь к комплекту файлов — путь локальной VM, видимый её daemon, как в начале главы.</p>
+<pre data-shell="bash"><code>if test -z &quot;${BUNDLE:-}&quot;; then
+  if test -n &quot;${SECOND_DIR:-}&quot;; then
+    BUNDLE=&quot;$SECOND_DIR&quot;
+  else
+    read -r -p &#x27;Путь к своему перенесённому поколению: &#x27; BUNDLE
+  fi
+fi
+if test -z &quot;${KNOWN_MANIFEST_SHA:-}&quot;; then
+  read -r -p &#x27;Отдельно сохранённый SHA256 manifest: &#x27; KNOWN_MANIFEST_SHA
+fi
+export BUNDLE KNOWN_MANIFEST_SHA
+(
+  set -euo pipefail
+  test -f labs/backup14/bundle.py
+  python3 -B labs/backup14/bundle.py verify &quot;$BUNDLE&quot; --expected-manifest &quot;$KNOWN_MANIFEST_SHA&quot;
+  endpoint=&quot;$(docker context inspect study --format &#x27;{{.Endpoints.docker.Host}}&#x27;)&quot;
+  case &quot;$endpoint&quot; in unix:///var/run/docker.sock|unix:///run/docker.sock) ;; *) exit 1 ;; esac
+  security=&quot;$(docker --context study info --format &#x27;{{json .SecurityOptions}}&#x27;)&quot;
+  case &quot;$security&quot; in *name=rootless*|*name=userns*) exit 1 ;; esac
+  docker --context study image load --input &quot;$BUNDLE/app-image.tar&quot;
+  docker --context study image load --input &quot;$BUNDLE/tools-image.tar&quot;
+  docker --context study image inspect &quot;$(cat &quot;$BUNDLE/image.id&quot;)&quot; --format &#x27;{{.Id}} {{.Os}}/{{.Architecture}}&#x27;
+  docker --context study image inspect &quot;$(cat &quot;$BUNDLE/tools.id&quot;)&quot; --format &#x27;{{.Id}} {{.Os}}/{{.Architecture}}&#x27;
+)</code></pre>
+<p>Load не требует сети, но требует уже установленного совместимого Engine и достаточного места. Он может восстановить и теги из архива. Работающий основной контейнер продолжает использовать свой сохранённый образ; следующие запуски выбирают записанный image ID, не случайное значение тега после импорта. При другой архитектуре сначала решают вопрос совместимости программы и среды. Наличие amd64-образа не создаёт автоматически работающую arm64-программу. Программа bundle.py проверяет байты архива образа, а успешный импорт и выбранный image ID проверяет Engine.</p>
+<p>Теперь создаём отдельную запись восстановления, уникальное имя контейнера и отдельный volume. Здесь основной study-data вообще не нужен как пишущая цель. При повторной попытке не очищают старую цель: сохраняют её отказ, а следующая попытка получает другое явно созданное имя. Метка связывает новый объект с записью текущей попытки.</p>
+<pre data-shell="bash"><code>BACKUP_ROOT=&quot;${BACKUP_ROOT:-$HOME/handbook-labs/docker-backups}&quot;
+install -d -m 0700 &quot;$BACKUP_ROOT&quot;
+RESTORE_RECORD=&quot;$(mktemp -d &quot;$BACKUP_ROOT/restore.XXXXXX&quot;)&quot;
+RESTORE_NAME=&quot;restore14-$(basename &quot;$RESTORE_RECORD&quot;)&quot;
+RESTORE_VOLUME=&quot;$RESTORE_NAME-data&quot;
+APP_IMAGE=&quot;$(cat &quot;$BUNDLE/image.id&quot;)&quot;
+RESTORE_TOOLS=&quot;$(cat &quot;$BUNDLE/tools.id&quot;)&quot;
+EXPECTED_COUNTER=&quot;$(cat &quot;$BUNDLE/counter.expected&quot;)&quot;
+export RESTORE_RECORD RESTORE_NAME RESTORE_VOLUME APP_IMAGE RESTORE_TOOLS EXPECTED_COUNTER
+(
+  set -euo pipefail
+  python3 -B labs/backup14/bundle.py verify &quot;$BUNDLE&quot; --expected-manifest &quot;$KNOWN_MANIFEST_SHA&quot;
+  names=&quot;$(docker --context study volume ls --format &#x27;{{.Name}}&#x27;)&quot;
+  if printf &#x27;%s\n&#x27; &quot;$names&quot; | grep -Fx -- &quot;$RESTORE_VOLUME&quot; &gt; /dev/null; then
+    printf &#x27;%s\n&#x27; &#x27;Цель уже существует: не смешиваем с ней архив.&#x27; &gt;&amp;2
+    exit 1
+  fi
+  date -u +%Y-%m-%dT%H:%M:%SZ &gt; &quot;$RESTORE_RECORD/start.at&quot;
+  docker --context study volume create --driver local --label &quot;handbook.restore14=$RESTORE_NAME&quot; &quot;$RESTORE_VOLUME&quot;
+  test &quot;$(docker --context study volume inspect &quot;$RESTORE_VOLUME&quot; --format &#x27;{{index .Labels &quot;handbook.restore14&quot;}}&#x27;)&quot; = &quot;$RESTORE_NAME&quot;
+  holders=&quot;$(docker --context study ps -a --filter &quot;volume=$RESTORE_VOLUME&quot; --format &#x27;{{.ID}}&#x27;)&quot;
+  test -z &quot;$holders&quot;
+  docker --context study run --rm --pull=never --network none --read-only \
+    --user 0:0 --cap-drop ALL --cap-add DAC_OVERRIDE --cap-add CHOWN --cap-add FOWNER \
+    --security-opt no-new-privileges=true \
+    --mount &quot;type=volume,source=$RESTORE_VOLUME,target=/data,volume-nocopy&quot; \
+    --mount &quot;type=bind,source=$BUNDLE,target=/backup,readonly&quot; \
+    &quot;$RESTORE_TOOLS&quot; sh -ec &#x27;
+      contents=&quot;$(find /data -mindepth 1 -maxdepth 1 -printf x -quit)&quot;
+      test -z &quot;$contents&quot;
+      tar --numeric-owner --same-owner --same-permissions --extract --file=/backup/counter.tar --directory=/data
+      stat -c &quot;uid=%u gid=%g mode=%a path=%n&quot; /data /data/counter
+    &#x27;
+  printf '%s\n' "$RESTORE_VOLUME" &gt; "$RESTORE_RECORD/data-restored.ok"
+)</code></pre>
+<p>Ранний grep -q здесь не нужен: grep -Fx дочитывает список, а перенаправление убирает найденные строки. При pipefail это избегает ложного «имени нет» из-за SIGPIPE печатающего процесса. Ошибка самого volume ls прекращает блок. После создания сверяется метка, отсутствие подключённых контейнеров и фактическая пустота каталога, включая имя из одного перевода строки. Если любая проверка отказала, административная распаковка не выполняется.</p>
+<p>При восстановлении root внутри контейнера-помощника должен создать файлы, назначить числового владельца 10001 и вернуть режимы/mtime. Поэтому кроме DAC_OVERRIDE и CHOWN нужен FOWNER для операций, требующих владельца, например восстановления метаданных уже переданного файла. Extract извлекает, same-owner возвращает владельцев, same-permissions — права, numeric-owner выбирает числа вместо совпавших имён пользователей. Эти полномочия ограничены новым томом и readonly-bundle; основной volume не подключён. GNU tar может отложить окончательные атрибуты каталогов до извлечения детей, иначе ранний режим 0700 владельца 10001 мешал бы продолжить работу.</p>
+<p>Ожидаем каталог 10001:10001/0700 и counter10001:10001/0600. Сбой tar способен оставить частично восстановленную цель. Блок прекращается до запуска приложения; том и запись отказа сохраняются. Не делайте поверх него второй tar -x и рекурсивный chown, чтобы скрыть причину. Сначала выясняют, что не применилось и почему. Источник BUNDLE и работающий основной экземпляр этим не меняются.</p>
+<h2 id="backup14-probe">Проверить чтение и одну новую запись</h2>
+<p>Для проверочного экземпляра выбираем loopback-порт 18081. Сначала проверьте ss и ранее созданные restore14-контейнеры. Занятый порт означает исследование владельца, а не отключение чужой службы. Нам не требуется сеть net06-net: для проверки используем --network bridge, уже существующую стандартную сеть Engine. Для наших запросов публикуется только 127.0.0.1. Обычный bridge сохраняет возможность исходящих соединений; --pull=never запрещает получение отсутствующего образа, а не сетевой обмен. Наш echo сам не обращается к внешним службам. Права приложения остаются 10001, корень readonly, writable только отдельный восстановленный /data.</p>
+<pre data-shell="bash"><code>ss -H -ltn &#x27;sport = :18081&#x27;
+docker --context study ps -a --filter name=restore14 --format &#x27;{{.Names}} {{.Status}} {{.Ports}}&#x27;
+(
+  set -euo pipefail
+  test &quot;$(cat &quot;$RESTORE_RECORD/data-restored.ok&quot;)&quot; = &quot;$RESTORE_VOLUME&quot;
+  docker --context study run -d --name &quot;$RESTORE_NAME&quot; --pull=never \
+    --network bridge --user 10001:10001 --cap-drop ALL \
+    --security-opt no-new-privileges=true --read-only \
+    --tmpfs /tmp:rw,noexec,nosuid,size=16m \
+    --mount &quot;type=volume,source=$RESTORE_VOLUME,target=/data,volume-nocopy&quot; \
+    --env APP_ADDR=0.0.0.0:8080 --env APP_DATA_DIR=/data \
+    --publish 127.0.0.1:18081:8080 &quot;$APP_IMAGE&quot;
+  docker --context study inspect &quot;$RESTORE_NAME&quot; --format &#x27;{{.Image}} {{.Config.User}} {{json .Mounts}}&#x27;
+)</code></pre>
+<p>Для новой цели inspect должен показать RESTORE_VOLUME, а не study-data. Состояние running ещё не означает готовность HTTP; сначала только читаем. Если запуск прервался до слушателя, журнал объяснит недоступный каталог или неправильное число. Проверять только /health недостаточно: в исходнике этот маршрут не читает counter и не делает fsync.</p>
+<pre data-shell="bash"><code>(
+  set -euo pipefail
+  curl --connect-timeout 2 --max-time 5 --noproxy &#x27;*&#x27; --fail --silent --show-error http://127.0.0.1:18081/health
+  curl --connect-timeout 2 --max-time 5 --noproxy &#x27;*&#x27; --fail --silent --show-error http://127.0.0.1:18081/version &gt; &quot;$RESTORE_RECORD/version.actual&quot;
+  cmp -s -- &quot;$BUNDLE/version.expected&quot; &quot;$RESTORE_RECORD/version.actual&quot;
+  actual=&quot;$(curl --connect-timeout 2 --max-time 5 --noproxy &#x27;*&#x27; --fail --silent --show-error http://127.0.0.1:18081/counter)&quot;
+  test &quot;$actual&quot; = &quot;$EXPECTED_COUNTER&quot;
+  printf &#x27;%s\n&#x27; &quot;$actual&quot; &gt; &quot;$RESTORE_RECORD/before.txt&quot;
+)</code></pre>
+<p>Читающий блок можно повторить после обычной задержки запуска. Следующий блок выполняет ровно один POST. Для вычисления N+1 используем целые Python, поскольку Bash с машинным знаковым целым может переполниться раньше максимума uint64 нашего приложения. При N=18446744073709551615 дальнейшее увеличение невозможно по логике программы: исходное значение корректно, ожидается отказ exhausted, а не обнуление. В этом крае ниже next-программа откажет <em>до</em> POST; чтение и сохранность проверяются отдельно, обычный тест новой записи на этой истории неприменим.</p>
+<pre data-shell="bash"><code>(
+  set -euo pipefail
+  next=&quot;$(python3 -c &#x27;import sys; n=int(sys.argv[1]); assert 0 &lt;= n &lt; (1&lt;&lt;64)-1, &quot;counter exhausted&quot;; print(n+1)&#x27; &quot;$EXPECTED_COUNTER&quot;)&quot;
+  posted=&quot;$(curl --connect-timeout 2 --max-time 5 --noproxy &#x27;*&#x27; --fail --silent --show-error --request POST http://127.0.0.1:18081/counter)&quot;
+  test &quot;$posted&quot; = &quot;$next&quot;
+  printf &#x27;%s\n&#x27; &quot;$posted&quot; &gt; &quot;$RESTORE_RECORD/post.txt&quot;
+  actual=&quot;$(curl --connect-timeout 2 --max-time 5 --noproxy &#x27;*&#x27; --fail --silent --show-error http://127.0.0.1:18081/counter)&quot;
+  test &quot;$actual&quot; = &quot;$next&quot;
+  date -u +%Y-%m-%dT%H:%M:%SZ &gt; &quot;$RESTORE_RECORD/function-checked.at&quot;
+)</code></pre>
+<p>Результат N→N+1 относится только к RESTORE_VOLUME. Если curl сообщил timeout или 503, блок прекращается: прежний ответ мог потеряться, а запись — состояться. Сохраните контейнер, том, логи и собственные файлы before/post. После неопределённого исхода не повторяют этот блок. Разбирают текущий GET, состояние файла и точку отказа; при uncertain старое RAM-значение может отличаться от файла. Новый чистый восстановительный опыт возможен из неизменённого BUNDLE в новой явно названной цели, при этом проблемная цель не стирается.</p>
+<p>После проверки остановим только проверочный контейнер. Это не удаляет том или журнал и не затрагивает основной процесс. При отказе stop нельзя подписывать запись «проверочная служба остановлена».</p>
+<pre data-shell="bash"><code>(
+  set -euo pipefail
+  docker --context study stop --timeout 15 &quot;$RESTORE_NAME&quot;
+  test &quot;$(docker --context study inspect &quot;$RESTORE_NAME&quot; --format &#x27;{{.State.Status}}&#x27;)&quot; = exited
+  docker --context study inspect &quot;$RESTORE_NAME&quot; --format &#x27;{{.Id}} {{.Image}} {{json .Mounts}}&#x27; &gt; &quot;$RESTORE_RECORD/container-final.txt&quot;
+  date -u +%Y-%m-%dT%H:%M:%SZ &gt; &quot;$RESTORE_RECORD/stopped.at&quot;
+)</code></pre>
+<h2 id="14-backup-recovery-section-5">На каком шаге должен прекратиться плохой вариант</h2>
+<table><thead><tr><th>Наблюдение</th><th>Причина и действие</th><th>Что сохраняем</th></tr></thead><tbody>
+<tr><td>Stop отказал, статус running, OOM или ненулевой exit</td><td>Текущий блок не запускает tar. Проверяем процесс, его запросы и хранилище; отдельно разбираем, допустима ли исследовательская копия аварийного состояния</td><td>Основной контейнер/том, прежние поколения и незавершённую запись попытки</td></tr>
+<tr><td>Закончились блоки или inode</td><td>Новый архив/manifest не принят. Не удаляем старую пригодную копию первым действием; выбираем достаточную цель</td><td>Неполное новое поколение и работающий либо осознанно остановленный основной процесс</td></tr>
+<tr><td>SHA или длина не совпадают</td><td>Verify отказывает до load/создания restore volume. Сверяем отдельно записанный manifest hash и второе размещение</td><td>Обе версии файла, их размеры и суммы; исходные данные не переписываем</td></tr>
+<tr><td>Архив содержит ссылку, повтор counter, неправильного владельца или файл вне ожидаемого набора</td><td>Узкая проверка отказывает. Не обходят её опцией tar: выясняют происхождение архива</td><td>Поколение целиком; восстановление не начинается</td></tr>
+<tr><td>Извлечение частично завершилось</td><td>Новый том остаётся предметом исследования; приложение из зависимого блока не запускается</td><td>Частичную цель, stderr, запись попытки и неизменный BUNDLE</td></tr>
+<tr><td>GET прошёл, POST получил permission denied</td><td>Чтение было возможно, создание временного файла — нет. Сверяем UID, каталог/файл/mount и этап отказа, а не назначаем рекурсивный chown</td><td>Текущий файл и журнал; основной study-data не подключаем вместо неудачной цели</td></tr>
+</tbody></table>
+<p>Отрицательные упражнения выполняют только над отдельной копией поколения или отдельной восстановленной целью. Изменение корректного числа 42 на 43 само по себе разбирается приложением; обнаружить неверную историю помогает ожидаемое N и доверенная сумма, а не один запуск. Для проверки повреждения меняют тестовую копию, оставляя обе пригодные копии неизменными. При неверном manifest SHA «исправление» ожидаемого значения по тому же испорченному файлу уничтожило бы смысл проверки.</p>
+<h2 id="backup14-budget">Объём, время и выбор частоты</h2>
+<p>Для маленького счётчика два image-архива обычно намного больше данных. Посчитаем условный комплект: 8 MiB приложения, 120 MiB инструментов и 10240 байт counter.tar дают 134227968 байт до небольших текстовых файлов. Два независимых размещения такого комплекта займут в сумме 268455936 байт. Это заданные числа, не размеры ваших образов: используйте stat и поле bytes manifest. Для восстановления дополнительно требуется место под импорт в image store, новый volume и временные файлы. Разделяемые слои и драйвер меняют реальный пик; место нельзя оценить только размером counter.</p>
+<p>Скорость переноса 20 MiB/s для 128 MiB даст около 6,4 с чистой передачи, но не цену stop, metadata, fsync, импорта и проверок. У большого числа маленьких файлов важны число открытий и метаданные; у нашего POST — синхронизации файла и каталога. Фиксируйте отдельно подготовку образов, паузу писателя, tar+seal, перенос, verify, load и возврат функции. Одну долгую паузу из-за медленного носителя нельзя назвать «Docker всегда тормозит». Сжатие экономит перенос и хранение, но требует CPU и добавляет ещё один процесс, который также может завершиться ошибкой; здесь для прозрачной процедуры выбираем несжатые архивы.</p>
+<p>Период копирования выбирают по допустимой потере, цене паузы и скорости поступления данных. Копия раз в час не удовлетворяет RPO 5 минут без дополнительного журнала/репликации, даже если каждый архив правильно распаковывается. Частые остановки ради полного tar могут нарушать доступность сильнее, чем помогает новая частота. Для постоянной нагрузки нужен предусмотренный приложением механизм согласованной копии или журнала; раздельные снимки volume не создают его автоматически.</p>
+<p>Поколения удаляют по осмысленной политике хранения: насколько давно могло появиться незамеченное повреждение, сколько версий формата ещё понимает код и из каких независимых мест реально восстанавливались. Новое поколение сначала получает проверенные файлы и практический результат на отдельной цели. Успешный cron и размер архива сами по себе не разрешают стирать последнюю известную рабочую историю. В этой процедуре автоматического prune или массового rm нет.</p>
+<h2 id="14-backup-recovery-section-6">Если данные принадлежат PostgreSQL или нескольким службам</h2>
+<p>Для работающего PostgreSQL нельзя перенести наш tar произвольного каталога и объявить согласованный backup. <a href="../postgres/index.html#18-recovery">Том PostgreSQL</a> разбирает логический pg_dump и физическую базовую копию с необходимой последовательностью WAL. Логический дамп одной БД не включает автоматически роли всего кластера и конфигурацию доступа. Физические файлы зависят от формата версии, табличных пространств и журнала. Остановка всех относящихся к БД процессов и копирование согласованного набора — другой предусмотренный путь, но известность одного mount не перечисляет все его части.</p>
+<p>Если заказ хранится в БД, а сообщение о нём — в очереди, два независимо корректных дампа могут показать заказ без сообщения или сообщение без заказа. Требуется известная точка прекращения изменений, согласованный протокол приложения либо журнал и правило повторения с распознаванием уже выполненного действия. Нужные состояния и допустимые повторы определяются приложением. У нашего счётчика единственный файл упрощает этот вопрос, но не решает безопасность повторного POST.</p>
+<h2 id="backup14-continue">Закончить проверку, не потеряв продолжаемый стенд</h2>
+<p>Запишите поколение и его отдельный ожидаемый SHA, путь обеих копий, image ID/platform, N на остановке, фактический основной N после продолжения, имя RESTORE_VOLUME и проверенный N+1 на нём. Добавьте начало процедуры и время подтверждения функции, ошибки и неразобранные POST. В условной истории основной 45, копия 42 и проверочная 43 одновременно корректны: они принадлежат разным объектам и моментам.</p>
+<p>Основная служба продолжает прежний study-data. Восстановленный контейнер и том остаются отдельно остановленными для следующего упражнения. При следующем запуске вернитесь к этим именам и данным, а не запускайте ещё один случайный стенд. Обновление кода в 15 потребует проверки формата и пути возврата: возврат старого бинарника не возвращает автоматически старые данные. Подготовленные образы, инструменты, копии и их проверка без сети должны быть закончены до автономного дня.</p>
+<p class="sources">Механизмы: <a href="https://docs.docker.com/engine/storage/volumes/#back-up-restore-or-migrate-data-volumes">резерв volume</a>, <a href="https://docs.docker.com/reference/cli/docker/container/stop/">stop и срок ожидания</a>, <a href="https://docs.docker.com/reference/cli/docker/image/save/">image save</a>, <a href="https://docs.docker.com/reference/cli/docker/image/load/">image load</a>, <a href="https://www.gnu.org/software/tar/manual/html_node/Standard.html">формат tar</a>, <a href="https://docs.python.org/3.12/library/tarfile.html">чтение членов tar</a>. Числа времён и объёмов выше — вычисляемые примеры. Приложенные <a href="labs/backup14/README.txt">описание проверки</a> и <a href="labs/backup14/test_bundle.py">тесты формата</a> можно читать без Engine. В подготовительных тестах использованы свои TEMP-файлы и подставные Docker-команды; Engine, настоящие volumes, реальные отключения VM и браузерное поведение этим не проверяются.</p>

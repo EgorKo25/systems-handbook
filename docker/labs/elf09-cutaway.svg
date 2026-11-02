@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="1030" viewBox="0 0 400 1030" role="img" aria-labelledby="title description">
+<title id="title">Из файла echo в процесс Linux</title>
+<desc id="description">В нативной сборке Go 1.27.3 Linux amd64 заголовок ELF64 занимает 64 байта. Его точка входа 0x48da40. Шесть программных заголовков начинаются с байта 64. В scratch копируется этот файл, без компилятора и libc. Три LOAD-участка отображаются с правами RX, R и RW; хвост RW заполняется нулями. У echo нет PT_INTERP; у отдельного динамического C-примера загрузчик требуется. Длины полос условные.</desc>
+<defs>
+ <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 8 4 0 8Z" fill="#256c8e"/></marker>
+ <style>text{font-family:system-ui,sans-serif;fill:#142f43;font-size:17px}.code{font-family:ui-monospace,monospace;font-size:16px}.small{font-size:15px}.heading{font-size:19px;font-weight:700}.light{fill:#fff}.muted{fill:#405b6e}.line{stroke:#256c8e;stroke-width:2;fill:none;marker-end:url(#arrow)}</style>
+</defs>
+<rect width="400" height="1030" rx="16" fill="#f4f8fa"/>
+<text x="20" y="33" class="heading">Один файл — три представления</text>
+<text x="20" y="57" class="small muted">Нативный echo · linux/amd64 · Go 1.27.3</text>
+<!-- A file with a visible folded corner, not a generic graph node. -->
+<path d="M24 80H334L376 122V365H24Z" fill="#fff" stroke="#55778b" stroke-width="2"/>
+<path d="M334 80V122H376" fill="#dceaf1" stroke="#55778b" stroke-width="2"/>
+<text x="40" y="110" class="heading">echo на диске</text>
+<rect x="40" y="129" width="320" height="57" rx="5" fill="#e3eff6"/>
+<text x="51" y="152" class="code">7f 45 4c 46 02 01 …</text>
+<text x="51" y="176" class="small">ELF · 64 бита · младший байт первым</text>
+<text x="40" y="212" class="code">e_machine = 62 (amd64)</text>
+<text x="40" y="239" class="code">e_entry = 0x0048da40</text>
+<text x="40" y="266" class="code">e_phoff = 64</text>
+<text x="40" y="293" class="code">6 записей × 56 байт = 336</text>
+<text x="40" y="322">Таблица описывает LOAD-участки.</text>
+<text x="40" y="347" class="small muted">В этом файле нет PT_INTERP.</text>
+<path d="M200 367V398" class="line"/>
+<text x="218" y="389" class="small">COPY --from=build</text>
+<!-- Filesystem root, with image configuration alongside the executable. -->
+<rect x="24" y="407" width="352" height="188" rx="9" fill="#fff" stroke="#55778b" stroke-width="2"/>
+<text x="40" y="437" class="heading">Файлы и настройки образа</text>
+<path d="M45 458H74V471H352V513H45Z" fill="#fff0ba" stroke="#987926"/>
+<text x="57" y="498" class="code">/echo  ← те же байты ELF</text>
+<text x="40" y="542" class="code">USER 10001:10001</text>
+<text x="40" y="570" class="code">ENTRYPOINT ["/echo"]</text>
+<path d="M200 598V627" class="line"/>
+<text x="218" y="619" class="small">Linux: execve</text>
+<!-- Actual segment addresses; bars are deliberately not size-scaled. -->
+<rect x="24" y="636" width="352" height="247" rx="9" fill="#fff" stroke="#55778b" stroke-width="2"/>
+<text x="40" y="666" class="heading">Виртуальная память процесса</text>
+<rect x="40" y="683" width="320" height="32" fill="#194f6a"/>
+<text x="51" y="705" class="code light">RX  0x400000 · код</text>
+<path d="M350 716V734H291" class="line"/>
+<text x="40" y="740" class="code">вход 0x48da40 → runtime Go</text>
+<rect x="40" y="751" width="320" height="32" fill="#d7e8f3"/>
+<text x="51" y="773" class="code">R   0x733000 · чтение</text>
+<rect x="40" y="795" width="150" height="32" fill="#cce7d7"/>
+<rect x="190" y="795" width="170" height="32" fill="#fff0ba"/>
+<text x="51" y="817" class="code">RW  0xa84000</text>
+<text x="40" y="851" class="small">RW: 326464 байта из файла;</text>
+<text x="40" y="873" class="small">ещё 33828248 байт заполняются нулями.</text>
+<!-- A separate contrasting file, not a claimed dependency of echo. -->
+<rect x="24" y="898" width="352" height="91" rx="9" fill="#fff4ed" stroke="#9a5943" stroke-dasharray="5 4"/>
+<text x="40" y="923" class="small">Другой файл: динамический C-пример</text>
+<text x="40" y="946" class="code">PT_INTERP → /lib64/ld-linux-</text>
+<text x="40" y="970" class="code">x86-64.so.2; нужен libc.so.6</text>
+<text x="24" y="1015" class="small muted">Длины полос условны. Контейнер не запускался.</text>
+</svg>

@@ -1,37 +1,327 @@
-<header><h1>Доставка: registry, digest, платформы и происхождение</h1><p>Готовый образ нужно доставить, узнать среди других и связать с проверенными исходниками. Целостность, происхождение и допустимость запуска отвечают на разные вопросы.</p></header>
-<h2>Что передаёт push</h2>
-<p>Registry принимает объекты по определённому протоколу: содержимое слоёв, конфигурацию, манифесты и индексы. Благодаря адресации по содержимому уже имеющийся blob не обязательно загружать заново. Финальная ссылка tag указывает на выбранный опубликованный объект. Повторный push под тем же tag может изменить его назначение, если политика реестра это допускает; поэтому «проверяли lesson1 вчера» недостаточно для сегодняшнего запуска.</p>
-<p>Pull получает описание и нужные объекты выбранной платформы, проверяя их digest. В обычном полном pull локальное наличие образа устраняет необходимость снова скачивать те же данные, но не доказывает вечную доступность remote tag. Lazy pulling, отложенное получение содержимого некоторыми snapshotters, имеет дополнительные условия и не подходит как молчаливое обещание офлайн-готовности. Автономный комплект проверяют реальной загрузкой на отключённой тестовой среде.</p>
-<pre><code>docker --context study image inspect --format \
-  '{{json .RepoDigests}}' study/echo:lesson1
-docker --context study buildx imagetools inspect \
-  registry.example.invalid/team/echo:lesson1</code></pre>
-<p>RepoDigests показывает известные локальному серверу связи с опубликованными digest. У локально собранного, ещё не опубликованного образа список может быть пуст. Его локальный image ID и удалённый manifest/index digest нельзя автоматически считать одним объектом. <code>imagetools inspect</code> обращается к образу в реестре и показывает платформенную структуру; это не то же самое, что исследовать только локальные слои.</p>
-<h2>Проверить digest — ещё не выбрать доверенного автора</h2>
-<p>Хеш обнаруживает несоответствие байтов ожидаемому содержимому. Если злоумышленник заменил и образ, и присланный рядом ожидаемый digest, сравнение может успешно подтвердить чужой образ. Нужен доверенный канал получения ожидаемой идентичности, политика подписей или другой явно выбранный механизм происхождения. Подпись также имеет смысл только при доверии к ключу, личности и допустимому процессу выпуска.</p>
-<p>Не путайте аутентификацию при login с доказательством безопасности содержимого. Успешный вход в реестр разрешает операции определённой учётной записи. Образ этой учётной записи может содержать уязвимую библиотеку, неверную конфигурацию или намеренно вредную программу. Доверие к издателю, результаты анализа и ограничения runtime остаются независимыми слоями решения.</p>
-<p>Для автоматизации применяют минимальный scope токена, область разрешённых действий и <code>docker login --password-stdin</code> с защищённым источником ввода; не помещают токен в аргументы процесса, журнал или общедоступный .env. Выбранное credential store, хранилище данных доступа клиента, проверяют отдельно. Кодирование значения в base64 в конфигурационном файле не является шифрованием.</p>
-<h2>Provenance и SBOM</h2>
-<p>Provenance, сведения о происхождении сборки, описывают входы и процесс получения результата: исходник, инструмент, параметры и связанные идентичности в объёме выбранного формата. SBOM, software bill of materials, — перечень компонентов программного состава. Они помогают расследовать, какие зависимости вошли в выпуск, но не доказывают автоматически отсутствие вредного поведения и не заменяют тесты приложения.</p>
-<pre><code>docker --context study buildx build \
-  --build-arg GO_IMAGE="$GO_IMAGE" \
-  --platform linux/amd64,linux/arm64 \
-  --provenance=mode=min --sbom=true \
-  --tag registry.example.invalid/team/echo:lesson1 --push labs/echo</code></pre>
-<p>Это дальнейший сетевой вариант при подготовленном личном registry и нужных возможностях builder. <code>--push</code> экспортирует результат в реестр, <code>--provenance</code> выбирает представление происхождения, <code>--sbom</code> запрашивает соответствующую аттестацию. Сканер SBOM может сам требовать дополнительных образов и сети; его готовность входит в автономный комплект. Наш базовый лабораторный запуск такой реестр не разворачивает.</p>
-<p>Attestation, сопровождающее утверждение о результате, может изменить структуру опубликованного index. Поддержка сохранения таких объектов зависит от image store и экспортера: старое классическое хранилище имеет ограничения. Успешная локальная сборка с --load не подтверждает, что все сопутствующие аттестации доступны потребителю. Проверяют фактически опубликованную структуру и политику её чтения.</p>
-<h2>Несколько архитектур — несколько доказательств исполнения</h2>
-<p>Многоархитектурный образ связывает несколько платформенных манифестов. Для Go без cgo перекрёстная компиляция часто проста: compiler работает нативно, а GOOS/GOARCH выбирают машинный код цели. Но успешно созданный arm64-файл ещё не проверил системные вызовы, возможности CPU, поведение сети и файловой системы реального arm64-сервера.</p>
-<p>Эмуляция может помочь выполнить проверки, но она добавляет программный слой и может заметно замедлять сборку либо скрывать аппаратные различия. Если требуется сравнить скорость, используют нативные машины и фиксируют семейство CPU, лимиты и фон. Сопоставление времени build под QEMU со временем нативного amd64 не измеряет только качество компилятора.</p>
-<h2>Подготовить автономную доставку</h2>
-<pre><code>docker --context study image save --output echo-lesson1.tar \
-  study/echo:lesson1
-sha256sum echo-lesson1.tar &gt; echo-lesson1.tar.sha256
-docker --context target image load --input echo-lesson1.tar
-docker --context target image inspect study/echo:lesson1</code></pre>
-<p><code>save</code> передаёт архив образов в файл на стороне клиента; <code>load</code> читает его оттуда и загружает на выбранный target. Это отличается от bind mount, чей путь относится к daemon-хосту. До переноса проверяют вместимость носителя, особенности файловой системы и контрольную сумму. Сумма, лежащая рядом с архивом, удобна для обнаружения случайной порчи; подлинность ожидаемого значения фиксируется доверенным паспортом.</p>
-<p>Сохранённый архив не включает именованные volumes, активные соединения и память процесса. <code>docker export</code> снимает файловое представление контейнера с иными свойствами, не сохраняя полный исходный договор image metadata и mounts. Его не подставляют вместо save/load для воспроизводимого выпуска. После переноса сверяют не только tag, но конфигурацию, платформу, ожидаемый локальный ID и контрольный запуск без сети.</p>
-<h2>Продвинуть тот же результат</h2>
-<p>Выпуск связывает исходный коммит, проверенный digest, runtime-конфигурацию, миграцию данных и запись о принятии. Повторно собрать «из тех же исходников» в рабочей среде — другой процесс с возможными новыми внешними входами. Предпочтительнее продвигать уже проверенный образ по идентичности, затем отдельно применять нужную конфигурацию. При возврате версии надо иметь доступ к прежнему образу и знать совместимость прежнего кода с текущими данными.</p>
-<p>Хранение в registry не является резервом пользовательского тома, а локальный кэш образов не является политикой сохранения выпусков. Сроки хранения, неизменность нужных идентичностей, права удаления и проверка восстановления должны быть явными. Самостоятельная эксплуатация реестров артефактов разбирается в отдельном томе.</p>
-<p class="sources">Первичные источники: <a href="https://github.com/opencontainers/distribution-spec">OCI Distribution</a>, <a href="https://docs.docker.com/build/metadata/attestations/">аттестации</a>, <a href="https://docs.docker.com/build/metadata/attestations/slsa-provenance/">provenance</a>, <a href="https://docs.docker.com/reference/cli/docker/image/save/">save</a>, <a href="https://docs.docker.com/reference/cli/docker/image/load/">load</a>.</p>
+<header><h1>Доставка образа: какие байты передаются и как выбрать нужный выпуск</h1><p>Образ службы уже собран. Разберём, как реестр хранит его части, как клиент выбирает платформу и проверяет полученные байты. Затем перенесём именно сохранённый результат главы 09 на другой Engine, сохранив его идентичность и не затрагивая прежние данные.</p></header>
+<h2 id="10-distribution-provenance-section-1">Что передаёт push</h2>
+<p><strong>Реестр образов</strong>, registry, — служба, принимающая и выдающая объекты образа через HTTP. В имени <code>registry.example.invalid/team/echo:lesson1</code> адрес службы — registry.example.invalid, репозиторий — team/echo, метка <strong>tag</strong> — lesson1. Этот домен учебный и не является подготовленным сервером. Репозиторий объединяет связанные имена и правила доступа. Метка позволяет сказать «выдать объект, который сейчас назначен lesson1»; она не содержит байты самого исполняемого файла.</p>
+<p><strong>Push</strong> — отправка образа в реестр, <strong>pull</strong> — получение. У одного образа несколько частей. Отдельная последовательность байтов, хранимая по своему хешу, называется <strong>blob</strong>. Конфигурация и упакованные слои — blobs; манифесты доступны через отдельные адреса протокола. Их связывают описания со ссылками на содержимое, поэтому уже имеющийся подходящий слой не нужно передавать заново. Форматы объектов определяет <strong>OCI</strong>, Open Container Initiative; сетевое взаимодействие — спецификация OCI Distribution и совместимые интерфейсы реестров.</p>
+<h3>Три поля, по которым получатель проверяет объект</h3>
+<p><strong>Descriptor</strong>, описание ссылки на объект, содержит обязательные <code>mediaType</code>, <code>digest</code> и <code>size</code>. Media type — строковый идентификатор формата данных: он помогает выбрать способ разбора, например JSON-манифест или tar-архив с gzip-сжатием. Digest — имя алгоритма и криптографический хеш самих байтов. Size — число байтов этой последовательности, не размер распакованных файлов и не суммарный размер образа. Дополнительные поля могут задавать платформу, аннотации или другие сведения. <a href="https://github.com/opencontainers/image-spec/blob/v1.1.0/descriptor.md">OCI descriptor 1.1.0</a>.</p>
+<p>Продолжим оригинальный пример двух слоёв <a href="#03-image-oci-layers">главы 03</a>. Это маленькие текстовые файлы A/B/C/D, а не бинарник echo. Из каталога тома <code>docker</code> выполните модель; нужен Python 3 и лежащий рядом <code>labs/image_objects.py</code>. Модель ничего не загружает и не записывает, а --check выполняет семь групп проверок в памяти:</p>
+<pre><code data-language="bash">python3 -B labs/distribution_objects.py --demo
+python3 -B labs/distribution_objects.py --check</code></pre>
+<p>Вывод содержит точные JSON-строки, полные сжатые байты в шестнадцатеричном виде, размеры и хеши. В подготовке Python 3.12.3 с библиотекой сжатия zlib 1.3 дал такой descriptor первого слоя:</p>
+<pre><code data-language="json">{
+  "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+  "digest": "sha256:ccb6144b559f70a3a79d9b21fad24d62b7699ce972a198b9166b67e0b7f4ca04",
+  "size": 133
+}</code></pre>
+<p>Его 133 байта начинаются с <code>1f 8b 08 00 00 00 00 00 02 ff ed d3 41 0a c2 30</code>. После распаковки gzip получается tar длиной 10240 байт, включающий заголовки и выравнивание, а не только четыре байта A/перевод строки/B/перевод строки. <strong>Diff ID</strong> — хеш этого несжатого tar-потока. Для первого слоя это <code>sha256:e90a4e5947ac62fd3ea46cd88208dd4fafb65c5498075644ccf7dd61cd876693</code>. Digest сжатого blob из descriptor отличается: алгоритм один, но входные байты разные. Изменение параметров сжатия может изменить blob и его descriptor при прежнем tar и diff ID. Версии упаковщика тоже записывают, если хотят повторить точные байты.</p>
+<figure id="oci10-byte-cutaway" aria-labelledby="distribution10-title" aria-describedby="distribution10-desc">
+<style>
+#oci10-byte-cutaway{margin:1.8em 0;padding:0;max-width:100%;color:inherit;background:transparent;line-height:1.55;text-align:left;overflow-wrap:anywhere}
+#oci10-byte-cutaway *{box-sizing:border-box}
+#oci10-byte-cutaway code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.91em;line-height:inherit;background:transparent;color:inherit;padding:0;border:0;hyphens:none;overflow-wrap:anywhere;word-break:break-word}
+#oci10-byte-cutaway .oc-title{color:inherit;font-size:1.2em;line-height:1.3;margin:0 0 .6em}
+#oci10-byte-cutaway .oc-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:1.6em}
+#oci10-byte-cutaway .oc-sheet{border-top:3px double currentColor;padding:.8em 0 0;min-width:0;break-inside:avoid-page}
+#oci10-byte-cutaway .oc-heading{color:inherit;font-size:1em;margin:0 0 .6em;line-height:1.4}
+#oci10-byte-cutaway .oc-path{display:block;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.85em;margin-bottom:.25em}
+#oci10-byte-cutaway .oc-choice{border-left:4px solid currentColor;margin:.7em 0;padding:.1em 0 .1em .75em}
+#oci10-byte-cutaway .oc-other{border-left:1px dashed currentColor;margin:.7em 0 .1em;padding:.1em 0 .1em .75em}
+#oci10-byte-cutaway .oc-fields{display:grid;grid-template-columns:5.4em minmax(0,1fr);gap:.25em .7em;margin:.4em 0 0}
+#oci10-byte-cutaway dt,#oci10-byte-cutaway dd{margin:0;padding:0;min-width:0}
+#oci10-byte-cutaway .oc-part{padding-left:.8em;margin:1em 0 0;border-left:1px solid currentColor}
+#oci10-byte-cutaway .oc-caption{font-size:.94em;margin:.7em 0 0}
+#oci10-byte-cutaway p{margin:.5em 0;text-align:left}
+#oci10-byte-cutaway .oc-bytes{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;table-layout:fixed;font-size:.94em}
+#oci10-byte-cutaway .oc-bytes th,#oci10-byte-cutaway .oc-bytes td{padding:.35em .2em;border:0;border-bottom:1px solid currentColor;background:transparent;color:inherit;vertical-align:top;text-align:left;overflow-wrap:anywhere}
+#oci10-byte-cutaway .oc-bytes th:first-child{width:5.6em}
+#oci10-byte-cutaway .oc-stream{display:flex;width:100%;min-height:2em;border:1px solid currentColor;margin:.7em 0}
+#oci10-byte-cutaway .oc-stream span{display:flex;justify-content:center;align-items:center;min-width:0;padding:.15em;font-size:.8em}
+#oci10-byte-cutaway .oc-stream span+span{border-left:1px solid currentColor}
+#oci10-byte-cutaway .oc-flow{border-bottom:1px solid currentColor;padding-bottom:.7em;margin:.7em 0}
+#oci10-byte-cutaway figcaption{color:inherit;margin-top:1em;font-size:.94em;line-height:1.5;text-align:left}
+@media(min-width:52rem){#oci10-byte-cutaway .oc-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}#oci10-byte-cutaway .oc-full{grid-column:1/-1}}
+@media(max-width:30rem){#oci10-byte-cutaway .oc-fields{display:block}#oci10-byte-cutaway dt{margin-top:.5em}#oci10-byte-cutaway dd{margin-left:.6em}}
+@media print{#oci10-byte-cutaway{color:#000;background:#fff;font-size:10pt}#oci10-byte-cutaway .oc-grid{display:block}#oci10-byte-cutaway .oc-sheet{margin:0 0 1.2em;break-inside:avoid;page-break-inside:avoid}#oci10-byte-cutaway code{font-size:.9em}#oci10-byte-cutaway .oc-title{break-after:avoid}#oci10-byte-cutaway figcaption{break-before:avoid}}
+</style>
+<h3 id="distribution10-title" class="oc-title">Одна ссылка выбирает платформу, другая — точные байты слоя</h3>
+<p>Читаем оригинальный индекс модели для <strong>linux/amd64</strong>. Документы JSON хранятся отдельно: descriptor содержит ссылку, размер и тип следующего объекта. Он не вкладывает в себя байты этого объекта. Полные значения ниже взяты из helper главы 10; перенос длинной строки в рисунке не добавляет в неё пробелы или переводы строк.</p>
+<div class="oc-grid">
+<section class="oc-sheet" aria-labelledby="oci10-index-title">
+<h4 id="oci10-index-title" class="oc-heading"><span class="oc-path">① index · 491 байт</span>Выбрать платформенный манифест</h4>
+<p>Хеш всех исходных байтов индекса:</p><p><code>sha256:b096f73b0ddf0aee5787548448925dbe0a16f443be8d49055fc79617ab9ea502</code></p>
+<div class="oc-choice"><strong>Выбран <code>manifests[0]</code></strong><p><code>platform.os = linux<br>platform.architecture = amd64</code></p><dl class="oc-fields"><dt><code>mediaType</code></dt><dd><code>application/vnd.oci.image.manifest.v1+json</code></dd><dt><code>size</code></dt><dd><code>555</code></dd><dt><code>digest</code></dt><dd><code>sha256:f72dfc7d3ed4b54147cc0d8015ca4b88fab353dc621ef8df489dcf19b39c179b</code></dd></dl></div>
+<div class="oc-other"><code>manifests[1]</code>: linux/arm64, 555 байт. Это другая ссылка на манифест; CPU-возможности она не испытывает. В этой модели у двух платформ совпадают текстовые слои.</div>
+<p class="oc-caption">Тип самого индекса: <code>application/vnd.oci.image.index.v1+json</code>. Его digest и digest выбранного манифеста относятся к разным документам.</p>
+</section>
+<section class="oc-sheet" aria-labelledby="oci10-manifest-title">
+<h4 id="oci10-manifest-title" class="oc-heading"><span class="oc-path">② выбранный manifest · 555 байт</span>Найти конфигурацию и слои</h4>
+<p>Скачанный документ должен иметь digest из <code>manifests[0]</code>. Его поле <code>config</code> ведёт к настройкам и несжатым хешам:</p>
+<div class="oc-part"><strong><code>config</code></strong><dl class="oc-fields"><dt><code>mediaType</code></dt><dd><code>application/vnd.oci.image.config.v1+json</code></dd><dt><code>size</code></dt><dd><code>237</code></dd><dt><code>digest</code></dt><dd><code>sha256:2070de3933224f314970119d79fedfc999a768959d4bbea47adbe77bc1fd25d1</code></dd></dl><p><code>rootfs.diff_ids[0]</code> внутри этих 237 байт:</p><p><code>sha256:e90a4e5947ac62fd3ea46cd88208dd4fafb65c5498075644ccf7dd61cd876693</code></p></div>
+<p>В массиве <code>layers</code> порядок сохраняется. Первый descriptor ведёт к сжатому потоку:</p>
+<div class="oc-part"><strong><code>layers[0]</code></strong><dl class="oc-fields"><dt><code>mediaType</code></dt><dd><code>application/vnd.oci.image.layer.v1.tar+gzip</code></dd><dt><code>size</code></dt><dd><code>133</code></dd><dt><code>digest</code></dt><dd><code>sha256:ccb6144b559f70a3a79d9b21fad24d62b7699ce972a198b9166b67e0b7f4ca04</code></dd></dl></div>
+<p class="oc-caption"><code>layers[1]</code> описывает второй blob длиной154 байта. Мы прослеживаем первый; распаковка и проверка второго выполняются по тому же правилу.</p>
+</section>
+<section class="oc-sheet" aria-labelledby="oci10-blob-title">
+<h4 id="oci10-blob-title" class="oc-heading"><span class="oc-path">③ blob · все 133 байта</span>Хешировать полученный gzip целиком</h4>
+<p>Начало настоящего сжатого объекта (смещения десятичные):</p>
+<table class="oc-bytes"><thead><tr><th scope="col">Смещение</th><th scope="col">Байты, hex</th></tr></thead><tbody>
+<tr><th scope="row">0…7</th><td><code>1f 8b 08 00 00 00 00 00</code></td></tr>
+<tr><th scope="row">8…15</th><td><code>02 ff ed d3 41 0a c2 30</code></td></tr>
+<tr><th scope="row">16…132</th><td>Ещё117 байт входят в тот же хеш; полная последовательность есть в выводе helper.</td></tr>
+</tbody></table>
+<div class="oc-stream" role="img" aria-label="gzip: заголовок10байт, сжатые данные115байт, завершение8байт"><span style="flex:10">10</span><span style="flex:115">115 байт сжатых данных</span><span style="flex:8">8</span></div>
+<p>На полосе — заголовок gzip, сжатые данные и завершающие поля; размеры суммируются: <code>10 + 115 + 8 = 133</code>. SHA-256 получает все три части. Его результат обязан совпасть с <code>layers[0].digest</code>; размер — с <code>layers[0].size</code>.</p>
+<p class="oc-flow"><strong>Распаковка gzip → несжатый tar из 10240 байт →</strong> отдельная проверка в следующем документе.</p>
+<p class="oc-caption">Изменение упаковки может дать другой blob и manifest digest при прежних байтах tar. Повторно «красиво» записанный JSON тоже меняет собственный digest.</p>
+</section>
+<section class="oc-sheet" aria-labelledby="oci10-tar-title">
+<h4 id="oci10-tar-title" class="oc-heading"><span class="oc-path">④ tar · все 10240 байт</span>Проверить <code>diff_ids[0]</code></h4>
+<p>Файлы содержат всего 4 байта, но diff ID включает также заголовки, выравнивание и конец архива:</p>
+<table class="oc-bytes"><thead><tr><th scope="col">Смещения</th><th scope="col">Содержимое потока tar</th></tr></thead><tbody>
+<tr><th scope="row">0…511</th><td>Заголовок <code>app/config.txt</code>,512 байт</td></tr>
+<tr><th scope="row">512…1023</th><td><code>41 0a</code> (<code>A</code> и перевод строки), затем 510 нулей</td></tr>
+<tr><th scope="row">1024…1535</th><td>Заголовок <code>app/old.txt</code>,512 байт</td></tr>
+<tr><th scope="row">1536…2047</th><td><code>42 0a</code> (<code>B</code> и перевод строки), затем 510 нулей</td></tr>
+<tr><th scope="row">2048…3071</th><td>Два нулевых512-байтовых блока конца tar</td></tr>
+<tr><th scope="row">3072…10239</th><td>Ещё 7168 нулевых байт до 10240-байтовой записи, выбранной упаковщиком модели</td></tr>
+</tbody></table>
+<p>SHA-256 всех10240 байт сравнивается с <code>rootfs.diff_ids[0]</code> из config, а не с digest сжатого слоя.</p>
+<p class="oc-caption">Иные допустимые заголовки или выравнивание tar могут изменить diff ID при тех же видимых файлах. Размер 4 байта внутри файлов не заменяет размер10240 байт, входящих в хеш.</p>
+</section>
+</div>
+<figcaption id="distribution10-desc">Сначала клиент выбирает linux/amd64, затем проверяет манифест, его конфигурацию и передаваемые слои. Для первого слоя есть две разные проверки SHA-256:133 сжатых байта и10240 несжатых. Эти точные учебные файлы не являются бинарником echo; значения нельзя подставлять вместо сохранённого image09/image.id. Согласованность ссылок проверяет целостность. Доверие к ожидаемому индексу и автору рассматривается отдельно в тексте главы.</figcaption>
+</figure>
+<h3>Конфигурация, манифест и индекс</h3>
+<p><strong>Конфигурация образа</strong>, config, — JSON с архитектурой, ОС, настройками программы и сведениями о файловых слоях. В нашем примере architecture=amd64, os=linux, а <code>rootfs.diff_ids</code> содержит два несжатых хеша по порядку применения. Настройки запуска в поле config здесь пусты: модель не является запускаемой службой. В образе echo там, среди прочего, сохраняются USER и ENTRYPOINT. <a href="https://github.com/opencontainers/image-spec/blob/v1.1.0/config.md">Формат конфигурации</a>.</p>
+<p><strong>Манифест</strong>, manifest, связывает descriptor конфигурации и упорядоченные descriptors слоёв одной платформы. Порядок слоёв влияет на получающееся дерево файлов. В нашей amd64-ветви config занимает 237 байт, манифест — 555. Ниже JSON расставлен с отступами для чтения; эти добавленные пробелы не являются байтами хешируемой строки из helper:</p>
+<pre><code data-language="json">{
+  "schemaVersion": 2,
+  "mediaType": "application/vnd.oci.image.manifest.v1+json",
+  "config": {
+    "mediaType": "application/vnd.oci.image.config.v1+json",
+    "digest": "sha256:2070de3933224f314970119d79fedfc999a768959d4bbea47adbe77bc1fd25d1",
+    "size": 237
+  },
+  "layers": [
+    {
+      "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+      "digest": "sha256:ccb6144b559f70a3a79d9b21fad24d62b7699ce972a198b9166b67e0b7f4ca04",
+      "size": 133
+    },
+    {
+      "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+      "digest": "sha256:a71f123c0461f537711097aa2fbff6df7e0bea3b395685d4ede9fdfbaf771764",
+      "size": 154
+    }
+  ]
+}</code></pre>
+<p>Digest именно исходной компактной строки манифеста — <code>sha256:f72dfc7d3ed4b54147cc0d8015ca4b88fab353dc621ef8df489dcf19b39c179b</code>; config — <code>sha256:2070de3933224f314970119d79fedfc999a768959d4bbea47adbe77bc1fd25d1</code>. Если разобрать JSON и заново записать его с отступами, смысл полей сохранится, а последовательность байтов и digest изменятся. Получатель хеширует полученное представление целиком: он не сортирует поля, не удаляет пробелы и не пересчитывает digest «по смыслу». Для передачи и копирования сохраняют исходные байты. <a href="https://github.com/opencontainers/image-spec/blob/v1.1.0/manifest.md">Формат манифеста</a>.</p>
+<p><strong>Индекс</strong>, image index, перечисляет descriptors платформенных манифестов. Здесь второй config отличается architecture=arm64, а текстовые слои остаются общими: ни в одном из них нет машинного кода. В поле platform каждого descriptor стоят os и architecture. У реального исполняемого образа дополнительно проверяют соответствие ELF, как в главе 09; одна надпись arm64 не проверяет машинные инструкции.</p>
+<pre><code data-language="json">{
+  "schemaVersion": 2,
+  "mediaType": "application/vnd.oci.image.index.v1+json",
+  "manifests": [
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:f72dfc7d3ed4b54147cc0d8015ca4b88fab353dc621ef8df489dcf19b39c179b",
+      "size": 555,
+      "platform": {
+        "architecture": "amd64",
+        "os": "linux"
+      }
+    },
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:ab41bafb053301ad8e9ad8d1c49a2d7a40cb1019ae14d68c32725fe9f63d125e",
+      "size": 555,
+      "platform": {
+        "architecture": "arm64",
+        "os": "linux"
+      }
+    }
+  ]
+}</code></pre>
+<p>Компактный индекс модели занимает 491 байт, его digest — <code>sha256:b096f73b0ddf0aee5787548448925dbe0a16f443be8d49055fc79617ab9ea502</code>. На рисунке и в таблицах сокращение хеша допустимо только для подписи. В настоящем запросе, descriptor или проверке нужны все 64 шестнадцатеричных знака SHA-256. <a href="https://github.com/opencontainers/image-spec/blob/v1.1.0/image-index.md">Платформенные записи индекса</a>.</p>
+<h3>Почему у одной службы несколько идентификаторов</h3>
+<table><thead><tr><th>Что сравниваем</th><th>Какие байты задают хеш</th><th>От чего зависит значение</th></tr></thead><tbody>
+<tr><td>Хеш /echo главы 09</td><td>Сам исполняемый файл</td><td>Код, toolchain и параметры изготовления файла</td></tr>
+<tr><td>Diff ID</td><td>Несжатый tar одного слоя</td><td>Файлы и метаданные этого изменения</td></tr>
+<tr><td>Digest передаваемого слоя</td><td>Упакованный blob,133байта в нашей первой модели</td><td>Также формат/параметры упаковки</td></tr>
+<tr><td>Локальный image ID обычного Docker-образа</td><td>Конфигурационный JSON</td><td>Настройки и перечисленные diff ID</td></tr>
+<tr><td>Manifest digest</td><td>JSON с config/layers descriptors</td><td>В том числе digest сжатых blobs</td></tr>
+<tr><td>Index digest</td><td>JSON со ссылками на платформенные/сопутствующие манифесты</td><td>Набор результатов, платформ и сопровождающих объектов</td></tr>
+</tbody></table>
+<p>Поэтому перепаковка неизменного tar может дать иной manifest digest при прежнем config и локальном ID. Добавление сведений о происхождении способно изменить индекс, не меняя /echo. Поле RepoDigests в image inspect показывает известные локальному Engine связи с опубликованными ссылками; у ещё не опубликованного результата оно может быть пустым. Нельзя присвоить нашей службе config-хеш 2070… из текстовой модели. Для дальнейших реальных команд используем только сохранённый <code>labs/echo/out/image09/image.id</code> главы 09.</p>
+<h2 id="distribution10-http">Как объекты проходят через HTTP</h2>
+<p>В этом разделе разобран протокол, а не запускаемый сценарий с выдуманным сервером. Запросы ниже — учебная расшифровка обмена для repository team/echo. Настоящего реестра книга не создаёт. Адреса, UUID сеансов и маркеры авторизации в примере не предоставляют доступ. При реальной работе клиент Docker выполняет эти действия сам; отдельный сервер реестра, TLS и учётные записи подготавливаются как самостоятельная технология.</p>
+<h3>Вход и права на конкретный репозиторий</h3>
+<p>Сначала клиент обращается к <code>GET /v2/</code>. Доступный интерфейс может ответить 200; защищённый — 401 с заголовком <code>WWW-Authenticate</code>. Это приглашение к предусмотренной аутентификации, а не доказательство отсутствия реестра. При токенной схеме challenge задаёт realm — адрес службы выдачи токенов и service — назначение токена. Для операции с конкретным репозиторием в challenge указывают scope — требуемую область действий; у общего запроса /v2/ она может отсутствовать. Ниже ответ на попытку операции с team/echo. <strong>Bearer-токен</strong> разрешает действия предъявителю; утечка значения даёт возможность воспользоваться этим разрешением до его истечения или отзыва.</p>
+<pre><code data-language="text">HTTP/1.1 401 Unauthorized
+WWW-Authenticate: Bearer realm="https://auth.example.invalid/token",
+                 service="registry.example.invalid",
+                 scope="repository:team/echo:pull,push"</code></pre>
+<p>Фактически значение этого заголовка передаётся по правилам HTTP; переносы выше добавлены для чтения. Scope <code>repository:team/echo:pull,push</code> ограничивает ресурс и действия. Токен только с pull не разрешает публикацию; право delete для обычного push не нужно. Клиент обращается к доверенной службе из challenge, та проверяет личность и выдаёт только разрешённые права. Ответ не обязан предоставить все запрошенные действия. Затем исходный запрос повторяется с Authorization: Bearer и секретным значением. В учебной записи значение не показано. <a href="https://docs.docker.com/reference/api/registry/auth/">Токенная аутентификация Registry</a>.</p>
+<p><code>docker login --password-stdin</code> получает секрет из стандартного ввода, позволяя не включать его в строку аргументов процесса. До вызова нужно выбрать собственный адрес/пользователя, подготовить защищённый источник ввода и проверить место хранения клиентских данных. Параметр <code>--config</code> выбирает каталог конфигурации клиента; по умолчанию используется его обычная настройка Docker. Credential helper — отдельная программа для хранения/получения учётных данных. Если настроенного защищённого хранилища нет, файл config.json может содержать закодированное base64 значение; такое кодирование не шифрует пароль. Не переносите этот каталог вместе с публичной книгой или архивом образа.</p>
+<h3>Проверить наличие, загрузить недостающий blob</h3>
+<p>Пусть клиент хочет отправить первый сжатый слой модели. Сначала он спрашивает <code>HEAD /v2/team/echo/blobs/sha256:ccb6144b559f70a3a79d9b21fad24d62b7699ce972a198b9166b67e0b7f4ca04</code>. HEAD возвращает заголовки без тела; 200 означает наличие запрошенного blob в данном репозитории, 404 — что его надо получить иным способом. Отказ авторизации нужно исправить отдельно: его нельзя трактовать как разрешение начать новую загрузку. При наличии подходящего содержимого сервер может привязать его из другого репозитория, если поддерживает такую операцию и у клиента есть нужные права; это не обещание свободного доступа ко всем blobs реестра.</p>
+<p>Для отсутствующих 133 байт рассматриваем загрузку по частям. Клиент начинает сеанс:</p>
+<pre><code data-language="text">POST /v2/team/echo/blobs/uploads/
+Content-Length: 0
+
+HTTP/1.1 202 Accepted
+Location: /v2/team/echo/blobs/uploads/00000000-0000-0000-0000-000000000010</code></pre>
+<p>202 подтверждает создание сеанса, а не завершение передачи слоя. <strong>Location</strong> — возвращённый сервером адрес продолжения; он может быть относительным, абсолютным и иметь обязательные параметры запроса. Клиент сохраняет его целиком и использует следующую возвращённую версию. Нельзя заменять Location самостоятельно склеенным «почти таким же» путём: можно потерять параметр состояния или адрес другого сервера. При перенаправлениях соблюдают правила доверия и передачи авторизации; токен не следует безусловно пересылать любому другому хосту.</p>
+<p>Для нашего маленького примера сервер не задаёт минимальный размер порции. В реальном POST может прийти <code>OCI-Chunk-Min-Length</code>: обычные порции должны учитывать его, последняя может быть меньше. Первая порция здесь содержит байты 0–63 включительно: <code>63 − 0 + 1 = 64</code>. Content-Length относится только к этой порции. Content-Range для этого интерфейса задаётся формой <code>0-63</code>, без префикса bytes. Тело — первые 64 байта сжатого blob, а не распакованный tar и не строка шестнадцатеричных цифр.</p>
+<pre><code data-language="text">PATCH LOCATION_ИЗ_POST
+Content-Type: application/octet-stream
+Content-Length: 64
+Content-Range: 0-63
+
+HTTP/1.1 202 Accepted
+Location: LOCATION_ДЛЯ_СЛЕДУЮЩЕГО_ШАГА
+Range: 0-63</code></pre>
+<p>Следующая порция — байты 64–132, длина <code>132 − 64 + 1 = 69</code>. После неё сервер возвращает Range: 0-132. Если начать с 63 повторно либо с 65, передача не соответствует ожидаемому смещению; для нарушения порядка спецификация задаёт 416. Клиент может запросить состояние upload через GET: активный сеанс возвращает 204, текущие Range и Location. Потерянный ответ не означает, что сервер не принял последнюю порцию; сначала устанавливают подтверждённое смещение.</p>
+<p>Когда все 133 байта приняты, клиент завершает сеанс PUT с digest <em>всего</em> blob. Последняя порция может идти и в этом PUT, но в нашем варианте всё уже отправлено PATCH, поэтому тело пусто:</p>
+<pre><code data-language="text">PUT LOCATION_ИЗ_ПОСЛЕДНЕГО_ОТВЕТА?digest=sha256:ccb6144b559f70a3a79d9b21fad24d62b7699ce972a198b9166b67e0b7f4ca04
+Content-Length: 0
+
+HTTP/1.1 201 Created
+Location: /v2/team/echo/blobs/sha256:ccb6144b559f70a3a79d9b21fad24d62b7699ce972a198b9166b67e0b7f4ca04</code></pre>
+<p>Знак ? показан для Location без существующей query-части; при имеющихся параметрах digest добавляется корректным разбором URL, не вторым вопросительным знаком. 201 означает завершённый blob, доступный по итоговому пути. Digest обязан соответствовать полученным байтам; несовпадение — ошибка DIGEST_INVALID. Если применили SHA-256 к tar, а передали gzip, проверка завершится ошибкой: это разные объекты. Размер/хеш проверяет и получатель при последующем скачивании, не только отправитель. Порядок и статусы описаны в <a href="https://github.com/opencontainers/distribution-spec/blob/v1.1.1/spec.md">OCI Distribution 1.1.1</a> и <a href="https://distribution.github.io/distribution/spec/api/">HTTP API Distribution</a>.</p>
+<h3>Почему публикация заканчивается манифестом</h3>
+<p>Для публикации одного платформенного образа аналогично отправляют второй слой и config, затем делают PUT в <code>/v2/team/echo/manifests/lesson1</code> с Content-Type <code>application/vnd.oci.image.manifest.v1+json</code> и точными 555 байтами манифеста. После принятия ожидается 201 и ссылка на опубликованный объект. Registry хранит байтовое представление манифеста. Если загрузить описание до его обычных зависимостей, реестр может отвергнуть его с MANIFEST_BLOB_UNKNOWN; окончание передачи одного слоя не публикует автоматически полноценный образ.</p>
+<p>Для нескольких платформ сначала загружают оба платформенных манифеста по их digest или отдельным служебным меткам. Основной release-tag между этими шагами не переназначают на половину выпуска. Последним публикуют индекс с его Content-Type и 491 байтом, назначая lesson1 уже индексу. Ссылка на отдельный manifest digest продолжает обозначать одну платформу, а ссылка на index digest фиксирует набор вариантов. Это разные пути выбора. Переназначение lesson1 на новый индекс не изменяет старые content-addressed байты, но старые объекты ещё должны сохраняться по политике хранения.</p>
+<h3>Как получатель выбирает и получает образ</h3>
+<p>При запросе тега клиент посылает Accept со списком понимаемых форматов. Content-Type ответа сообщает, получен манифест или индекс. Из индекса выбирается подходящий platform descriptor, затем клиент получает манифест по его digest и проверяет его размер/хеш. Из него узнаёт config и слои; скачивает недостающие, сверяет digest сжатых байтов, распаковывает поддерживаемый формат и проверяет нужные diff ID при подготовке файлов. Ошибку типа, размера, хеша или неподдерживаемой платформы нельзя исправить тихим выбором «первой записи».</p>
+<p>В нашей модели одна платформа требует <code>491 + 555 + 237 + 133 + 154 = 1570</code> байт объектов без HTTP/TLS-накладных расходов. Для второй платформы добавятся только её config и manifest, ещё 792 байта; общие слои уже есть. В реальном образе большую долю обычно составляют файлы. Но мелких запросов тоже много: условные восемь последовательных обменов по 50 мс добавят около 0,4 с сверх передачи байтов. Это расчёт при заданных задержках и отсутствии перекрытия, не замер нашего стенда. Повторный pull с локальными объектами измеряет другое состояние, чем первый.</p>
+<h2 id="10-distribution-provenance-section-2">Проверить digest — ещё не выбрать доверенного автора</h2>
+<p>При известном ожидаемом digest подмена одного байта обнаруживается. Но тот, кто заменил все объекты и сообщил новый корневой digest, может предъявить полностью согласованный граф. Модель делает именно такую замену: меняет label конфигурации, вычисляет новые config/manifest/index и проходит проверки целостности. Проверщик знает, что ссылки согласованы; личность автора он из SHA-256 не узнал.</p>
+<p>Поэтому ожидаемую ссылку получают из заранее выбранного доверенного источника: записи проверенного выпуска, канала доставки или проверяемой подписи. <strong>Цифровая подпись</strong> связывает утверждение с закрытым ключом; потребитель проверяет его доверенным открытым ключом либо предусмотренной цепочкой удостоверения личности. Нужно заранее решить, какой ключ или какая удостоверённая личность допустимы, для какого репозитория и процесса сборки. Подпись неизвестным ключом не становится разрешением запускать приложение.</p>
+<p>Разрешение login отвечает за действия учётной записи в реестре. Оно не исследует поведение опубликованного кода. Даже подписанный проверенным издателем выпуск может содержать ошибку, уязвимую зависимость или неподходящую конфигурацию. Для решения о запуске нужны также результаты тестов, проверка требований приложения и ограничения исполнения. В записанном решении указывают, какой объект подписан: индекс, конкретный платформенный манифест или другое утверждение. Затем проверяют, что запускаемый вариант действительно достижим из этого объекта.</p>
+<h2 id="10-distribution-provenance-section-3">Provenance и SBOM</h2>
+<p><strong>Provenance</strong> — сведения о происхождении результата: какие исходники, материалы, инструменты и действия привели к определённому digest в пределах выбранного формата. <strong>SBOM</strong>, Software Bill of Materials, — описание программного состава: компоненты, версии, идентификаторы и другие сведения. Для Go туда могут входить Go-модули; для базовой системы — пакеты дистрибутива. Сканер видит определённый набор входов и может пропустить статически объединённый, сгенерированный или иначе нераспознанный компонент. Список без записи о способе получения и области охвата легко переоценить.</p>
+<p><strong>Attestation</strong>, сопровождающее утверждение, связывает сведения с конкретным результатом. Формат in-toto Statement содержит subject с именем и digest, predicateType с типом описания и predicate с самими сведениями. Например, в provenance ожидаются данные сборки, а в SBOM — перечень состава соответствующего формата. Два разных результата могут иметь одинаковое имя, поэтому связывают их по digest. Нужно проверять и подпись/доверие к автору утверждения, и совпадение subject с выбранным образом; наличие JSON-файла само по себе не выполняет эти проверки.</p>
+<p>BuildKit поддерживает соответствующие <code>--provenance</code> и <code>--sbom</code>. По текущей документации provenance по умолчанию использует схему SLSA 0.2; другой вариант версии включают явно при поддержке инструмента. <strong>SLSA</strong> — набор требований и форматов для описания происхождения программных результатов; режим min/max определяет объём сведений, а не автоматически достигнутый уровень доверия. Полный max может раскрыть параметры сборки, поэтому секреты нельзя передавать через ARG в расчёте на их невидимость в опубликованных метаданных. <a href="https://docs.docker.com/build/metadata/attestations/slsa-provenance/">Состав provenance</a>, <a href="https://docs.docker.com/build/metadata/attestations/sbom/">границы генератора SBOM</a>.</p>
+<h3>Когда имеет смысл выполнять сетевую сборку</h3>
+<p>Для основного офлайн-маршрута следующая команда не нужна. Она предназначена для следующего собственного выпуска после подготовки реестра: существуют repository и права публикации, доверенная TLS-настройка, GO_IMAGE главы 04, выбранный <code>PUBLISH_BUILDER</code> с поддержкой аттестаций и имя <code>PUBLISH_REPOSITORY</code> вида адрес/команда/echo без тега и новая метка кандидата в <code>PUBLISH_TAG</code>. Если метка уже используется, сначала выберите другой кандидат или явно решите вопрос её переназначения по правилам своего реестра. Образ генератора SBOM и его зависимости тоже должны быть получены заранее. Inspect builder проверяет выбранный экземпляр и платформы, но сам по себе не доказывает поддержку каждого экспортера.</p>
+<p>Блок рассчитан на Bash из каталога docker. Он создаёт новый каталог результатов и отказывается перезаписать прежний. Это новый кандидат сборки; прежние image09/image.id и study-echo не меняются. Пример выбирает две Linux-платформы без предположения об их исполнении на одном CPU:</p>
+<pre><code data-language="bash">(
+  set -euo pipefail
+  : "${GO_IMAGE:?Подготовьте официальный Go-образ главы 04}"
+  : "${PUBLISH_BUILDER:?Выберите свой подготовленный builder}"
+  : "${PUBLISH_REPOSITORY:?Выберите свой repository с правом push}"
+  : "${PUBLISH_TAG:?Выберите новую метку своего кандидата}"
+  if test -e labs/echo/out/publish10; then
+    printf 'publish10 уже существует: сначала изучите прежний результат\n' &gt;&amp;2
+    exit 1
+  fi
+  docker --context study buildx inspect "$PUBLISH_BUILDER"
+  mkdir -p labs/echo/out/publish10
+  docker --context study buildx build --builder "$PUBLISH_BUILDER" \
+    --build-arg GO_IMAGE="$GO_IMAGE" --platform linux/amd64,linux/arm64 \
+    --provenance=mode=min --sbom=true \
+    --metadata-file labs/echo/out/publish10/build-metadata.json \
+    --tag "$PUBLISH_REPOSITORY:$PUBLISH_TAG" --push labs/echo
+  docker --context study buildx imagetools inspect "$PUBLISH_REPOSITORY:$PUBLISH_TAG"
+)</code></pre>
+<p><code>--builder</code> фиксирует исполнителя; <code>--build-arg</code> передаёт ссылку GO_IMAGE; <code>--platform</code> выбирает результаты для двух целей. <code>--provenance=mode=min</code> запрашивает указанный объём происхождения, <code>--sbom=true</code> — генерацию описания состава. <code>--metadata-file</code> сохраняет сведения результата на стороне клиента, <code>--tag</code> задаёт имя публикации, <code>--push</code> выбирает экспорт в реестр. Последний аргумент labs/echo остаётся контекстом файлов. Imagetools inspect читает уже удалённую структуру; он не исследует только локальное хранилище.</p>
+<p>После успеха сохраняют выходной digest из метаданных и проверяют платформенные манифесты и относящиеся к ним утверждения. В записи фиксируют результат проверки потребителем, а не одно присутствие опций в команде. При отказе SBOM-генератора или экспортера кандидат не объявляют опубликованным проверенным выпуском. Части могли уже попасть в реестр; изменение тега и наличие всех ожидаемых сопутствующих объектов устанавливают по результату, не по одному начатому push.</p>
+<p>Сопутствующие объекты могут храниться в индексе либо связываться с subject и обнаруживаться через referrers API — интерфейс поиска относящихся к объекту утверждений. Конкретное представление зависит от версии BuildKit, параметров и возможностей реестра. Старое классическое image store Docker не сохраняет image index с аттестациями; поддержка драйвера docker требует подходящего containerd image store. Для --load это тоже существенно. Поэтому успешная локальная загрузка одного исполняемого варианта не доказывает перенос всех утверждений. Их наличие, подписи и связи проверяют отдельно. <a href="https://docs.docker.com/build/metadata/attestations/">Поддержка драйверов и хранилищ</a>, <a href="https://docs.docker.com/build/metadata/attestations/attestation-storage/">способы хранения утверждений</a>.</p>
+<h2 id="10-distribution-provenance-section-4">Несколько архитектур — несколько доказательств исполнения</h2>
+<p>Закреплённый index digest фиксирует список вариантов и их descriptors. Получатель дополнительно выбирает нужные os, architecture и, если применимо, variant и особенности ОС. Отсутствующая платформа должна давать понятный отказ; нельзя подменять её чужой архитектурой ради запуска. При явном выборе платформы всё равно требуется соответствующий код и способ исполнения. Компиляция, загрузка файлов и проверка HTTP на реальном целевом компьютере — отдельные этапы.</p>
+<p>В текстовой модели обе архитектуры разделяют слои, потому что внутри только одинаковые файлы. У реального echo бинарники amd64 и arm64 различаются. Успех Go-тестов на builder amd64 не подтверждает вызовы ядра, CPU-возможности и работу хранения arm64-варианта. Эмуляция добавляет собственную среду и стоимость. Для сравнения производительности используют нативную цель, одинаковый прикладной вход, лимиты и измеряемую величину; время сборки под эмуляцией не является временем обработки запроса выпущенным сервером.</p>
+<h2 id="10-distribution-provenance-section-5">Подготовить автономную доставку</h2>
+<p>Теперь возвращаемся к уже сохранённому echo. <strong>Save/load</strong> — экспорт и импорт образов архивом; это другой путь, чем сетевой push/pull. Архив содержит данные образа и предусмотренные метаданные, но не память процесса, открытые соединения или содержимое именованного study-data. Экспорт выбранного локального ID также нельзя считать автоматическим переносом всех платформ, подписей и связанных аттестаций реестра: их представление и полноту проверяют отдельно. Проверка одного config ID после load относится к выбранному исполняемому варианту. Резерв пользовательских данных выполняется отдельно по <a href="#14-backup-recovery">главе 14</a>. Здесь не останавливаем и не удаляем основной контейнер.</p>
+<p>Команды save/load читают или записывают файл на стороне клиента. При удалённом Engine это не путь на daemon-хосте, как у bind mount. Перед записью проверьте место на диске клиента и носителе, размер после save и допустимый размер одного файла выбранной файловой системы. Например, FAT32 не вместит один файл размером 4ГиБ или больше. На целевом Engine отдельно нужен запас для импортируемого содержимого и распакованных файлов: свободное место на флэшке не измеряет его дисковый запас.</p>
+<h3>Экспортировать сохранённый ID без подмены тегом</h3>
+<p>Нужны пройденная глава09, её image.id и доступный study. Выполняйте из каталога тома docker. Блок сохраняет архив, независимую копию ожидаемого ID, платформу и исходный inspect. Прежний image09/image.id остаётся нетронутым. Сначала пишется echo.tar.part; окончательное имя появляется только после успеха save.</p>
+<pre><code data-language="bash">(
+  set -euo pipefail
+  IMAGE_ID="$(cat labs/echo/out/image09/image.id)"
+  [[ "$IMAGE_ID" =~ ^sha256:[0-9a-f]{64}$ ]]
+  docker --context study image inspect "$IMAGE_ID" &gt; /dev/null
+  DELIVERY10=labs/echo/out/delivery10
+  if test -e "$DELIVERY10"; then
+    printf 'delivery10 уже есть: прежний комплект не перезаписываем\n' &gt;&amp;2
+    exit 1
+  fi
+  mkdir -p "$DELIVERY10"
+  printf '%s\n' "$IMAGE_ID" &gt; "$DELIVERY10/expected-image.id"
+  docker --context study image inspect --format '{{.Os}}/{{.Architecture}}' \
+    "$IMAGE_ID" &gt; "$DELIVERY10/platform.txt"
+  docker --context study image inspect "$IMAGE_ID" &gt; "$DELIVERY10/source-inspect.json"
+  docker --context study image save --output "$DELIVERY10/echo.tar.part" "$IMAGE_ID"
+  mv "$DELIVERY10/echo.tar.part" "$DELIVERY10/echo.tar"
+  (
+    cd "$DELIVERY10"
+    sha256sum echo.tar &gt; echo.tar.sha256
+    sha256sum --check echo.tar.sha256
+    wc -c echo.tar
+    tar --list --file echo.tar
+  )
+)</code></pre>
+<p><code>[[ ... =~ ... ]]</code> проверяет форму сохранённого SHA-256 ID; истинность ожидаемого значения она не устанавливает. <code>save --output</code> получает именно этот ID, поэтому смена тега lesson1 не меняет выбор. Сохранение по ID не обязано назначить архиву удобный tag. После load будем проверять ID, а не наличие прежнего имени. <code>mv</code> меняет имя успешно полученного файла; при отказе save блок остановится с частичным .part для разбора. <code>sha256sum --check</code> сравнивает архив с записанной суммой, <code>wc -c</code> даёт число байтов, <code>tar --list --file</code> только перечисляет записи, ничего не извлекая. <a href="https://docs.docker.com/reference/cli/docker/image/save/">Что сохраняет image save</a>.</p>
+<h3>Какие пути можно увидеть внутри архива</h3>
+<p>У архивов разных экспортёров и хранилищ встречаются разные представления. В Docker-совместимом архиве <code>manifest.json</code> перечисляет Config, RepoTags и Layers: имя JSON конфигурации и упорядоченные имена tar-слоёв. В OCI image layout есть <code>oci-layout</code>, <code>index.json</code> и файлы <code>blobs/sha256/ПОЛНЫЙ_ХЕШ</code>. Имя blob содержит только шестнадцатеричную часть digest; размер/тип узнаются из descriptor. Экспорт может содержать и совместимые дополнительные файлы. Не предполагайте, что любой Docker 29 tar обязан иметь один жёстко заданный список путей.</p>
+<pre><code data-language="text">OCI image layout:
+oci-layout
+index.json
+blobs/sha256/…config hash…
+blobs/sha256/…manifest hash…
+blobs/sha256/…layer hash…
+
+Docker-compatible metadata:
+manifest.json  → Config / RepoTags / Layers
+                пути берутся из этих полей, не угадываются</code></pre>
+<p>Например, OCI-путь первого сжатого слоя нашей модели был бы <code>blobs/sha256/ccb6144b559f70a3a79d9b21fad24d62b7699ce972a198b9166b67e0b7f4ca04</code>, а его descriptor требует 133 байта. Файл index.json тоже является точной последовательностью байтов; его содержимое описывает корни переносимого набора. Модель не выдаёт себя за архив настоящего docker save. В реальном комплекте сначала читают список путей и формат. Не распаковывайте образ в / или в рабочий каталог сервиса ради осмотра; для проверки идентичности достаточно хеша архива, штатного load и image inspect на подготовленной цели. <a href="https://github.com/opencontainers/image-spec/blob/v1.1.0/image-layout.md">OCI layout</a>, <a href="https://github.com/moby/docker-image-spec/blob/main/spec.md">Docker image archive</a>.</p>
+<h3>Загрузить на заранее подготовленную цель</h3>
+<p>На другой разрешённой машине заранее установите совместимый Linux Engine и создайте контекст <code>target</code> по <a href="#01-install-and-state">главе установки</a>. Проверьте его адрес и server version: target не появляется от копирования книги. На рабочей Windows без разрешённой установленной среды этот этап остаётся чтением; установка Desktop не обещает отсутствия следов. Скопируйте каталог delivery10 целиком; сохраните ожидаемый ID и доверенное значение контрольной суммы также в своей записи выпуска, независимо от изменяемого комплекта.</p>
+<p>В новой оболочке укажите действительный полный путь копии delivery10. Read читает строку, -r не обрабатывает обратные косые черты, -p показывает приглашение; export передаёт значение следующему блоку. В блоке сначала проверяется архив, затем доступность target, только потом импорт:</p>
+<pre><code data-language="bash">read -r -p 'Полный путь к скопированному delivery10: ' DELIVERY10
+export DELIVERY10
+(
+  set -euo pipefail
+  : "${DELIVERY10:?Укажите каталог комплекта}"
+  cd "$DELIVERY10"
+  sha256sum --check echo.tar.sha256
+  EXPECTED_ID="$(cat expected-image.id)"
+  [[ "$EXPECTED_ID" =~ ^sha256:[0-9a-f]{64}$ ]]
+  docker --context target version
+  docker --context target image load --input echo.tar
+  ACTUAL_ID="$(docker --context target image inspect --format '{{.Id}}' "$EXPECTED_ID")"
+  test "$ACTUAL_ID" = "$EXPECTED_ID"
+  docker --context target image inspect --format '{{.Os}}/{{.Architecture}}' "$ACTUAL_ID"
+  cat platform.txt
+)</code></pre>
+<p><code>--input</code> читает архив клиента, не автоматически файл внутри VM. Load добавляет образ в выбранное хранилище и может восстановить теги из архива. При сохранении по ID вы можете получить только ID — это ожидаемо. Inspect и сравнение проверяют наличие именно нужного конфигурационного объекта; строки платформы сверяют с сохранённой. Если целевой CPU другой, сначала подготовьте соответствующий вариант, а не запускайте имеющийся с принудительно выбранным чужим --platform. Отдельные save/load имеют фильтр --platform при поддержке API 1.48+, но он выбирает имеющийся вариант, не создаёт отсутствующий. <a href="https://docs.docker.com/reference/cli/docker/image/load/">Параметры load</a>.</p>
+<p>Совпадение суммы, лежащей рядом с архивом, хорошо обнаруживает случайное повреждение. Если заменили одновременно архив, сумму и expected-image.id, такой комплект может успешно проверить сам себя. Это тот же вопрос доверенного ожидаемого значения, который мы разобрали для реестра. Проверка формата ID и успешный load не исправляют подмену доверенной записи.</p>
+<h3>Проверить запуск без внешней сети, сохранив основной мир</h3>
+<p>На target нужен свободный собственный объект <code>study-offline10</code>. Он не подключает study-data и не публикует хостовые порты. Используются сохранённый ID, те же основные бюджеты, внутренний HTTP на IPv4 и проверка loopback. Network none не запрещает внутренний 127.0.0.1. Блок сам переходит в скопированный delivery10 по заданной переменной; при занятом имени run откажет и не будет обращаться к неизвестному старому контейнеру.</p>
+<pre><code data-language="bash">(
+  set -euo pipefail
+  cd "${DELIVERY10:?Укажите каталог скопированного комплекта}"
+  EXPECTED_ID="$(cat expected-image.id)"
+  docker --context target run -d --name study-offline10 --pull=never --network none \
+    --read-only --memory=256m --cpus=1.0 --pids-limit=128 --cap-drop=ALL \
+    --security-opt=no-new-privileges:true \
+    --env APP_ADDR=0.0.0.0:8080 --env GOMEMLIMIT=160MiB "$EXPECTED_ID"
+  for ((attempt=1; attempt&lt;=10; attempt++)); do
+    if docker --context target exec study-offline10 /echo check; then
+      exit 0
+    fi
+    sleep 0.5
+  done
+  docker --context target logs --tail 40 study-offline10
+  printf 'Офлайн-проверка HTTP не прошла\n' &gt;&amp;2
+  exit 1
+)</code></pre>
+<p>Успех подтверждает запуск этого варианта и локальный /health в данных условиях. Он не проверяет диск счётчика, внешние зависимости или все будущие пути приложения. После осмотра остановите <code>docker --context target stop --timeout 15 study-offline10</code>; объект можно оставить для следующего сеанса и запускать через start. Этот опыт не удаляет основной study-echo, не создаёт новую БД и не обнуляет прежние данные. Для продолжения Compose используйте нужный локальный ID как APP_IMAGE, сохраняя явную историю выбора.</p>
+<h2 id="10-distribution-provenance-section-6">Продвинуть тот же результат</h2>
+<p><strong>Продвижение выпуска</strong> — назначение уже проверенного результата следующей среде. Если после испытаний заново выполнить go build, можно получить другой файл из-за версии компилятора, зависимости или генератора. Проверенный digest теряет связь с новым результатом. При копировании образа между реестрами сохраняют исходные байты всех объектов и проверяют выходной manifest/index digest. Если инструмент преобразовал формат или переупаковал слои, выходной digest может измениться; такую операцию учитывают как новый результат и заново проверяют связи с утверждениями.</p>
+<p>Для нашей службы запись выпуска связывает исходный коммит, платформу, /echo, config/image ID, опубликованный manifest/index digest при его наличии, runtime-настройки и совместимое состояние study-data. На вопрос «можно ли откатить код» отвечает и формат данных: прежний бинарник должен понимать текущий файл или схему. Простое start прежнего образа не отменяет уже выполненную миграцию. Перед сменой нужны отдельный проверенный резерв и способ восстановить данные; это не содержимое registry.</p>
+<h3>Почему нельзя удалять «всё без красивого тега»</h3>
+<p><strong>Retention</strong> — правила, какие выпуски и сопутствующие объекты сохраняются и как долго. <strong>Garbage collection</strong>, сборка мусора, освобождает объекты, больше не нужные сохраняемым корням. Тег, манифест, платформа, конфигурация и слой — разные объекты; несколько выпусков могут ссылаться на общий слой. Удаление тега не обязательно сразу освобождает байты. Удаление манифеста по digest может сделать недоступными и другие метки, которые указывали на него. Подписи/аттестации тоже требуют правил сохранения и поиска, включая обратную связь subject/referrers.</p>
+<p>На нашем графе оба платформенных манифеста ссылаются на два общих слоя. Удалить arm64-ветвь недостаточно, чтобы удалить эти слои: amd64 всё ещё их использует. Алгоритм mark-and-sweep, то есть пометка и удаление, сначала помечает достижимые объекты от сохраняемых выпусков, потом удаляет остальные. Но связь от аттестации к subject направлена обратно относительно обычного обхода образа: конкретная реализация должна отдельно учитывать политику хранения связанных утверждений. Нельзя перенести наш маленький обход всех descriptors на любой реестр и обещать сохранность.</p>
+<p>У CNCF Distribution описана двухфазная сборка мусора с остановленной записью или read-only режимом: одновременный push может создать ссылку после обхода и привести к ошибочному удалению нужного blob. Другие продукты имеют свои алгоритмы и режимы. Здесь команду GC не выполняем и не подставляем чужой data-root. До очистки проверяют реализацию/версию, резерв, список сохраняемых выпусков и результат пробного расчёта, а после — возможность получить выбранные старые результаты вместе с их утверждениями. <a href="https://distribution.github.io/distribution/about/garbage-collection/">Алгоритм и ограничения GC Distribution</a>.</p>
+<p>Практический итог этой главы — сохранённый образ, ожидаемая идентичность, проверенный перенос и понятная запись о том, что именно испытано. Сохраните прежний image09/image.id и оба набора наблюдений. На следующий день сначала проверьте выбранный сервер, ID и состояние данных, затем продолжайте запуск. Потерянный локальный кэш или переназначенный тег не должны незаметно выбрать новую программу вместо вчерашней.</p>
+<p class="sources">Форматы разобраны по OCI Image 1.1.0 и OCI Distribution 1.1.1; ссылки стоят рядом с механизмами. В подготовке выполнены только точные локальные JSON/hash/tar-модели и безопасные проверки управляющих блоков. Engine, настоящий реестр, push/pull/login/save/load и GC не запускались. Команды доставки предназначены для отдельно подготовленного собственного стенда; модель текстовых файлов не является сохранённым Docker-образом echo.</p>
