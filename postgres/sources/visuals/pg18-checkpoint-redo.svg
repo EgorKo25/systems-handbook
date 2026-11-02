@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 812" role="img" aria-labelledby="pg18-redo-title pg18-redo-desc" class="pg18-redo-svg" data-plain-skip="true">
+<title id="pg18-redo-title">Checkpoint указывает назад на REDO; страницы проверяются по концу записи</title>
+<desc id="pg18-redo-desc">Условная линия WAL: REDO начинается в R0/01000100, запись R1 начинается в0/01000200 и имеет EndRecPtr E0/010002C0, checkpoint находится позднее в C0/01000400 и хранит redo=R. После сбоя блок P уже имеет PageLSN E, блок Q имеет0/010000F0. В обычной ветви без применяемого образа P возвращает BLK_DONE, Q требует REDO и после применения получает E. Применимый полный образ рассматривается раньше этой проверки.</desc>
+<style>
+.pg18-redo-svg{color:var(--reader-text,var(--text,#202d34));background:var(--paper,#fff);font:17px system-ui,sans-serif}
+.pg18-redo-svg text{fill:currentColor}
+.pg18-redo-svg .mono{font:16px ui-monospace,monospace}
+.pg18-redo-svg .line{fill:none;stroke:currentColor;stroke-width:1.6}
+.pg18-redo-svg .page{fill:var(--paper,#fff);stroke:currentColor;stroke-width:1.8}
+.pg18-redo-svg .band{fill:var(--soft,#edf1ee);stroke:currentColor;stroke-width:1.5}
+.pg18-redo-svg .back{fill:none;stroke:currentColor;stroke-width:1.6;stroke-dasharray:5 4}
+@media print{.pg18-redo-svg{--paper:#fff;--soft:#fff;--text:#000;--reader-text:#000;color:#000;background:#fff}}
+</style>
+<defs><marker id="pg18-redo-arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M1 1L6 3.5L1 6" class="line"/></marker></defs>
+<text x="20" y="26">Порядок WAL ↓; не масштаб времени</text>
+<text x="20" y="53">Одна линия, адреса заданы моделью</text>
+<path class="line" d="M44 82V324" marker-end="url(#pg18-redo-arrow)"/>
+<circle cx="44" cy="100" r="5" fill="currentColor"/>
+<text class="mono" x="72" y="96">R = 0/01000100</text>
+<text x="72" y="121">Начало повтора REDO</text>
+<rect class="band" x="36" y="144" width="16" height="87"/>
+<text class="mono" x="72" y="164">R1: S=0/01000200</text>
+<text class="mono" x="72" y="197">E = 0/010002C0</text>
+<text x="72" y="223">EndRecPtr: конец R1</text>
+<circle cx="44" cy="284" r="5" fill="currentColor"/>
+<text class="mono" x="72" y="274">C = 0/01000400</text>
+<text x="72" y="301">Checkpoint хранит redo=R</text>
+<path class="back" d="M38 284H16V100H38" marker-end="url(#pg18-redo-arrow)"/>
+<text x="20" y="350">Сбой — после сохранения C</text>
+<text x="20" y="379">В файлах — разные состояния</text>
+<path class="page" d="M16 400H142L164 422V540H16Z M142 400V422H164"/>
+<path class="page" d="M194 400H320L342 422V540H194Z M320 400V422H342"/>
+<text x="28" y="430">Блок P</text><text x="206" y="430">Блок Q</text>
+<text class="mono" x="28" y="455">PageLSN</text><text class="mono" x="206" y="455">PageLSN</text>
+<text class="mono" x="28" y="483">0/010002C0</text><text class="mono" x="206" y="483">0/010000F0</text>
+<path class="line" d="M28 494H152M206 494H330"/>
+<text x="28" y="520">R1 уже есть</text><text x="206" y="520">R1 ещё нет</text>
+<path class="back" d="M90 541V563" marker-end="url(#pg18-redo-arrow)"/>
+<path class="line" d="M268 541V563" marker-end="url(#pg18-redo-arrow)"/>
+<text class="mono" x="20" y="587">E ≤ PageLSN</text><text class="mono" x="198" y="587">E &gt; PageLSN</text>
+<text class="mono" x="20" y="615">BLK_DONE</text><text class="mono" x="198" y="615">BLK_NEEDS_REDO</text>
+<text x="20" y="643">Без повтора</text><text x="198" y="643">Применить R1</text>
+<text x="20" y="681">После R1: обе PageLSN равны E</text>
+<path class="line" d="M20 705H340"/>
+<text x="20" y="737">Если есть образ с APPLY:</text>
+<text x="20" y="766">сначала восстановить образ,</text>
+<text x="20" y="795">даже при PageLSN ≥ E.</text>
+</svg>

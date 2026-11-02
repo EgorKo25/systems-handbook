@@ -1,0 +1,744 @@
+<header>
+<h1>PUT, GET и DELETE: тело, текущий объект и история</h1>
+<p>Запишем 14 байтов под одним ключом, прочитаем их обратно и проследим,
+что удаление меняет в корзине с сохранением версий. Затем повторим этот
+путь с потерянными ответами и оборванным чтением.</p>
+</header>
+
+<h2 id="s3-07-input">Какие байты и какой объект мы передаём</h2>
+
+<p>Возьмём fixture из первой главы: заранее заданные тестовые байты
+<code>object-lab v1\n</code>. Здесь <code>\n</code> обозначает один LF,
+байт перевода строки <code>0a</code>, а не два печатных знака.
+Тринадцать предшествующих символов входят в ASCII — таблицу кодирования,
+в которой каждый из этих латинских символов, цифр, дефиса и пробела
+занимает один байт. Поэтому тело содержит ровно 14 байтов:</p>
+
+<pre><code>6f 62 6a 65 63 74 2d 6c 61 62 20 76 31 0a
+ o  b  j  e  c  t  -  l  a  b     v  1 LF</code></pre>
+
+<p>Корзина называется <code>study-s3</code>, ключ —
+<code>lessons/2026-11/hello +%.txt</code>. Ключ выбирает объект внутри
+корзины; его косые черты не требуют создания каталогов на сервере.
+При адресации с корзиной в пути начало адреса будет
+<code>/study-s3/lessons/2026-11/hello%20%2B%25.txt</code>:
+пробел закодирован как <code>%20</code>, буквальный плюс — как
+<code>%2B</code>, процент — как <code>%25</code>. Тело при этом
+не кодируется в проценты и остаётся теми же 14 байтами.</p>
+
+<p>К телу добавим пользовательские метаданные — пару имени и значения,
+сохранённую вместе с объектом:
+<code>operation-id=00000000000000000000000000000001</code>.
+Это выбранный приложением номер одной логической записи. В HTTP-запросе
+такое имя получает префикс <code>x-amz-meta-</code>; при чтении префикс
+возвращается. Сервер не обязан устранять повторные PUT по этому номеру.
+Номер нужен приложению для последующего сопоставления.
+<a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingMetadata.html">Пользовательские метаданные S3</a>.</p>
+
+<p>Ниже вручную составлены сообщения HTTP/1.1 с публичными вымышленными
+учётными данными из главы <a href="#s3-06-signature">s3-06-signature</a>:
+access key <code>AKIDEXAMPLE</code>, secret
+<code>s3-lab-only-not-a-real-secret</code>, регион <code>us-east-1</code>,
+служба <code>s3</code>, без session token. Это разбор протокола,
+а не команды для отправки. <code>127.0.0.1:19000</code> продолжает
+учебный вектор предыдущей главы и обозначает сетевое окружение самого
+клиента. Он не является endpoint AWS или адресом RGW в другой VM.
+Все ответы, ETag, version ID и request ID в примере сконструированы.
+Показаны минимальные сообщения для разбора; реальная служба может
+добавить другие заголовки.</p>
+
+<p>В печатных блоках строки заголовков показаны обычными переносами.
+Для получения байтов HTTP каждую такую строку, включая пустую строку
+между заголовками и телом, заканчивают CRLF — двумя байтами
+<code>0d 0a</code>. У тела только свой последний LF.
+В каноническом запросе SigV4 разделителем остаётся один LF, как в главе 06.
+Смешение этих двух представлений изменит подпись или тело.
+<a href="https://www.rfc-editor.org/rfc/rfc9112.html#section-2.1">Формат сообщения HTTP/1.1</a>.</p>
+
+<h2 id="s3-07-put">PUT: условие, тело и подтверждение</h2>
+
+<p>Создадим объект, только если у ключа сейчас нет тела объекта.
+Условие <code>If-None-Match: *</code> проверяет сервер во время записи.
+Предварительный HEAD с ответом «нет объекта» этого условия не заменяет:
+между HEAD и PUT другой клиент мог бы создать объект.</p>
+
+<pre><code>PUT /study-s3/lessons/2026-11/hello%20%2B%25.txt HTTP/1.1
+host: 127.0.0.1:19000
+x-amz-content-sha256: 874160ebe2d9a6a82abdec1966f3be5be4e0db5d575d4d00953c66baf6e30897
+x-amz-date: 20261101T090000Z
+content-type: text/plain
+if-none-match: *
+x-amz-meta-operation-id: 00000000000000000000000000000001
+x-amz-checksum-sha256: h0Fg6+LZpqgqvewZZvO+W+Tg211XXU0AlTxmuvbjCJc=
+content-length: 14
+authorization: AWS4-HMAC-SHA256 Credential=AKIDEXAMPLE/20261101/us-east-1/s3/aws4_request, SignedHeaders=content-type;host;if-none-match;x-amz-checksum-sha256;x-amz-content-sha256;x-amz-date;x-amz-meta-operation-id, Signature=db8d8bd200fa19f16b17fdf4c83820543e44e4f9db054245f249f67dcec27d38
+
+object-lab v1
+</code></pre>
+
+<p><code>PUT</code> выбирает операцию записи; <code>HTTP/1.1</code> задаёт
+формат сообщения. В первой строке нет query-параметров.
+<code>host</code> содержит адрес и порт получателя, участвующие в подписи.
+<code>content-length: 14</code> сообщает длину передаваемого тела,
+без строки запроса, заголовков и разделяющего CRLF.
+<code>content-type: text/plain</code> описывает тело как обычный текст;
+он сам не меняет кодировку и не добавляет LF.
+В исходниках helper v1 для файлов выбран
+<code>application/octet-stream</code>, то есть произвольные байты.
+Поэтому данный учебный запрос не является побайтовым дампом helper.</p>
+
+<p><code>x-amz-content-sha256</code> содержит 32 байта SHA-256 тела
+в виде 64 шестнадцатеричных знаков. Поле
+<code>x-amz-checksum-sha256</code> представляет те же 32 байта в Base64:
+это способ записи бинарных данных печатными знаками, здесь 44 знака
+с завершающим <code>=</code>. Первое значение участвует в SigV4,
+второе явно просит службу проверить контрольную сумму загружаемого
+объекта. Сам заголовок checksum также включён в нашу подпись.
+Для одиночного PutObject это checksum всего тела. Multipart upload —
+загрузка объекта отдельными частями с последующим завершением;
+у неё возможна составная checksum, полученная из checksum частей. <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity-upload.html">Проверка checksum при загрузке</a>.</p>
+
+<p><code>x-amz-date</code> — время подписывания в UTC:
+1 ноября 2026 года, 09:00:00. Поле <code>Authorization</code> непрерывно,
+без добавленных переносов внутри значения. В его <code>Credential</code>
+после access key записан scope <code>20261101/us-east-1/s3/aws4_request</code>.
+<code>SignedHeaders</code> перечисляет семь подписанных имён;
+<code>Signature</code> содержит вычисленный HMAC. Алгоритм вывода ключа
+остаётся тем же, что в главе 06. Здесь добавлены checksum и operation-id,
+поэтому изменились канонический запрос и окончательная подпись.
+<code>content-length</code> в выбранный список не включён.</p>
+
+<p>Для проверки именно нового примера канонический запрос приведён целиком.
+После последнего хеша завершающего LF нет; между каноническими
+заголовками и их списком есть одна пустая строка.</p>
+
+<pre><code>PUT
+/study-s3/lessons/2026-11/hello%20%2B%25.txt
+
+content-type:text/plain
+host:127.0.0.1:19000
+if-none-match:*
+x-amz-checksum-sha256:h0Fg6+LZpqgqvewZZvO+W+Tg211XXU0AlTxmuvbjCJc=
+x-amz-content-sha256:874160ebe2d9a6a82abdec1966f3be5be4e0db5d575d4d00953c66baf6e30897
+x-amz-date:20261101T090000Z
+x-amz-meta-operation-id:00000000000000000000000000000001
+
+content-type;host;if-none-match;x-amz-checksum-sha256;x-amz-content-sha256;x-amz-date;x-amz-meta-operation-id
+874160ebe2d9a6a82abdec1966f3be5be4e0db5d575d4d00953c66baf6e30897</code></pre>
+
+<pre><code>canonical bytes: 524
+SHA256(canonical):
+fb15d29d96058ba84f27a3a3f214d5ba50e68bda1e464df79480629c937fbb63
+
+AWS4-HMAC-SHA256
+20261101T090000Z
+20261101/us-east-1/s3/aws4_request
+fb15d29d96058ba84f27a3a3f214d5ba50e68bda1e464df79480629c937fbb63
+
+Signature:
+db8d8bd200fa19f16b17fdf4c83820543e44e4f9db054245f249f67dcec27d38</code></pre>
+
+<p>Это полностью заданный HMAC-вектор, который можно пересчитать без
+обращения к службе. Изменение <code>If-None-Match</code>, номера операции,
+времени или хотя бы одного байта тела требует новой подписи.
+<a href="https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_sigv-create-signed-request.html">SigV4 с подписью заголовков</a>.</p>
+
+<p>Принимаем для дальнейшего разбора такой ответ:</p>
+
+<pre><code>HTTP/1.1 200 OK
+Date: Sun, 01 Nov 2026 09:00:00 GMT
+Content-Length: 0
+ETag: "study-etag-v1"
+x-amz-version-id: study-v1
+x-amz-checksum-sha256: h0Fg6+LZpqgqvewZZvO+W+Tg211XXU0AlTxmuvbjCJc=
+x-amz-checksum-type: FULL_OBJECT
+x-amz-request-id: study-put-1
+
+</code></pre>
+
+<p><code>200</code> означает успешный PutObject.
+<code>Content-Length: 0</code> относится к пустому телу этого ответа;
+оно не означает, что был сохранён пустой объект.
+<code>Date</code> — время формирования ответа в HTTP-формате с GMT.
+<code>x-amz-request-id</code> — номер запроса, выданный сервером для
+диагностики; он не является номером версии или нашего намерения записи.
+<code>ETag</code> — непрозрачная метка объекта, которую можно вернуть
+в предусмотренном условии. Кавычки являются частью показанного
+значения заголовка. Формат <code>"study-etag-v1"</code> выбран для примера:
+по нему не вычисляют контрольную сумму.</p>
+
+<p><code>x-amz-version-id: study-v1</code> сообщает присвоенный сервером
+идентификатор версии. В этом основном сценарии AWS general purpose bucket
+имеет включённое versioning, то есть сохраняет отдельные версии записей.
+<code>FULL_OBJECT</code> уточняет, что checksum относится ко всему телу.
+Ответ PUT не обязан повторять пользовательские метаданные; позже
+прочитаем их через HEAD и GET.
+Согласно AWS, успешный PutObject сохраняет объект целиком;
+частичный объект результатом успешного PUT не становится.
+<a href="https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html">PutObject</a>.</p>
+
+<p>В этой точке на сервере есть версия с телом длиной 14 байтов,
+типом содержимого, checksum и operation-id; текущий ключ указывает
+на неё. Из ответа клиент узнал version ID, ETag и request ID.
+После полученного успешного ответа AWS обеспечивает согласованное
+чтение записанного состояния. Одновременная более поздняя запись может
+снова поменять текущий ключ; несколько обращений к текущему ключу
+не составляют одного снимка. Обновление одного ключа атомарно:
+чтение не должно собирать начало старого тела с концом нового.
+Эти свойства описывают наблюдаемое поведение AWS, а не устройство
+его внутренних дисков, реплик или протокола фиксации.
+<a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html#ConsistencyModel">Модель согласованности Amazon S3</a>.</p>
+
+<h2 id="s3-07-state-map">Один ключ проходит через три разных представления</h2>
+
+<p>Схема показывает корзину с включённым versioning, то есть Enabled.
+Маркер удаления — версия без тела, которая скрывает текущий объект
+от обычного GET ключа. Стрелка записи меняет серверное состояние,
+стрелка чтения переносит выбранное тело к клиенту.
+Получение заголовков и появление нового локального имени — разные шаги.</p>
+
+<pre><code>[fixture: 14 байтов + operation-id]
+          |
+          | PUT, If-None-Match: *
+          v
+[текущий key → v1; история: v1]
+          |
+          | HEAD: ETag, version ID, checksum, operation-id; тела нет
+          | GET versionId=v1: заголовки + поток 14 байтов
+          v
+[временный локальный файл]
+          |
+          | полное чтение + длина + checksum + закрытие потока
+          | синхронизировать файл → закрыть → создать новое имя
+          | синхронизировать каталог
+          v
+[новое принятое имя output]
+
+серверный key → v1 -----PUT------→ v2 --DELETE без ID--→ marker m1
+история       [v1]                  [v2,v1]              [m1,v2,v1]
+GET key       тело v1               тело v2              404
+GET ID=v1     тело v1               тело v1              тело v1</code></pre>
+
+<p>Скопированное тело не делает локальный файл принятой копией
+до окончания проверок и публикации имени. Текущий маркер на сервере,
+напротив, меняет обычный GET ключа, но не стирает сохранённое тело v1.
+Эти два изменения происходят в разных местах и проверяются по-разному.</p>
+
+<h2 id="s3-07-read">HEAD выбирает сведения, GET передаёт тело</h2>
+
+<p>Сначала запросим текущий объект методом HEAD. Поле
+<code>x-amz-checksum-mode: ENABLED</code> запрашивает сохранённую checksum.
+У самого запроса нет тела, поэтому его
+<code>x-amz-content-sha256</code> — SHA-256 пустой последовательности.
+Это не SHA-256 загруженного объекта.</p>
+
+<pre><code>HEAD /study-s3/lessons/2026-11/hello%20%2B%25.txt HTTP/1.1
+host: 127.0.0.1:19000
+x-amz-content-sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+x-amz-date: 20261101T090005Z
+x-amz-checksum-mode: ENABLED
+authorization: AWS4-HMAC-SHA256 Credential=AKIDEXAMPLE/20261101/us-east-1/s3/aws4_request, SignedHeaders=host;x-amz-checksum-mode;x-amz-content-sha256;x-amz-date, Signature=8dd192870261662dfc0977885ca8f55fb8cb082019abed3ea9722bc29e540410
+
+</code></pre>
+
+<pre><code>HTTP/1.1 200 OK
+Date: Sun, 01 Nov 2026 09:00:05 GMT
+Content-Length: 14
+Content-Type: text/plain
+Last-Modified: Sun, 01 Nov 2026 09:00:00 GMT
+ETag: "study-etag-v1"
+x-amz-version-id: study-v1
+x-amz-meta-operation-id: 00000000000000000000000000000001
+x-amz-checksum-sha256: h0Fg6+LZpqgqvewZZvO+W+Tg211XXU0AlTxmuvbjCJc=
+x-amz-checksum-type: FULL_OBJECT
+x-amz-request-id: study-head-1
+
+</code></pre>
+
+<p>У ответа HEAD нет тела. Здесь <code>Content-Length: 14</code> сообщает
+размер тела, которое передал бы соответствующий GET, а не количество
+байтов после пустой строки ответа HEAD.
+<code>Last-Modified</code> описывает время изменения выбранного объекта;
+его нельзя подменять полем <code>Date</code>, относящимся к ответу.
+<code>Content-Type</code>, ETag, version ID, checksum и пользовательский
+operation-id относятся к выбранной версии.
+HEAD позволяет сравнить эти сведения без скачивания тела, но сам
+не проверяет, что клиент сумеет полностью прочитать и сохранить 14 байтов.
+<a href="https://docs.aws.amazon.com/AmazonS3/latest/API/API_HeadObject.html">HeadObject</a>,
+<a href="https://www.rfc-editor.org/rfc/rfc9110.html#section-9.3.2">Семантика HEAD</a>.</p>
+
+<p>Теперь запросим конкретную сохранённую версию, указав
+<code>versionId=study-v1</code> в query. Query входит в подпись.
+Это отдельный запрос; его время и подпись вычислены заново.</p>
+
+<pre><code>GET /study-s3/lessons/2026-11/hello%20%2B%25.txt?versionId=study-v1 HTTP/1.1
+host: 127.0.0.1:19000
+x-amz-content-sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+x-amz-date: 20261101T090010Z
+x-amz-checksum-mode: ENABLED
+authorization: AWS4-HMAC-SHA256 Credential=AKIDEXAMPLE/20261101/us-east-1/s3/aws4_request, SignedHeaders=host;x-amz-checksum-mode;x-amz-content-sha256;x-amz-date, Signature=a76e5a7630877c258b2dd78ab19d846485a5b02743174b50c1f5f54eb6f50f17
+
+</code></pre>
+
+<pre><code>HTTP/1.1 200 OK
+Date: Sun, 01 Nov 2026 09:00:10 GMT
+Content-Length: 14
+Content-Type: text/plain
+Last-Modified: Sun, 01 Nov 2026 09:00:00 GMT
+ETag: "study-etag-v1"
+x-amz-version-id: study-v1
+x-amz-meta-operation-id: 00000000000000000000000000000001
+x-amz-checksum-sha256: h0Fg6+LZpqgqvewZZvO+W+Tg211XXU0AlTxmuvbjCJc=
+x-amz-checksum-type: FULL_OBJECT
+x-amz-request-id: study-get-1
+
+object-lab v1
+</code></pre>
+
+<p>После пустой строки передаются те самые 14 байтов, включая LF.
+Сравниваем не только <code>200</code>: полученная длина должна быть 14,
+SHA-256 тела —
+<code>874160ebe2d9a6a82abdec1966f3be5be4e0db5d575d4d00953c66baf6e30897</code>,
+а operation-id — номер нашей записи. Сохранённая версия AWS с ID, отличным от строки <code>null</code>,
+выбирает одно тело с его пользовательскими метаданными даже после
+смены текущей версии, пока выбранная версия существует и доступна.
+Такие ID будем называть non-null. Её могут окончательно удалить; чтение также требует подходящих прав
+и, при шифровании, доступа к ключу.
+<a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/RetrievingObjectVersions.html">Получение выбранной версии</a>.</p>
+
+<p>Для доступа к текущему объекту AWS проверяет
+<code>s3:GetObject</code>, а для выбранной версии —
+<code>s3:GetObjectVersion</code>. Отсутствующий текущий ключ обычно
+различается как <code>404</code>, если у вызывающего есть
+<code>s3:ListBucket</code>, и <code>403</code> без этого разрешения.
+Поэтому одиночный <code>403</code> нельзя читать как подтверждение
+наличия или отсутствия тела. У HEAD ошибки часто доступны только
+как HTTP-статус без подробного тела ошибки.
+<a href="https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObject.html">GetObject и разрешения</a>,
+<a href="https://docs.aws.amazon.com/AmazonS3/latest/API/API_HeadObject.html">Ошибки HeadObject</a>.</p>
+
+<p>Есть и другое условие чтения: <code>If-None-Match</code> с конкретным
+ETag просит передать тело, только если текущая метка отличается.
+Если клиент уже имеет принятую локальную копию с
+<code>"study-etag-v1"</code>, протокольный запрос может выглядеть так:</p>
+
+<pre><code>GET /study-s3/lessons/2026-11/hello%20%2B%25.txt HTTP/1.1
+host: 127.0.0.1:19000
+x-amz-content-sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+x-amz-date: 20261101T090015Z
+if-none-match: "study-etag-v1"
+authorization: AWS4-HMAC-SHA256 Credential=AKIDEXAMPLE/20261101/us-east-1/s3/aws4_request, SignedHeaders=host;if-none-match;x-amz-content-sha256;x-amz-date, Signature=e51e40a0a98c5649c00040a414632a4d48991f6ec9c466ecbe5a5df4b7e63c8c
+
+</code></pre>
+
+<pre><code>HTTP/1.1 304 Not Modified
+Date: Sun, 01 Nov 2026 09:00:15 GMT
+ETag: "study-etag-v1"
+x-amz-request-id: study-get-conditional-1
+
+</code></pre>
+
+<p><code>304</code> не содержит тела и разрешает использовать ранее
+сохранённое представление по правилам условного чтения.
+Он не создаёт локальную копию, если её прежде не было.
+Другое условие, <code>If-Match: "study-etag-v1"</code>, передало бы тело
+только при совпадении метки, иначе дало бы <code>412</code>.
+В этих примерах используется одно условие; правила сочетания
+нескольких условий нужно рассматривать отдельно.
+Helper v1 не имеет флагов условного GET: этот обмен объясняет протокол.
+<a href="https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObject.html">Условия GetObject</a>.</p>
+
+<h2 id="s3-07-local-copy">От ответа GET до нового локального файла</h2>
+
+<p>SDK — библиотека, которая преобразует вызов Go в запрос службы.
+В исходниках helper вызывающий код задаёт bucket, исходный key,
+предел размера и необязательный version ID. SDK кодирует адрес,
+добавляет нужные заголовки, вычисляет SigV4 из выбранных credentials
+и передаёт запрос HTTP-клиенту. HTTP-клиент устанавливает соединение,
+проверяет TLS для HTTPS, отправляет сообщение и разбирает ответ.
+Сервер проверяет подпись, разрешения, условие и данные; конкретный
+порядок его внутренних стадий этим описанием не задаётся.</p>
+
+<p>При GetObject возврат структуры результата и <code>Body</code>
+ещё не означает успешное получение тела: <code>Body</code> — поток,
+из которого программа продолжает читать. EOF сообщает, что поток закончился. В Go последнее чтение может
+вернуть одновременно несколько байтов и EOF; программа сначала учитывает
+эти байты, затем обрабатывает признак конца потока. Ошибка транспорта
+или несовпадение checksum могут проявиться при этом чтении, уже после
+получения заголовков. SDK проверяет возвращённую поддерживаемую checksum
+при запрошенном режиме; отсутствие checksum в ответе не превращается
+в выполненную проверку. Полное чтение до EOF и закрытие Body выполняет
+вызывающий код.
+<a href="https://docs.aws.amazon.com/sdk-for-go/v2/developer-guide/s3-checksums.html">Проверка checksum в Go SDK</a>.</p>
+
+<p>Для нашей загрузки возьмём <code>N=14</code>. Это верхний предел,
+а не требование получить ровно N для любого объекта.
+Полный объект длиной 13 байтов уложился бы в предел, но не совпал бы
+с данной fixture. Ответ с объявленным <code>Content-Length: 14</code>
+и только десятью полученными байтами не проходит проверку длины.
+В примере десять байтов — <code>object-lab</code>; оставшиеся
+<code> v1\n</code> потерялись. HTTP-клиент может сообщить обрыв раньше,
+но вызывающий код дополнительно сравнивает известную длину ответа
+с фактически скопированной. Верхний предел N проверяют по потоку Body: после N байтов
+helper пытается прочитать ещё один. Дополнительный байт означает
+превышение предела, а EOF без дополнительных байтов — конец потока.
+Это нужно и для ответа с неизвестной длиной. В показанном
+HTTP/1.1-ответе <code>Content-Length: 14</code> уже ограничивает Body
+четырнадцатью байтами. Такое чтение не проверяет, остались ли за телом
+лишние байты в сетевом соединении.
+<a href="https://www.rfc-editor.org/rfc/rfc9112.html#section-8">Неполные сообщения HTTP/1.1</a>.</p>
+
+<p>Путь файла output и его каталоги должны контролироваться учебным
+пользователем. В Linux-реализации helper новое тело сначала попадает
+во временный файл того же каталога. До публикации проверяются полный
+ответ <code>200</code> без частичного диапазона, ограничение N,
+известный Content-Length, EOF, checksum и закрытие Body.
+Если служба вернула SHA-256 с типом <code>FULL_OBJECT</code>,
+он отдельно сравнивается с локальным SHA-256. Составную checksum
+multipart нельзя сравнивать с обычным SHA-256 всех байтов.</p>
+
+<p>После проверок helper синхронизирует и закрывает временный файл,
+создаёт конечное имя через hard link — ещё одно имя того же файла —
+без замены уже существующего имени, затем синхронизирует каталог.
+При обрыве на десятом байте конечное имя не публикуется.
+При ошибке checksum после четырнадцатого байта оно также не публикуется.
+Существовавший output не перезаписывается. Есть более поздняя точка
+ошибки: если link уже создан, но синхронизация каталога не удалась,
+полное конечное имя уже может быть видно. Код 5 сообщает локальную
+ошибку; повторно писать поверх этого имени helper не должен.
+Приёмка файла требует успешного завершения всей выбранной
+последовательности, включая сохранение имени.</p>
+
+<p>Квитанция helper, receipt, записана в JSON — текстовом формате
+с именованными полями. Она содержит выбранные сведения о последнем
+ответе и локальном чтении. HTTP-статус <code>200</code> может остаться
+в квитанции неудачного GET: сервер уже прислал заголовки, а поток
+оборвался позже. Поля <code>local_bytes</code> и
+<code>local_sha256_hex</code> читают вместе с <code>outcome</code>
+и кодом завершения. SHA-256 из самостоятельно заданной fixture
+сравнивается с принятым результатом отдельно; совпавшая длина
+сама по себе не устанавливает совпадение содержимого.</p>
+
+<h2 id="s3-07-next-put">Следующий PUT меняет текущую версию</h2>
+
+<p>Изменим один байт тела: цифру 1 на 2.
+<code>object-lab v2\n</code> по-прежнему содержит 14 байтов, но его SHA-256
+равен <code>ff0761e2751da943e831d1d4b5538e9a4ba9e6e5fc1e65a5cc2d7c21dd46b9fa</code>.
+Условие <code>If-Match</code> связывает замену с известным ETag
+текущего объекта. Оно не выбирает version ID для записи поверх
+сохранённой старой версии.</p>
+
+<pre><code>PUT /study-s3/lessons/2026-11/hello%20%2B%25.txt HTTP/1.1
+host: 127.0.0.1:19000
+x-amz-content-sha256: ff0761e2751da943e831d1d4b5538e9a4ba9e6e5fc1e65a5cc2d7c21dd46b9fa
+x-amz-date: 20261101T090100Z
+content-type: text/plain
+if-match: "study-etag-v1"
+x-amz-meta-operation-id: 00000000000000000000000000000002
+x-amz-checksum-sha256: /wdh4nUdqUPoMdHUtVOOmkup5uX8HmWlzC18Id1Gufo=
+content-length: 14
+authorization: AWS4-HMAC-SHA256 Credential=AKIDEXAMPLE/20261101/us-east-1/s3/aws4_request, SignedHeaders=content-type;host;if-match;x-amz-checksum-sha256;x-amz-content-sha256;x-amz-date;x-amz-meta-operation-id, Signature=9996ada4545c7d4a1cdb01e8a8598e570f8ce489bb0515cd1b7e8a0a90cd1b98
+
+object-lab v2
+</code></pre>
+
+<pre><code>HTTP/1.1 200 OK
+Date: Sun, 01 Nov 2026 09:01:00 GMT
+Content-Length: 0
+ETag: "study-etag-v2"
+x-amz-version-id: study-v2
+x-amz-checksum-sha256: /wdh4nUdqUPoMdHUtVOOmkup5uX8HmWlzC18Id1Gufo=
+x-amz-checksum-type: FULL_OBJECT
+x-amz-request-id: study-put-2
+
+</code></pre>
+
+<p>Поменялись условие, SHA-256 тела, checksum, operation-id,
+время и подпись. Остальные поля имеют прежний смысл.
+Вторая запись снова передаёт целое тело и свой набор пользовательских
+метаданных. PUT не дописывает 14 байтов к прежним четырнадцати:
+размер новой версии остаётся 14, а не 28.
+При включённом versioning версия <code>study-v1</code> остаётся,
+новой текущей становится <code>study-v2</code>.
+GET без query теперь выбирает v2, а GET
+<code>?versionId=study-v1</code> продолжает выбирать v1.
+При несовпадении текущего ETag условный PUT получает <code>412</code>.
+Если текущего объекта нет или текущая версия является delete marker,
+AWS для If-Match возвращает <code>404</code>; при конкурирующих
+изменениях возможен и <code>409</code>.
+<a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/conditional-writes.html">Поведение условной записи</a>.</p>
+
+<p>ETag проверяет предусмотренное сервером условие, но не является
+уникальным номером события. Если состояния сменились A → B → A,
+метка может вернуться к прежнему значению. Этот случай называют ABA:
+сравниваемое значение совпало, хотя между чтением и записью были
+изменения. Поэтому If-Match не подтверждает, что никто не писал
+со времени нашего HEAD, и не заменяет номер операции или историю версий.</p>
+
+<h2 id="s3-07-lost-put">PUT сохранился, но ответ потерян</h2>
+
+<p>Вернёмся к первой записи. До запроса ключ отсутствовал.
+Первая попытка create-only дошла до службы и создала
+<code>study-v1</code> с operation-id <code>...0001</code>.
+Ответ <code>200</code> потерялся. Для клиента это ошибка соединения,
+хотя сервер уже хранит все 14 байтов.</p>
+
+<pre><code>клиент                        служба: текущая версия
+PUT If-None-Match: *   ------&gt; study-v1, operation-id ...0001
+                       &lt;--X-- 200, version-id study-v1
+повтор того же условия ------&gt; study-v1 уже существует
+                       &lt;------ 412 Precondition Failed</code></pre>
+
+<p>SDK может выполнять внутренние повторы подходящих ошибок в пределах
+общего времени операции; в исходниках helper задано максимум три попытки
+SDK. При повторе остаются тело, условие и operation-id, а подпись
+может вычисляться заново для отправляемого запроса.
+Последний <code>412</code> говорит об отказе повторной попытки,
+но не отменяет первый PUT.
+<a href="https://docs.aws.amazon.com/sdk-for-go/v2/developer-guide/configure-retries-timeouts.html">Повторы и тайм-ауты Go SDK</a>.</p>
+
+<p>Для этого случая квитанция логической PUT-операции может содержать
+<code>"http_status": 412</code>, код завершения 3 и
+<code>"outcome": "unknown"</code>.
+Поле <code>attempts</code> считает вызовы HTTPClient.Do на стороне SDK,
+а не все передачи по сети: HTTP-транспорт может выполнять собственные
+переподключения. Поэтому обработчик квитанции helper консервативно оставляет unknown
+у неудачного PUT после любой возможной отправки, даже если последним
+получен понятный отказ. Ошибка открытия или предварительного хеширования
+локального файла-источника source до отправки даёт rejected. Ошибка чтения source после возможной
+отправки тоже оставляет unknown: локальная причина не доказывает,
+что сервер ничего не сохранил.</p>
+
+<p>После неизвестного исхода сначала прекращают новые записи этого опыта
+под тем же ключом. Затем читают метаданные и тело доступных версий,
+сопоставляя точный ключ, operation-id, длину и SHA-256 с подготовленной
+записью. Для обычной сохранённой non-null версии найденный ID позволяет
+повторять чтение одного тела с его метаданными, пока версия доступна.
+Если другой клиент уже сменил текущий объект, одного текущего HEAD
+будет мало: искомая версия могла стать предыдущей. GET и совпавший хеш
+без operation-id показывают нужные байты, но другой клиент мог записать
+такие же. Operation-id тоже является данными приложения: его уникальность
+и отсутствие чужого повторного использования — предпосылки сопоставления.</p>
+
+<p>Helper v1 генерирует номер до вызова PUT и возвращает его в receipt;
+он не записывает устойчивый журнал намерений перед отправкой.
+Если процесс погиб до сохранения квитанции, у пользователя может
+не остаться номера для уверенного сопоставления. Новые автоматические
+повторы без условия этого не исправляют: при versioning они способны
+добавить сохранённые версии. HTTP-идемпотентность PUT описывает
+предполагаемый эффект повторного запроса на целевой ресурс, но не
+обещает одну запись в истории и не устанавливает авторство найденных
+байтов.
+<a href="https://www.rfc-editor.org/rfc/rfc9110.html#section-9.2.2">Идемпотентные методы HTTP</a>.
+Подробный порядок действий после ошибок продолжается
+в <a href="#s3-15-errors-reconciliation">s3-15-errors-reconciliation</a>.</p>
+
+<h2 id="s3-07-delete">DELETE: скрыть текущий ключ или удалить выбранную версию</h2>
+
+<p>Delete marker, маркер удаления, — отдельная запись версии без тела
+объекта. Когда она текущая, обычное чтение ключа видит удаление;
+более старые версии при этом могут сохраняться.
+В исходном Enabled-сценарии после двух PUT история, от новой записи
+к старой, выглядит как <code>[study-v2, study-v1]</code>.
+Следующий DELETE не содержит <code>versionId</code>.
+В helper v1 команды DELETE нет: ниже только протокольная иллюстрация.</p>
+
+<pre><code>DELETE /study-s3/lessons/2026-11/hello%20%2B%25.txt HTTP/1.1
+host: 127.0.0.1:19000
+x-amz-content-sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+x-amz-date: 20261101T090200Z
+authorization: AWS4-HMAC-SHA256 Credential=AKIDEXAMPLE/20261101/us-east-1/s3/aws4_request, SignedHeaders=host;x-amz-content-sha256;x-amz-date, Signature=08c9285831c7db1b26c2ec501c3db115bc12f3a7eb36fcbd6edbdbc5d72cf10c
+
+</code></pre>
+
+<pre><code>HTTP/1.1 204 No Content
+Date: Sun, 01 Nov 2026 09:02:00 GMT
+x-amz-delete-marker: true
+x-amz-version-id: study-marker-m1
+x-amz-request-id: study-delete-1
+
+</code></pre>
+
+<p><code>204</code> означает успешную операцию без тела ответа.
+По HTTP в таком ответе Content-Length не передаётся.
+<code>x-amz-delete-marker: true</code> и version ID сообщают о созданном
+маркере. История становится
+<code>[study-marker-m1, study-v2, study-v1]</code>.
+Тела v2 и v1 не удалены этим простым DELETE.
+<a href="https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteObject.html">DeleteObject</a>,
+<a href="https://www.rfc-editor.org/rfc/rfc9110.html#section-8.6">Content-Length в ответах без тела</a>.</p>
+
+<p>GET или HEAD текущего ключа теперь получает <code>404</code>
+с <code>x-amz-delete-marker: true</code>.
+Запрос выбранного <code>study-v1</code> по-прежнему может вернуть тело.
+Если же явно запросить сам <code>study-marker-m1</code> через GET или HEAD,
+AWS вернёт <code>405</code>, заголовок delete-marker и Last-Modified:
+у выбранной записи нет тела объекта для такого чтения.
+Маркер не равен пустому объекту: объект с нулём байтов можно успешно
+прочитать, а текущий маркер обозначает отсутствие текущего тела.
+<a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/DeleteMarker.html">Чтение delete marker</a>.</p>
+
+<p>Чтобы убрать именно маркер и снова сделать v2 текущей,
+нужен DELETE с его version ID:</p>
+
+<pre><code>DELETE /study-s3/lessons/2026-11/hello%20%2B%25.txt?versionId=study-marker-m1 HTTP/1.1
+host: 127.0.0.1:19000
+x-amz-content-sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+x-amz-date: 20261101T090205Z
+authorization: AWS4-HMAC-SHA256 Credential=AKIDEXAMPLE/20261101/us-east-1/s3/aws4_request, SignedHeaders=host;x-amz-content-sha256;x-amz-date, Signature=e6043136a7deaaf0588a321636139e16d49664c1ec0343d9f1ebf6993bf01779
+
+</code></pre>
+
+<pre><code>HTTP/1.1 204 No Content
+Date: Sun, 01 Nov 2026 09:02:05 GMT
+x-amz-delete-marker: true
+x-amz-version-id: study-marker-m1
+x-amz-request-id: study-delete-marker-1
+
+</code></pre>
+
+<p>Теперь <code>true</code> описывает удалённую запись-маркер.
+Запись <code>study-marker-m1</code> окончательно убрана;
+текущей становится v2, история снова <code>[study-v2, study-v1]</code>.
+Простой повтор DELETE без versionId имел бы другой эффект:
+он создал бы новый маркер. Именно выбранный query-параметр
+делает эти операции разными.
+<a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/ManagingDelMarkers.html">Удаление выбранного маркера</a>.</p>
+
+<p>Тот же метод с <code>versionId=study-v1</code> окончательно удалял бы
+данные v1, а не создавал маркер поверх них. Подстановка другого query
+требует новой подписи; подпись удаления маркера для этого не подходит.
+Для такого удаления AWS проверяет <code>s3:DeleteObjectVersion</code>,
+для простого DELETE — <code>s3:DeleteObject</code>.
+Действующие правила хранения и защиты объектов могут запрещать
+окончательное удаление. Отказ <code>403</code> или иной ошибки нужно
+разбирать как результат конкретного обращения, а не как успешное удаление.
+<a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/DeletingObjectVersions.html">Удаление версий</a>,
+<a href="https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteObject.html">Разрешения DeleteObject</a>.</p>
+
+<h2 id="s3-07-versioning">Что меняется без versioning и при Suspended</h2>
+
+<p>До сих пор использовалась корзина AWS general purpose с состоянием
+versioning <code>Enabled</code>. Это настройка корзины;
+расширение файла, SDK и слово <code>backend</code> в JSON helper
+её не включают. Для одного ключа различаются следующие случаи.</p>
+
+<table>
+<thead><tr><th>Состояние корзины</th><th>Следующий PUT</th><th>DELETE без versionId</th></tr></thead>
+<tbody>
+<tr><td>Versioning никогда не включалось</td><td>Заменяет текущее тело;
+история прежних записей средствами versioning не сохраняется.</td><td>Удаляет
+текущее тело окончательно; маркера версии нет.</td></tr>
+<tr><td>Enabled</td><td>Создаёт новую версию с присвоенным ID;
+прежние сохраняются.</td><td>Создаёт новый текущий маркер;
+прежние тела сохраняются.</td></tr>
+<tr><td>Suspended после включения versioning</td><td>Создаёт версию
+с буквальным ID <code>null</code> или заменяет существующую null-версию;
+сохранённые non-null версии остаются.</td><td>Убирает существующее
+тело null-версии, если оно есть, и устанавливает текущий null-маркер;
+non-null версии сохраняются.</td></tr>
+</tbody>
+</table>
+
+<p>Например, при Suspended история
+<code>[null: v2, study-v1: v1]</code> после нового PUT становится
+<code>[null: v3, study-v1: v1]</code>. Тело v2 из null-слота заменено;
+GET <code>?versionId=null</code> уже получает v3. Последующий простой
+DELETE заменяет этот слот маркером:
+<code>[null: marker, study-v1: v1]</code>.
+Если null-слота ещё нет, DELETE добавляет null-маркер, сохраняя
+существующие non-null версии. Эти переходы задаются именно правилами
+AWS для Suspended.
+<a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/AddingObjectstoVersionSuspendedBuckets.html">PUT при Suspended</a>,
+<a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/DeletingObjectsfromVersioningSuspendedBuckets.html">DELETE при Suspended</a>.</p>
+
+<p>В receipt нужно различать JSON <code>"version_id": null</code> —
+значение ID не получено — и <code>"version_id": "null"</code> —
+сервер передал буквальную строку ID. Вторую строку нельзя превращать
+в JSON null. Она также не закрепляет неизменное состояние:
+при Suspended этот слот перезаписывается. HEAD с ID
+<code>"null"</code>, а затем GET этого ID не гарантируют одно и то же
+тело при конкурирующем PUT. DELETE с <code>versionId=null</code>
+тоже обращается к этому изменяемому слоту, поэтому при конкуренции
+может затронуть уже другое тело.</p>
+
+<p>Условия записи проверяют текущее состояние. В Enabled-корзине
+If-None-Match <code>*</code> может успешно создать новое тело поверх
+текущего маркера, хотя более старые версии по-прежнему существуют.
+Такое условие означает «сейчас нет текущего тела», а не
+«этот ключ никогда раньше не использовался».</p>
+
+<h2 id="s3-07-lost-delete">DELETE потерял ответ: проверяем состояние и историю</h2>
+
+<p>Пусть Enabled-корзина содержит <code>[study-v2, study-v1]</code>.
+Первый простой DELETE создаёт <code>study-marker-m1</code>,
+но его ответ теряется. Повтор простого DELETE создаёт ещё один маркер,
+<code>study-marker-m2</code>. Текущий GET после обеих попыток даёт
+одинаковое «нет текущего тела», а история различается:</p>
+
+<pre><code>до DELETE             [v2, v1]
+первая запись         [m1, v2, v1]       ответ потерян
+повтор без versionId  [m2, m1, v2, v1]
+GET текущего          404
+DELETE versionId=m2   [m1, v2, v1]       GET всё ещё 404</code></pre>
+
+<p>Удаление только m2 не восстанавливает v2: под ним остаётся m1.
+Нельзя автоматически удалять все обнаруженные маркеры ради появления
+тела — это уже новые изменения состояния, которые могут нарушить
+намерение другого клиента. Сначала выясняют, требовалось скрыть текущий
+ключ, сохранить историю или окончательно убрать конкретную версию.
+Затем выбирают только те изменения, которые соответствуют этой задаче.</p>
+
+<p>Для проверки истории AWS предоставляет ListObjectVersions,
+отдельную операцию с разрешением <code>s3:ListBucketVersions</code>.
+Она возвращает записи Version и DeleteMarker с key, version ID,
+LastModified и IsLatest. Prefix отбирает начало ключа, поэтому результат
+дополнительно фильтруют по точному ключу, включая его пробел, плюс и процент.
+При усечённой странице продолжают с обеими возвращёнными метками
+NextKeyMarker и NextVersionIdMarker.
+Страницы, полученные при параллельных изменениях, нельзя считать
+единым снимком всей истории: такую гарантию здесь не предполагаем.
+Helper v1 историю не перечисляет.
+<a href="https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListObjectVersions.html">ListObjectVersions</a>.</p>
+
+<p>Один <code>404</code> текущего GET после потерянного DELETE
+не сообщает, сколько маркеров создано и кто их создал.
+У простого DELETE из этого примера нет operation-id в новой
+записи-маркере. Набор ID и времени из истории может помочь сопоставлению
+с внешним журналом, но сам по себе не устанавливает автора запроса.
+После потерянного ответа на DELETE выбранной обычной non-null версии
+проверяют наличие именно этого ID, а не только текущего ключа;
+отсутствие ID показывает наблюдаемое состояние, но не доказывает,
+какая из конкурировавших операций его удалила.</p>
+
+<p>В корзине без versioning повтор DELETE ещё опаснее для конкурирующей
+новой записи: первый DELETE мог убрать v1, другой клиент мог записать v2,
+а повтор простого DELETE уберёт уже v2. В Suspended ту же проблему
+нельзя решить запоминанием ID <code>null</code>, потому что его слот
+изменяем. AWS также описывает условный DELETE с If-Match для
+general purpose buckets; он сравнивает ETag, но не превращает эту метку
+в уникальный номер события. В helper v1 такого маршрута нет.
+Потерянное подтверждение поэтому разбирают через требуемый результат,
+выбранную версию, доступные сведения и возможную конкуренцию,
+а не через слепой повтор метода.</p>
+
+<h2 id="s3-07-service">Что переносится на совместимый endpoint</h2>
+
+<p>Вымышленные HTTP-сообщения показывают формат запроса и различие
+текущего ключа, выбранной версии и локального файла.
+Правила versioning, условий, маркеров и согласованности выше
+взяты из документации AWS для general purpose buckets.
+Для MinIO или RGW название S3 API не подтверждает каждый из этих
+результатов: проверяют конкретную принятую версию сервера, настройку
+корзины, учётную запись и поддерживаемые checksum.
+Параметр backend helper только выбирает конфигурацию цели.</p>
+
+<p>Исходники helper v1 предусматривают put, head и get;
+PUT ограничен одним телом до 64 MiB и требует create-only либо If-Match.
+GET запрашивает полный объект, предел N и новое имя output.
+Подготовленные HTTP-примеры DELETE, перечисление истории
+и условный GET не расширяют этот интерфейс.
+Если endpoint не принимает выбранную checksum или условие,
+результат сохраняют как ошибку этого режима.
+Убирать условие или незаметно отключать проверку ради успешного ответа
+означало бы выполнить уже другой опыт.</p>

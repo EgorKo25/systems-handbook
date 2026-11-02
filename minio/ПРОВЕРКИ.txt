@@ -1,0 +1,37 @@
+Фактическая подготовка 2 ноября 2026. SOURCE-ONLY.
+
+Прочитаны восстановленные route/model/supply/workbench/first-object/accounts/
+versions и поздние HOME/Go/evidence/CLI/prose corrections. Сохранены глубокие
+принятые object IO08 и healing07, модель и предметный SVG. Новые09–11 и
+cold_copy.py/capacity_model.py перечитаны по действиям/состояниям.
+
+База author9c97f1957e24c336a4c42833dfb889a0340868c6:
+git ls-tree -r --name-only BASE -- minio дал пустой результат.
+Все authored paths новые относительно этой базы; other/shared paths не меняются.
+Текущий canonical может продвигаться основным чатом; перед физической
+интеграцией проверяются отдельные target paths и exact source hashes.
+
+Проверены: 25 отобранных Bash blocks 00–06 через bash -n stdin (syntax only);
+новая capacity_model в памяти: округление +1B/264B, weights20/60, goal1/2,
+синтетические quantiles, отрицательные параметры.
+cold_copy: 25 actual pure-function assertions safe paths/manifest/separate
+trees; filesystem methods/copy/restore не вызваны.
+reference.py pure declaration:27 уникальных cards,46 уникальных terms,
+root-only --version (не путать с --version-id).
+Standalone GF-model копирует embedded code08; прежние RS/bitrot/healing
+модельные результаты не переименовываются в native execution.
+Все12 HTML fragments: HTMLParser balance/unique IDs, embedded SVG XML, local links PASS; всего30 Bash blocks через bash -n stdin. CONFIG13 IDs включая99, DS-сцены nodes/edges/steps=5/4/4 и6/11/6, reference links PASS. Полный readback source records описан final manifest.
+
+Не выполнялись: получение Go/source/binaries, сборка MinIO/mc, native help/
+JSON/version, server/TLS/IAM/versioning/HA, настоящий scan/heal/rebalance,
+cold snapshot/copy/restore, filesystem crash/power test, benchmark,
+SDK helper bridge, browser/mobile/themes/print render.
+Нативные JSON checks в recipes выведены из pinned source и могут остановить
+опыт при несовпадении формата; ослаблять их до любого ненулевого exit нельзя.
+
+Приёмка читателя: выполнить setup в личной Linux amd64 VM; сохранить
+22evidence-файла; проверить первый PUT→GET→cmp и restart без нового PUT;
+проверить limited-account positive/AccessDenied, V1/V2/marker;
+cold-copy остановленного single data→новый restore→GET выбранных UUID→cmp.
+Отдельный erasure cluster и AIStor не считаются созданными этим single-node
+опытом. p99/MiB/s и vendor minimum ресурсы не выдумывались.

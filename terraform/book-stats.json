@@ -1,0 +1,170 @@
+[
+  {
+    "id": "00-route",
+    "title": "Terraform: от выражения до объекта, за который отвечает команда",
+    "words": 615,
+    "part": "Начало",
+    "number": "•"
+  },
+  {
+    "id": "tf-01-install",
+    "title": "Получить CLI и доказать, какие байты будут исполняться",
+    "words": 697,
+    "part": "Начало",
+    "number": "1"
+  },
+  {
+    "id": "tf-02-first-state",
+    "title": "Первый apply: пять объектов в памяти Terraform и два локальных файла",
+    "words": 830,
+    "part": "Начало",
+    "number": "2"
+  },
+  {
+    "id": "tf-03-types",
+    "title": "HCL: форма текста, тип и смысл значения",
+    "words": 874,
+    "part": "Книга I · Язык HCL",
+    "number": "3"
+  },
+  {
+    "id": "tf-04-expressions",
+    "title": "Выражения: преобразование данных и границы знания",
+    "words": 852,
+    "part": "Книга I · Язык HCL",
+    "number": "4"
+  },
+  {
+    "id": "tf-05-contracts",
+    "title": "Входы, locals, outputs и проверка договоров",
+    "words": 721,
+    "part": "Книга I · Язык HCL",
+    "number": "5"
+  },
+  {
+    "id": "tf-06-instances",
+    "title": "Count, for_each и dynamic: число объектов и форма блока",
+    "words": 645,
+    "part": "Книга I · Язык HCL",
+    "number": "6"
+  },
+  {
+    "id": "tf-07-init-provider",
+    "title": "Init и provider: подготовка исполнения и граница RPC",
+    "words": 1137,
+    "part": "Книга II · Как исполняется изменение",
+    "number": "7"
+  },
+  {
+    "id": "tf-08-graph-unknown",
+    "title": "Граф зависимостей: известная форма и поздние значения",
+    "words": 936,
+    "part": "Книга II · Как исполняется изменение",
+    "number": "8"
+  },
+  {
+    "id": "tf-09-plan-apply",
+    "title": "Refresh, plan и apply: решение и его исполнение",
+    "words": 1204,
+    "part": "Книга II · Как исполняется изменение",
+    "number": "9"
+  },
+  {
+    "id": "tf-10-lifecycle",
+    "title": "Жизненный цикл: изменить, заменить, сохранить запрет",
+    "words": 992,
+    "part": "Книга II · Как исполняется изменение",
+    "number": "10"
+  },
+  {
+    "id": "tf-11-module-interface",
+    "title": "Модуль: интерфейс, экземпляр и граница ответственности",
+    "words": 519,
+    "part": "Книга III · Модули и адреса",
+    "number": "11"
+  },
+  {
+    "id": "tf-12-module-providers",
+    "title": "Providers в модуле: requirement, configuration и alias",
+    "words": 542,
+    "part": "Книга III · Модули и адреса",
+    "number": "12"
+  },
+  {
+    "id": "tf-13-module-evolution",
+    "title": "Sources, версии и миграция адресов модуля",
+    "words": 612,
+    "part": "Книга III · Модули и адреса",
+    "number": "13"
+  },
+  {
+    "id": "tf-14-state-identity",
+    "title": "State: адрес, identity, lineage и serial",
+    "words": 668,
+    "part": "Книга IV · Состояние и команда",
+    "number": "14"
+  },
+  {
+    "id": "tf-15-drift-import",
+    "title": "Drift и import: наблюдать, принять или вернуть управление",
+    "words": 870,
+    "part": "Книга IV · Состояние и команда",
+    "number": "15"
+  },
+  {
+    "id": "tf-16-backends-locks",
+    "title": "Backend и locking: кто имеет право записать следующую память",
+    "words": 1051,
+    "part": "Книга IV · Состояние и команда",
+    "number": "16"
+  },
+  {
+    "id": "tf-17-recovery-security",
+    "title": "Восстановление, частичный apply и секреты",
+    "words": 937,
+    "part": "Книга IV · Состояние и команда",
+    "number": "17"
+  },
+  {
+    "id": "tf-18-offline-upgrade",
+    "title": "Зависимости, mirror и обновление без потери доверия",
+    "words": 559,
+    "part": "Эксплуатация и практикум",
+    "number": "18"
+  },
+  {
+    "id": "tf-19-performance",
+    "title": "Измерять plan и apply: CPU, API, граф и очередь state",
+    "words": 762,
+    "part": "Эксплуатация и практикум",
+    "number": "19"
+  },
+  {
+    "id": "tf-20-vm-contract",
+    "title": "VM-адаптер и договор с настройкой Go-сервиса",
+    "words": 1177,
+    "part": "Эксплуатация и практикум",
+    "number": "20"
+  },
+  {
+    "id": "tf-21-lab",
+    "title": "Продолжаемый практикум: ошибка остаётся наблюдаемой",
+    "words": 1293,
+    "part": "Эксплуатация и практикум",
+    "number": "21"
+  },
+  {
+    "id": "tf-22-sources",
+    "title": "Первичные источники и границы подтверждения",
+    "words": 368,
+    "part": "Эксплуатация и практикум",
+    "number": "22"
+  },
+  {
+    "id": "99-glossary",
+    "title": "Словарь · Terraform",
+    "words": 1577,
+    "part": "Справочник",
+    "number": "•"
+  }
+]

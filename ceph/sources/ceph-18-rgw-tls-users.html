@@ -1,0 +1,98 @@
+<header><h1>HTTPS RGW и отдельный S3-пользователь</h1>
+<p>Шлюз получает собственный TLS-сертификат и серверное CephX-удостоверение.
+Приложению выдаются другие ключи: они удостоверяют S3-запросы,
+а не дают управление Linux или всем RADOS.</p></header>
+<h2>Сеть и сертификат</h2>
+<p>Продолжается принятый четырёхузловой кластер 20.2.4.
+На ceph1 заранее принят дополнительный бюджет для RGW.
+Выбран HTTPS endpoint https://rgw-ceph.study:8443, адрес 10.77.0.11.
+Имя должно разрешаться именно в этот адрес в закрытой сети;
+для первого probe curl можно явно указать --resolve. Не добавляйте
+публичный проброс ради доступности endpoint.</p>
+<p>TLS аутентифицирует сервер по сертификату и защищает канал.
+Клиент проверяет цепочку до доверенного CA, срок и имя из SAN,
+списка дополнительных имён сертификата. S3 SigV4 отдельно подтверждает
+владение прикладным secret key и связывает подписанные части HTTP-запроса.
+Правильная подпись не заменяет проверку TLS-сервера.</p>
+<p>В ceph1 от student, cwd ~/ceph-book/labs, выполните прочитанный
+new-tls.sh только после проверки VM. Он создаёт новый tls-01,
+частный CA с RSA3072 и server certificate с SAN rgw-ceph.study/10.77.0.11.
+CA действует 30 дней, серверный сертификат 14 дней; это учебные значения.
+Verify проверяет имя/IP и назначение serverAuth, checkend — минимум сутки
+до истечения. CA key и server key не распространяются в исходниках книги.
+Доверенный ca.crt передают клиенту отдельно после сверки fingerprint.</p>
+<h2>Описание RGW без скрытой подстановки секрета</h2>
+<p>В том же ceph1 создайте новый rgw-deploy-01. TLS-файлы уже приняты,
+server.key не является примером из книги. Python собирает JSON,
+который также является допустимым YAML service spec. Поле ssl включает TLS,
+rgw_frontend_port выбирает 8443, certificate содержит приватный ключ
+и сертификат. Поэтому spec имеет mode 0600 и не попадает в Git/отчёт.</p>
+<pre><code class="language-bash">set -euo pipefail
+umask 077
+set -o noclobber
+mkdir -m 0700 "$HOME/ceph-study/rgw-deploy-01"
+cd "$HOME/ceph-study/rgw-deploy-01"
+python3 -B - "$HOME/ceph-study/tls-01" &gt; rgw.json &lt;&lt;'PY'
+import json, pathlib, sys
+p = pathlib.Path(sys.argv[1])
+spec = {"service_type":"rgw", "service_id":"study",
+ "placement":{"hosts":["ceph1"]},
+ "spec":{"ssl":True,"rgw_frontend_port":8443,
+ "rgw_frontend_ssl_certificate":
+ (p/"server.key").read_text()+"\n"+(p/"server.crt").read_text()}}
+json.dump(spec,sys.stdout)
+sys.stdout.write("\n")
+PY
+sudo cephadm --image "$image" shell --fsid "$fsid" \
+ --mount "$PWD:/study-spec:ro" -- ceph orch apply -i /study-spec/rgw.json
+c orch ls
+c orch ps --daemon-type rgw
+</code></pre>
+<p>Перед apply через c orch ls убедитесь, что service rgw.study отсутствует.
+Существующий service требует чтения его spec, а не замены.
+Orchestrator запускает daemon со своими CephX правами.
+Готовность процесса ещё не означает, что client доверяет сертификату
+или имеет S3 credentials.</p>
+<pre><code class="language-bash">curl --fail-with-body --show-error \
+ --cacert "$HOME/ceph-study/tls-01/ca.crt" \
+ --resolve rgw-ceph.study:8443:10.77.0.11 \
+ https://rgw-ceph.study:8443/
+</code></pre>
+<p>У анонимного запроса допустим S3 AccessDenied: это не успешный
+прикладной доступ, но после проверки сертификата ответ указывает,
+что HTTPS listener доступен. --fail-with-body возвращает ненулевой код
+при таком HTTP-отказе; его нельзя объявить успешным bootstrap.
+Ошибка имени, недоверенный CA, истёкший сертификат или connection refusal
+имеют другую причину. Флаги -k/--insecure не используются.</p>
+<h2>Создание S3 identity</h2>
+<p>Из reentered Bash ceph1 администратор сначала проверяет отсутствие
+user rgw-study через radosgw-admin user info. Только явное отсутствие
+пользователя позволяет create; timeout или отказ доступа не являются
+доказательством отсутствия. Новый собственный каталог rgw-user-01
+и noclobber защищают вывод с секретом от замены.</p>
+<pre><code class="language-bash">umask 077
+set -o noclobber
+mkdir -m 0700 "$HOME/ceph-study/rgw-user-01"
+cd "$HOME/ceph-study/rgw-user-01"
+sudo cephadm --image "$image" shell --fsid "$fsid" -- \
+ radosgw-admin user create --uid=rgw-study --display-name="RGW study application" \
+ &gt; user.json
+</code></pre>
+<p>JSON содержит user_id и массив keys с access_key/secret_key.
+Это реальные сгенерированные credentials только будущего опыта;
+их не показывают на странице или в диагностике. Max_buckets и quota
+ограничивают использование, но не создают bucket. Приложению передают
+только нужную пару через защищённый профиль, не весь административный вывод.
+Регистрация S3 user не меняет пароли Linux.</p>
+<h2>Отказ и ротация</h2>
+<p>При SignatureDoesNotMatch сначала проверяют endpoint, время, region,
+адресацию и signed headers. В 20.2.4 host и x-amz- headers требуют
+предусмотренного включения в подписанное множество. Ослаблять verifier
+в новом локальном стенде не нужно. При утечке создают и принимают новую
+пару, переводят приложение и проверяют отказ старого ключа;
+удаление старой пары до проверки новой может остановить доступ.
+Ключ самого RGW и S3 secret приложения ротируются разными процедурами.</p>
+<p class="sources"><a href="https://github.com/ceph/ceph/blob/v20.2.4/doc/cephadm/services/rgw.rst">service spec и HTTPS</a>;
+<a href="https://github.com/ceph/ceph/blob/v20.2.4/doc/radosgw/admin.rst">S3 user и keys</a>;
+<a href="https://www.ceph.io/en/news/blog/2026/v20-2-4-v19-2-6-combo-released/">SigV4 20.2.4</a>.
+Рецепт не выполнялся; готовый TLS/RGW endpoint здесь не заявлен.</p>

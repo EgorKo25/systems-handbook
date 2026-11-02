@@ -70,7 +70,95 @@
 <p>При чтении неизменённого config приложение получает содержимое нижнего файла. При первой модификации может понадобиться <em>copy-up</em>: подготовка его версии в верхнем каталоге. После этого приложение читает и изменяет верхнюю версию. Другой контейнер, созданный из того же образа, продолжает видеть нижнюю. Запись одного байта поэтому может потребовать значительно больше работы, чем один байт ввода-вывода; точное поведение зависит от файловой системы и включённых возможностей.</p>
 <p>Слои OCI описывают переносимые изменения, а OverlayFS обслуживает текущее дерево на Linux. Это два связанных, но разных представления. Не следует ожидать, что внутренние рабочие файлы OverlayFS буквально совпадут с именами tar-записей OCI, или вручную редактировать их, чтобы исправить контейнер.</p>
 <p>Подключённый том или каталог хоста может перекрыть путь в этом дереве. Если поверх <code>/app</code> смонтировать пустой каталог хоста, прежние файлы образа перестанут быть видны по этому пути. Они не обязаны быть удалены: поиск пути дошёл до монтирования и теперь читает другой источник. Такой эффект объясняет ситуацию «в образе файл есть, а в контейнере его нет».</p>
-<p>Следующая схема продолжает именно наш образ из двух слоёв: исходно видны config=C и new=D. Приложение запишет E в собственную область контейнера и удалит new. Повторный запуск того же контейнера сохранит эти изменения; другой контейнер из прежнего образа снова увидит C и D. Файл old при этом не вернётся: он скрыт уже в самом образе.</p>
+<p>Разрез ниже продолжает тот же образ: исходно config содержит C, new — D, old уже скрыт вторым слоем. Теперь программа меняет, а затем удаляет один и тот же config. Так видно, почему удаление верхней копии не должно возвращать прежнее содержимое из образа.</p>
+
+<figure id="docker-layer-visible-bytes" class="docker-overlay-cut" aria-labelledby="docker-layer-visible-bytes-title">
+<style>
+.docker-overlay-cut{margin:1.5em 0;color:inherit}
+.docker-overlay-cut svg{display:block;width:100%;min-width:0;max-width:400px;height:auto;margin:1em auto;color:inherit}
+.docker-overlay-cut .overlay-phase{max-width:48rem;margin:1.5em auto}
+.docker-overlay-cut figcaption,.docker-overlay-cut .overlay-text{max-width:48rem;margin:1em auto;overflow-wrap:anywhere}
+.docker-overlay-cut code{overflow-wrap:anywhere}
+@media print{.docker-overlay-cut{color:#000!important;background:#fff!important;break-inside:auto}.docker-overlay-cut svg{break-inside:avoid;max-width:90mm}.docker-overlay-cut .overlay-phase{break-inside:avoid}.docker-overlay-cut figcaption,.docker-overlay-cut .overlay-text{color:#000!important;background:transparent!important}}
+</style>
+<h3 id="docker-layer-visible-bytes-title">Один файл между lower, upper и merged</h3>
+<p class="overlay-text">Нижние каталоги уже подготовлены из двух слоёв нашего образа. Следим только за <code>/app/config.txt</code>: <code>43 0a</code> — буква C и перевод строки, два байта. <strong>Lower</strong> — нижний источник; <strong>upper</strong> — изменяемый каталог этого контейнера; <strong>merged</strong> — результат поиска пути, который получает процесс. Это не три полные копии файла. Том поверх <code>/app</code> здесь не подключён.</p>
+<section class="overlay-phase" aria-labelledby="docker-overlay-read-phase-title">
+<h4 id="docker-overlay-read-phase-title">1. Чтение: верхней записи ещё нет</h4>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 346" role="img" aria-labelledby="docker-overlay-read-title docker-overlay-read-desc">
+<title id="docker-overlay-read-title">Первое чтение берёт config.txt из lower</title>
+<desc id="docker-overlay-read-desc">В upper для пути /app/config.txt: config.txt отсутствует, Собственных байтов файла нет. В нижнем каталоге остаются байты 43 0a. При новом поиске через merged: Чтение: 43 0a · C + LF, Источник: lower.</desc>
+<g font-family="system-ui,sans-serif" font-size="16" fill="currentColor">
+<text x="12" y="25">Один путь: /app/config.txt</text>
+<rect x="8" y="43" width="304" height="91" rx="5" fill="currentColor" fill-opacity=".06" stroke="currentColor" stroke-width="2"/>
+<text x="20" y="68" font-weight="700">upper · область контейнера</text>
+<text x="20" y="96">config.txt отсутствует</text>
+<text x="20" y="120">Собственных байтов файла нет</text>
+<rect x="8" y="153" width="304" height="81" rx="5" fill="none" stroke="currentColor" stroke-dasharray="5 4"/>
+<text x="20" y="179" font-weight="700">lower · подготовленный образ</text>
+<text x="20" y="209">config.txt: 43 0a · C + LF</text>
+<path d="M8 252H312" fill="none" stroke="currentColor" stroke-width="2"/>
+<text x="12" y="283" font-weight="700">Вид merged · не новая копия</text>
+<text x="12" y="309">Чтение: 43 0a · C + LF</text>
+<text x="12" y="334">Источник: lower</text>
+</g>
+</svg>
+<p>Поиск не находит верхнюю запись и использует нижний обычный файл. Чтение не создаёт собственную копию его данных.</p>
+</section>
+<section class="overlay-phase" aria-labelledby="docker-overlay-write-phase-title">
+<h4 id="docker-overlay-write-phase-title">2. Copy-up и запись: C превращается в E</h4>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 346" role="img" aria-labelledby="docker-overlay-write-title docker-overlay-write-desc">
+<title id="docker-overlay-write-title">После копирования и успешной записи merged использует upper</title>
+<desc id="docker-overlay-write-desc">В upper для пути /app/config.txt: config.txt — обычный файл, 45 0a · E + LF. В нижнем каталоге остаются байты 43 0a. При новом поиске через merged: Чтение: 45 0a · E + LF, Источник: upper.</desc>
+<g font-family="system-ui,sans-serif" font-size="16" fill="currentColor">
+<text x="12" y="25">Один путь: /app/config.txt</text>
+<rect x="8" y="43" width="304" height="91" rx="5" fill="currentColor" fill-opacity=".06" stroke="currentColor" stroke-width="2"/>
+<text x="20" y="68" font-weight="700">upper · область контейнера</text>
+<text x="20" y="96">config.txt — обычный файл</text>
+<text x="20" y="120">45 0a · E + LF</text>
+<rect x="8" y="153" width="304" height="81" rx="5" fill="none" stroke="currentColor" stroke-dasharray="5 4"/>
+<text x="20" y="179" font-weight="700">lower · подготовленный образ</text>
+<text x="20" y="209">config.txt: 43 0a · C + LF</text>
+<path d="M8 252H312" fill="none" stroke="currentColor" stroke-width="2"/>
+<text x="12" y="283" font-weight="700">Вид merged · не новая копия</text>
+<text x="12" y="309">Чтение: 45 0a · E + LF</text>
+<text x="12" y="334">Источник: upper</text>
+</g>
+</svg>
+<p>Процесс открывает существующий путь для записи <em>без обнуления длины</em> и заменяет байт с позиции 0 на <code>45</code>, букву E. Сначала OverlayFS подготавливает верхнюю версию с метаданными и данными C: <code>43 0a</code>. Затем запись меняет её на <code>45 0a</code>. Размер остаётся равным двум байтам; нижний файл сохраняет C. На рисунке показано состояние после обеих успешных операций.</p>
+</section>
+<section class="overlay-phase" aria-labelledby="docker-overlay-unlink-phase-title">
+<h4 id="docker-overlay-unlink-phase-title">3. Unlink: скрыть имя, не вернуть нижнюю C</h4>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 346" role="img" aria-labelledby="docker-overlay-unlink-title docker-overlay-unlink-desc">
+<title id="docker-overlay-unlink-title">После удаления whiteout скрывает нижний config.txt</title>
+<desc id="docker-overlay-unlink-desc">В upper для пути /app/config.txt: config.txt — whiteout, Символьное устройство (0,0). В нижнем каталоге остаются байты 43 0a. При новом поиске через merged: Новый open: ENOENT, Имени файла не видно.</desc>
+<g font-family="system-ui,sans-serif" font-size="16" fill="currentColor">
+<text x="12" y="25">Один путь: /app/config.txt</text>
+<rect x="8" y="43" width="304" height="91" rx="5" fill="currentColor" fill-opacity=".06" stroke="currentColor" stroke-width="2"/>
+<text x="20" y="68" font-weight="700">upper · область контейнера</text>
+<text x="20" y="96">config.txt — whiteout</text>
+<text x="20" y="120">Символьное устройство (0,0)</text>
+<rect x="8" y="153" width="304" height="81" rx="5" fill="none" stroke="currentColor" stroke-dasharray="5 4"/>
+<text x="20" y="179" font-weight="700">lower · подготовленный образ</text>
+<text x="20" y="209">config.txt: 43 0a · C + LF</text>
+<path d="M8 252H312" fill="none" stroke="currentColor" stroke-width="2"/>
+<text x="12" y="283" font-weight="700">Вид merged · не новая копия</text>
+<text x="12" y="309">Новый open: ENOENT</text>
+<text x="12" y="334">Имени файла не видно</text>
+</g>
+</svg>
+<p>Если просто убрать верхний файл E, поиск снова нашёл бы нижнюю C. Поэтому успешное удаление через merged оставляет верхний признак скрытия — <em>whiteout</em>. В выбранном представлении это специальный объект с тем же именем <code>config.txt</code>, символьное устройство с major/minor <code>0/0</code>. Он не выдаётся приложению как обычный файл.</p>
+</section>
+<figcaption>Срез одного пути при обычном kernel OverlayFS: полная подготовка данных для записи, без <code>metacopy</code>, внешних монтирований и параллельных писателей. Нижний файл во всех трёх состояниях остаётся <code>43 0a</code>. Горизонтальная черта отделяет источники данных от результата поиска: merged не является третьим каталогом с собственной полной копией.</figcaption>
+<div class="overlay-text">
+<p><strong>Текстовая последовательность.</strong> В начале upper не содержит config, merged читает C из lower. После copy-up и изменения upper содержит E, merged читает E. После unlink в upper остаётся whiteout, новый поиск config завершается <code>ENOENT</code>, «нет такого файла». Ранее открытый дескриптор может ещё обращаться к удалённому файлу; исчезновение имени не доказывает немедленного исчезновения всех его байтов.</p>
+<p><strong>Архив и рабочее дерево.</strong> В архиве изменения OCI скрытие этого пути представлялось бы записью <code>app/.wh.config.txt</code>. Это правило tar-формата, а не обязательное имя файла в upper. Kernel OverlayFS поддерживает также представления с расширенными атрибутами; их нельзя механически приравнять к tar-whiteout. Служебный <code>workdir</code> участвует в подготовке операций, но не является ещё одним видимым слоем; детали временных объектов на срезе опущены.</p>
+<p><strong>Сохранение и границы.</strong> Остановка и запуск того же контейнера сохраняют его upper и скрытое имя. Другой контейнер из прежнего образа получает свою пустую верхнюю область и снова читает C; <code>new.txt</code> с D остаётся видимым во всех шагах этого рисунка, а <code>old.txt</code> уже отсутствует в самом образе. Ошибка copy-up или записи, например при нехватке места, требует отдельного разбора фактического состояния; здесь показаны успешные операции. Имена lower/upper условны: не редактируйте внутренние каталоги Engine вручную.</p>
+<p><strong>Где применима модель.</strong> Это механизм kernel OverlayFS из документации Linux 6.8, не обещание конкретного storage driver всем установкам Docker. Классический <code>overlay2</code>, containerd overlayfs snapshotter и rootless-вариант с <code>fuse-overlayfs</code> управляют хранилищем по-разному. Версию ядра, backend и параметры проверяют отдельно. Оптимизации, разреженные файлы и reflink могут менять физическую стоимость copy-up; два нарисованных байта не задают число дисковых операций.</p>
+<p class="sources">Основания: <a href="https://www.kernel.org/doc/html/v6.8/filesystems/overlayfs.html">OverlayFS, Linux 6.8</a>, <a href="https://github.com/torvalds/linux/blob/v6.8/fs/overlayfs/copy_up.c">подготовка верхней версии</a>, <a href="https://github.com/torvalds/linux/blob/v6.8/fs/overlayfs/dir.c">удаление и whiteout</a>. Байты C/E и последовательность состояний вычислены для примера этой главы.</p>
+</div>
+</figure>
+
 <h2>Где Docker хранит подготовленные объекты</h2>
 <p><code>overlay2</code> — название классического драйвера хранения Docker, использующего OverlayFS. У containerd есть интерфейс <em>snapshotter</em> для подготовки файловых снимков; его overlayfs-реализация тоже использует OverlayFS, но организует управление иначе. Поэтому overlay2 и overlayfs snapshotter — не два написания одного параметра.</p>
 <p>По документации Engine 29 и новее свежая установка использует containerd image store; обновлённая с прежнего выпуска может продолжать использовать классический драйвер. Проверяйте свой <code>docker info</code>. При containerd image store могут сохраняться и сжатые передаваемые объекты, и распакованные файловые снимки. Данные containerd размещаются отдельно от Docker data-root; изменение одного пути не переносит автоматически всё хранилище.</p>

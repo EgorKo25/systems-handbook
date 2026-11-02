@@ -1,0 +1,600 @@
+<header>
+<h1>Как PUT становится версией и откуда GET берёт её байты</h1>
+<p>В предыдущих упражнениях клиент получил version ID и сравнил
+прочитанный manifest с исходным файлом. Теперь проследим работу
+серверного процесса: какие сведения он держит в памяти, какие части
+пишет на endpoints и после каких проверок возвращает ответ.</p>
+</header>
+
+<h2>Объект упражнения и объект расчёта</h2>
+<p>На сохраняемом стенде у <code>project/manifest.txt</code> было
+35 байт. Там один endpoint, K=1 и P=0: дополнительного источника для
+восстановления нет. Небольшое тело может храниться внутри
+<code>xl.meta</code>. Такой способ называется inline; ниже мы разберём
+его отдельно.</p>
+<p>Для расчёта нескольких дисков рассмотрим условную новую версию V
+того же key в bucket <code>handbook-minio</code>. Её тело состоит
+из 2 097 152 байтов <code>0x41</code>, кода буквы A, и одного
+байта LF <code>0x0a</code>, перевода строки: S=2 097 153 байта. Предположим один pool, один erasure set и
+четыре endpoints, N=4, K=2, P=2. В начале PUT все четыре доступны;
+сжатие, шифрование тела и перенос во внешнее хранилище не используются.
+Это описание модели, команда изменения учебного manifest здесь
+не выполняется.</p>
+<p>Рассматривается один обычный PUT с известной длиной тела.
+Single PUT означает одну операцию загрузки целого тела. Сервер
+описывает её как один part с номером 1. Part — часть версии,
+перечисленная в метаданных; у multipart upload частей несколько.
+Erasure block — порция part, которую кодер обрабатывает за один
+проход. Совокупность полученных для неё K+P фрагментов далее
+называется stripe. Shard — фрагмент с определённым номером.
+Сервер хранит distribution — перестановку, которая назначает номера
+shards позициям endpoints. Последовательные фрагменты одного номера
+образуют поток назначенного ему endpoint.</p>
+<p>Все функции и значения этой главы относятся к архивному Server
+commit <code>9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a</code>.
+Имена внутренних файлов описывают данный формат OSS.</p>
+
+<h2>HTTP-handler читает поток, а не получает готовый файл</h2>
+<p><code>PutObjectHandler</code> получает bucket и key из URL,
+проверяет Content-Length, поддерживаемые заголовки, подпись и право
+PutObject. Ветка обычного запроса берёт тело из <code>r.Body</code>.
+Это поток чтения: байты ещё могут приходить по сети, когда сервер
+уже обработал их начало.</p>
+<p>Handler оборачивает поток в <code>hash.Reader</code>. При чтении
+тот считает длину и требуемые контрольные суммы. Если клиент передал
+проверяемую контрольную сумму, несовпадение возвращается как ошибка чтения.
+Часть проверок завершается при EOF — признаке конца входного потока.
+Поэтому получение последнего сетевого пакета ещё не означает, что
+сервер принял весь объект. Подготовленный PutObjReader передаётся
+в объектный слой вместе с параметрами версии и пользовательскими
+метаданными.</p>
+<p>Метаданные запроса, например Content-Type и operation-id,
+хранятся в серверных структурах в RAM до формирования записи версии.
+Условие If-Match или If-None-Match превращается в проверку текущего
+объекта. Для такого PUT код берёт блокировку имени до проверки.
+Безусловный PUT может сначала кодировать тело во временную область,
+а блокировку bucket/key получить перед добавлением V в метаданные объекта.
+UUID — генерируемый 128-битовый идентификатор. Отдельный временный UUID
+каждой записи задаёт ей собственное имя каталога.</p>
+<p class="sources">Источники:
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/object-handlers.go#L1793-L2183">PutObjectHandler</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/internal/hash/reader.go#L267-L328">проверки Reader.Read</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-object.go#L1254-L1286">условия и ранняя блокировка</a>.</p>
+
+<h2>Pool, set и номер shard выбираются разными действиями</h2>
+<p>В модели с одним pool запрос сразу попадает в него. При нескольких
+pools код сначала проверяет сведения о существующем объекте и ошибки
+его поиска. В обычной ветви PUT он может выбрать pool для новой записи
+через <code>getAvailablePoolIdx</code>. Выбор учитывает доступное место
+и состояние pools; среди пригодных вариантов используется случайный
+выбор с весом доступной ёмкости. Поэтому правило «все версии key
+навсегда лежат в одном pool» из этой функции не следует.</p>
+<p>Внутри выбранного pool функция <code>getHashedSet(object)</code>
+выбирает set. Используется алгоритм из формата deployment:
+в закреплённом коде есть CRCMOD и варианты SIPMOD. В нашем примере
+set один. Сервер получает его список StorageAPI — интерфейсов
+к областям хранения. Для локального диска операция исполняется
+в его storage-реализации; удалённый endpoint обслуживает процесс
+соответствующего узла. Клиентский S3 URL указывает на принимающий
+сервер, а storage endpoint обозначает область хранения внутри
+серверной топологии.</p>
+<p>Отдельная перестановка distribution задаёт номера shards на
+позициях endpoints. <code>newFileInfo</code> получает
+<code>handbook-minio/project/manifest.txt</code> и вызывает
+<code>hashOrder</code> для N=4. Для этой строки CRC32 равен
+<code>0x87b9ae59</code>, остаток деления на 4 равен 1,
+distribution получается <code>[3,4,1,2]</code>.
+E1 получает shard 3, E2 — shard 4, E3 — shard 1, E4 — shard 2.
+Для кодера/декодера порядок endpoints становится
+<code>[E3,E4,E1,E2]</code>.</p>
+<p>Этот расчёт distribution использует полный bucket/key,
+переданный в newFileInfo. Индекс set выше вычислялся другим вызовом
+и с другим назначением. При последующем чтении distribution берётся
+из метаданных выбранной версии, чтобы номер полученных байтов
+оставался известен даже после изменения текущих настроек.</p>
+<p class="sources">Источники:
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-server-pool.go#L392-L409">взвешенный выбор pool</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-server-pool.go#L637-L656">getPoolIdx</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-sets.go#L679-L741">выбор set</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/storage-datatypes.go#L387-L397">newFileInfo</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-metadata-utils.go#L173-L191">hashOrder</a>.</p>
+
+<h2>Какие сведения нужны одной версии</h2>
+<p><code>putObject</code> выбирает K и P для новой записи,
+создаёт version ID при включённом versioning и отдельный UUID
+DataDir. Version ID идентифицирует версию S3, DataDir называет
+серверную область её данных; эти UUID не обязаны совпадать.
+Ещё один UUID U именует временную операцию.</p>
+<table>
+<thead><tr><th>Поле в FileInfo</th><th>Смысл в этом PUT</th></tr></thead>
+<tbody>
+<tr><td>VersionID</td><td>Идентификатор V, который позднее вернётся клиенту.</td></tr>
+<tr><td>DataDir</td><td>Имя T каталога данных; для inline отдельный каталог с телом не требуется.</td></tr>
+<tr><td>Erasure.DataBlocks / ParityBlocks</td><td>K=2 и P=2 для этой версии.</td></tr>
+<tr><td>Erasure.BlockSize</td><td>Размер B входного блока кодирования.</td></tr>
+<tr><td>Erasure.Distribution / Index</td><td>Перестановка endpoints и номер shard данного участника.</td></tr>
+<tr><td>Parts</td><td>Номера и размеры частей; у рассматриваемого single PUT один part 1.</td></tr>
+<tr><td>Size / ModTime / Metadata</td><td>Принятый размер, время версии и поля вроде Content-Type и ETag.</td></tr>
+<tr><td>Data</td><td>Буфер кодированных inline-байтов данного участника, если выбран inline-путь.</td></tr>
+</tbody>
+</table>
+<p>На этом шаге FileInfo и массив отдельных FileInfo по endpoints
+находятся в RAM. В сериализованном xlMetaV2Object поля ErasureM и
+ErasureN сохраняют соответственно K и P; обозначение N в математике
+главы означает их сумму. Номер Index и shard data у участников
+разные, хотя VersionID, размеры parts, K/P и distribution должны
+описывать одну версию.</p>
+<p>При K=P=2 write quorum W равен 3. Для обычной data version
+формула W=K, а при K=P добавляется один ответ. При отказах,
+уже обнаруженных до выбора layout, режим availability может повысить P;
+это разобрано в <a href="#minio-01-model">главе о модели</a>.
+Здесь отказ E4 произойдёт позднее, поэтому исходный layout 2+2
+остаётся тем же.</p>
+
+<h2>Части, blocks, chunks и контрольные суммы</h2>
+<p>У новой версии <code>newFileInfo</code> задаёт
+B=1 048 576 байт, то есть 1 MiB. <code>Erasure.Encode</code>
+читает до B входных байтов, вызывает Split и Encode библиотеки,
+затем передаёт N фрагментов writers. Split делает K последовательных
+data shards одинаковой длины ceil(L/K), то есть L/K с округлением
+вверх до целого, где L — фактическая длина данного блока; недостающие байты последнего data shard дополняются
+нулём. Такое дополнение называется padding. Исходная длина
+позволит исключить эти нули при GET. Parity вычисляется для
+дополненных данных.</p>
+<p>У body длиной 2 MiB+1 будут два полных блока и один блок длиной
+1 байт. При K=2 каждый полный блок даёт по 524 288 байт на shard,
+последний — по 1 байту. Payload здесь — кодированные байты
+без контрольных сумм и метаданных. Каждый endpoint должен получить
+1 048 577 байт shard payload. Весь набор из четырёх shards
+содержит 4 194 308 таких байтов: data с одним байтом padding
+и parity той же суммарной длины.</p>
+<p>Bitrot writer защищает каждый переданный фрагмент отдельно.
+Chunk — фрагмент одного shard за проход кодирования. Hash —
+контрольное значение, вычисленное из его байтов. Для выбранного
+HighwayHash256S перед chunk записывается 32-байтовый hash,
+затем payload chunk. Получается поток
+<code>hash0 | chunk0 | hash1 | chunk1 | hash2 | chunk2</code>.
+В примере это 96 байт hashes на endpoint, 384 на четыре.
+Полный расход четырёх shard-потоков —
+4 194 692 байта до xl.meta, каталогов и распределения блоков filesystem.</p>
+<p>Это вычисленные длины. Полезные байты HTTP body, shard payload,
+hashes и выделенные filesystem блоки учитываются раздельно.
+При успешной записи только на трёх endpoints фактический расход
+также зависит от того, сколько временных байтов успел записать
+четвёртый и удалось ли их убрать.</p>
+<p>В RAM используются буферы входных blocks, кодированных shards,
+metadata и записи к storage. Большой body не требуется целиком
+держать в одном Go slice; код обрабатывает его блоками и может
+использовать read-ahead. Из B нельзя вывести общий расход RAM:
+одновременно существуют буферы нескольких путей и нескольких запросов.</p>
+<p class="sources">Источники:
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/object-api-common.go#L28-L37">blockSizeV2</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-encode.go#L69-L109">Encode</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-coding.go#L42-L131">NewErasure, EncodeData и ShardFileSize</a>,
+<a href="https://github.com/klauspost/reedsolomon/blob/v1.12.4/reedsolomon.go#L1595-L1652">Split зависимости v1.12.4</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/bitrot-streaming.go#L44-L132">потоковый bitrot writer</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/xl-storage-format-v1.go#L156-L159">DefaultBitrotAlgorithm</a>.</p>
+
+<h2>Записанные chunks ещё не являются опубликованной версией</h2>
+<p>Если тело хранится отдельно от xl.meta, далее назовём этот путь
+non-inline. Его writer создаёт временные данные под
+<code>.minio.sys/tmp/U/T/part.1</code> на соответствующем endpoint.
+U относится к операции, T — к DataDir версии. Фоновый writer
+читает данные из буфера, а storage CreateFile создаёт файл
+с запретом заменить уже существующий файл. В закреплённой
+writeAllDirect после копирования проверяется записанная длина,
+выполняется Fdatasync и проверяется результат Close. Fdatasync
+запрашивает у ОС синхронизацию данных файла и необходимых для них
+служебных сведений. Фактическая устойчивость при пропадании питания зависит также
+от filesystem и контроллера накопителя.</p>
+<p><code>multiWriter</code> запоминает ошибку каждого writer.
+Неисправный writer исключается из следующих проходов. Для каждого
+блока Encode должен сохранить write quorum; после Encode
+<code>putObject</code> закрывает writers и отдельно проверяет
+quorum возвращённых результатов Close. Затем проверяется, что прочитано не меньше
+заявленной длины body. Ошибка hash.Reader тоже прерывает Encode.
+До этих проверок сервер не переходит к RenameData.</p>
+<p>Допустим, E4 перестал принимать данные, а E1, E2 и E3 успешно
+дописали и закрыли свои потоки. W=3 выполнен. Данные на этих
+трёх endpoints пока находятся во временной области; наличие там
+байтов ещё не добавило V в публичный xl.meta объекта.
+Сервер заканчивает FileInfo: записывает размер part, время,
+метаданные и сведения о версии.</p>
+<p>Для non-inline part streamingBitrotWriter.Close сначала
+закрывает промежуточный writer, затем ждёт завершения фонового
+вызова CreateFile. Внутри CreateFile функция writeAllDirect
+проверяет длину и возвращает ошибки Fdatasync и Close файла.
+Однако streamingBitrotWriter.Close сохраняет результат закрытия
+промежуточного writer до ожидания и после Wait возвращает именно
+его; результат CreateFile после ожидания он заново не читает.
+Поэтому ожидание CreateFile само по себе не доказывает, что каждая
+поздняя ошибка Fdatasync или Close попадёт в close quorum.
+Затем общий код вызывает RenameData на участниках: данные и метаданные
+публикуются по отдельным endpoints, после чего возвращённые результаты
+сопоставляются с write quorum.</p>
+<p class="sources">Источники:
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-encode.go#L33-L65">multiWriter</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/bitrot-streaming.go#L77-L98">streamingBitrotWriter.Close</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/internal/ringbuffer/ring_buffer.go#L548-L609">Flush и закрытие ring buffer</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-object.go#L1393-L1551">temporary writers, close и FileInfo</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/xl-storage.go#L2092-L2208">CreateFile и writeAllDirect</a>.</p>
+
+<h2>Что меняется при публикации</h2>
+<p>Публикацией здесь называется изменение, после которого
+серверные метаданные объекта ссылаются на новую версию V и её данные.
+Под блокировкой имени <code>renameData</code> вызывает
+<code>StorageAPI.RenameData</code> у пригодных endpoints.
+Внутри локального <code>xlStorage.RenameData</code> сервер читает
+прежний xl.meta, добавляет описание V и сериализует обновлённый
+набор версий. Общий xl.meta может описывать несколько версий;
+отдельные каталоги T хранят их non-inline данные.</p>
+<p>У каждого non-inline участника сначала записывается новый
+временный <code>U/xl.meta</code>, затем каталог данных
+<code>U/T</code> перемещается к объекту, и после этого временный
+xl.meta заменяет публичный
+<code>handbook-minio/project/manifest.txt/xl.meta</code>.
+Конечный part находится по относительному пути
+<code>handbook-minio/project/manifest.txt/T/part.1</code>.
+Все пути отсчитываются от корня соответствующего storage endpoint.</p>
+<p>Порядок нужен для чтения: опубликованное описание V должно
+указывать на её подготовленные данные. Несколько перемещений
+на нескольких endpoints выполняются отдельно. Если три RenameData
+завершились успешно, W=3 выполнен, хотя E4 ещё не содержит V.
+Если успешных публикаций меньше W, общий код пытается отменить
+успешные записи через DeleteVersion с UndoWrite. Ошибки этой
+очистки не превращают её в гарантированный общий rollback;
+на дисках могут оставаться частичные результаты.</p>
+<p>Рассмотрим один возможный остаток при известном модели ID V.
+RenameData прошёл только на E1/E2: это 2, меньше W=3.
+Пусть попытка UndoWrite на них не удалила V, их метаданные V
+согласованы, а оба полных parity shard читаются и проходят hash.
+После возврата PUT с ошибкой и освобождения блокировки запрос
+именно V может получить тело из этих двух источников при R=2.
+FastGetObjInfo — опция быстрого поиска сведений об объекте —
+в этом примере выключена. Попытки чтения metadata завершены:
+E1/E2 вернули V, E3 — отсутствие V, E4 — ошибку недоступности.
+Успешное чтение здесь зависит от перечисленных ответов metadata
+и выбора V. Для GET без ID сервер отдельно выбирает и согласует
+текущую версию; этот пример его результат не устанавливает.
+ID V задан моделью; клиент, потерявший ответ, может его не знать.</p>
+<p>После успешного renameData вызывается commitRenameDataDir.
+Если заменялась прежняя версия null и получен oldDataDir,
+эта функция удаляет старую область данных с отдельной проверкой
+ошибок. Поэтому её ошибка может вернуться уже после публикации
+новых метаданных. У рассматриваемой новой версии V с новым VersionID
+oldDataDir пуст.</p>
+<p>Затем объектный слой возвращает ObjectInfo. HTTP-handler
+устанавливает ETag и version ID и доходит до отправки успешного
+ответа. Клиент получает подтверждение только если этот ответ
+дошёл до него. Успешный ответ означает принятие сервером
+предусмотренных проверок записи, а не наличие N исправных shards
+или один общий атомарный syscall на объект. Набор IO зависит
+от inline/non-inline пути, размера xl.meta, filesystem и storage.</p>
+<p class="sources">Источники:
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-object.go#L1019-L1100">renameData и UndoWrite</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/xl-storage.go#L2781-L2915">xlStorage.RenameData</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-object.go#L1563-L1623">последние проверки PUT</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-object.go#L1836-L1852">commitRenameDataDir</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/object-handlers.go#L2111-L2183">ObjectInfo и HTTP-ответ</a>.</p>
+
+<h2>Короткий manifest проходит inline-ветвь</h2>
+<p>Inline означает хранение кодированных байтов рядом с описанием
+версии внутри xl.meta. Выбор делается по ожидаемому размеру shard,
+а не только по длине HTTP body. В закреплённой настройке исходный
+inline block равен 128 KiB; для versioned записи ShouldInline
+использует одну восьмую этого значения, 16 KiB. Настроенное
+значение может быть другим.</p>
+<p>Поэтому 35-байтовый manifest на исходном одноendpointном стенде
+может попасть в inline: K=1, его shard payload равен 35 байтам.
+При потоковом HighwayHash256S один chunk добавляет 32 байта hash.
+Эти 67 байт являются содержимым inline-буфера данного участника;
+размер самого xl.meta больше и зависит также от полей и других
+версий.</p>
+<p>Вместо CreateFile для part writer наполняет bytes.Buffer
+в RAM. После Encode его байты присваиваются FileInfo.Data.
+AddVersion помещает их во внутреннее inline-хранилище версии,
+а AppendTo добавляет это хранилище к сериализованному xl.meta.
+RenameData сохраняет новый xl.meta; ветвь перемещения отдельного
+DataDir для такого тела пропускается. Описание part 1 в metadata
+при этом остаётся. На endpoint не обязательно появится отдельный
+файл с исходными 35 байтами.</p>
+<p>Checksum входного HTTP body, hash каждого bitrot chunk
+и проверка сериализованных метаданных защищают разные байты.
+ETag, возвращённый приложению, также нельзя безусловно считать
+ни bitrot hash, ни собственным SHA-256 исходного файла.</p>
+<p class="sources">Источники:
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/internal/config/storageclass/storage-class.go#L275-L306">ShouldInline и InlineBlock</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-object.go#L1398-L1422">inline writers</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/xl-storage-format-v2.go#L1592-L1700">AddVersion</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/xl-storage-format-v2.go#L1176-L1230">AppendTo</a>.</p>
+
+<h2>GET сначала выбирает версию</h2>
+<p>Продолжим чтением той же V. Клиент указывает её version ID;
+сервер проверяет запрос и полномочия. При нескольких pools код
+получает сведения о версии из pools и выбирает подходящий результат;
+внутри pool обращается к set этого key. Это поиск уже сохранённого
+объекта, а не повторный выбор pool по свободному месту.</p>
+<p><code>getObjectFileInfo</code> запрашивает ReadVersion для
+явного ID. Без ID читаются xl.meta и выбирается текущая версия;
+при необходимости pickLatestQuorumFilesInfo согласует сведения
+из списков версий. Текущий delete marker и чтение конкретного V
+разобраны в <a href="#minio-06-versions-and-unknown-put">предыдущей
+главе</a>. Здесь V — обычная data version с телом.</p>
+<p>Сначала objectQuorumFromMeta устанавливает quorum по доступным
+метаданным. Для рассматриваемого layout read quorum R равен K=2.
+listOnlineDisks и pickValidFileInfo затем ищут согласованный
+вариант: учитываются время либо предусмотренное кодом запасное сопоставление по ETag,
+список parts, их размеры, K/P и distribution. Перед чтением
+отбрасываются неподходящие metadata и endpoints.</p>
+<p>Два ответа от дисков ещё не дают два пригодных shard. Например,
+описание V на одном диске и описание другой версии на втором
+нельзя соединить как части V. Разная distribution назначила бы
+байтам другие номера. Напротив, метаданные двух пригодных участников
+не обязаны совпадать побайтово: Index и inline shard data у них
+свои. Код согласует нужные свойства версии.</p>
+<p>В быстром пути есть отдельный стартовый порог minDisks,
+рассчитанный до знания layout. В симметричном случае он увеличен
+на один. Этот порог управляет ожиданием ответов; окончательный
+read quorum вычисляется из metadata. Число K в декодере не следует
+подменять этим предварительным порогом.</p>
+<p>Согласование metadata происходит под блокировкой имени.
+При inline выбранные данные уже находятся в RAM, и блокировку
+можно освободить после подготовки reader. Для non-inline чтения
+код передаёт освобождение блокировки в cleanup reader.
+Это позволяет читать данные выбранной версии с нужным временем
+жизни ресурсов.</p>
+<p class="sources">Источники:
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-server-pool.go#L907-L1043">поиск GET по pools</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-object.go#L594-L676">pickLatestQuorumFilesInfo</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-object.go#L706-L971">getObjectFileInfo</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-metadata.go#L289-L403">согласованные FileInfo</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-metadata.go#L530-L563">objectQuorumFromMeta</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-healing-common.go#L219-L254">listOnlineDisks</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-object.go#L203-L307">reader и блокировка</a>.</p>
+
+<h2>От hash на носителе до байтов HTTP-ответа</h2>
+<p><code>getObjectWithFileInfo</code> переставляет endpoints по
+сохранённым номерам shards, определяет parts для нужного диапазона
+и создаёт bitrot readers. Для inline reader использует сохранённый
+буфер Data, для non-inline — поток файла part.N. При Range-запросе
+всё равно могут потребоваться выровненные chunks; кодер затем
+отдаёт только требуемый диапазон логических байтов.</p>
+<p>Bitrot reader читает сохранённый hash и payload chunk,
+вычисляет hash заново и сравнивает. При несовпадении возвращается
+errFileCorrupt. Ошибка чтения, отсутствующий файл или повреждённый
+chunk исключают этот reader; parallelReader пробует другие,
+пока не получит K пригодных фрагментов либо исчерпает источники.
+Он не передаёт заведомо повреждённый chunk декодеру как правильный.</p>
+<p>В нашем распределении E1/E2 содержат parity shards, E3/E4 —
+data shards. После PUT E4 не получил V. Предположим, позднее chunk
+на E3 перестал проходить hash. В рассматриваемом GET код
+обратился к reader E3 и обнаружил это несовпадение.
+Метаданные V на E1/E2 пригодны,
+оба их parity chunks проходят проверку. Из них кодер восстанавливает
+два data shards в RAM. Для каждого блока writeDataBlocks соединяет
+data shards в исходном порядке и исключает padding по известной
+логической длине.</p>
+<p>Результат через reader/pipe передаётся HTTP-handler и затем
+клиенту. Все 2 097 153 байта V могут быть прочитаны, хотя файлы
+E3 и E4 ещё не восстановлены. Если восстановлены все запрошенные
+байты, а ошибка относилась к missing/corrupt parts, код может
+поставить partial operation в MRF — фоновую очередь повторного
+восстановления — и завершить это чтение успешно.</p>
+<p>Поздняя ошибка чтения имеет другой результат. Если HTTP-handler
+ещё не отправил headers или body, он может вернуть S3 error.
+После начала ответа заменить уже отправленный статус новым нельзя:
+клиент должен заметить оборванный поток или ошибку проверки тела.
+Поэтому принятие GET включает чтение до конца и сравнение байтов,
+как в <a href="#minio-04-first-object">первом roundtrip</a>.</p>
+<p>Описанный путь относится к пригодной выбранной V. В других ветвях
+этой реализации GET может инициировать lifecycle expiry или проверку
+и удаление невосстановимого остатка при недостаточных metadata.
+Поэтому GET нельзя считать универсальной процедурой снятия
+неизменяемого снимка повреждённого server data.</p>
+<p class="sources">Источники:
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-object.go#L310-L431">getObjectWithFileInfo и MRF</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/bitrot-streaming.go#L161-L214">bitrot reader</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-decode.go#L126-L313">parallelReader и Decode</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/object-handlers.go#L468-L565">expiry и запись HTTP body</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-object.go#L913-L936">ветвь dangling metadata</a>.</p>
+
+<h2>Вычислим две stripes на семи байтах</h2>
+<p>Для видимого расчёта возьмём body <code>MinIO!\n</code>:
+семь байтов <code>4d 69 6e 49 4f 21 0a</code>.
+Все значения далее записаны в hex. Уменьшим учебный B до 5 байт
+и оставим K=2, P=2. Это самостоятельная модель кодирования;
+матрицу выбранной в
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/go.mod">go.mod</a>
+библиотеки klauspost/reedsolomon v1.12.4 мы здесь не воспроизводим и побайтового совпадения parity не заявляем.</p>
+<p>Символом поля служит один байт; GF(2^8) содержит 256 таких
+значений. Биты байта задают коэффициенты полинома: коэффициент
+при x^i равен биту номера i. Нумерация начинается с 0 у младшего
+разряда. Поэтому 02 соответствует x, а 80 — x^7. Коэффициенты равны 0
+или 1. Их сложение выполняется через XOR: в разряде получается 1,
+когда два исходных бита различаются. Вычитание здесь совпадает
+со сложением. Например, 4d XOR 49 = 04.</p>
+<p>При умножении сначала перемножают полиномы, затем берут остаток
+по выбранному неприводимому полиному x^8+x^4+x^3+x^2+1,
+записанному как 0x11d. Он не раскладывается на произведение
+полиномов меньшей положительной степени с коэффициентами 0 и 1.
+При таком выборе каждый ненулевой элемент имеет обратный:
+их произведение равно 01. Например, 02·80 даёт x^8, а после
+уменьшения по выбранному полиному остаётся x^4+x^3+x^2+1,
+то есть 1d.
+<a href="https://www.rfc-editor.org/rfc/rfc5510.html#section-8.1">Арифметика конечного поля</a>.</p>
+<p>Для каждой позиции двух data shards x и y выбираем матрицу G:</p>
+<pre><code>          x   y
+shard 1 [ 1   0 ]   = x
+shard 2 [ 0   1 ]   = y
+shard 3 [ 1   1 ]   = x XOR y
+shard 4 [ 1   2 ]   = x XOR (02 · y)</code></pre>
+<p>Первые две строки сохраняют data, следующие вычисляют parity.
+Для двух строк (a,b) и (c,d) определитель вычисляется как
+a·d XOR b·c с умножением в этом поле. У любой пары строк он ненулевой,
+поэтому любые два исправных shards дают два независимых уравнения
+для x и y. Слово «независимых» здесь имеет вычислимый смысл:
+обратная матрица пары существует.</p>
+<table>
+<thead><tr><th>Stripe</th><th>Входные байты</th><th>Shard 1</th><th>Shard 2</th><th>Shard 3</th><th>Shard 4</th></tr></thead>
+<tbody>
+<tr><td>0</td><td>4d 69 6e 49 4f</td><td>4d 69 6e</td><td>49 4f 00</td><td>04 26 6e</td><td>df f7 6e</td></tr>
+<tr><td>1</td><td>21 0a</td><td>21</td><td>0a</td><td>2b</td><td>35</td></tr>
+</tbody>
+</table>
+<p>В первой stripe ceil(5/2)=3 байта на shard: добавлен один
+нулевой байт. Во второй ceil(2/2)=1, padding нет.
+Потоки payload по номерам shards получаются такими:</p>
+<pre><code>shard 1: 4d 69 6e | 21
+shard 2: 49 4f 00 | 0a
+shard 3: 04 26 6e | 2b
+shard 4: df f7 6e | 35</code></pre>
+<p>Всего data payload 8 байт, parity payload ещё 8: 16 байт
+против семи входных. Из девяти добавленных байтов один — padding
+в data, восемь — parity. Если применить уже вычисленную
+distribution [3,4,1,2], E1 получит поток shard 3, E2 — shard 4,
+E3 — shard 1, E4 — shard 2.</p>
+<p>Условно добавим потоковый 32-байтовый hash перед каждым chunk
+каждого endpoint. Две stripes дают восемь hashes: 256 байт,
+а вместе с payload — 272 байта. Значения самих hashes в этой
+модели не вычисляются; посчитаны их длины. xl.meta, filesystem
+и временное сосуществование файлов сюда не включены.</p>
+
+<h2>Восстановление только из parity</h2>
+<p>Пусть доступны shard 3 и shard 4; обозначим их байты p и q.
+Определитель их матрицы равен 02 XOR 01 = 03.
+Обратный к 03 элемент поля равен f4, поскольку 03·f4=01.
+Получаем y=f4·(p XOR q), затем x=p XOR y.</p>
+<pre><code>позиция 0: p=04, q=df
+p XOR q = db
+y = f4 · db = 49
+x = 04 XOR 49 = 4d
+
+позиция 1: p=26, q=f7 → y=4f, x=69
+позиция 2: p=6e, q=6e → y=00, x=6e
+stripe 1: p=2b, q=35 → y=0a, x=21</code></pre>
+<p>Восстановленные data shards первой stripe соединяются как
+<code>4d 69 6e 49 4f 00</code>. Известная длина блока 5 убирает
+последний 00. Вторая stripe даёт <code>21 0a</code>.
+Результат снова <code>4d 69 6e 49 4f 21 0a</code>.</p>
+<p>Одного parity shard недостаточно для однозначного результата.
+Например, body <code>MinIO!\n</code> и <code>LinHO!\n</code>
+дают в этой модели один и тот же полный shard 3
+<code>04 26 6e 2b</code>. Проверка его hash подтвердила бы именно
+эти сохранённые байты, но не выбрала бы между двумя исходными body.
+Второе независимое уравнение поступает из другого пригодного shard.</p>
+<p>У реального B=1 MiB этот семибайтовый body образует одну stripe:
+K=2 даёт по 4 байта shard payload, те же 16 байт суммарно,
+но только четыре hashes, 128 байт. Получается 144 байта потоков
+до metadata, а при стандартном inline-выборе они сохранялись бы
+в xl.meta. Учебный B=5 нужен для расчёта двух stripes; он не
+является настройкой нашего MinIO и меняет число контрольных сумм.
+У реального большого body V размеры выше вычислены с B=1 MiB.</p>
+
+<details>
+<summary>Повторить арифметику без MinIO</summary>
+<p>Этот Python-код использует только стандартную библиотеку и RAM.
+Он печатает shards двух stripes и проверяет восстановление из каждой
+пары. Сетевых запросов и файловых операций здесь нет.</p>
+<pre><code class="language-python">from itertools import combinations
+
+def mul(a, b):
+    result = 0
+    while b:
+        if b &amp; 1:
+            result ^= a
+        b &gt;&gt;= 1
+        a &lt;&lt;= 1
+        if a &amp; 0x100:
+            a ^= 0x11d
+    return result
+
+def inv(a):
+    if a == 0:
+        raise ValueError("zero has no inverse")
+    result, base, exponent = 1, a, 254
+    while exponent:
+        if exponent &amp; 1:
+            result = mul(result, base)
+        base = mul(base, base)
+        exponent &gt;&gt;= 1
+    return result
+
+G = ((1, 0), (0, 1), (1, 1), (1, 2))
+body, B = b"MinIO!\n", 5
+stripes = []
+for offset in range(0, len(body), B):
+    block = body[offset:offset+B]
+    width = (len(block) + 1) // 2
+    padded = block + bytes(2*width - len(block))
+    x, y = padded[:width], padded[width:]
+    shards = [
+        bytes(mul(a, u) ^ mul(b, v) for u, v in zip(x, y))
+        for a, b in G
+    ]
+    stripes.append((len(block), shards))
+    print([part.hex() for part in shards])
+
+def restore(pair, shards):
+    a, b = G[pair[0]]
+    c, d = G[pair[1]]
+    scale = inv(mul(a, d) ^ mul(b, c))
+    left, right = shards[pair[0]], shards[pair[1]]
+    x = bytes(mul(scale, mul(d, u) ^ mul(b, v))
+              for u, v in zip(left, right))
+    y = bytes(mul(scale, mul(c, u) ^ mul(a, v))
+              for u, v in zip(left, right))
+    return x + y
+
+for pair in combinations(range(4), 2):
+    recovered = b"".join(restore(pair, shards)[:length]
+                         for length, shards in stripes)
+    assert recovered == body
+assert mul(3, inv(3)) == 1 and inv(3) == 0xf4
+assert all(mul(a, inv(a)) == 1 for a in range(1, 256))
+assert sum(len(s) for _, stripe in stripes for s in stripe) == 16
+print("6 surviving pairs recover the original 7 bytes")
+</code></pre>
+</details>
+
+<h2>Восстановленные байты и восстановленный endpoint</h2>
+<p>GET в рассмотренной ошибке создал нужные data shards в RAM
+и передал их клиенту. Для возвращения копии на E3 либо E4
+нужен другой путь: healing выбранной версии заново выбирает
+метаданные и источники, восстанавливает нужные data/parity shards,
+записывает их во временное место, проверяет writers и публикует
+результат через RenameData на выбранной цели.</p>
+<p>Цель E4 сначала должна снова стать доступной. Успех записи E3
+не подтверждает запись E4: состояние каждой цели учитывается
+отдельно. Scanner может обнаружить объект для проверки и
+восстановления, но не участвует обязательным шагом между каждым
+PUT и его HTTP-ответом. Выбор scan mode, прогресс замены диска,
+bitrot и стоимость такого IO продолжаются в
+<a href="#minio-07-healing-and-scanner">главе healing/scanner</a>.</p>
+<p class="sources">Источники:
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-decode.go#L316-L363">Erasure.Heal</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-healing.go#L550-L681">writers, close и публикация целей</a>.</p>
+
+<h2>Где произошёл отказ и что известно клиенту</h2>
+<table>
+<thead><tr><th>Момент</th><th>Серверное состояние</th><th>Что следует проверить</th></tr></thead>
+<tbody>
+<tr><td>Неполный body, checksum error, недобор W в Encode/close</td><td>Этот путь не дошёл до публикации V. Временные данные могли появиться; deferred cleanup пытается их удалить.</td><td>Причину отказа; старую опубликованную версию читать отдельно.</td></tr>
+<tr><td>RenameData успел на части endpoints, но W не набран</td><td>Выполняется попытка UndoWrite; общий rollback не гарантируется.</td><td>Согласованное состояние версии, а не только число оставшихся файлов.</td></tr>
+<tr><td>Публикация прошла, последующая очистка старого DataDir вернула ошибку</td><td>Новая версия уже может быть видима.</td><td>Version ID, metadata и body результата.</td></tr>
+<tr><td>Сервер принял V, HTTP-ответ потерян</td><td>V может быть сохранена при клиентском timeout.</td><td>Результат исходной операции по правилам reconciliation.</td></tr>
+<tr><td>GET начал ответ и затем потерял необходимые источники</td><td>Часть body могла дойти; заменить отправленный статус невозможно.</td><td>EOF, длину и целостность всего результата.</td></tr>
+</tbody>
+</table>
+<p>Безусловный повтор PUT в versioned bucket может создать следующую
+версию с теми же байтами. Create-only повтор использует тот же key;
+после сохранённой первой попытки он может получить 412.
+Последний отказ не устанавливает исход первой попытки.
+Для сопоставления нужны сохранённое намерение, operation ID,
+конкретная версия и прочитанные байты — как в
+<a href="#minio-06-versions-and-unknown-put">главе о timeout</a>.</p>
+<p>В расчёте N=4 относится к одному set. Четыре пути одного SSD
+теряются вместе с SSD; четыре независимых имени не создают
+четыре физических источника. Числа R=2 и W=3 описывают этот layout
+пригодной версии, а успешность операции дополнительно зависит
+от согласованных metadata, целостности прочитанных chunks
+и завершения storage IO.</p>

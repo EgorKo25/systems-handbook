@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 836" role="img" aria-labelledby="pg12-route-title pg12-route-desc" class="pg12-route-svg" data-plain-skip="true">
+<title id="pg12-route-title">От номера элемента к заголовку двух версий UPDATE</title>
+<desc id="pg12-route-desc">Рассчитанный блок0: LP1 в байтах24–27 указывает на старую версию8160–8191, LP2 в28–31 — на новую8128–8159. Обе версии32байта. У V1 xmin510,xmax520,t_ctid=(0,2),n0; у V2 xmin520,xmax недействителен,t_ctid=(0,2),n1. Пунктирная связь V1 идёт через LP2, а не прямо по байтовому адресу. После COMMIT520 старый снимок со списком520 выбирает V1, новый — V2.</desc>
+<style>
+.pg12-route-svg{color:var(--reader-text,var(--text,#202d34));background:var(--paper,#fff);font:17px system-ui,sans-serif}
+.pg12-route-svg text{fill:currentColor}
+.pg12-route-svg .mono{font:16px ui-monospace,monospace}
+.pg12-route-svg .line{fill:none;stroke:currentColor;stroke-width:1.6}
+.pg12-route-svg .box{fill:var(--paper,#fff);stroke:currentColor;stroke-width:1.6}
+.pg12-route-svg .slot{fill:var(--soft,#edf1ee);stroke:currentColor;stroke-width:1.6}
+.pg12-route-svg .link{fill:none;stroke:currentColor;stroke-width:1.6;stroke-dasharray:5 4}
+@media print{.pg12-route-svg{--paper:#fff;--soft:#fff;--text:#000;--reader-text:#000;color:#000;background:#fff}}
+</style>
+<defs><marker id="pg12-route-arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M1 1L6 3.5L1 6" class="line"/></marker></defs>
+<text x="20" y="26">Блок 0 · оба LP имеют LP_NORMAL</text>
+<text x="20" y="51">Адрес версии = (блок, номер LP)</text>
+<rect class="slot" x="32" y="70" width="268" height="46"/>
+<text class="mono" x="44" y="90">LP1 [24,28): off=8160</text>
+<text class="mono" x="44" y="109">len=32; адрес (0,1)</text>
+<rect class="slot" x="32" y="126" width="268" height="46"/>
+<text class="mono" x="44" y="146">LP2 [28,32): off=8128</text>
+<text class="mono" x="44" y="165">len=32; адрес (0,2)</text>
+<path class="line" d="M300 93H342V472H320" marker-end="url(#pg12-route-arrow)"/>
+<path class="line" d="M300 149H330V254H320" marker-end="url(#pg12-route-arrow)"/>
+<text x="38" y="207">Свободная область здесь опущена</text>
+<rect class="box" x="66" y="230" width="254" height="412"/>
+<path class="line" d="M66 438H320"/>
+<text x="80" y="254">V2 · новая · [8128,8160)</text>
+<text class="mono" x="80" y="286">+0:  t_xmin=520</text>
+<text class="mono" x="80" y="314">+4:  t_xmax=0, INVALID</text>
+<text class="mono" x="80" y="342">+12: t_ctid=(0,2)</text>
+<text class="mono" x="80" y="370">+22: t_hoff=24</text>
+<text class="mono" x="80" y="408">+24…31: id=1, n=1</text>
+<text x="80" y="472">V1 · старая · [8160,8192)</text>
+<text class="mono" x="80" y="504">+0:  t_xmin=510</text>
+<text class="mono" x="80" y="532">+4:  t_xmax=520</text>
+<text class="mono" x="80" y="560">+12: t_ctid=(0,2)</text>
+<text class="mono" x="80" y="588">+22: t_hoff=24</text>
+<text class="mono" x="80" y="626">+24…31: id=1, n=0</text>
+<path class="link" d="M66 555H16V149H32" marker-end="url(#pg12-route-arrow)"/>
+<text x="20" y="680">Пунктир: ссылка V1 на элемент LP2</text>
+<text x="20" y="707">Проверка связи: xmax V1 = xmin V2</text>
+<text class="mono" x="20" y="734">520 = 520; это ещё не видимость</text>
+<path class="line" d="M20 752H340"/>
+<text x="20" y="781">Старый снимок → V1, значение n=0</text>
+<text x="20" y="812">Новый снимок → V2, значение n=1</text>
+</svg>

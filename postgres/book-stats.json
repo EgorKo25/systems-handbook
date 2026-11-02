@@ -65,7 +65,7 @@
     {
       "id": "12-mvcc",
       "title": "MVCC: как выбирается видимая версия",
-      "words": 1872
+      "words": 2214
     },
     {
       "id": "13-isolation",
@@ -95,7 +95,7 @@
     {
       "id": "18-recovery",
       "title": "Резервирование и восстановление",
-      "words": 2420
+      "words": 2793
     },
     {
       "id": "19-operations",
@@ -133,7 +133,7 @@
       "words": 8937
     }
   ],
-  "words": 76719,
+  "words": 77434,
   "terms": 441,
   "external_assets": 0
 }

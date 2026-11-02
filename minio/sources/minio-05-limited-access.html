@@ -1,0 +1,225 @@
+<header>
+<h1>Приложение получает отдельный доступ к прежнему bucket</h1>
+<p>Этот опыт продолжает архивный OSS-стенд. Root alias остаётся
+инструментом владельца; приложение получает отдельный service account
+с явной ограничивающей policy.</p>
+</header>
+
+<h2>Credentials отвечают за личность, policy — за допустимые действия</h2>
+<p>Access key — идентификатор доступа, secret key — секрет для подписи
+запросов. Policy — документ с разрешёнными действиями и ресурсами.
+Service account — отдельная пара credentials, связанная с parent
+account. В выбранном поколении его embedded policy дополнительно
+сужает права parent; она не должна расширять их.</p>
+<p>В этом опыте parent study-admin является root owner сервера.
+Закреплённый код распознаёт такой service account как owner-derived:
+права parent разрешены по умолчанию. Затем embedded session policy
+ограничивает действия самого service account. При её проверке
+признак owner снимается, поэтому приложение получает только
+перечисленные разрешения. Для service account обычного пользователя
+код дополнительно проверяет действующие права parent.</p>
+<p>Приложению разрешим читать, записывать и перечислять объекты только
+в handbook-minio. Оно не сможет создавать bucket, удалять объекты,
+менять IAM или перечислять все buckets сервера. Звёздочка в Resource
+ниже охватывает имена объектов одного bucket; Action wildcard нет.</p>
+
+<h2>Почему mc cat требует отдельного действия чтения версии</h2>
+<p>Обычный SDK GET /bucket/key без versionId проверяется как
+s3:GetObject. Закреплённый mc cat сначала получает metadata,
+запоминает обнаруженный version ID и затем делает GET с versionId.
+Для такого запроса требуется s3:GetObjectVersion. Это объясняет
+добавление конкретного action; расширять policy до s3:* ради
+исчезновения ошибки не нужно.</p>
+
+<h2>Создаём закрытый этап до серверной операции</h2>
+<p>Сервер работает в первом терминале. Во втором терминале той же VM
+загружаем прежний enter.sh, проверяем HTTPS health как в предыдущей
+главе и только после успеха продолжаем. Все следующие файлы принадлежат
+обычному пользователю и создаются с umask 077.</p>
+<pre><code>source "$HOME/minio-study/enter.sh"
+cd "$LAB_ROOT"
+begin_stage access-v1 \
+  "$LAB_ROOT/exercises/access-v1" \
+  "$LAB_ROOT/secrets/object-credentials.json" \
+  "$LAB_ROOT/object-study"
+EX="$LAB_ROOT/exercises/access-v1"
+mkdir -- "$EX"
+</code></pre>
+<p>Если этап уже начат, он не повторяется. Его частичный результат
+может включать уже созданный серверный account.</p>
+<p>JSON содержит именованные поля, массивы и значения. Version обозначает редакцию языка policy, не версию MinIO. Statement — массив правил; Effect: Allow разрешает перечисленные Action на Resource. ARN — строка идентичности ресурса. arn:aws:s3:::handbook-minio относится к bucket для ListBucket/GetBucketLocation; arn:aws:s3:::handbook-minio/* — к именам объектов для Get/Put. Слово aws в совместимом ARN не отправляет запрос в AWS: endpoint остаётся MinIO. Отсутствующее разрешение означает отказ.</p>
+<pre><code>cat &gt; "$EX/policy.json" &lt;&lt;'JSON'
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["s3:GetBucketLocation", "s3:ListBucket"],
+      "Resource": ["arn:aws:s3:::handbook-minio"]
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["s3:GetObject", "s3:GetObjectVersion", "s3:PutObject"],
+      "Resource": ["arn:aws:s3:::handbook-minio/*"]
+    }
+  ]
+}
+JSON
+
+printf 'study-%s\n' "$(openssl rand -hex 8)" &gt; "$EX/access-id"
+ACCESS_ID="$(cat "$EX/access-id")"
+</code></pre>
+<p>Идентификатор сохраняется до запроса. Это позволит найти account,
+если ответ создания потеряется. Secret key в аргументах команды
+не передаётся: его сгенерирует mc и запишет в закрытый результат.</p>
+<pre><code>if "${MC[@]}" --json admin user svcacct add \
+    --policy "$EX/policy.json" \
+    --access-key "$ACCESS_ID" \
+    --name "handbook object client" \
+    lab study-admin \
+    &gt; "$EX/account.private.json" 2&gt; "$EX/account.private.err"
+then
+    :
+else
+    printf '%s\n' 'Создание не подтверждено. Не повторяйте add; выполните reconciliation по сохранённому access-id.' &gt;&amp;2
+    exit 1
+fi
+</code></pre>
+<p>Оба потока закрыты. Не выводим account.private.json в терминал
+и не прикладываем его к отчёту: он содержит secret key. Код 0 ещё
+проверяется разбором ожидаемой структуры.</p>
+<pre><code>python3 -B - "$EX" "$LAB_ROOT/secrets/object-credentials.json" &lt;&lt;'PY'
+import json, pathlib, sys
+ex = pathlib.Path(sys.argv[1])
+value = json.loads((ex / "account.private.json").read_text())
+expected = (ex / "access-id").read_text().strip()
+if (value.get("status") != "success"
+        or value.get("accessKey") != expected
+        or not isinstance(value.get("secretKey"), str)
+        or not value["secretKey"]
+        or "\n" in value["secretKey"]):
+    raise SystemExit("Неожиданный результат создания; остановка без вывода содержимого.")
+with (ex / "alias-input.private").open("x") as out:
+    out.write(expected + "\n" + value["secretKey"] + "\n")
+profile = {
+    "schema_version": 1,
+    "profiles": {
+        "minio-app": {
+            "access_key_id": expected,
+            "secret_access_key": value["secretKey"]
+        }
+    }
+}
+with open(sys.argv[2], "x") as out:
+    json.dump(profile, out)
+    out.write("\n")
+PY
+
+"${MC[@]}" alias set --api S3v4 --path on \
+  app https://127.0.0.1:19000 \
+  &lt; "$EX/alias-input.private" \
+  &gt; "$EX/alias.private.out" 2&gt; "$EX/alias.private.err"
+</code></pre>
+<p>Alias app использует service account; alias lab по-прежнему
+использует owner. Успех alias set не принимается за серверную проверку:
+при явно заданном api путь может сохранить конфигурацию без
+проверки подписи на сервере.</p>
+
+<h2>Положительная и отрицательная приёмка</h2>
+<p>Первый GET читает существующий объект. Затем создаём отдельный
+client-note.txt, чтобы не менять manifest.txt перед следующим опытом.</p>
+<pre><code>"${MC[@]}" cat app/handbook-minio/project/manifest.txt \
+  &gt; "$EX/manifest-read.txt"
+cmp "$LAB_ROOT/fixtures/manifest-v1.txt" "$EX/manifest-read.txt"
+
+printf 'writer=limited-service-account\nedition=1\n' &gt; "$EX/client-note-v1.txt"
+"${MC[@]}" cp "$EX/client-note-v1.txt" \
+  app/handbook-minio/project/client-note.txt
+"${MC[@]}" cat app/handbook-minio/project/client-note.txt \
+  &gt; "$EX/client-note-read.txt"
+cmp "$EX/client-note-v1.txt" "$EX/client-note-read.txt"
+</code></pre>
+<p>Все коды должны быть 0. Если чтение или запись не разрешены,
+проверяем action, ресурс и фактический запрос; owner credentials
+в приложение не подставляем.</p>
+<p>Отрицательный опыт пытается создать другой bucket на собственном
+сервере. Неуспех принимается как проверка policy только при
+подтверждённом AccessDenied. TLS error, timeout и connection refused
+не доказывают ограничения полномочий.</p>
+<pre><code>if "${MC[@]}" --json mb app/handbook-forbidden \
+    &gt; "$EX/denied.private.json" 2&gt; "$EX/denied.private.err"
+then
+    printf '%s\n' 'Неожиданно разрешён CreateBucket; остановка.' &gt;&amp;2
+    exit 1
+fi
+
+python3 -B - "$EX/denied.private.json" &lt;&lt;'PY'
+import json, sys
+try:
+    data = json.load(open(sys.argv[1]))
+    code = data["error"]["cause"]["error"]["Code"]
+except Exception:
+    raise SystemExit("Формат отказа не подтверждён; требуется разбор без продолжения.")
+if data.get("status") != "error" or code != "AccessDenied":
+    raise SystemExit("Получен другой отказ; приёмка policy не пройдена.")
+PY
+</code></pre>
+<p>Этот строгий разбор опирается на errorMessage mc и ErrorResponse
+его minio-go v7.0.90. Если native-вывод отличается, проверка
+останавливается. Нельзя ослаблять её до «любой ненулевой код подходит».</p>
+
+<h2>Явный профиль другого клиента</h2>
+<p>targets.json относится к optional object-study из тома S3; для пути mc он не требуется. В файле нет secret, credentials_file указывает в закрытый каталог, ca_file задаёт доверие, не отключение TLS.</p>
+<pre><code>mkdir -- "$LAB_ROOT/object-study"
+cat &gt; "$LAB_ROOT/object-study/targets.json" &lt;&lt;'JSON'
+{
+  "schema_version": 1,
+  "targets": {
+    "minio-study": {
+      "backend": "minio",
+      "endpoint": "https://127.0.0.1:19000",
+      "region": "us-east-1",
+      "bucket": "handbook-minio",
+      "addressing": "path",
+      "profile": "minio-app",
+      "credentials_file": "../secrets/object-credentials.json",
+      "ca_file": "../tls/ca.crt"
+    }
+  }
+}
+JSON
+finish_stage
+</code></pre>
+<h2>Тот же объект через общий Go-клиент</h2>
+<p>Теперь сменим клиент, сохранив сервер, bucket, ограниченный аккаунт и проверяемые байты. В этом упражнении читается <code>project/client-note.txt</code>. Следующая глава изменит manifest, поэтому её прохождение не сделает этот пример зависимым от прежнего latest manifest.</p>
+<p>Блок доступен только после получения и приёмки <code>object-study</code> по маршруту S3-тома. Сейчас согласован SPEC v1; реализация транспорта и native-проверка остаются pending. Наличие спецификации не означает наличие установленной программы.</p>
+<p>Используется уже созданный <code>$LAB_ROOT/object-study/targets.json</code>. Относительные пути в нём отсчитываются от каталога этого файла: credentials находятся в <code>$LAB_ROOT/secrets/object-credentials.json</code>, CA — в <code>$LAB_ROOT/tls/ca.crt</code>. Это отдельный формат профилей helper, а не JSON-вывод создания service account и не стандартный AWS credentials file.</p>
+<pre><code>object-study --config "$LAB_ROOT/object-study/targets.json" \
+  --target minio-study --timeout 30s \
+  get --output "$LAB_ROOT/downloads/object-study-client-note.txt" \
+  --max-bytes 1048576 -- project/client-note.txt
+
+cmp -- "$LAB_ROOT/exercises/access-v1/client-note-v1.txt" \
+  "$LAB_ROOT/downloads/object-study-client-note.txt"</code></pre>
+<p>Сравнение выполняется только после exit 0 клиента. По SPEC v1 конечное имя GET появляется после EOF, проверки целостности и закрытия временного файла; Linux commit использует hard link на том же filesystem и не заменяет существующее имя. Ошибка транспорта или локальной фиксации не становится успешным чтением из-за одного полученного HTTP-заголовка.</p>
+
+<p>Client-note содержит 31 байт первой строки с LF и 10 второй: всего 41 байт. Эталон access-v1/client-note-v1.txt сохраняется после изменения manifest в следующей главе. SPEC v1 ограничен put/get/head; здесь нет list/delete, multipart, presign и условного GET. Без полученного и принятого helper этот раздел пропускают.</p>
+<h2>Неоднозначное создание account и утечка</h2>
+<p>Если add завершился timeout либо закрытый ответ неполон, не
+генерируем новый account автоматически. Сохранённый access-id
+позволяет владельцу выполнить admin user svcacct info для нужного
+идентификатора. Info подтверждает metadata и policy, но не возвращает
+потерянный secret. Если account создан, а secret утрачен, его сначала
+отключают через admin user svcacct disable и фиксируют состояние;
+новый доступ выпускают отдельным осознанным этапом.</p>
+<p>При утечке отключение account запрещает будущую авторизацию,
+но не отзывает уже прочитанные байты и не отменяет прошлые записи.
+Смена содержимого локального credentials file сама по себе не
+меняет секрет, сохранённый сервером.</p>
+
+<p class="sources">Первоисточники:
+<a href="https://raw.githubusercontent.com/minio/minio/RELEASE.2025-10-15T17-29-55Z/cmd/iam.go">проверка service account и сокрытие secret в info</a>,
+<a href="https://raw.githubusercontent.com/minio/mc/RELEASE.2025-08-13T08-35-41Z/cmd/admin-user-svcacct-add.go">создание account и формат ответа</a>,
+<a href="https://raw.githubusercontent.com/minio/mc/RELEASE.2025-08-13T08-35-41Z/cmd/cat-main.go">HEAD и чтение version ID</a>,
+<a href="https://raw.githubusercontent.com/minio/mc/RELEASE.2025-08-13T08-35-41Z/cmd/error.go">JSON отказа</a>,
+<a href="https://raw.githubusercontent.com/minio/minio-go/v7.0.90/api-error-response.go">ErrorResponse.Code</a>.</p>

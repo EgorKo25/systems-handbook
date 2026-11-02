@@ -50,9 +50,220 @@ go test -run='^$' -bench=. -benchmem -benchtime=50ms -count=3 || exit 1</code></
 <h2>Указатели влияют на сканирование</h2>
 <p>Сборщику нужно находить ссылки на другие объекты. Данные без указателей не требуют такого же поиска внутренних ссылок, как структуры со множеством указательных полей. Два одинаковых по размеру буфера могут иметь разную стоимость сканирования. Кроме числа объектов существенны связность, расположение и объём указательных областей.</p>
 <p>В нашем опыте срез указателей образует граф из общего массива и отдельных значений. Массив целых хранит полезные данные плотнее и не содержит ссылку на каждый элемент. Это может улучшить локальность и уменьшить работу GC, но конкретное ускорение требует измерения. Сам тест AllocsPerRun доказывает только число выделений, а не полный выигрыш сканирования.</p>
+<h3>Один адрес нужен до возврата, другой сохраняется глобально</h3>
+<p>Возьмём уже поставленные <code>Read</code>, <code>Borrow</code> и <code>Save</code> из <a href="#48-go-ir-escape-inline">главы 48</a>. В <code>Borrow(7)</code> функция Read получает адрес того же v и успевает прочитать его до возврата Borrow. В <code>Save(9)</code> адрес сохраняется в Global. Компилятор заранее выбирает для такого адресуемого v хранение, переживающее вызов; действующий стековый объект не переносится в кучу задним числом после возврата.</p>
+<p>Достижимый объект можно найти, переходя по живым указателям от корней сборщика мусора, GC. Корни включают необходимые ссылки стеков, глобальных данных и runtime. Остаточные биты старого адреса в уже ненужной ячейке сами по себе не образуют такую живую ссылку.</p>
+<pre><code>var Global *int
+
+//go:noinline
+func Read(p *int) int { return *p }
+
+//go:noinline
+func Borrow(v int) int { return Read(&amp;v) }
+
+//go:noinline
+func Save(v int) { Global = &amp;v }</code></pre>
+<figure class="go54-life-scene" id="go54-storage-reachability">
+<style>
+.go54-life-scene{margin:1.5em 0;color:inherit}
+.go54-life-scene svg{display:block;width:100%;max-width:28rem;height:auto;min-width:0;margin:auto;color:inherit}
+.go54-life-scene figcaption{margin:.8em 0}
+@media print{.go54-life-scene{color:#000!important;background:#fff!important;break-inside:auto!important}.go54-life-scene svg{width:auto;max-width:100%;max-height:180mm;break-inside:avoid}.go54-life-scene figcaption{color:#000!important;background:#fff!important}}
+</style>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 690" role="img" aria-labelledby="go54-life-title go54-life-desc">
+<title id="go54-life-title">Borrow читает стековое v; Global удерживает другое v в куче</title>
+<desc id="go54-life-desc">Три состояния. При Borrow(7) Read.p указывает на восьмибайтовую ячейку v в кадре Borrow и возвращает число 7. При Save(9) входное число записывается в заранее выбранный кучевой объект, Global хранит его адрес; возврат Save не уничтожает этот объект. Присваивание Global=nil убирает глобальное ребро. Если других живых ссылок нет, объект недостижим, но его байты не обязаны немедленно исчезнуть.</desc>
+<defs><marker id="go54-life-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L8 4L0 8Z" fill="currentColor"/></marker></defs>
+<g fill="currentColor" font-family="system-ui,sans-serif" font-size="16">
+<text x="8" y="23" font-weight="700">1 · Пока Borrow(7) работает</text>
+<rect x="8" y="39" width="124" height="121" rx="7" fill="none" stroke="currentColor"/>
+<rect x="146" y="39" width="126" height="121" rx="7" fill="none" stroke="currentColor"/>
+<text x="17" y="65">Кадр Borrow</text>
+<text x="158" y="65">Кадр Read</text>
+<rect x="20" y="82" width="86" height="62" fill="currentColor" fill-opacity=".08" stroke="currentColor"/>
+<text x="30" y="106">v: int</text><text x="30" y="132">7</text>
+<rect x="164" y="82" width="96" height="62" fill="none" stroke="currentColor"/>
+<text x="174" y="106">Read(p)</text><text x="174" y="132">p = &amp;v</text>
+<path d="M164 123H109" fill="none" stroke="currentColor" stroke-width="2" marker-end="url(#go54-life-arrow)"/>
+<text x="20" y="174">Read читает ту же ячейку.</text>
+<text x="20" y="194">Результат Borrow — число 7.</text>
+<text x="8" y="237" font-weight="700">2 · Save(9) сохранила адрес</text>
+<text x="20" y="268">Входное число 9</text>
+<path d="M183 267H260V337" fill="none" stroke="currentColor" stroke-dasharray="3 3" marker-end="url(#go54-life-arrow)"/>
+<text x="8" y="304">Глобальная</text><text x="8" y="325">переменная</text>
+<text x="169" y="304">Куча</text>
+<rect x="8" y="340" width="108" height="65" fill="none" stroke="currentColor"/>
+<text x="18" y="365">Global</text><text x="18" y="391">адрес v</text>
+<rect x="170" y="340" width="102" height="65" fill="currentColor" fill-opacity=".08" stroke="currentColor"/>
+<text x="180" y="365">v: int</text><text x="180" y="391">9</text>
+<path d="M116 380H167" fill="none" stroke="currentColor" stroke-width="2" marker-end="url(#go54-life-arrow)"/>
+<text x="8" y="434">Save вернулась; ссылка есть.</text>
+<text x="8" y="472" font-weight="700">3 · Выполнили Global = nil</text>
+<rect x="8" y="491" width="108" height="65" fill="none" stroke="currentColor"/>
+<text x="18" y="516">Global</text><text x="18" y="542">nil</text>
+<rect x="170" y="491" width="102" height="65" fill="none" stroke="currentColor" stroke-dasharray="5 4"/>
+<text x="180" y="516">v: int</text><text x="180" y="542">9</text>
+<text x="8" y="589">Если других ссылок нет,</text>
+<text x="8" y="612">пути от корней к v нет.</text>
+<text x="8" y="646">Байты ещё могут оставаться.</text>
+<text x="8" y="675">Это не моментальный free.</text>
+</g></svg>
+<figcaption>Разрез мест хранения для Go 1.27.3, Linux/amd64: int занимает 8 байтов. Сплошная стрелка обозначает указатель; пунктир от входного числа — запись значения. Рисунок не задаёт смещения от SP, реальные адреса, регистры аргументов или физический порядок размещения. Локальные ячейки могут иметь другую машинную реализацию; выбранное размещение Borrow/Save опирается на уже разобранный пример. Tiny allocator и его общие блоки здесь не изображены.</figcaption>
+<ol>
+<li><strong>Borrow.</strong> В параметр <code>p</code> копируется значение указателя на <code>v</code> в кадре Borrow; само целое остаётся тем же. После чтения возвращается число. У вызывающего не остаётся указателя на эту ячейку; в проверенном примере кучевое выделение не требуется.</li>
+<li><strong>Save.</strong> Кучевое хранение адресуемого v создаётся при исполнении функции по решению компилятора. Global сохраняет его адрес. Здесь поиск начинается с глобальной переменной. Пока путь через Global нужен, объект должен оставаться доступным.</li>
+<li><strong>Потеря ссылки.</strong> Global=nil меняет только одно ребро. Вывод о недостижимости требует отсутствия других живых ссылок. Снимок этого графа не является снимком mark-битов текущего цикла: ранее отмеченный объект может пережить его. Когда будет пригодно повторное использование слота, решает протокол GC и sweep; присваивание nil не является командой освобождения ОС.</li>
+</ol>
+</figure>
 <h2>Mark и sweep</h2>
 <p>Сборка мусора устанавливает, какие объекты достижимы от корней, а затем делает недостижимое хранение доступным для повторного использования. Корни включают необходимое состояние стеков, глобальных данных и runtime. Маркировка и сканирование являются связанными действиями: пометить объект как найденный недостаточно, если внутри него ещё нужно найти ссылки.</p>
 <p>Go выполняет значительную часть этой работы конкурентно с приложением. Но «конкурентный» не означает полное отсутствие остановок и CPU-затрат. Есть служебные переходы фаз, фоновая работа и участие создающего объекты кода. Оценивать следует распределение затрат и задержек, а не только одну самую короткую паузу.</p>
+<h3>Ожидающая горутина тоже может удерживать объект</h3>
+<p>Горутина — выполняемая runtime задача со своим стеком. Канал <code>chan T</code> передаёт значения типа T и согласует отправителя с получателем. У <code>make(chan Message)</code> ёмкость равна нулю: отправке нужен соответствующий приём, заранее сложить Message в буфер нельзя. Такое согласование называют встречей, или rendezvous. Внутренний объект канала при этом существует: он хранит, в частности, очереди ожидающих операций.</p>
+<p>В реализации Go горутина обозначается G, системный поток — M. Чтобы исполнять обычный Go-код, M нужен ресурс планировщика P. Ожидание канала переводит G в waiting и позволяет исполнять другую работу. Runnable означает готовность к выбору планировщиком; running — уже исполняемый код. Ни ожидание, ни пробуждение не означают, что стек горутины и нужные ей указатели исчезли.</p>
+<pre><code>package main
+
+import "runtime"
+
+type Message struct {
+    N int
+    P *int
+}
+
+func main() {
+    ch := make(chan Message)
+    gate := make(chan struct{})
+    done := make(chan [2]int)
+    p := new(int)
+    *p = 7
+    src := Message{N: 41, P: p}
+
+    go func() {
+        m := &lt;-ch
+        &lt;-gate
+        m.N++
+        *m.P = 9
+        done &lt;- [2]int{m.N, *m.P}
+    }()
+
+    ch &lt;- src
+    p = nil
+    src.P = nil
+    runtime.GC()
+    close(gate)
+    out := &lt;-done
+    println(src.N, out[0], out[1])
+}</code></pre>
+<p>Gate здесь передаёт пустую структуру и лишь задерживает получателя перед использованием m.P; после закрытия приём из него возвращает нулевое значение struct{} без отдельной отправки. Done возвращает два числа после изменения объекта. Ожидаемые числа при печати — 41, 42, 9. Это новый небольшой пример для рассуждения, а не выполненный компиляторный или нагрузочный опыт. Явная <code>runtime.GC()</code> задаёт диагностическую границу и добавляет работу; так не следует устраивать каждую операцию приложения.</p>
+<figure class="go54-channel-scene" id="go54-channel-roots">
+<style>
+.go54-channel-scene{margin:1.5em 0;color:inherit;min-width:0}
+.go54-channel-diagram{font:1rem/1.5 var(--sans,system-ui,sans-serif);color:inherit;min-width:0}
+.go54-channel-diagram h4{font:700 1.05em/1.4 var(--sans,system-ui,sans-serif);margin:0 0 1rem;color:inherit}
+.go54-channel-map{padding:1rem;border:1px solid var(--line,currentColor);border-radius:.65rem;background:var(--paper,transparent)}
+.go54-channel-map svg{display:block;width:100%;max-width:32rem;height:auto;min-width:0;margin:auto;color:inherit}
+.go54-channel-sequence{margin-top:1.75rem}
+.go54-channel-lanes{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1rem;min-width:0}
+.go54-channel-lane-head{padding:0 .85rem .65rem;color:var(--muted,inherit);font-weight:700}
+.go54-channel-scene .go54-channel-timeline{list-style:none;padding:0;margin:0;display:grid;gap:1rem;counter-reset:go54-step}
+.go54-channel-scene .go54-channel-timeline>li{margin:0;padding:0;counter-increment:go54-step;min-width:0}
+.go54-channel-step{display:flex;align-items:center;gap:.65rem;margin:0 0 .6rem!important;font-weight:700}
+.go54-channel-step::before{content:counter(go54-step);display:grid;place-items:center;flex:0 0 1.7em;min-height:1.7em;border:1px solid var(--line,currentColor);border-radius:50%;font-size:.85em;color:var(--muted,inherit)}
+.go54-channel-cell{padding:.85rem;border:1px solid var(--line,currentColor);border-radius:.5rem;background:var(--paper,transparent);min-width:0;overflow-wrap:anywhere}
+.go54-channel-cell span,.go54-channel-cell code{display:block}
+.go54-channel-diagram code{font:.94em/1.55 ui-monospace,monospace;white-space:normal;overflow-wrap:anywhere;background:none;color:inherit;padding:0}
+.go54-channel-status{color:var(--muted,inherit);font-size:.9em;margin-top:.25rem}
+.go54-channel-scheduled{border-top:2px dashed currentColor}
+.go54-channel-note,.go54-channel-result{padding:.85rem 1rem;margin:.65rem 0 0!important;border-left:3px solid currentColor;background:var(--soft,transparent);overflow-wrap:anywhere}
+.go54-channel-result strong{display:block}
+.go54-channel-note+.go54-channel-lanes{margin-top:.65rem}
+.go54-channel-scene figcaption{margin:1em 0}
+@media(max-width:420px){.go54-channel-map{padding:.75rem .5rem}.go54-channel-lanes{gap:.6rem}.go54-channel-cell{padding:.65rem}.go54-channel-lane-head{padding:0 .65rem .6rem}.go54-channel-note,.go54-channel-result{padding:.75rem}}
+@media print{.go54-channel-scene{break-inside:auto!important}.go54-channel-map,.go54-channel-timeline>li{break-inside:avoid}.go54-channel-map,.go54-channel-cell,.go54-channel-step::before{border-color:currentColor}.go54-channel-map,.go54-channel-cell,.go54-channel-note,.go54-channel-result{background:transparent}.go54-channel-map svg{max-width:105mm}.go54-channel-diagram{font-size:10pt}}
+</style>
+<div class="go54-channel-diagram">
+<section class="go54-channel-map" aria-labelledby="go54-copy-heading">
+<h4 id="go54-copy-heading">N и P копируются; X общий</h4>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 286" role="img" aria-labelledby="go54-channel-title go54-channel-desc">
+<title id="go54-channel-title">Два значения Message, один общий объект и отдельное пробуждение</title>
+<desc id="go54-channel-desc">Вверху N и P копируются из отправляемого Message в место приёма. Два P указывают на один объект X с числом 7. Ниже один допустимый порядок: получатель ждёт ch; отправитель передаёт Message напрямую ожидающему и делает его runnable; затем получатель начинает running и ждёт gate. Main теряет свои ссылки, GC всё равно должен сохранить X для будущего m.P. Main закрывает gate, получатель меняет свою N на 42 и общий X на 9; done передаёт числа обратно. Печатаются 41, 42, 9.</desc>
+<defs><marker id="go54-channel-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L8 4L0 8Z" fill="currentColor"/></marker></defs>
+<g fill="currentColor" font-family="system-ui,sans-serif" font-size="24">
+<text x="26" y="30">Отправитель</text><text x="286" y="30">Приём</text>
+<rect x="16" y="48" width="188" height="84" rx="8" fill="none" stroke="currentColor"/>
+<text x="34" y="82">N = 41</text><text x="34" y="116">P = X</text>
+<rect x="276" y="48" width="188" height="84" rx="8" fill="none" stroke="currentColor"/>
+<text x="294" y="82">N = 41</text><text x="294" y="116">P = X</text>
+<path d="M212 90H266" fill="none" stroke="currentColor" stroke-width="2" marker-end="url(#go54-channel-arrow)"/>
+<path d="M110 140V162H212V184" fill="none" stroke="currentColor" stroke-width="2" marker-end="url(#go54-channel-arrow)"/>
+<path d="M370 140V162H268V184" fill="none" stroke="currentColor" stroke-width="2" marker-end="url(#go54-channel-arrow)"/>
+<rect x="170" y="190" width="140" height="84" rx="8" fill="none" stroke="currentColor"/>
+<text x="188" y="221">X: int</text><text x="188" y="257">7</text>
+</g></svg>
+</section>
+<section class="go54-channel-sequence" aria-labelledby="go54-sequence-heading">
+<h4 id="go54-sequence-heading">Один порядок во времени ↓</h4>
+<div class="go54-channel-lanes" aria-hidden="true"><div class="go54-channel-lane-head">G main</div><div class="go54-channel-lane-head">G приёма</div></div>
+<ol class="go54-channel-timeline">
+<li>
+<p class="go54-channel-step">До передачи</p>
+<div class="go54-channel-lanes">
+<div class="go54-channel-cell" role="group" aria-label="G main"><span>готовит src</span></div>
+<div class="go54-channel-cell" role="group" aria-label="G приёма"><span>ждёт ch</span><span class="go54-channel-status">waiting</span></div>
+</div>
+</li>
+<li>
+<p class="go54-channel-step">ch: cap=0, без буфера</p>
+<p class="go54-channel-note">sendDirect: слот → слот</p>
+<div class="go54-channel-lanes">
+<div class="go54-channel-cell" role="group" aria-label="G main"><span>send готов</span></div>
+<div class="go54-channel-cell" role="group" aria-label="G приёма"><span class="go54-channel-status">runnable</span></div>
+</div>
+</li>
+<li>
+<p class="go54-channel-step">Выбор планировщика</p>
+<div class="go54-channel-lanes">
+<div class="go54-channel-cell" role="group" aria-label="G main"><span>может идти</span></div>
+<div class="go54-channel-cell go54-channel-scheduled" role="group" aria-label="G приёма"><span class="go54-channel-status">running</span><span>получил m</span></div>
+</div>
+</li>
+<li>
+<p class="go54-channel-step">Ожидание gate</p>
+<div class="go54-channel-lanes">
+<div class="go54-channel-cell" role="group" aria-label="G main"><code>p = nil</code><code>src.P = nil</code></div>
+<div class="go54-channel-cell" role="group" aria-label="G приёма"><span>ждёт gate</span><span class="go54-channel-status">waiting</span></div>
+</div>
+<p class="go54-channel-note">GC должен сохранить X:<br>m.P нужен после gate.</p>
+</li>
+<li>
+<p class="go54-channel-step">Продолжение получателя</p>
+<div class="go54-channel-lanes">
+<div class="go54-channel-cell" role="group" aria-label="G main"><code>close(gate)</code></div>
+<div class="go54-channel-cell" role="group" aria-label="G приёма"><span class="go54-channel-status">ready → run</span></div>
+</div>
+</li>
+<li>
+<p class="go54-channel-step">Изменение значения и объекта</p>
+<div class="go54-channel-lanes">
+<div class="go54-channel-cell" role="group" aria-label="G main"><span>ждёт done</span></div>
+<div class="go54-channel-cell" role="group" aria-label="G приёма"><code>m.N = 42</code><code>*m.P = 9</code></div>
+</div>
+<p class="go54-channel-note">done → main: <code>[42, 9]</code></p>
+</li>
+</ol>
+<p class="go54-channel-result"><strong>main печатает: 41 42 9</strong>Приём done уже завершён.</p>
+</section>
+</div>
+<figcaption>Это выбранный допустимый порядок, не трасса. Верхний разрез показывает значение в месте приёма после копирования; присваивание исходной переменной m завершается при продолжении получателя. Для amd64 Message содержит 8-байтовый int и 8-байтовый указатель: копируются 16 байтов значения, а не независимый экземпляр X. Размещение X в куче и прямоугольные места приёма — модель представления; новый пример не компилировался, реальные адреса и раскладка оптимизатора не измерены. Время между отметками и привязка G к M/P не заданы.</figcaption>
+<ol>
+<li><strong>Копирование.</strong> В выбранной ветви Go 1.27.3 <code>chansend</code> находит ожидающего в recvq — очереди приёма. Запись ожидания sudog связывает горутину и её место приёма. <code>sendDirect</code> с учётом указательных битов копирует значение в этот слот; нулевая ёмкость не создаёт тайного буфера Message. Копия N независима, обе копии P обозначают тот же X.</li>
+<li><strong>Пробуждение.</strong> После копирования <code>goready</code> переводит получателя из waiting в runnable и помещает в очередь исполнения. Только отдельный выбор планировщика приводит к running. Отправитель тем временем может продолжать исполняться; на другом M с P получатель может начать и параллельно. Пунктир на шкале отделяет готовность от исполнения, а не задаёт обязательную задержку.</li>
+<li><strong>Корень GC.</strong> В показанном порядке получатель остановился на gate. M может выполнять другие G, но будущий доступ через m.P остаётся необходимым: runtime обязан сохранить X. Присваивания nil отправителя не обнуляют уже переданный P. Схема не утверждает, что реализация хранит ровно одну физическую ссылку; временные места и карты живости зависят от компиляции.</li>
+<li><strong>Порядок памяти.</strong> Отправка ch согласована с завершением соответствующего приёма. Изменения m.N и X выполняются до отправки done, а main читает out после её приёма. Поэтому наблюдаются 41, 42, 9. Если просто передать указатель и затем без согласования одновременно менять X с двух сторон, само наличие канала не устранит гонку.</li>
+</ol>
+<p>Если main первой дойдёт до отправки, она может ждать получателя: это другая ветвь runtime с очередью отправки. Если gate закроется до ожидания на нём, этот приём не задержит получателя. Правила передачи и результат программы остаются, но нарисованный порядок событий менять необходимо. Для буферизованного канала появляются слоты и другие условия продвижения — эта сцена их не изображает.</p>
+<p>Первичные определения: <a href="https://go.dev/ref/mem#chan">согласование через каналы в модели памяти Go</a>; выбранная реализация: <a href="https://github.com/golang/go/blob/go1.27.3/src/runtime/chan.go">chan.go, send/sendDirect</a> и <a href="https://github.com/golang/go/blob/go1.27.3/src/runtime/proc.go">proc.go, ready/execute</a>. Сведения о живости ссылок уже разобраны в <a href="#51-go-abi">главе ABI</a>.</p>
+</figure>
 <h2>Green Tea в проверенной версии</h2>
 <p>Green Tea включён по умолчанию в Go 1.27.3 и накапливает обнаруженные объекты по span: marks показывают обнаружение, scans — уже обработанные; очередь span и сравнение этих наборов позволяют обходить несколько соседних объектов вместе. Например, marks={1,3,4}, scans={1} требует обработать 3 и 4, не 1 заново. Соседство может улучшить доступ к данным и метаданным, но выигрыш зависит от графа. Это поясняющий набор номеров, не запись реальных runtime-адресов нашего процесса. Точная организация закреплена <a href="https://github.com/golang/go/blob/go1.27.3/src/runtime/mgcmark_greenteagc.go">исходником Green Tea</a>; allocator — <a href="https://github.com/golang/go/blob/go1.27.3/src/runtime/malloc.go">malloc.go</a>, барьер — <a href="https://github.com/golang/go/blob/go1.27.3/src/runtime/mbarrier.go">mbarrier.go</a>.</p>
 <h2>Какая ссылка потерялась бы без барьера</h2>

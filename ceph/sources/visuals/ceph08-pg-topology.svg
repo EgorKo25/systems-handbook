@@ -1,0 +1,73 @@
+<svg class="ceph08-topology" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 304 784"
+     role="img" aria-labelledby="ceph08-svg-title ceph08-svg-desc">
+<title id="ceph08-svg-title">Две сохранные копии PG и выбранный пустой получатель</title>
+<desc id="ceph08-svg-desc">В корне study две стойки. В rack-a недоступен host a0 с osd.0 и osd.1,
+оба уже out; прежняя копия PG 11.0 на osd.0 недоступна. Host a1 с osd.2 и host b0
+в rack-b с osd.3 сохраняют по 128 GiB этой PG. Host b1 с osd.4 выбран новой целью,
+но ещё не получил копию. Это заданная автором топология, не вывод CRUSH.</desc>
+<style>
+.ceph08-topology{color:var(--text,#222);background:var(--paper,#fff);font:14px system-ui,sans-serif}
+.ceph08-topology text{fill:currentColor;stroke:none}
+.ceph08-topology .frame{fill:none;stroke:currentColor;stroke-width:1.4}
+.ceph08-topology .rack{fill:none;stroke:var(--line,currentColor);stroke-width:2}
+.ceph08-topology .host{fill:var(--soft,#f5f5f5);stroke:currentColor;stroke-width:1.2}
+.ceph08-topology .unavailable{stroke-dasharray:5 3}
+.ceph08-topology .disk{fill:var(--paper,#fff);stroke:currentColor;stroke-width:1.4}
+.ceph08-topology .empty{stroke-dasharray:4 3}
+.ceph08-topology .copy{fill:var(--accent,#315b91);stroke:currentColor;stroke-width:1}
+.ceph08-topology .lost{fill:url(#ceph08-unavailable-hatch);stroke:currentColor;stroke-width:1}
+.ceph08-topology .strong{font-weight:700}
+.ceph08-topology .small{font-size:13px}
+</style>
+<defs>
+<pattern id="ceph08-unavailable-hatch" width="6" height="6" patternUnits="userSpaceOnUse">
+<path d="M-1 1L1-1M0 6L6 0M5 7L7 5" fill="none" stroke="currentColor" stroke-width="1"/>
+</pattern>
+</defs>
+<rect class="frame" x="1" y="1" width="302" height="782" rx="3"/>
+<text class="strong" x="12" y="23">study · root</text>
+<rect class="rack" x="9" y="39" width="286" height="346" rx="2"/>
+<text class="strong" x="19" y="62">rack-a</text>
+<rect class="host unavailable" x="19" y="77" width="266" height="167" rx="4"/>
+<text class="strong" x="29" y="99">host a0 · недоступен</text>
+<text class="small" x="29" y="118">osd.0 и osd.1: down + out</text>
+<path class="disk" d="M29 142C29 130 142 130 142 142V222C142 234 29 234 29 222Z"/>
+<ellipse class="disk" cx="85.5" cy="142" rx="56.5" ry="8"/>
+<text class="strong" x="85" y="166" text-anchor="middle">osd.0 · HDD</text>
+<text x="85" y="185" text-anchor="middle">512 GiB</text>
+<rect class="lost" x="38" y="195" width="95" height="12"/>
+<text class="small" x="85" y="223" text-anchor="middle">128 GiB: недост.</text>
+<path class="disk" d="M162 142C162 130 275 130 275 142V222C275 234 162 234 162 222Z"/>
+<ellipse class="disk" cx="218.5" cy="142" rx="56.5" ry="8"/>
+<text class="strong" x="218" y="166" text-anchor="middle">osd.1 · SSD</text>
+<text x="218" y="185" text-anchor="middle">512 GiB</text>
+<text class="small" x="218" y="211" text-anchor="middle">этой PG нет</text>
+<rect class="host" x="19" y="257" width="266" height="114" rx="4"/>
+<text class="strong" x="29" y="279">host a1 · OSD up + in</text>
+<path class="disk" d="M29 301C29 289 102 289 102 301V349C102 361 29 361 29 349Z"/>
+<ellipse class="disk" cx="65.5" cy="301" rx="36.5" ry="8"/>
+<rect class="copy" x="39" y="318" width="53" height="21"/>
+<text class="strong" x="114" y="308">osd.2 · HDD</text>
+<text x="114" y="329">1024 GiB</text>
+<text class="strong" x="114" y="350">PG: 128 GiB</text>
+<rect class="rack" x="9" y="408" width="286" height="358" rx="2"/>
+<text class="strong" x="19" y="431">rack-b</text>
+<rect class="host" x="19" y="446" width="266" height="114" rx="4"/>
+<text class="strong" x="29" y="468">host b0 · OSD up + in</text>
+<path class="disk" d="M29 490C29 478 102 478 102 490V538C102 550 29 550 29 538Z"/>
+<ellipse class="disk" cx="65.5" cy="490" rx="36.5" ry="8"/>
+<rect class="copy" x="39" y="507" width="53" height="21"/>
+<text class="strong" x="114" y="497">osd.3 · HDD</text>
+<text x="114" y="518">1024 GiB</text>
+<text class="strong" x="114" y="539">PG: 128 GiB</text>
+<rect class="host" x="19" y="578" width="266" height="174" rx="4"/>
+<text class="strong" x="29" y="600">host b1 · OSD up + in</text>
+<path class="disk empty" d="M29 622C29 610 102 610 102 622V670C102 682 29 682 29 670Z"/>
+<ellipse class="disk empty" cx="65.5" cy="622" rx="36.5" ry="8"/>
+<rect class="frame empty" x="39" y="639" width="53" height="21"/>
+<text class="strong" x="114" y="629">osd.4 · HDD</text>
+<text x="114" y="650">1024 GiB</text>
+<text class="strong" x="114" y="671">PG: 0 GiB</text>
+<text x="29" y="704">Выбран получателем этой PG.</text>
+<text x="29" y="726">Копирование ещё не началось.</text>
+</svg>

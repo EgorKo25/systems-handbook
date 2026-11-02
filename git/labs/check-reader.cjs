@@ -464,8 +464,67 @@ for (const slug of selectedVolumes) {
       for (const band of s.bands) for (const key of ['label', 'value', 'detail']) equal(typeof band[key], 'string', slug + ': band ' + key);
     }
   }
-  ok(seen.size >= 1, slug + ': has an interactive diagram');
-  ok(steps >= 6, slug + ': has enough diagram steps to validate');
-  observed.push({volume: slug, commands: commands.length, nativeCards: native, flagQueries, nonOptionForms, diagrams: seen.size, steps});
+  let subjectFigures = 0;
+  const storageSubject = {
+    s3: ['s3-sigv4-bytes', 's3-06-signature', 's306-encoding-title', 's306-encoding-desc', ['25 32 30', '%2B', '25 32 35']],
+    minio: ['minio-four-endpoint-healing', 'minio-07-healing-and-scanner', 'm07-fig-title', 'm07-fig-desc', ['hash(chunk 3) ≠ h3.', 'Close: ошибка', 'E4: RenameData OK']],
+    ceph: ['ceph-crush-policy-to-copy', 'ceph-08-pools-encoding', 'ceph08-svg-title', 'ceph08-svg-desc', ['osd.0 и osd.1: down + out', 'PG: 128 GiB', 'PG: 0 GiB']],
+  }[slug];
+  if (storageSubject) {
+    const [id, chapter, titleId, descId, labels] = storageSubject;
+    const article = page.match(new RegExp('<article\\b[^>]*id="' + chapter + '"[^>]*>([\\s\\S]*?)</article>'));
+    ok(article, slug + ': storage subject chapter ' + chapter);
+    const figures = [...article[1].matchAll(new RegExp('<figure\\b[^>]*id="' + id + '"[^>]*>([\\s\\S]*?)</figure>', 'g'))];
+    equal(figures.length, 1, slug + ': one storage subject figure ' + id);
+    const figure = figures[0][1], svgs = [...figure.matchAll(/<svg\b([^>]*)>([\s\S]*?)<\/svg>/g)];
+    equal(svgs.length, 1, slug + ': one storage subject SVG ' + id);
+    ok(/\brole="img"/.test(svgs[0][1]), slug + ': storage SVG image role ' + id);
+    ok(svgs[0][1].includes('aria-labelledby="' + titleId + ' ' + descId + '"'), slug + ': storage SVG accessible references ' + id);
+    for (const [tag, textId] of [['title', titleId], ['desc', descId]]) {
+      const texts = [...svgs[0][2].matchAll(new RegExp('<' + tag + '\\b[^>]*id="' + textId + '"[^>]*>([^<]+)</' + tag + '>', 'g'))];
+      equal(texts.length, 1, slug + ': one accessible storage ' + tag + ' ' + id);
+      ok(texts[0][1].trim().length > 0, slug + ': nonempty storage ' + tag + ' ' + id);
+    }
+    ok(/<figcaption\b[^>]*>[\s\S]*?\S[\s\S]*?<\/figcaption>/.test(figure), slug + ': storage subject caption ' + id);
+    ok(/<p\b[^>]*>[\s\S]*?\S[\s\S]*?<\/p>/.test(figure), slug + ': storage subject text alternative ' + id);
+    const textLabels = [...svgs[0][2].matchAll(/<text\b[^>]*>([\s\S]*?)<\/text>/g)].map(match => match[1]).join('\n');
+    for (const label of labels) ok(textLabels.includes(label), slug + ': concrete storage label ' + id + ' ' + label);
+    equal((figure.match(/<(?:button|input|select|textarea)\b/gi) || []).length, 0, slug + ': static storage figure has no untested controls ' + id);
+    subjectFigures++;
+  }
+  if (slug === 'argocd') {
+    // These three authored SVG figures replace Argo's former generic graphs.
+    // They are static explanatory scenes, with no step controls to exercise.
+    for (const [id, chapter, labels] of [
+      ['argocd-diff-health-axes', 'argocd-07-diff-health', ['last-applied', 'spec.replicas: 2', 'spec.replicas: 3']],
+      ['argocd-sync-order', 'argocd-09-waves-hooks', ['PreSync / 10', 'PostSync / 5', 'Deployment → Healthy']],
+      ['argocd-recovery-boundary', 'argocd-14-recovery', ['UID_B ≠ UID_A', 'application-controller: 0 Pod', 'notifications-controller: 0 Pod']],
+    ]) {
+      const article = page.match(new RegExp('<article\\b[^>]*id="' + chapter + '"[^>]*>([\\s\\S]*?)</article>'));
+      ok(article, slug + ': subject figure chapter ' + chapter);
+      const figures = [...article[1].matchAll(new RegExp('<figure\\b[^>]*id="' + id + '"[^>]*>([\\s\\S]*?)</figure>', 'g'))];
+      equal(figures.length, 1, slug + ': one subject figure ' + id);
+      const figure = figures[0][1], svgs = [...figure.matchAll(/<svg\b([^>]*)>([\s\S]*?)<\/svg>/g)];
+      equal(svgs.length, 1, slug + ': one subject SVG ' + id);
+      ok(/\brole="img"/.test(svgs[0][1]), slug + ': subject SVG image role ' + id);
+      ok(svgs[0][1].includes('aria-labelledby="' + id + '-svg-title ' + id + '-desc"'), slug + ': subject SVG accessible references ' + id);
+      for (const [tag, suffix] of [['title', '-svg-title'], ['desc', '-desc']]) {
+        const texts = [...svgs[0][2].matchAll(new RegExp('<' + tag + '\\b[^>]*id="' + id + suffix + '"[^>]*>([^<]+)</' + tag + '>', 'g'))];
+        equal(texts.length, 1, slug + ': one accessible ' + tag + ' ' + id);
+        ok(texts[0][1].trim().length > 0, slug + ': nonempty accessible ' + tag + ' ' + id);
+      }
+      ok(/<figcaption\b[^>]*>[\s\S]*?\S[\s\S]*?<\/figcaption>/.test(figure), slug + ': subject caption ' + id);
+      ok(/<p\b[^>]*>[\s\S]*?\S[\s\S]*?<\/p>/.test(figure), slug + ': subject text alternative ' + id);
+      for (const label of labels) ok(svgs[0][2].includes(label), slug + ': concrete subject label ' + id + ' ' + label);
+      equal((figure.match(/<(?:button|input|select|textarea)\b/gi) || []).length, 0, slug + ': static subject scene has no untested controls ' + id);
+      subjectFigures++;
+    }
+  } else if (slug !== 's3') {
+    // MinIO/Ceph still validate their existing interactive graph progressions.
+    // S3 uses the concrete byte-encoding figure checked above.
+    ok(seen.size >= 1, slug + ': has an interactive diagram');
+    ok(steps >= 6, slug + ': has enough diagram steps to validate');
+  }
+  observed.push({volume: slug, commands: commands.length, nativeCards: native, flagQueries, nonOptionForms, diagrams: seen.size, steps, ...(subjectFigures ? {subjectFigures} : {})});
 }
 console.log(JSON.stringify({ok: true, assertions, readers: observed}));

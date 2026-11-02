@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -22,6 +23,8 @@ import (
 
 var version = "dev"
 
+const maxConfigBytes = 64 * 1024
+
 type config struct {
 	Listen   string `json:"listen"`
 	DataFile string `json:"data_file"`
@@ -35,7 +38,15 @@ func loadConfig(path string) (config, error) {
 		return cfg, err
 	}
 	defer file.Close()
-	decoder := json.NewDecoder(io.LimitReader(file, 65537))
+	// Read one byte beyond the budget so a truncated reader cannot imitate EOF.
+	data, err := io.ReadAll(io.LimitReader(file, maxConfigBytes+1))
+	if err != nil {
+		return cfg, err
+	}
+	if len(data) > maxConfigBytes {
+		return cfg, fmt.Errorf("configuration exceeds %d bytes", maxConfigBytes)
+	}
+	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&cfg); err != nil {
 		return cfg, err

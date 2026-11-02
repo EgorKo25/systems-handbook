@@ -1,0 +1,183 @@
+<header>
+  <h1>Адрес, ключ и данные относятся к одному стенду</h1>
+  <p>Программы предыдущей главы уже собраны. Здесь создаются файлы,
+  которые будут использованы при первом запуске.</p>
+</header>
+
+<h2>Что сохраняем и кто этим владеет</h2>
+<p>Работаем тем же непривилегированным пользователем личной VM.
+В LAB_ROOT появятся data — управляемое сервером хранилище,
+secrets — закрытые credentials и CA key, tls — сертификаты,
+mc — отдельное состояние клиента, fixtures — собственные входные
+данные, downloads — прочитанные результаты, logs — закрытый журнал.
+Каталог mc не является конфигурацией сервера. Его config.json
+содержит клиентский доступ и требует защиты как секрет.</p>
+<pre><code>set +x
+set -euo pipefail
+set -C
+umask 077
+export LAB_ROOT="$HOME/minio-study"
+source "$LAB_ROOT/setup-helpers.sh"
+test -f "$LAB_ROOT/.setup/source-build/COMPLETE"
+test -x "$LAB_ROOT/bin/minio"
+test -x "$LAB_ROOT/bin/mc"
+mkdir -p "$LAB_ROOT"/{data,secrets,tls,mc/certs/CAs,fixtures,downloads,logs}
+begin_stage root-credentials \
+  "$LAB_ROOT/secrets/root-user" "$LAB_ROOT/secrets/root-password"
+printf '%s\n' study-admin &gt; "$LAB_ROOT/secrets/root-user"
+openssl rand -hex 24 &gt; "$LAB_ROOT/secrets/root-password"
+test -s "$LAB_ROOT/secrets/root-user"
+test -s "$LAB_ROOT/secrets/root-password"
+finish_stage
+</code></pre>
+<p>Случайный пароль создаётся на личном стенде и не выводится в книгу.
+MINIO_ROOT_USER_FILE и MINIO_ROOT_PASSWORD_FILE передадут серверу
+пути к этим файлам. Это bootstrap-доступ владельца. Прикладной
+Go-клиент позже получит собственные ограниченные credentials.</p>
+
+<h2>Почему HTTPS требует доверия</h2>
+<p>TLS шифрует сетевой обмен и позволяет проверить, к какому серверу
+обратился клиент. Сертификат связывает открытый ключ с именем или IP.
+CA — удостоверяющая сторона, которой клиент доверяет подтвердить
+эту связь. Для изолированного опыта создадим собственный CA,
+а затем подпишем им сертификат localhost и 127.0.0.1. Установка
+этого CA в системное хранилище VM не требуется.</p>
+<pre><code>begin_stage tls \
+  "$LAB_ROOT/secrets/ca.key" \
+  "$LAB_ROOT/tls/ca.crt" \
+  "$LAB_ROOT/tls/ca.srl" \
+  "$LAB_ROOT/tls/private.key" \
+  "$LAB_ROOT/tls/server.csr" \
+  "$LAB_ROOT/tls/server.ext" \
+  "$LAB_ROOT/tls/public.crt" \
+  "$LAB_ROOT/mc/certs/CAs/study-ca.crt"
+
+openssl req -x509 -newkey rsa:3072 -nodes -sha256 -days 30 \
+  -keyout "$LAB_ROOT/secrets/ca.key" -out "$LAB_ROOT/tls/ca.crt" \
+  -subj '/CN=MinIO study CA' \
+  -addext 'basicConstraints=critical,CA:TRUE' \
+  -addext 'keyUsage=critical,keyCertSign,cRLSign'
+
+openssl req -new -newkey rsa:3072 -nodes -sha256 \
+  -keyout "$LAB_ROOT/tls/private.key" -out "$LAB_ROOT/tls/server.csr" \
+  -subj '/CN=localhost'
+
+cat &gt; "$LAB_ROOT/tls/server.ext" &lt;&lt;'EXT'
+basicConstraints=critical,CA:FALSE
+keyUsage=critical,digitalSignature,keyEncipherment
+extendedKeyUsage=serverAuth
+subjectAltName=DNS:localhost,IP:127.0.0.1
+EXT
+
+openssl x509 -req -in "$LAB_ROOT/tls/server.csr" \
+  -CA "$LAB_ROOT/tls/ca.crt" -CAkey "$LAB_ROOT/secrets/ca.key" \
+  -CAserial "$LAB_ROOT/tls/ca.srl" -CAcreateserial -days 30 -sha256 \
+  -extfile "$LAB_ROOT/tls/server.ext" -out "$LAB_ROOT/tls/public.crt"
+
+openssl verify -CAfile "$LAB_ROOT/tls/ca.crt" \
+  -verify_ip 127.0.0.1 "$LAB_ROOT/tls/public.crt"
+openssl verify -CAfile "$LAB_ROOT/tls/ca.crt" \
+  -verify_hostname localhost "$LAB_ROOT/tls/public.crt"
+cp "$LAB_ROOT/tls/ca.crt" "$LAB_ROOT/mc/certs/CAs/study-ca.crt"
+finish_stage
+</code></pre>
+<p>Ожидается проверка public.crt с кодом 0. private.key — закрытый
+ключ сервера, public.crt — его сертификат. ca.key нужен для выпуска
+сертификатов и не передаётся клиенту. При ошибке времени, подписи
+или имени сначала исправляем сертификаты. Параметр --insecure
+не является решением такого отказа.</p>
+
+<h2>Создаём явный запуск</h2>
+<p>Порт 19000 будет S3 API, 19001 — браузерный интерфейс. Оба
+listener ограничены 127.0.0.1. Приложение обращается к API, а не
+к порту интерфейса. TLS обеспечивается найденными в certs-dir
+файлами public.crt и private.key.</p>
+<pre><code>begin_stage launch-scripts \
+  "$LAB_ROOT/run-server.sh" \
+  "$LAB_ROOT/enter.sh"
+
+cat &gt; "$LAB_ROOT/run-server.sh" &lt;&lt;'SH'
+#!/usr/bin/env bash
+set +x
+set -euo pipefail
+umask 077
+
+LAB_ROOT="$(cd -- "$(dirname -- "$0")" &amp;&amp; pwd -P)"
+
+for stage in source-build root-credentials tls launch-scripts; do
+  if [[ ! -f "$LAB_ROOT/.setup/$stage/COMPLETE" ]]; then
+    printf 'Этап %s не завершён; сервер не запущен.\n' "$stage" &gt;&amp;2
+    exit 1
+  fi
+done
+
+for directory in data tmp; do
+  test -d "$LAB_ROOT/$directory"
+done
+
+for file in secrets/root-user secrets/root-password \
+            tls/private.key tls/public.crt; do
+  test -s "$LAB_ROOT/$file"
+done
+
+test -x "$LAB_ROOT/bin/minio"
+cd -- "$LAB_ROOT"
+
+exec env -i \
+  PATH=/usr/bin:/bin HOME="$HOME" TMPDIR="$LAB_ROOT/tmp" \
+  LANG=C LC_ALL=C MINIO_UPDATE=off MINIO_SITE_REGION=us-east-1 \
+  MINIO_ROOT_USER_FILE="$LAB_ROOT/secrets/root-user" \
+  MINIO_ROOT_PASSWORD_FILE="$LAB_ROOT/secrets/root-password" \
+  "$LAB_ROOT/bin/minio" --certs-dir "$LAB_ROOT/tls" server \
+  --address 127.0.0.1:19000 --console-address 127.0.0.1:19001 \
+  "$LAB_ROOT/data"
+SH
+cat &gt; "$LAB_ROOT/enter.sh" &lt;&lt;'SH'
+set +x
+set -euo pipefail
+set -C
+umask 077
+LAB_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &amp;&amp; pwd -P)"
+export LAB_ROOT
+source "$LAB_ROOT/setup-helpers.sh"
+test -f "$LAB_ROOT/.setup/source-build/COMPLETE"
+test -f "$LAB_ROOT/.setup/root-credentials/COMPLETE"
+test -f "$LAB_ROOT/.setup/tls/COMPLETE"
+test -f "$LAB_ROOT/.setup/launch-scripts/COMPLETE"
+test -d "$LAB_ROOT/tmp"
+MC=(env -i
+    PATH=/usr/bin:/bin HOME="$HOME" TMPDIR="$LAB_ROOT/tmp"
+    LANG=C LC_ALL=C MC_UPDATE=off MINIO_UPDATE=off
+    "$LAB_ROOT/bin/mc" --config-dir "$LAB_ROOT/mc" --disable-pager)
+SH
+chmod 700 "$LAB_ROOT/run-server.sh" "$LAB_ROOT/enter.sh"
+bash -n "$LAB_ROOT/run-server.sh"
+bash -n "$LAB_ROOT/enter.sh"
+finish_stage
+</code></pre>
+<p>env -i задаёт окружение дочернего процесса; окружение родительской оболочки сохраняется. HOME остаётся настоящим домашним каталогом. Изоляцию задают абсолютные data, certs-dir и config-dir; временные файлы идут в TMPDIR стенда. Явный PATH нужен системным командам, LANG/LC_ALL фиксируют locale. Чужие MINIO_CONFIG_ENV_FILE и MC_CONFIG_ENV_FILE не наследуются; они способны переопределить выбранные настройки. В окружение передаются пути credentials, не их содержимое.</p>
+<p>Глобальный --certs-dir стоит перед server. --address и
+--console-address принадлежат server. Последний аргумент — каталог
+данных, а не каталог установки программы. В скрипте нет daemon,
+автозапуска или удаления состояния. exec передаёт процессу MinIO
+сигналы терминала.</p>
+<p>launch-scripts завершается после записи обоих скриптов, chmod и bash -n. Нормальный повторный вход использует прежние файлы, не вызывает begin_stage и не создаёт CA/ключи. Если stage существует без COMPLETE, сохраните состояние и разберите отказ; удаление маркера не является восстановлением. Срок сертификата здесь 30 дней: истёкший сертификат требует осознанного выпуска нового, не отключения TLS verification.</p>
+<p>В первом терминале VM запускаем уже созданный файл. Терминал
+останется занят сервером; это ожидаемое поведение.</p>
+<pre><code>"$HOME/minio-study/run-server.sh" &gt;&gt; "$HOME/minio-study/logs/server.log" 2&gt;&amp;1
+</code></pre>
+<p>При немедленном завершении смотрим закрытый logs/server.log.
+Типичные причины: занятый порт, неправильные права, неверная пара
+сертификата и ключа, неподдержанный формат данных. Не меняем data
+на новый пустой каталог, чтобы скрыть ошибку запуска. Подключать
+второй процесс к тому же data тоже нельзя.</p>
+<p>Сервер создаёт внутри data собственные служебные структуры,
+включая .minio.sys. Именно сервер отвечает за их изменение.
+Ручная правка xl.meta или format.json не является способом repair.</p>
+
+<p class="sources">Исходники закреплённого поколения:
+<a href="https://raw.githubusercontent.com/minio/minio/RELEASE.2025-10-15T17-29-55Z/cmd/main.go">глобальные CLI flags</a>,
+<a href="https://raw.githubusercontent.com/minio/minio/RELEASE.2025-10-15T17-29-55Z/cmd/server-main.go">server flags</a>,
+<a href="https://raw.githubusercontent.com/minio/minio/RELEASE.2025-10-15T17-29-55Z/internal/config/constants.go">имена secret-file переменных</a>,
+<a href="https://raw.githubusercontent.com/minio/minio/RELEASE.2025-10-15T17-29-55Z/docs/tls/README.md">TLS filenames</a>,
+<a href="https://raw.githubusercontent.com/minio/mc/RELEASE.2025-08-13T08-35-41Z/cmd/certs.go">клиентское доверие CA</a>.</p>

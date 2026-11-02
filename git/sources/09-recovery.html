@@ -10,6 +10,70 @@
 --mixed A:   HEAD=A   индекс=old   файл=new
 --hard A:    HEAD=A   индекс=old   файл=old</code></pre>
 <p><code>--hard</code> может безвозвратно убрать несохранённые рабочие байты. Неотслеживаемые пути тоже могут пострадать, если мешают записи отслеживаемого пути из целевого снимка. При этом команда не является общей очисткой всех неизвестных файлов: посторонний файл, не мешающий приведению дерева, может остаться. Фраза «hard удаляет всё лишнее» одновременно преувеличивает полноту очистки и скрывает конкретный риск перезаписи.</p>
+<!-- GIT_RESET_OBJECT_CUTAWAY_V1_BEGIN -->
+<figure id="git-reset-object-cutaway" aria-labelledby="gro-title">
+<style>
+#git-reset-object-cutaway{margin:2rem 0;color:var(--text);max-width:100%}
+#git-reset-object-cutaway *{box-sizing:border-box;min-width:0}
+#git-reset-object-cutaway svg{display:block;width:100%;max-width:18.75rem;height:auto;margin:1rem auto;color:inherit}
+#git-reset-object-cutaway code{white-space:normal;overflow-wrap:anywhere}
+#git-reset-object-cutaway .gro-oid{word-break:break-all}
+#git-reset-object-cutaway .gro-ledger{width:100%;border-collapse:collapse;table-layout:fixed;font-size:1em}
+#git-reset-object-cutaway th,#git-reset-object-cutaway td{padding:.6rem .3rem;text-align:start;vertical-align:top;border-bottom:1px solid var(--line);overflow-wrap:anywhere}
+#git-reset-object-cutaway .gro-status{white-space:pre}
+#git-reset-object-cutaway .gro-identities{margin:1rem 0;padding-left:1.25rem}
+#git-reset-object-cutaway .gro-identities li{margin:.5rem 0}
+#git-reset-object-cutaway figcaption{margin:.8rem 0;color:var(--muted)}
+@media print{#git-reset-object-cutaway{--text:#000;--muted:#333;--line:#888;color:#000;background:#fff}#git-reset-object-cutaway svg{max-width:70mm;break-inside:avoid}#git-reset-object-cutaway tr{break-inside:avoid}}
+</style>
+<h3 id="gro-title">Reset двигает имя, а не переписывает коммит</h3>
+<p>Разворачиваем предыдущий опыт: единственный обычный файл <code>note.txt</code>, режим <code>100644</code>, SHA-1, без преобразований строк и обработчиков. В A сохранены четыре байта <code>old\n</code>, в B — <code>new\n</code>; <code>\n</code> обозначает один LF. B имеет одного родителя A. До операции <code>HEAD</code> содержит символическую ссылку <code>ref: refs/heads/main</code>, main выбирает B, индекс и рабочий файл совпадают с B.</p>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 350" role="img" aria-labelledby="gro-svg-title gro-svg-desc">
+<title id="gro-svg-title">Одни и те же объекты до и после reset на A</title>
+<desc id="gro-svg-desc">HEAD по-прежнему выбирает main. Пунктир ведёт от main к B до reset, сплошная стрелка — к A после. B своим полем parent ссылается на A. Каждый commit указывает вниз на своё tree, а запись note.txt в tree — на blob old или new. Все шесть объектов остались с прежними байтами. Изменения индекса и рабочего файла раскрывает таблица ниже.</desc>
+<defs><marker id="gro-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L8 4L0 8Z" fill="currentColor"/></marker></defs>
+<g fill="currentColor" font-family="sans-serif" font-size="17" text-anchor="middle">
+<text x="150" y="22">HEAD → refs/heads/main</text>
+<text x="150" y="52" font-weight="700">main: B → A</text>
+</g>
+<g fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#gro-arrow)">
+<path d="M150 62L70 103"/><path d="M150 62L230 103" stroke-dasharray="5 4"/>
+<path d="M170 134H132"/><path d="M70 158V190"/><path d="M230 158V190"/>
+<path d="M70 248V278"/><path d="M230 248V278"/>
+</g>
+<g fill="none" stroke="currentColor" stroke-width="1.5">
+<rect x="10" y="108" width="120" height="50" rx="5"/><rect x="170" y="108" width="120" height="50" rx="5"/>
+<path d="M10 196H112L130 214V248H10Z M112 196V214H130"/>
+<path d="M170 196H272L290 214V248H170Z M272 196V214H290"/>
+<rect x="10" y="284" width="120" height="54"/><rect x="170" y="284" width="120" height="54"/>
+</g>
+<g fill="currentColor" font-family="sans-serif" font-size="17" text-anchor="middle">
+<text x="70" y="139">A · commit</text><text x="230" y="139">B · commit</text>
+<text x="70" y="218">tree A</text><text x="70" y="240">note.txt</text>
+<text x="230" y="218">tree B</text><text x="230" y="240">note.txt</text>
+<text x="70" y="307">blob</text><text x="70" y="329">old\n</text>
+<text x="230" y="307">blob</text><text x="230" y="329">new\n</text>
+</g>
+</svg>
+<figcaption>Пунктир — прежний выбор main; сплошная наклонная стрелка — новый. Горизонтальная стрелка B → A обозначает поле <code>parent</code>; стрелки вниз следуют полям <code>tree</code> и записи <code>note.txt</code>. Они показывают ссылки на объекты, а не направление копирования файлов. Эти объекты не меняются ни в одном из трёх режимов.</figcaption>
+<p><strong>Три альтернативы одного исходного состояния B.</strong> Каждая строка ниже начинается заново из чистого B; это не последовательность трёх команд. У всех после успешного reset main = A, символическая строка HEAD прежняя. Меняются два других назначения:</p>
+<table class="gro-ledger"><caption>Содержимое note.txt после выбранного режима</caption><thead><tr><th scope="col">Режим</th><th scope="col">Индекс, stage 0</th><th scope="col">Рабочие байты</th><th scope="col">XY</th></tr></thead><tbody>
+<tr><th scope="row"><code>soft</code></th><td><code>new\n</code></td><td><code>new\n</code></td><td><code class="gro-status">M&#32;</code></td></tr>
+<tr><th scope="row"><code>mixed</code></th><td><code>old\n</code></td><td><code>new\n</code></td><td><code class="gro-status">&#32;M</code></td></tr>
+<tr><th scope="row"><code>hard</code></th><td><code>old\n</code></td><td><code>old\n</code></td><td>нет строки</td></tr>
+</tbody></table>
+<p>XY — первые два символа <code>git status --short</code> перед именем <code>note.txt</code>: X сравнивает индекс с HEAD, Y — файл с индексом. Пробел означает отсутствие различия. У hard в этом чистом опыте строка отсутствует целиком.</p>
+<p>У записи индекса путь <code>note.txt</code>, режим <code>100644</code> и stage 0. При soft она продолжает выбирать blob new; mixed и hard заменяют её выбор на blob old. Поэтому у soft отличие от A подготовлено, у mixed оно осталось только на диске. Hard дополнительно записывает old в рабочий файл. Здесь new уже сохранено в B: этот рисунок не изображает потерю никогда не добавленных байтов.</p>
+<p><strong>Проверяемые имена объектов модели.</strong> A = <code class="gro-oid">fc8b04fd5a2376f1350eed32a96ba8dd1c64cda0</code>, B = <code class="gro-oid">659c7c16e0deb861d9766aacff567d58ed6e08a0</code>. main до операции хранит OID B, после — OID A; HEAD хранит имя ссылки, не эти байты OID. Reset записывает прежнюю вершину B в <code>ORIG_HEAD</code>. Наличие этой временной ссылки и reflog не является бессрочной резервной копией.</p>
+<ul class="gro-identities">
+<li>tree A: <code class="gro-oid">cf5c174a1fbe4e51ca5f4fadf602c0a21671b43b</code>; blob old: <code class="gro-oid">3367afdbbf91e638efe983616377c60477cc6612</code>, байты <code>6f 6c 64 0a</code>.</li>
+<li>tree B: <code class="gro-oid">baa5c0650c30f20727ad572fb8f55a5ead2f209e</code>; blob new: <code class="gro-oid">3e757656cf36eca53338e520d134963a44f793f8</code>, байты <code>6e 65 77 0a</code>.</li>
+</ul>
+<p>Для расчёта A/B заданы author и committer <code>Reader &lt;reader@example.invalid&gt;</code>, время 1700000000 и 1700000060 соответственно, смещение <code>+0000</code>, сообщения <code>old</code> и <code>new</code> с LF. У B добавлена строка parent с OID A. Другие метаданные дадут другие OID, хотя действие reset останется тем же. Модель ограничена успешной операцией, одним обычным путём и HEAD на ветке; конфликты, submodules, преобразования и посторонние файлы здесь не моделируются.</p>
+<p class="sources">Версионная граница: <a href="https://raw.githubusercontent.com/git/git/v2.43.0/Documentation/git-reset.txt">Git 2.43.0: режимы reset, ORIG_HEAD и форма с путями</a>. Объекты и их канонические байты разобраны в <a href="#02-objects">главе об объектах</a>.</p>
+</figure>
+<!-- GIT_RESET_OBJECT_CUTAWAY_V1_END -->
+
 <h2>Restore выбирает источник и место назначения</h2>
 <pre><code>git restore --staged -- service.conf
 git restore -- service.conf

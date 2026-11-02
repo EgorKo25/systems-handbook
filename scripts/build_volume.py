@@ -90,6 +90,13 @@ def command_catalog():
             parent = ' '.join(parts[:length])
             inherited.extend((parent, flag) for flag in own.get(parent, [])
                              if not selectors.intersection(re.findall(r'(?:^|\s)([+-]{1,2}[A-Za-z0-9_][A-Za-z0-9_-]*)', flag['flag'])))
+            if parts[0] == 'argocd' and 'argocd' in persistent:
+                # Argo dispatch resolves persistent options in the final leaf.
+                # A fully shadowed parent row is unreachable even before it.
+                spellings = lambda flag: set(re.findall(r'(?:^|\s)([+-]{1,2}[A-Za-z0-9_][A-Za-z0-9_-]*)', flag['flag']))
+                local = set().union(*(spellings(flag) for flag in own[name]))
+                inherited = [(owner, flag) for owner, flag in inherited
+                             if owner not in persistent or not spellings(flag) or not spellings(flag) <= local]
             # Merely inheriting help does not make options valid everywhere.
             # Default scope is strict; a CLI can explicitly declare persistence.
             prefixes[parent] = list(dict.fromkeys(flag['flag'] for owner, flag in inherited

@@ -1,0 +1,831 @@
+<header>
+<h1>Когда копии расходятся: bitrot, scanner и healing</h1>
+<p>При GET MinIO может исключить повреждённый shard и восстановить
+запрошенные байты из оставшихся исправных частей. Клиент получит
+содержимое, хотя повреждённая часть на диске ещё требует замены.
+Healing записывает восстановленные части на нужные endpoints.
+Сервер учитывает результат для каждой цели отдельно: успешная
+запись одной части не завершает восстановление другой, если там
+возникла ошибка.</p>
+</header>
+
+<p>Путь от HTTP body до публикации xl.meta и последующего GET
+разобран в <a href="#minio-08-object-io">главе записи и чтения</a>.
+Здесь продолжим с обнаружением повреждения и записью восстановленных
+частей на выбранные endpoints.</p>
+<p>Далее рассматривается архивный OSS Server commit
+<code>9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a</code>. Имена функций, режимов и полей
+относятся к нему. Сохраняемый одноendpointный стенд предыдущих
+глав не превращается в распределённый кластер от чтения этой модели.</p>
+
+<h2>Какие байты нужно вернуть на диск</h2>
+<p>Возьмём одну сохранённую версию V с одним part 1 длиной
+S=4 194 304 байта, то есть 4 MiB. Part — часть версии, чей номер
+и размер записаны в metadata, служебных сведениях об объекте.
+Тело не сжато, не зашифровано и не перенесено во внешнее хранилище;
+кодированные данные лежат отдельными файлами, а не inline внутри
+xl.meta. Эти условия позволяют считать байты без дополнительных
+преобразований.</p>
+<p>У версии один erasure set, группа совместно кодируемых endpoints:
+N=4, K=2 data shards и P=2 parity shards. Endpoint — адресуемая
+сервером область хранения. Shard — пронумерованный кодированный
+поток части. Parity вычисляется из data и позволяет восстановить
+недостающие фрагменты при достаточном числе пригодных источников.
+Здесь E1–E4 находятся на отдельных физических дисках узлов A–D;
+диск узла D называется D1. K обозначает число data shards, а D
+в имени узла остаётся именем узла.</p>
+<p>В metadata V записан erasure block size B=1 048 576 байт.
+Block — порция входного part за один проход кодера. Она даёт
+четыре shard-фрагмента, вместе называемые stripe. Chunk здесь —
+один такой фрагмент в потоке конкретного shard. При K=2 полный
+block даёт chunk длиной 524 288 байт. Четыре blocks образуют
+по 2 097 152 байта shard payload на endpoint. Payload означает
+кодированные байты без hashes и metadata. Деление здесь точное,
+поэтому padding, дополнения нулевыми байтами, нет.</p>
+<p>Зафиксируем distribution [1,2,3,4], перестановку номеров shards
+по endpoints: E1/E2 содержат data, E3/E4 — parity. Это явная
+предпосылка сцены, а не вычисленное размещение по имени key.
+При HighwayHash256S перед каждым chunk лежит 32-байтовый hash,
+контрольное значение его байтов. Один поток имеет вид
+<code>hash0 | chunk0 | hash1 | chunk1 | hash2 | chunk2 | hash3 | chunk3</code>.
+Его длина — 2 097 280 байт; сумма четырёх — 8 389 120 байт.
+Из них 8 MiB составляет shard payload и 512 байт — hashes.
+xl.meta, каталоги и выделенные filesystem блоки сюда не входят.</p>
+<p class="sources">Источники:
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-coding.go#L42-L131">размеры shards</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/bitrot-streaming.go#L44-L75">запись hash и chunk</a>.</p>
+
+<h2>Почему размер файла не заменяет проверку содержимого</h2>
+<p>Bit rot здесь означает повреждение сохранённых байтов.
+Сервер ищет его проверкой целостности; отсутствие файла
+и изменение содержимого требуют разных проверок.</p>
+<p>Normal scan для отдельного non-inline part вызывает CheckParts.
+Локальный checkPart смотрит путь, проверяет, что он не является
+каталогом, и выявляет размер меньше ожидаемого shard payload.
+Он не читает весь payload и не сравнивает hashes; файл прежней
+длины с изменённым байтом способен пройти этот этап. По этому
+результату нельзя утверждать, что проверено содержимое part.</p>
+<p>Deep scan вызывает VerifyFile. Storage endpoint читает
+hash и следующий chunk, заново считает hash и сравнивает значения.
+При HighwayHash256S проверяется также ожидаемый размер потока
+с hashes. Несовпадение даёт errFileCorrupt. Reader обычного GET
+тоже проверяет прочитанные chunks; он не передаёт обнаруженные
+повреждённые байты декодеру как исправные. Проверенный диапазон
+не говорит о ещё не прочитанных chunks.</p>
+<p>Inline данные уже получены вместе с metadata: в
+checkObjectWithAllParts их bitrotVerify выполняется и в normal
+режиме. Поэтому правило «normal никогда не проверяет байты»
+для этой реализации неверно. Delete marker, версия без тела,
+и remote-версия с данными во внешнем хранилище проходят другие
+ветви; приведённые далее расходы относятся к нашему локальному part.</p>
+<p>Checksum отвечает на вопрос о совпадении сохранённых байтов
+и контрольного значения. Она не выбирает нужную историю:
+две разные версии могут иметь исправные, но разные тела.
+У HighwayHash здесь встроенный публично известный ключ из
+bitrot.go. Это обнаружение повреждения, а не аутентификация
+автора данных: знающий алгоритм может пересчитать hash.
+SigV4 проверяет подпись запроса, TLS защищает соединение,
+а приложение отдельно сравнивает принятое тело с ожидаемым.</p>
+<p class="sources">Источники:
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/xl-storage.go#L2365-L2424">checkPart и CheckParts</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/xl-storage.go#L3100-L3136">VerifyFile</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-healing-common.go#L397-L430">inline и выбор режима</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/bitrot.go#L36-L59">ключ и алгоритмы</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/bitrot.go#L156-L215">bitrotVerify</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/bitrot-streaming.go#L161-L199">reader chunks</a>.</p>
+
+<h2>Откуда появляются задания scanner</h2>
+<p>Data scanner обходит namespace, пространство имён bucket/key,
+и собирает сведения об объёме и версиях. Он также исполняет
+выбранные проверки healing, lifecycle и replication.
+Lifecycle задаёт срок хранения или перенос версий; replication
+копирует их в другую цель. Эти действия объясняют, почему обход
+не является только чтением данных для поиска bitrot.</p>
+<p>runDataScanner получает лидерскую блокировку, читает сохранённый
+номер цикла и вызывает NSScanner. Верхний слой запускает работу
+по sets всех pools и объединяет usage cache, дерево сохранённых
+счётчиков. Внутри set nsScanner раздаёт buckets через общую очередь
+работникам доступных дисков; новые buckets идут раньше уже известных.
+Конкретный bucket берёт один работник очереди. Это не требование
+прочитать его payload на каждом endpoint в каждом цикле.</p>
+<p>На storage endpoint NSScanner ищет xl.meta или файл старого формата xl.json,
+читает metadata и превращает найденные версии в ObjectInfo,
+сведения о версии для объектного слоя, включая VersionID и размер.
+Далее applyActions рассматривает версии по отдельности. Для
+выбранной проверки applyHealing передаёт именно VersionID этой
+версии в HealObject. У удаляемой lifecycle-версии может оказаться
+другое действие вместо healing. В HealObject пустой versionID
+преобразуется в буквальную null-версию; это не обещание ремонта
+самой новой версии при любой форме вызова.</p>
+<p>Cache позволяет не перечитывать каждую ветку целиком. У
+скомпактированной ветки хранятся суммарные счётчики потомков.
+Для известных таких веток применяется отбор по hash и номеру
+цикла с dataUsageUpdateDirCycles=16; пропущенная ветка переносит
+прежние totals. Для выбора healing используется другая часть
+того же hash: modAlt сравнивает её остаток с номером цикла,
+а healObjectSelectProb равен 1024. При предварительном отборе
+ветки делитель objectHealProbDiv согласует эти два шага.</p>
+<p>Это детерминированный отбор по hash и циклу, а не независимый
+бросок монеты для каждого запроса. Если healing выключен для
+прохода через SkipHealing или диск уже помечен Healing,
+shouldHeal не разрешает обычную проверку. Отдельная ветвь
+abandonedChildren, ранее известных, но не найденных сейчас имён,
+проверяет другие диски и может поставить найденные версии в
+фоновую работу. Поэтому отсутствие имени на одном диске
+не читается сразу как доказательство удаления всего объекта.</p>
+<p class="sources">Источники:
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/data-scanner.go#L155-L229">цикл и его сохранение</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-server-pool.go#L735-L792">работа по sets</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure.go#L378-L569">очередь buckets и cache</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/xl-storage.go#L594-L649">metadata и версии</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/data-scanner.go#L650-L668">отбор веток</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/data-scanner.go#L495-L507">выбор item</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/data-usage-cache.go#L311-L330">mod и modAlt</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/data-scanner.go#L691-L839">ранее найденные имена</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-healing.go#L1081-L1106">null и повтор deep</a>.</p>
+
+<h2>Как выбирается normal или deep</h2>
+<p>Параметр heal:bitrotscan и переменная MINIO_HEAL_BITROTSCAN
+разбираются кодом закреплённого поколения. Значение off даёт
+BitrotScanCycle=-1, on — 0; запись вида 1m означает один
+30-дневный месяц, а не одну минуту. Положительное число месяцев
+задаёт интервал. Это описание формата, а не команда изменения
+настроек стенда; default в исходниках — off.</p>
+<p>getCycleScanMode возвращает normal при -1 и deep при 0.
+Для положительного интервала deep выбирается, пока разность
+currentCycle и BitrotStartCycle меньше 1024, либо когда
+прошедшее время превысило интервал. Иначе выбирается normal.
+При переходе в deep сохраняются BitrotStartTime,
+BitrotStartCycle и CurrentScanMode. Режим цикла и выбор объекта
+— два отдельных условия: deep не отменяет отбор items по hash.</p>
+<p>При выбранном item applyHealing создаёт HealOpts со ScanMode
+и Remove=true. Это путь, способный менять storage. Даже DryRun
+не следует описывать как безусловно неизменяющее чтение:
+внутри healObject некоторые ветви deleteIfDangling находятся
+до проверки DryRun. Успешный цикл и обновлённый usage cache
+не доказывают чтение всех байтов всех версий. Числа 16 и 1024
+не задают крайний срок полного scrub, проверки содержимого
+всего хранилища.</p>
+<p class="sources">Источники:
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/internal/config/heal/heal.go#L65-L150">цикл, default и месяцы</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/data-scanner.go#L89-L107">getCycleScanMode</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/data-scanner.go#L190-L199">переход режима</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/data-scanner.go#L952-L970">HealOpts scanner</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-healing.go#L332-L435">metadata и DryRun</a>.</p>
+
+<h2>Как healing выбирает версию и источники</h2>
+<p>Перед дорогим чтением HealObject выполняет быстрый опрос
+metadata. В рабочем healObject сервер обычно берёт блокировку
+bucket/key и заново вызывает readAllFileInfo для выбранного
+VersionID. Вариант NoLock предназначен для вызывающего пути,
+который сам обеспечивает нужную блокировку. Данные опроса
+в RAM ещё не являются выбранным телом объекта. FileInfo — структура
+сведений об одной версии. Она содержит VersionID, DataDir — имя
+области её shard-данных, erasure-параметры и список Parts.</p>
+<p>objectQuorumFromMeta получает K и P из доступных согласуемых
+metadata этой версии. Затем listOnlineDisks выбирает группу по
+общему ModTime, времени версии; предусмотрен запасной путь по
+ETag с общим VersionID. pickValidFileInfo вызывает findFileInfoInQuorum. Для нашего
+локального несжатого V эта функция группирует описание по XLV1,
+номерам и размерам parts, K/P и distribution после отбора по
+ModTime либо ETag. Index конкретного endpoint и его shard data
+при этом различаются.
+Более позднее время одного файла или один исправный hash
+не заменяют эти проверки.</p>
+<p>Для V в нашей модели read quorum R=K=2; обычный PUT при K=P
+требовал W=3. Healing восстанавливает уже выбранную версию.
+Условие K пригодных shards проверяется для каждого нужного блока.
+Два ответа с разными версиями либо два неправильных номера shard
+не дают двух уравнений для V. Если metadata не позволяют выбрать
+версию или у part больше P непригодных участников, путь не может
+обычно восстановить тело. Код рассматривает и deleteIfDangling,
+обработку признанного невосстановимым остатка; для сохранения повреждённых файлов без изменений нужна отдельная
+копия: этот изменяющий storage путь сам по себе её не создаёт.</p>
+<p>checkObjectWithAllParts сопоставляет metadata с выбранным
+описанием, проверяет распределение и получает результаты по
+каждому part каждого endpoint. В основном пути сравниваются
+ModTime и DataDir; в запасном пути — ETag. Далее normal/deep
+выбирает CheckParts или VerifyFile. Источники для данного part
+создаются только там, где его результат равен checkPartSuccess.
+Нормальная лёгкая проверка ещё не исключила скрытое повреждение:
+bitrot reader повторно проверит реально прочитанные chunks.</p>
+<p class="sources">Источники:
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-healing.go#L295-L391">блокировка и metadata</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-metadata.go#L289-L403">pickValidFileInfo</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-metadata.go#L530-L563">R и W</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-healing-common.go#L145-L169">VersionID перед запасным ETag</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-healing-common.go#L219-L254">listOnlineDisks</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-healing-common.go#L291-L439">проверка parts</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-healing.go#L438-L475">невосстановимый остаток</a>.</p>
+
+<h2>Как определяются цели</h2>
+<p>Функция shouldHealObjectOnDisk отвечает отдельно для каждого
+участника. Отсутствующее описание V, повреждённая metadata или
+описание, не совпавшее с выбранным FileInfo, делают доступный
+endpoint кандидатом на обновление. Недостающий либо corrupt part
+также требует записи. Здесь stale означает устаревшие или
+неподходящие сведения о рассматриваемой версии, а не просто
+«давно не трогавшийся файл». FileInfo.Equals учитывает время,
+erasure-параметры, признаки compression, encryption и transition.</p>
+<p>Ошибка errDiskNotFound даёт состояние Offline и не создаёт
+пишущую цель: серверу некуда отправить новые данные. Если E4
+вновь доступен, но V у него отсутствует, новая попытка может
+включить его как Missing. Если вернулся прежний диск с исправной V,
+эта копия проходит проверки и не требует автоматической перезаписи
+только из-за самого факта временного отключения.</p>
+<p>В результате HealResultItem указываются Bucket, Object,
+VersionID, DiskCount, DataBlocks, ParityBlocks и списки
+Before.Drives / After.Drives. В каждом элементе важны Endpoint
+и State. Известные причины превращаются в DriveStateMissing,
+DriveStateCorrupt, DriveStateOffline или DriveStateOk;
+неизвестная ошибка сохраняет неизвестное состояние с причиной.
+Формат native CLI здесь не имитируется. Before и After относятся
+к этому вызову и выбранной версии, а не к проверке всех объектов диска.</p>
+<p class="sources">Источники:
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-healing.go#L178-L204">shouldHealObjectOnDisk</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/storage-datatypes.go#L322-L340">FileInfo.Equals</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-healing.go#L279-L291">состояния</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-healing.go#L398-L435">списки целей и результатов</a>.</p>
+
+<figure id="minio-four-endpoint-healing" class="m07-object-figure">
+<style>
+#minio-four-endpoint-healing{margin:2rem 0;color:var(--text,#20252b)}
+#minio-four-endpoint-healing .m07-scroll{box-sizing:border-box;max-width:100%;overflow-x:auto;overscroll-behavior-inline:contain;border:1px solid var(--line,currentColor);border-radius:.5rem;background:var(--paper,#fff)}
+#minio-four-endpoint-healing .m07-scroll>svg{display:block;width:60rem;max-width:none;height:auto}
+#minio-four-endpoint-healing .m07-scroll:focus-visible{outline:3px solid var(--accent,currentColor);outline-offset:3px}
+#minio-four-endpoint-healing figcaption{margin-top:1rem}
+#minio-four-endpoint-healing figcaption p{margin:.6rem 0}
+#minio-four-endpoint-healing .m07-pan{color:var(--muted,currentColor);font-size:.9em}
+@media(min-width:64rem){#minio-four-endpoint-healing .m07-pan{display:none}}
+@media print{
+#minio-four-endpoint-healing .m07-scroll{overflow:visible;border:0}
+#minio-four-endpoint-healing .m07-scroll>svg{width:100%;max-width:100%;height:auto}
+#minio-four-endpoint-healing .m07-pan{display:none}
+#minio-four-endpoint-healing{break-inside:avoid}
+}
+</style>
+<p><strong>Почему клиент уже получил V, а избыточность ещё не восстановлена?</strong></p>
+<p class="m07-pan">Прокрутите рисунок по горизонтали, чтобы сравнить четыре диска.
+Текст под ним описывает те же состояния.</p>
+<div class="m07-scroll" tabindex="0" role="region" aria-label="Разрез четырёх дисков; рисунок прокручивается по горизонтали">
+<svg id="m07-storage-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 1260" role="img" aria-labelledby="m07-fig-title m07-fig-desc">
+<title id="m07-fig-title">GET вернул V; отдельный repair опубликовал только E4</title>
+<desc id="m07-fig-desc">На узлах A и B лежат исправные data shards V.
+Узел C содержит parity shard с плохим hash последнего chunk.
+При GET reader E3 обнаружил повреждение, E4 был недоступен.
+E1 и E2 дали клиенту все четыре MiB без записи новых parity.
+Для отдельного repair E4 снова доступен с проверенным format слота.
+Два временных parity parts записаны заново. Возвращённая ошибка Close
+исключила E3; RenameData на E4 опубликовал его part и metadata.
+E3 остаётся повреждённым. Это условная сцена, не native IO.</desc>
+<style>
+#m07-storage-svg{color:var(--text,#20252b);font-family:system-ui,sans-serif}
+#m07-storage-svg text{fill:currentColor;font-size:16px}
+#m07-storage-svg .m07-small{font-size:14px}
+#m07-storage-svg .m07-label{font-size:18px;font-weight:700}
+#m07-storage-svg .m07-paper{fill:var(--paper,#fff);stroke:currentColor;stroke-width:1.5}
+#m07-storage-svg .m07-drive{fill:var(--soft,#eef1f4);stroke:currentColor;stroke-width:2}
+#m07-storage-svg .m07-platter{fill:none;stroke:var(--muted,currentColor);stroke-width:1.5}
+#m07-storage-svg .m07-good{fill:var(--accent,#386a86);fill-opacity:.18;stroke:currentColor}
+#m07-storage-svg .m07-missing{fill:none;stroke:currentColor;stroke-dasharray:6 4}
+#m07-storage-svg .m07-path{fill:none;stroke:var(--accent,currentColor);stroke-width:2.5;marker-end:url(#m07-arrow)}
+#m07-storage-svg .m07-check{fill:none;stroke:currentColor;stroke-width:2;stroke-dasharray:4 4}
+#m07-storage-svg .m07-stop{fill:none;stroke:currentColor;stroke-width:3}
+</style>
+<defs>
+<marker id="m07-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="currentColor"/></marker>
+<pattern id="m07-bad-hatch" patternUnits="userSpaceOnUse" width="8" height="8"><path d="M0 8L8 0" stroke="currentColor" stroke-width="1" stroke-opacity=".35"/></pattern>
+</defs>
+<text x="20" y="28" class="m07-label">V: один part 4 MiB · N=4 · K=2 · P=2 · B=1 MiB</text>
+<text x="20" y="54">Distribution [1,2,3,4]: data на E1/E2, parity на E3/E4.</text>
+<text x="20" y="80">Каждый endpoint — отдельный физический диск своего узла.</text>
+<g transform="translate(20 108)">
+<path class="m07-drive" d="M0 18L18 0H192L210 18V288L192 306H18L0 288Z"/>
+<circle class="m07-platter" cx="170" cy="43" r="27"/><circle class="m07-platter" cx="170" cy="43" r="6"/><path class="m07-platter" d="M195 68L174 45"/>
+<text x="12" y="30" class="m07-label">Узел A / A1</text>
+<text x="12" y="54">E1 · shard 1</text>
+<text x="12" y="83">data</text>
+<path class="m07-paper" d="M12 98H177L196 117V150H12Z"/><path class="m07-check" d="M177 98V117H196"/>
+<text x="22" y="128">xl.meta: версия V</text>
+<path class="m07-paper" d="M12 162H177L196 181V288H12Z"/>
+<text x="22" y="185">part.1</text>
+<rect x="22" y="196" width="26" height="16" class="m07-good"/><rect x="48" y="196" width="136" height="16" class="m07-good"/><text x="27" y="208" class="m07-small">h0</text><text x="56" y="208" class="m07-small">chunk 0</text>
+<rect x="22" y="216" width="26" height="16" class="m07-good"/><rect x="48" y="216" width="136" height="16" class="m07-good"/><text x="27" y="228" class="m07-small">h1</text><text x="56" y="228" class="m07-small">chunk 1</text>
+<rect x="22" y="236" width="26" height="16" class="m07-good"/><rect x="48" y="236" width="136" height="16" class="m07-good"/><text x="27" y="248" class="m07-small">h2</text><text x="56" y="248" class="m07-small">chunk 2</text>
+<rect x="22" y="256" width="26" height="16" class="m07-good"/><rect x="48" y="256" width="136" height="16" class="m07-good"/><text x="27" y="268" class="m07-small">h3</text><text x="56" y="268" class="m07-small">chunk 3</text>
+</g>
+<g transform="translate(252 108)">
+<path class="m07-drive" d="M0 18L18 0H192L210 18V288L192 306H18L0 288Z"/>
+<circle class="m07-platter" cx="170" cy="43" r="27"/><circle class="m07-platter" cx="170" cy="43" r="6"/><path class="m07-platter" d="M195 68L174 45"/>
+<text x="12" y="30" class="m07-label">Узел B / B1</text>
+<text x="12" y="54">E2 · shard 2</text>
+<text x="12" y="83">data</text>
+<path class="m07-paper" d="M12 98H177L196 117V150H12Z"/><path class="m07-check" d="M177 98V117H196"/>
+<text x="22" y="128">xl.meta: версия V</text>
+<path class="m07-paper" d="M12 162H177L196 181V288H12Z"/>
+<text x="22" y="185">part.1</text>
+<rect x="22" y="196" width="26" height="16" class="m07-good"/><rect x="48" y="196" width="136" height="16" class="m07-good"/><text x="27" y="208" class="m07-small">h0</text><text x="56" y="208" class="m07-small">chunk 0</text>
+<rect x="22" y="216" width="26" height="16" class="m07-good"/><rect x="48" y="216" width="136" height="16" class="m07-good"/><text x="27" y="228" class="m07-small">h1</text><text x="56" y="228" class="m07-small">chunk 1</text>
+<rect x="22" y="236" width="26" height="16" class="m07-good"/><rect x="48" y="236" width="136" height="16" class="m07-good"/><text x="27" y="248" class="m07-small">h2</text><text x="56" y="248" class="m07-small">chunk 2</text>
+<rect x="22" y="256" width="26" height="16" class="m07-good"/><rect x="48" y="256" width="136" height="16" class="m07-good"/><text x="27" y="268" class="m07-small">h3</text><text x="56" y="268" class="m07-small">chunk 3</text>
+</g>
+<g transform="translate(484 108)">
+<path class="m07-drive" d="M0 18L18 0H192L210 18V288L192 306H18L0 288Z"/>
+<circle class="m07-platter" cx="170" cy="43" r="27"/><circle class="m07-platter" cx="170" cy="43" r="6"/><path class="m07-platter" d="M195 68L174 45"/>
+<text x="12" y="30" class="m07-label">Узел C / C1</text>
+<text x="12" y="54">E3 · shard 3</text>
+<text x="12" y="83">parity</text>
+<path class="m07-paper" d="M12 98H177L196 117V150H12Z"/><path class="m07-check" d="M177 98V117H196"/>
+<text x="22" y="128">xl.meta: версия V</text>
+<path class="m07-paper" d="M12 162H177L196 181V288H12Z"/>
+<text x="22" y="185">part.1</text>
+<rect x="22" y="196" width="26" height="16" class="m07-good"/><rect x="48" y="196" width="136" height="16" class="m07-good"/><text x="27" y="208" class="m07-small">h0</text><text x="56" y="208" class="m07-small">chunk 0</text>
+<rect x="22" y="216" width="26" height="16" class="m07-good"/><rect x="48" y="216" width="136" height="16" class="m07-good"/><text x="27" y="228" class="m07-small">h1</text><text x="56" y="228" class="m07-small">chunk 1</text>
+<rect x="22" y="236" width="26" height="16" class="m07-good"/><rect x="48" y="236" width="136" height="16" class="m07-good"/><text x="27" y="248" class="m07-small">h2</text><text x="56" y="248" class="m07-small">chunk 2</text>
+<rect x="22" y="256" width="26" height="16" class="m07-good"/><rect x="48" y="256" width="136" height="16" class="m07-missing"/><rect x="148" y="256" width="36" height="16" fill="url(#m07-bad-hatch)"/><text x="27" y="268" class="m07-small">h3</text><text x="56" y="268" class="m07-small">chunk 3 ×</text>
+</g>
+<g transform="translate(716 108)">
+<path class="m07-drive" d="M0 18L18 0H192L210 18V288L192 306H18L0 288Z"/>
+<circle class="m07-platter" cx="170" cy="43" r="27"/><circle class="m07-platter" cx="170" cy="43" r="6"/><path class="m07-platter" d="M195 68L174 45"/>
+<text x="12" y="30" class="m07-label">Узел D / D1</text>
+<text x="12" y="54">E4 · shard 4</text>
+<text x="12" y="83">parity · V нет</text>
+<path class="m07-missing" d="M12 98H177L196 117V288H12Z"/><text x="24" y="132">GET: offline</text><text x="24" y="168">Перед repair:</text><text x="24" y="193">доступен новый D1,</text><text x="24" y="218">format слота E4</text><text x="24" y="243">проверен; V нет.</text>
+</g>
+<text x="20" y="447" class="m07-label">GET</text>
+<path class="m07-path" d="M125 414V462H98V510"/>
+<path class="m07-path" d="M357 414V482H182V510"/>
+<path class="m07-check" d="M589 414V462H435"/>
+<path class="m07-stop" d="M428 455L442 469M428 469L442 455"/>
+<text x="484" y="490" class="m07-small">Reader E3 вызван:</text>
+<text x="484" y="512" class="m07-small">hash(chunk 3) ≠ h3.</text>
+<path class="m07-paper" d="M32 510H272L300 538V628H32Z"/>
+<path class="m07-check" d="M272 510V538H300"/>
+<text x="48" y="540" class="m07-label">Клиент получил V</text>
+<text x="48" y="568">4 MiB после проверок.</text>
+<text x="48" y="594">E1/E2 дали оба data shards.</text>
+<text x="48" y="618" class="m07-small">На E3/E4 ещё нет repair.</text>
+<text x="20" y="670" class="m07-label">Repair: выбранная версия V</text>
+<text x="20" y="698">Повторное чтение E1 и E2</text>
+<path class="m07-path" d="M125 414V425H8V805H404"/>
+<path class="m07-path" d="M357 414V435H326V775H404"/>
+<circle class="m07-drive" cx="450" cy="790" r="48"/>
+<text x="450" y="785" class="m07-label" text-anchor="middle">K=2</text>
+<text x="450" y="810" text-anchor="middle">кодер</text>
+<text x="370" y="858" class="m07-small">RAM узла D</text>
+<text x="370" y="880" class="m07-small">→ parity 3 и 4</text>
+<path class="m07-path" d="M496 775H568V706H610"/>
+<path class="m07-path" d="M496 805H568V906H610"/>
+<g transform="translate(610 650)">
+<path class="m07-paper" d="M0 0H206L230 24V110H0Z"/><path class="m07-check" d="M206 0V24H230"/>
+<text x="14" y="29">E3: tmp/U/…/part.1</text>
+<text x="14" y="57">shard 3, новые hashes</text>
+<text x="14" y="85">ещё не опубликован</text>
+</g>
+<path class="m07-stop" d="M725 760V772M711 772H739"/>
+<text x="624" y="800" class="m07-label">Close: ошибка</text>
+<text x="624" y="824">E3 остаётся Corrupt.</text>
+<g transform="translate(610 850)">
+<path class="m07-paper" d="M0 0H206L230 24V110H0Z"/><path class="m07-check" d="M206 0V24H230"/>
+<text x="14" y="29">E4: tmp/U/…/part.1</text>
+<text x="14" y="57">shard 4, новые hashes</text>
+<text x="14" y="85">ещё не опубликован</text>
+</g>
+<path class="m07-path" d="M725 960V990"/>
+<g transform="translate(610 990)">
+<path class="m07-paper" d="M0 0H206L230 24V110H0Z"/><path class="m07-check" d="M206 0V24H230"/>
+<text x="14" y="29" class="m07-label">E4: RenameData OK</text>
+<text x="14" y="57">xl.meta(V), part.1</text>
+<text x="14" y="85">After(E4) = OK</text>
+</g>
+<text x="20" y="1140" class="m07-label">Возможен nil у вызова, пока After(E3) остаётся Corrupt.</text>
+<text x="20" y="1166">Результат читают отдельно по Endpoint. Следующая попытка может исправить E3.</text>
+<text x="20" y="1192">Общая атомарная публикация всех целей этой сценой не предполагается.</text>
+<text x="20" y="1220">h: 32 B · chunk: 512 KiB · 4 chunks на shard.</text>
+<text x="20" y="1247">Один shard stream: 2 MiB payload + 128 B hashes.</text>
+</svg>
+</div>
+<figcaption>
+<p>В GET этой сцены reader E3 действительно обнаружил плохой hash.
+Исправные E1/E2 уже содержат оба data shards; клиент получает V,
+а повреждённый parity E3 и отсутствующий E4 ещё не исправлены.
+Узел D с диском D1 здесь означает физическое размещение, K=2 — число data shards.</p>
+<p>Перед отдельным repair E4 снова доступен и соответствует ожидаемому
+слоту set. Согласованные metadata V и проверки parts выбрали E1/E2
+источниками, E3/E4 — целями. Новые hashes и parity сначала попали
+во временные parts каждого endpoint. В показанном исходе возвращённая
+ошибка Close исключила E3; успешный RenameData E4 опубликовал только E4.
+Повтор заново проверяет V и цели, сохраняя уже исправный E4.</p>
+<p>Close ждёт фоновой CreateFile, но это не обещает передачи каждой
+поздней Fdatasync/Close-ошибки в возвращённый результат Close.
+Рисунок использует именно наблюдаемую возвращённую ошибку.
+Checksums обнаруживают повреждение прочитанных chunks; они не выбирают
+верную историю и не аутентифицируют автора данных.
+Пути tmp/U/… сокращены только на рисунке; полный временный путь объяснён ниже.</p>
+</figcaption>
+</figure>
+
+<h2>Почему GET может закончиться раньше восстановления</h2>
+<p>В этой схеме явно принята distribution [1,2,3,4]:
+E1/E2 содержат data shards, E3/E4 — parity. Пусть E4 недоступен,
+а chunk на E3 не прошёл checksum. Исправные E1/E2 уже содержат
+оба data shards, поэтому GET может собрать тело без вычисления
+отсутствующих data shards. Запись parity на E3/E4 остаётся
+отдельной работой. В главе записи и чтения показан другой случай:
+GET получает data из одной пары parity shards.</p>
+<p>Для этой сцены reader E3 действительно был вызван и обнаружил
+несовпадение. В другой последовательности успешный GET может
+ограничиться E1/E2 и вообще не прочитать E3. Если HTTP-клиент
+принял все байты V, это подтверждает результат данного чтения.
+Для записи на E3 требуется другой вызов, новое согласование
+metadata и завершение целевого IO.</p>
+<p>В read path, когда запрошенная часть передана целиком, но decoder
+сообщил missing/corrupt source, код может добавить PartialOperation
+в MRF. Эта структура содержит Bucket, Object, VersionID,
+SetIndex, PoolIndex, Queued и BitrotScan. Последний признак
+выбирает deep для фонового вызова, если причиной был bitrot.
+GET при этом может завершиться успешно. Добавление задания
+не означает, что его цель уже восстановлена.</p>
+<p>MRF имеет очередь на 100 000 элементов. addPartialOp не ждёт
+свободного места: при заполненной либо закрываемой очереди
+добавление может быть пропущено. В этом коде есть сохранение
+оставшейся очереди при штатном shutdown и загрузка list.bin
+при старте; это не durable-журнал каждого принятого задания.
+Обработка элемента очереди и последующие scanner/drive-heal
+дают разные возможности снова найти проблему. Из них не
+получается обещание срока или доставки каждого задания после
+любого аварийного завершения процесса.</p>
+<p class="sources">Источники:
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-object.go#L367-L418">GET и addPartialOp</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/mrf.go#L38-L98">поля и очередь</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/mrf.go#L100-L211">сохранение и загрузка</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/mrf.go#L218-L279">выбор режима MRF</a>.</p>
+
+<h2>От источников до временных целевых байтов</h2>
+<p>Продолжим с доступным E4. Представим, что deep-проверка V
+нашла corrupt part на E3 и отсутствие V на E4. У E1/E2 metadata
+согласованы, все chunks выбранного part исправны; E4 уже доступен
+для записи в ожидаемой позиции set. Это две выбранные цели.
+Списки sources, targets и FileInfo переставляются по distribution,
+чтобы позиция в erasure-массиве обозначала номер shard.</p>
+<p>Для каждой цели cleanFileInfo копирует согласованное описание
+V и очищает локальные Index, checksums и inline Data. Оригинальная
+копия metadata источника сохраняется отдельно, чтобы читать его
+прежние DataDir и checksum-параметры. Для обычного нового формата
+dstDataDir остаётся DataDir V; отдельный migrateDataDir нужен
+для миграции старого формата XLV1. Временной операции присваивается собственный UUID U.</p>
+<p>Цикл проходит parts V. Reader источника читает его part.N
+и проверяет hash каждого полученного chunk. Erasure.Heal
+вызывает parallelReader, получает K пригодных фрагментов и
+DecodeDataAndParityBlocks. При наших E1/E2 data уже есть:
+нужно вычислить parity для E3/E4. При других пригодных номерах
+shards сначала восстанавливаются недостающие data, затем parity.
+Размеры, номера и конечное поле задаёт кодер выбранной версии;
+учебная матрица из главы 08 не подменяет библиотечную.</p>
+<p>Writers создаются только для выбранных целей. Для non-inline
+данные идут во временный part
+<code>.minio.sys/tmp/U/DataDir/part.1</code> данного endpoint.
+Bitrot writer заново добавляет hash перед каждым новым chunk.
+Для inline вместо отдельного файла заполняется буфер в RAM,
+который позже попадёт в xl.meta. Здесь один corrupt chunk делает
+целевой part непригодным; рассматриваемая ветвь переписывает
+полный shard part, а не только один повреждённый байт.</p>
+<p>Внутри Erasure.Heal multiWriter имеет writeQuorum=1. Это порог
+продолжения записи доступных целей существующей V, а не замена
+W=3 для обычного PUT. Если один writer отказал, другой ещё может
+получить восстановленные байты. Если ни одна цель больше не
+принимает данные, продолжать этот repair нечем.</p>
+<p>Если normal-проверка пропустила скрытый bitrot, source reader
+может обнаружить его уже при восстановлении. Erasure.Heal
+способен получить достаточные другие фрагменты и записать временные
+байты, но вернуть сохранённый errFileCorrupt. Внешний healObject
+закрывает readers/writers и при этой ошибке возвращается до
+публикации. Обёртка HealObject после errFileCorrupt в normal
+повторяет работу в deep, чтобы заново выбрать пригодные sources
+и targets. Наличие временных байтов первого прохода не является
+завершённым repair.</p>
+<p class="sources">Источники:
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-healing.go#L478-L598">порядок, metadata, readers и writers</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-decode.go#L316-L363">Erasure.Heal</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-healing.go#L600-L645">ошибки записи и Close</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-healing.go#L1099-L1106">normal с повтором deep</a>.</p>
+
+<h2>Close, публикация и результат каждой цели</h2>
+<p>После обработки part код закрывает writers. Возвращённая
+ошибка Close исключает соответствующую цель из дальнейших parts
+и публикации. У streamingBitrotWriter.Close есть две операции:
+закрыть промежуточный writer и дождаться фонового CreateFile.
+Он возвращает сохранённый результат первого закрытия, а после
+ожидания не читает результат CreateFile заново. Поэтому ожидание
+фоновой функции и передача каждой поздней ошибки Fdatasync или
+Close storage-файла — разные свойства. Здесь действует то же
+уточнение, что в главе 08.</p>
+<p>Целям, оставшимся после parts, выставляются номер shard Index
+и признак SetHealing. Затем healObject последовательно вызывает
+StorageAPI.RenameData. Это этап публикации восстановленных данных
+и metadata по отдельным endpoints. Только после успешного вызова
+для данной цели её After.Drives.State становится DriveStateOk.
+Этот цикл не вызывает общий renameData обычного PUT с W=3.
+Общий момент атомарной публикации всех целей из него не следует.</p>
+<p>Предположим, E3 вернул ошибку Close, а E4 прошёл Close и
+RenameData. В ответе E4 станет OK, E3 сохранит прежнее не-OK
+состояние, например Corrupt. Если других ошибок нет, функция
+может вернуть nil — отсутствие общей ошибки. При этом E3 ещё
+не восстановлен. Поэтому нужно читать
+After по нужному Endpoint. В другом случае E3 успел опубликоваться,
+а RenameData E4 вернул ошибку: функция возвращает ошибку,
+но уже успешная публикация E3 не откатывается общим rollback.</p>
+<p>Повтор заново выбирает V и актуальное состояние endpoints.
+Успешный E4 больше не обязан входить в targets; E3 может получить
+новую временную запись и затем публикацию. Удалять данные E4,
+менять private xl.meta или создавать пустой каталог на месте
+неподтверждённой цели для «выравнивания» состояния не требуется.
+В исходниках есть очистка временной операции, но отложенный вызов удаления, defer,
+ставится после цикла parts; ранний выход до него не даёт основания
+обещать отсутствие оставшихся временных файлов.</p>
+<p class="sources">Источники:
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/bitrot-streaming.go#L77-L98">возвращённый Close</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/internal/ringbuffer/ring_buffer.go#L548-L609">Flush буфера</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/xl-storage.go#L2169-L2208">Fdatasync и Close файла</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-healing.go#L600-L683">исключение целей и публикация</a>.</p>
+
+<h2>Вернулся endpoint или заменён физический носитель</h2>
+<p>Временный сетевой отказ может скрыть прежний исправный диск.
+После его возвращения сервер снова читает format и metadata:
+возврат доступности сам по себе не говорит, какие versions он
+успел пропустить. Для V он может оказаться исправным источником,
+устаревшей копией или доступной целью с отсутствующими данными.</p>
+<p>Физическая замена меняет накопитель, но адрес endpoint может
+остаться прежним. В format.json поле Erasure.This задаёт
+логическую идентичность позиции среди Erasure.Sets. GetDiskID
+проверяет format и соответствие set/disk позиции. В ветви
+newHealFormatSets новый unformatted носитель получает ожидаемый
+Erasure.This из reference format этой позиции. Следовательно,
+появление того же UUID не доказывает, что вернулся тот же
+физический накопитель; это не аппаратный serial number.</p>
+<p>saveFormatErasure публикует новый format и при заданном healID
+создаёт healing tracker. Этот tracker хранит ID диска, отдельный
+HealID операции, PoolIndex, SetIndex, DiskIndex, Endpoint,
+Started и LastUpdate. При загрузке его ID сравнивается с GetDiskID.
+Копирование чужого tracker или ручная перестановка format не являются
+способами продолжить восстановление.</p>
+<p>Автоматический monitor локального узла вызывает HealFormat,
+а затем healFreshDisk. Обход выполняет узел, к которому подключён
+заменённый диск, для соответствующего set. Сначала нужна пригодная
+reference format в quorum; при несогласованном format код отказывает.
+Ни совпавший путь, ни пустой новый filesystem не являются
+восстановленными объектами.</p>
+<p class="sources">Источники:
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/xl-storage.go#L821-L897">GetDiskID и позиция</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/format-erasure.go#L691-L719">newHealFormatSets</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/format-erasure.go#L349-L384">format и tracker</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-sets.go#L1007-L1086">HealFormat</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/background-newdisks-heal-ops.go#L103-L149">tracker ID</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/background-newdisks-heal-ops.go#L556-L603">локальный monitor</a>.</p>
+
+<h2>Чем прогресс замены диска отличается от очереди MRF</h2>
+<p>healFreshDisk сохраняет очередь QueuedBuckets; tracker
+запоминает текущие Bucket/Object, HealedBuckets и счётчики.
+ResumeItemsHealed, ResumeItemsFailed и другие Resume-поля
+возвращают счётчики к началу возобновляемого bucket. Повторный
+обход части уже обработанной работы возможен: сохранённая контрольная точка не
+означает отдельную транзакцию для каждого объекта.</p>
+<p>healErasureSet начинает normal scan, перечисляет versions
+и вызывает HealObject. Новые версии с ModTime после Started
+и версии, выбранные lifecycle для удаления, могут быть пропущены (skipped).
+Успех конкретной версии дополнительно требует
+After.Drives[tracker.DiskIndex].State=DriveStateOk. Поэтому
+общий nil от HealObject не подменяет результат нужной цели.
+ItemsHealed/BytesDone, ItemsFailed/BytesFailed и
+ItemsSkipped/BytesSkipped учитываются отдельно. Эти Bytes
+относятся к учитываемым версиям, а не к измерению всех physical
+shard reads и writes.</p>
+<p>Если ItemsFailed больше нуля и RetryAttempts меньше 4,
+healFreshDisk увеличивает RetryAttempts, сбрасывает рабочие
+счётчики и возвращает errRetryHealing. После исчерпания этой
+ветви ошибки остаются в счётчиках; tracker с тем же HealID
+может получить Finished=true. Поэтому Finished означает
+окончание этого обхода, включая вариант с оставшимися failed
+items. Он не заменяет проверку нужной V и её целей.</p>
+<p>Scanner ищет объекты по namespace и cache; MRF обрабатывает
+задания известных partial operations; fresh-disk heal перечисляет
+данные set ради конкретного заменённого диска. Foreground GET
+может только обнаружить проблему и дать повод для фонового
+вызова. Эти инициаторы используют общий механизм работы с V,
+но их очереди, критерии пропуска и счётчики различаются.</p>
+<p class="sources">Источники:
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/background-newdisks-heal-ops.go#L47-L97">поля tracker</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/background-newdisks-heal-ops.go#L207-L256">учёт и сохранение</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/background-newdisks-heal-ops.go#L277-L309">resume</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/global-heal.go#L445-L490">версии и результат нужного диска</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/background-newdisks-heal-ops.go#L490-L550">повтор и Finished</a>.</p>
+
+<h2>Сколько IO требует исправление V</h2>
+<p>Посчитаем отдельный deep-проход с последующим repair, когда
+E4 уже доступен, но V у него нет. На E1/E2 все четыре chunks
+исправны; у E3 ошибка в последнем chunk, поэтому до её обнаружения
+прочитан весь его поток. Проверка трёх потоков читает
+6 MiB payload и 384 байта hashes: 6 291 840 байт.
+Опрос metadata E4 сообщает отсутствие V; чтения его part нет.</p>
+<p>Далее sources E1/E2 читаются для восстановления: ещё
+4 MiB payload и 256 байт hashes, всего 4 194 560 байт.
+Writers E3/E4 получают столько же суммарно. Итого для этой
+последовательности — 14 MiB payload и 896 байт hashes,
+14 680 960 байт чтения и записи shard-потоков. Hash вычисляется
+для 12 проверенных chunks первого прохода, 8 source chunks
+repair и 8 новых target chunks: 28 вычислений на chunks
+по 512 KiB. Кодирование обрабатывает четыре stripes.</p>
+<p>Это счётчик байтов на выбранных storage-путях. Он не равен фактическому чтению и записи
+накопителя, device IO: filesystem metadata, выравнивание, упреждающее чтение,
+кэширование данных, повторные ошибки и временное сосуществование файлов
+меняют обращения к устройствам. Если повреждение обнаружено
+раньше, VerifyFile может прочитать меньше; если sources меняются
+или попытка повторяется, работа растёт.</p>
+<p>Зафиксируем и место исполнения: healer работает на D,
+источники E1/E2 находятся на A/B, E3 — на C, E4 — локальный
+новый диск D1. Удалённый вызов метода, RPC VerifyFile,
+исполняет проверку на storage endpoint и возвращает статусы parts, поэтому первые 6 MiB
+payload не обязаны пересекать сеть к D. При repair к D приходят
+потоки E1/E2, 4 194 560 байт; к C уходит поток E3,
+2 097 280 байт. Поток E4 пишется локально. Получаем
+6 291 840 сетевых байт shard-потоков без RPC, metadata,
+HTTP/TLS framing и повторов. При другом месте healer или
+совмещении endpoints на узле этот расчёт меняется.</p>
+<p>Если в ту же пару sources приходит полный обычный клиентский
+(foreground) GET V
+и он читает E1/E2, эти sources дополнительно обслужат ещё
+4 194 560 байт. Вместе с source-проходом repair это
+8 389 120 байт вместо 4 194 560 для одного GET, до прочих расходов.
+Это сравнение объёма двух работ. Из удвоения байтов не следует
+удвоение latency: cache, очереди и расположение IO могут дать
+другую зависимость. Успешный E4 и повтор только E3 также требуют
+раздельного учёта: один новый source-проход и запись E3 — ещё
+6 291 840 байт без новой предварительной deep-проверки.</p>
+<p>Для большого набора, где требуется вернуть 1 TiB именно
+shard payload на одну цель при K=2, один идеальный полный
+проход требует 2 TiB source payload reads и 1 TiB target
+payload writes. Это не 1 TiB логических объектов. Время можно
+оценивать только по измеренным доступным скоростям нужных
+ресурсов и количеству повторов; непроверенные MiB/s сюда
+не подставляются.</p>
+<p class="sources">Источники:
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/storage-rest-client.go#L829-L850">RPC VerifyFile</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/storage-rest-server.go#L1116-L1150">проверка на endpoint</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/storage-rest-client.go#L629-L654">source stream</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/storage-rest-client.go#L392-L415">передача writer</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-decode.go#L316-L363">обработка stripes</a>.</p>
+
+<details>
+<summary>Пересчитать отбор, частичный результат и байты в RAM</summary>
+<p>Код ниже моделирует только названные условия. Синтетический
+64-битовый hash уже задан числом; xxhash реального key здесь
+не вычисляется. На неизменном, посещаемом в каждом нужном цикле
+имени он показывает два уровня отбора, но не срок scanner.
+Функция publish получает наблюдаемые результаты Close и RenameData;
+она не воспроизводит storage, metadata quorum или crash recovery.</p>
+<pre><code class="language-python">"""Teaching model: selection, per-target publication and byte accounting.
+No MinIO calls, sockets, files, HighwayHash or xxhash implementation.
+"""
+from math import ceil
+
+MiB = 1 &lt;&lt; 20
+S, B, K, N, H = 4 * MiB, MiB, 2, 4, 32
+blocks = [min(B, S - offset) for offset in range(0, S, B)]
+widths = [ceil(length / K) for length in blocks]
+payload = sum(widths)
+hash_bytes = len(blocks) * H
+stream = payload + hash_bytes
+assert blocks == [MiB] * 4
+assert widths == [MiB // 2] * 4
+assert payload == 2 * MiB and hash_bytes == 128
+assert N * stream == 8389120
+
+# E4 is available but has no V. E3's last chunk has a bad hash.
+deep_reads = 3 * stream
+source_reads = K * stream
+target_writes = 2 * stream
+network = source_reads + stream  # healer D; E1/E2 remote; E3 remote; E4 local
+assert deep_reads == 6291840
+assert source_reads == target_writes == 4194560
+assert deep_reads + source_reads + target_writes == 14680960
+assert network == 6291840
+assert 2 * source_reads == 8389120  # repair sources plus one foreground GET
+assert source_reads + stream == 6291840  # another pass, only E3 is target
+assert 3*4 + 2*4 + 2*4 == 28  # chunk hashes computed
+
+def cycle_mode(config, cycle, start_cycle, elapsed):
+    if config == -1:
+        return "normal"
+    if config == 0:
+        return "deep"
+    return "deep" if cycle - start_cycle &lt; 1024 or elapsed &gt; config else "normal"
+
+assert cycle_mode(-1, 0, 0, 0) == "normal"
+assert cycle_mode(0, 5000, 0, 0) == "deep"
+assert cycle_mode(100, 1023, 0, 0) == "deep"
+assert cycle_mode(100, 1024, 0, 100) == "normal"
+assert cycle_mode(100, 1024, 0, 101) == "deep"
+
+def selected(hash64, cycle, compact=False, skip=False):
+    # hash64 is a supplied synthetic xxhash result, not calculated from a key.
+    low = hash64 &amp; 0xffffffff
+    high = (hash64 &gt;&gt; 32) &amp; 0xffffffff
+    divisor = 16 if compact else 1
+    if skip or (compact and low % 16 != cycle % 16):
+        return False
+    return high % (1024 // divisor) == (cycle // divisor) % (1024 // divisor)
+
+fake_hash = (93 &lt;&lt; 32) | 37
+ordinary = [c for c in range(1024) if selected(fake_hash, c)]
+compacted = [c for c in range(1024) if selected(fake_hash, c, compact=True)]
+assert ordinary == [93] and compacted == [469]
+assert not selected(fake_hash, 93, skip=True)
+
+def publish(before, close_results, rename_results, decode_error=False):
+    # Only observable return values are modeled. No claim that Close carries
+    # every late error from a storage goroutine.
+    after = dict(before)
+    if decode_error:
+        return after, "decode error"
+    candidates = [name for name in before if close_results[name] is None]
+    if not candidates:
+        return after, "all targets failed"
+    for name in candidates:
+        if rename_results[name] is not None:
+            return after, "rename error"
+        after[name] = "ok"
+    return after, None
+
+before = {"E3": "corrupt", "E4": "missing"}
+after, error = publish(before, {"E3": "returned close error", "E4": None},
+                       {"E4": None})
+assert after == {"E3": "corrupt", "E4": "ok"} and error is None
+again, error = publish({"E3": after["E3"]}, {"E3": None}, {"E3": None})
+assert again == {"E3": "ok"} and error is None
+partial, error = publish(before, {"E3": None, "E4": None},
+                         {"E3": None, "E4": "error"})
+assert partial == {"E3": "ok", "E4": "missing"} and error == "rename error"
+early, error = publish(before, {"E3": None, "E4": None}, {},
+                       decode_error=True)
+assert early == before and error == "decode error"
+
+print("streams:", stream, "four streams:", N * stream)
+print("deep/source/target:", deep_reads, source_reads, target_writes)
+print("total:", deep_reads + source_reads + target_writes, "network:", network)
+print("synthetic selection cycles:", ordinary, compacted)
+print("partial:", after, "retry:", again, "rename failure:", partial)
+</code></pre>
+</details>
+
+<h2>Как наблюдать влияние на обычные запросы</h2>
+<p>Сопоставляйте ход scan/heal с end-to-end временем обычных PUT/GET,
+числом завершённых запросов, ошибками и unknown исходами.
+Для сравнения нужны одинаковые размеры объектов, concurrency,
+состояние cache, TLS, проверки checksum и SDK retries.
+Latency измеряется от выбранного начала операции до принятия
+полного результата, включая тело GET. По отдельности полезны
+занятость устройств, глубина очереди, объёмы source reads и
+target writes, CPU hash/decode и сеть между указанными узлами.</p>
+<p>В throughput приложения входят подтверждённые логические
+байты. Внутренние bytes tracker и сумма shard-потоков отвечают
+на другие вопросы и не складываются с ним как «ещё один полезный
+результат». p99 получают из распределения длительностей:
+его нельзя вывести из среднего, сложить либо усреднить
+процентили узлов. Сокращение очереди за окно также нужно читать
+вместе с новыми заданиями, skipped/failed и доступностью целей.</p>
+<p>В коде scannerSleeper и healSleeper вводят задержки; отдельные
+пути могут ждать снижения числа HTTP-запросов. Это механизмы
+снижения конкуренции, а не резерв определённого числа IOPS
+или гарантия foreground latency. Численные скорости и p99
+в этой главе не выдаются за измеренные результаты.</p>
+<p class="sources">Источники:
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/data-scanner.go#L1388-L1475">dynamicSleeper</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/background-heal-ops.go#L64-L105">ожидание HTTP IO</a>.</p>
+
+<h2>Что остаётся после отказа</h2>
+<table>
+<thead><tr><th>Событие</th><th>Состояние этой попытки</th><th>Следующее действие</th></tr></thead>
+<tbody>
+<tr><td>Цель недоступна ещё при выборе</td><td>Offline не получает writer.</td><td>Вернуть доступность, проверить identity/format и заново выбрать V.</td></tr>
+<tr><td>Нет согласованной metadata либо пригодных K sources part</td><td>Обычное восстановление тела не может продолжиться; возможна ветвь dangling.</td><td>Сохранить сведения об ошибках и доступных версиях; внешний backup решает другую задачу.</td></tr>
+<tr><td>Ошибка decoder или source после временных writes</td><td>Текущий проход возвращается до RenameData; временные байты могли появиться.</td><td>Повтор должен заново проверить sources и режим, без ручного удаления опубликованных данных.</td></tr>
+<tr><td>Одна цель вернула ошибку Close</td><td>Она исключена; другая может стать OK.</td><td>Проверить After.Drives нужной цели, затем отдельную попытку для оставшегося повреждения.</td></tr>
+<tr><td>Одна RenameData уже успешна, следующая отказала</td><td>Частичный опубликованный результат остаётся возможен.</td><td>Заново прочитать состояние V; не откатывать исправную цель вручную.</td></tr>
+<tr><td>Ответ healing потерян</td><td>Клиенту неизвестны завершившиеся публикации.</td><td>Новый опрос и подходящий повтор выбранной V; timeout сам по себе не отменяет storage IO.</td></tr>
+</tbody>
+</table>
+<p>Числа N=4 и K=2 относятся к одному set выбранной версии.
+Если E1/E2 — каталоги одного SSD, один отказ убирает сразу два
+endpoints; три потерянных endpoints оставляют меньше K.
+Четыре VM на одном ноутбуке также имеют общие накопитель,
+питание и гипервизор. У нашей схемы физические диски разные;
+дополнительная независимость питания остаётся условием размещения.</p>
+<p>Erasure coding использует сохранившуюся избыточность.
+Оно не возвращает окончательно удалённую историю, не исправляет
+правильно записанные, но ошибочные данные приложения и не заменяет
+backup. Дополнительные shards не возвращают утраченный ключ
+шифрования. Сохраняемый стенд книги имеет один endpoint с P=0:
+здесь нет второго источника для такого восстановления.
+Четырёхendpointная сцена — вычисленная модель; административный
+запуск healing и повреждение private server data в упражнение
+этого стенда не добавляются.</p>

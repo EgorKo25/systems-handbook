@@ -31,6 +31,59 @@ docker --context study inspect --format   '{{.State.Status}} {{.State.ExitCode}}
 <p><em>Пространства имён</em>, namespaces, позволяют процессу видеть собственные наборы процессов, сетевых интерфейсов или монтирований. <em>Контрольные группы</em>, cgroups, учитывают и ограничивают ресурсы группы процессов. Это разные механизмы: отдельный список видимых процессов ещё не ограничивает память. Их подробно разберём <a href="#05-process-kernel">в главе об изоляции</a>. Сейчас важно, что эти возможности предоставляет ядро Linux, а runc применяет запрошенную конфигурацию.</p>
 <p>Низкоуровневая команда runc не обязана оставаться работающей всё время жизни приложения. Наблюдать за задачей помогает <em>shim</em> — небольшой служебный процесс, который связывает её с containerd, обслуживает потоки ввода-вывода и сообщает о завершении. Для обычного runtime v2 это часто процесс с именем наподобие <code>containerd-shim-runc-v2</code>. Имена и количество процессов зависят от реализации; схема показывает роли, а не обязательный буквальный вывод ps.</p>
 <p>Эти компоненты нужны потому, что управление контейнерами и исполнение программы имеют разные обязанности. Но из наличия shim нельзя заключить, что любое обновление Docker пройдёт без остановки. Docker при штатной остановке демона может завершать контейнеры; режим live restore меняет предусмотренное поведение и имеет свои ограничения. При обновлении проверяют именно настройки и документацию установленного Engine.</p>
+
+<p>На рисунке разделены две связи: передача команды между программами и родство процессов. Стрелка запроса не означает, что отправитель является родителем получателя. Показан локальный rootful Engine на Linux с runtime <code>io.containerd.runc.v2</code>; образ уже подготовлен, объект контейнера создан.</p>
+<figure id="docker-launch-boundaries" class="docker02-socket-cut" aria-labelledby="docker-launch-boundaries-title">
+<style>
+.docker02-socket-cut{margin:1.5em 0;color:inherit}
+.docker02-socket-cut svg{display:block;width:100%;min-width:0;max-width:400px;height:auto;margin:1em auto;color:inherit}
+.docker02-socket-cut figcaption{margin:1em 0;overflow-wrap:anywhere}
+@media print{.docker02-socket-cut{color:#000!important;background:#fff!important;break-inside:auto}.docker02-socket-cut svg{max-width:85mm;break-inside:avoid}.docker02-socket-cut figcaption{color:#000!important;background:transparent!important}}
+</style>
+<h3 id="docker-launch-boundaries-title">Сокет передаёт запрос, shim остаётся рядом с задачей</h3>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 760" role="img" aria-labelledby="docker02-socket-title docker02-socket-desc">
+<title id="docker02-socket-title">Путь управления и отдельный фрагмент дерева процессов</title>
+<desc id="docker02-socket-desc">Клиент передаёт HTTP через локальный Unix-сокет dockerd. Dockerd управляет задачей через containerd; тот обращается к shim по отдельному сокету ttRPC. Shim вызывает runc для подготовки и запуска. Runc использует механизмы ядра и завершается. В нижнем фрагменте дерева после запуска родителем приложения является shim, а не Docker CLI. Это схема ролей, не вывод ps.</desc>
+<defs><marker id="docker02-control-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L8 4L0 8Z" fill="currentColor"/></marker></defs>
+<g font-family="system-ui,sans-serif" font-size="16" fill="currentColor">
+<text x="12" y="25" font-weight="700">А · Путь управления задачей</text>
+<text x="12" y="56" font-weight="700">docker CLI</text>
+<path d="M34 66V147" fill="none" stroke="currentColor" stroke-width="2" marker-end="url(#docker02-control-arrow)"/>
+<text x="55" y="87">HTTP через AF_UNIX</text>
+<circle cx="34" cy="117" r="8" fill="var(--paper, Canvas)" stroke="currentColor" stroke-width="2"/>
+<text x="55" y="122">/var/run/docker.sock</text>
+<text x="12" y="175" font-weight="700">dockerd · API Engine</text>
+<path d="M34 187V229" fill="none" stroke="currentColor" stroke-width="2" marker-end="url(#docker02-control-arrow)"/>
+<text x="55" y="212">Управление задачей</text>
+<text x="12" y="257" font-weight="700">containerd</text>
+<path d="M34 269V312" fill="none" stroke="currentColor" stroke-width="2" marker-end="url(#docker02-control-arrow)"/>
+<text x="55" y="295">ttRPC · другой сокет</text>
+<text x="12" y="340" font-weight="700">containerd-shim-runc-v2</text>
+<path d="M34 352V394" fill="none" stroke="currentColor" stroke-width="2" marker-end="url(#docker02-control-arrow)"/>
+<text x="55" y="378">Вызывает runc</text>
+<text x="12" y="422" font-weight="700">runc create / start</text>
+<path d="M34 434V466" fill="none" stroke="currentColor" stroke-width="2" marker-end="url(#docker02-control-arrow)"/>
+<path d="M8 478H312" fill="none" stroke="currentColor" stroke-width="3"/>
+<text x="12" y="504" font-weight="700">Ядро Linux</text>
+<text x="12" y="529">Процесс, namespaces, cgroups</text>
+<path d="M8 548H312" fill="none" stroke="currentColor" stroke-dasharray="3 4"/>
+<text x="12" y="579" font-weight="700">Б · Родство после запуска</text>
+<text x="12" y="614">containerd-shim-runc-v2</text>
+<path d="M29 627V666H57" fill="none" stroke="currentColor" stroke-width="2"/>
+<text x="67" y="672">/echo</text>
+<text x="12" y="711">runc уже завершился.</text>
+<text x="12" y="743">CLI не родитель /echo.</text>
+</g>
+</svg>
+<figcaption><strong>Сверху — команды, снизу — родитель и потомок.</strong> В нижнем фрагменте показано только отношение shim → основной процесс после завершения запуска выбранным runc runtime. Родители самого shim и остальные процессы хоста опущены: их нельзя восстановить из стрелок API. Вызовы runc для создания и старта задачи краткоживущие; это не постоянно работающий посредник каждого HTTP-запроса приложения.</figcaption>
+<ol>
+<li><strong>Адрес соединения.</strong> Для запроса запуска клиент использует путь API вроде <code>POST /vX.Y/containers/ID/start</code>: X.Y и ID здесь заполнители. При локальном подключении байты HTTP идут через <code>/var/run/docker.sock</code>. Это имя Unix-сокета, не TCP-порт; <code>localhost</code> в примере curl выше не означает соединение с портом 80. Права на сокет и каталоги участвуют в проверке доступа.</li>
+<li><strong>Управление исполнением.</strong> Containerd вызывает операции shim через его отдельное соединение. Shim привлекает runc для необходимых операций, поддерживает связь с задачей, ввод-вывод и получение результата завершения. Приложение обращается к ядру самостоятельно; его сетевые пакеты не обязаны проходить через CLI, dockerd или containerd. Прочие служебные процессы тоже используют системные вызовы: верхняя часть не является полной трассой ядра.</li>
+<li><strong>Что переживает клиента.</strong> Отсоединение CLI оставляет запущенную задачу под управлением серверной стороны. Из этого не следует автоматическое переживание остановки dockerd: поведение зависит, в частности, от live restore. Роль shim и политика остановки Engine — разные вопросы.</li>
+</ol>
+<p>Границы модели: отдельный Engine на Linux, обычный runc runtime v2, не обязательное число shim для любого набора контейнеров. Desktop размещает Linux-исполнение в своей VM и может добавлять пересылку соединений; rootless меняет пользователя, адрес сокета и области наблюдения. Для удалённого context локальный <code>/var/run/docker.sock</code> вообще не обязан быть назначением команды. Ни PID, ни hostname конкретного компьютера на рисунке не использованы.</p>
+<p class="sources">Основания: <a href="https://github.com/containerd/containerd/blob/v2.4.2/docs/runtime-v2.md">containerd 2.4.2: shim и runtime engine</a>, <a href="https://man7.org/linux/man-pages/man7/unix.7.html">Unix-сокеты Linux</a>; ограничения остановки описаны в <a href="https://docs.docker.com/engine/daemon/live-restore/">документации live restore</a>.</p>
+</figure>
 <h2>Потоки, терминал и фон</h2>
 <p>У процесса есть три стандартных потока: ввод, вывод и сообщения об ошибках. Программа обращается к ним через файловые дескрипторы 0, 1 и 2 — небольшие номера открытых объектов. Docker может связать эти потоки с терминалом клиента или собирать вывод через драйвер журналов.</p>
 <p><code>-i</code> сохраняет стандартный ввод открытым, даже если клиент к нему не подключён. <code>-t</code> создаёт псевдотерминал: программный аналог терминального устройства, благодаря которому интерактивная оболочка видит терминал, а не простой канал байтов. Сочетание <code>-it</code> обычно удобно для ручной работы с оболочкой. Для передачи двоичных данных и автоматического разбора вывода псевдотерминал может мешать: он меняет обработку символов и делает разделение stdout и stderr иным.</p>

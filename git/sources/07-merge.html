@@ -46,6 +46,76 @@ port=9000
 <h3>Исследование без выбора стороны</h3>
 <p><code>git diff --name-only --diff-filter=U</code> перечисляет пути с неразрешённым состоянием: <code>--name-only</code> оставляет имена, <code>--diff-filter=U</code> выбирает unmerged, то есть неслитые. Для произвольных имён добавляют предусмотренный нулевой вывод. <code>git ls-files --unmerged</code> раскрывает записи и стадии. Эти инструменты отвечают на структурный вопрос даже там, где рабочего файла с привычными маркерами нет.</p>
 <p>Для ort при текстовом конфликте может существовать ссылка <code>AUTO_MERGE</code> на дерево первоначального рабочего результата с маркерами. <code>git diff AUTO_MERGE</code> помогает увидеть, что человек изменил во время разрешения. Это не готовый коммит и не замена исходных стадий; служебное состояние связано с текущей операцией и версией Git. Для чтения каждой исходной стороны по-прежнему используют индекс и его стадии.</p>
+<!-- GIT_MERGE_FILE_CUTAWAY_V1_BEGIN -->
+<figure id="git-merge-index-stages" aria-labelledby="git-merge-index-stages-title">
+<style>
+#git-merge-index-stages{margin:2rem 0;color:var(--text);max-width:100%}
+#git-merge-index-stages *{box-sizing:border-box;min-width:0}
+#git-merge-index-stages svg{display:block;width:100%;max-width:18.75rem;height:auto;margin:1rem auto;color:inherit}
+#git-merge-index-stages code{white-space:normal;overflow-wrap:anywhere}
+#git-merge-index-stages pre{max-width:100%;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;padding:.8rem;border:1px solid var(--line);background:var(--paper);color:var(--text);font-size:1em;line-height:1.55}
+#git-merge-index-stages pre code{white-space:inherit}
+#git-merge-index-stages .gm-working{border-left:3px solid var(--text);padding-left:1rem;margin:1.4rem 0}
+#git-merge-index-stages .gm-working h4{margin-bottom:.5rem}
+#git-merge-index-stages .gm-oid{word-break:break-all}
+#git-merge-index-stages ol{padding-left:1.4rem}
+#git-merge-index-stages li{margin:1rem 0}
+#git-merge-index-stages figcaption{color:var(--muted);margin:.8rem 0}
+@media print{#git-merge-index-stages{--text:#000;--muted:#333;--paper:#fff;--line:#888;color:#000;background:#fff}#git-merge-index-stages svg{max-width:70mm;break-inside:avoid}#git-merge-index-stages pre{break-inside:avoid}}
+</style>
+<h3 id="git-merge-index-stages-title">Один путь: три записи индекса и отдельный рабочий файл</h3>
+<p>Продолжаем именно конфликт <code>service.conf</code> из этой главы: main выбирает M, topic — T, общий предок — A. Это условные имена коммитов, не сокращённые OID. Перед обычным <code>git merge topic</code> индекс и файл совпадали с M; после остановки HEAD всё ещё выбирает M, а <code>MERGE_HEAD</code> — T. Здесь Git 2.43.0, стратегия ort, обычный merge, один текстовый путь режима <code>100644</code>, без преобразований содержимого, обработчиков и автоматического rerere. Чтобы получить именно обычные маркеры, для этого отдельного опыта команду запускают как <code>git -c merge.conflictStyle=merge -c rerere.enabled=false merge topic</code>: параметры действуют только в этом процессе.</p>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 310" role="img" aria-labelledby="gm-svg-title gm-svg-desc">
+<title id="gm-svg-title">Три исходных blob выбираются разными стадиями одного пути</title>
+<desc id="gm-svg-desc">Слева показаны неизменяемые байты service.conf в A, M и T: port=8000, 8080, 9000 с LF. Справа — три логические записи индекса того же пути, стадии 1, 2 и 3. Стрелки связывают запись с выбранным blob; это не три копии папки и не двоичный формат index. Стадии 0 для этого пути при остановке нет. Рабочее представление с маркерами показано отдельно ниже.</desc>
+<defs><marker id="gm-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L8 4L0 8Z" fill="currentColor"/></marker></defs>
+<g fill="currentColor" font-family="sans-serif" font-size="17" text-anchor="middle">
+<text x="98" y="22">Три blob</text><text x="258" y="22">Индекс</text>
+</g>
+<g fill="none" stroke="currentColor" stroke-width="1.5">
+<path d="M8 44H170L188 62V110H8Z M170 44V62H188"/>
+<path d="M8 134H170L188 152V200H8Z M170 134V152H188"/>
+<path d="M8 224H170L188 242V290H8Z M170 224V242H188"/>
+<rect x="218" y="40" width="80" height="256"/><path d="M218 126H298 M218 216H298"/>
+</g>
+<g fill="currentColor" font-family="sans-serif" font-size="17">
+<text x="18" y="69">A · основание</text><text x="18" y="94" font-family="monospace">port=8000\n</text>
+<text x="18" y="159">M · ours</text><text x="18" y="184" font-family="monospace">port=8080\n</text>
+<text x="18" y="249">T · theirs</text><text x="18" y="274" font-family="monospace">port=9000\n</text>
+</g>
+<g fill="currentColor" font-family="sans-serif" font-size="17" text-anchor="middle">
+<text x="258" y="71">stage 1</text><text x="258" y="97">bA</text>
+<text x="258" y="161">stage 2</text><text x="258" y="187">bM</text>
+<text x="258" y="251">stage 3</text><text x="258" y="277">bT</text>
+</g>
+<g fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#gm-arrow)">
+<path d="M218 83H192"/><path d="M218 173H192"/><path d="M218 263H192"/>
+</g>
+</svg>
+<figcaption>Стрелки идут от записи индекса к выбранному содержимому. bA, bM и bT — короткие подписи blob с полными OID ниже. Ours — вариант текущего HEAD, theirs — присоединяемый вариант; при rebase соответствие будет другим. Все три строки здесь имеют ровно 10 байт, включая один LF; <code>\n</code> обозначает этот байт, а не два печатных символа.</figcaption>
+<p>Ожидаемые логические записи для <code>git ls-files --unmerged -- service.conf</code>: режим, OID, stage, затем имя пути. Между stage и путём — табуляция. Stage 0 у этого пути пока отсутствует.</p>
+<pre><code>100644 8714c4baaaf3f639bd7dee092beaa66a0ffa9ed3 1	service.conf
+100644 fc6826aa998f757813aa4c9d806c3b3e61cf5592 2	service.conf
+100644 cecd77d34545af14a89d4043e259f039ee8ed09d 3	service.conf</code></pre>
+<div class="gm-working">
+<h4>В это же время на диске: service.conf</h4>
+<pre><code>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
+port=8080
+=======
+port=9000
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; topic</code></pre>
+<p>Это рабочий результат для редактирования. Он отличается от каждого исходного blob. При обычном стиле merge основание 8000 не напечатано в маркерах, но доступно через <code>git show :1:service.conf</code>. Файл индекса хранит OID вариантов; удаление строк с маркерами редактором не меняет эти записи.</p>
+</div>
+<ol>
+<li><strong>Выбираем результат в рабочем файле.</strong> Читатель заменил всё содержимое на <code>port=8443\n</code>: байты <code>70 6f 72 74 3d 38 34 34 33 0a</code>. Это выбранное третье решение, не значение, вычисленное Git, и сетевой сервис здесь не запускается. Индекс ещё содержит stages 1/2/3; краткий статус для этого пути остаётся <code>UU</code>. Исчезновение маркеров само по себе не завершает конфликт.</li>
+<li><strong>Подготавливаем проверенный файл.</strong> <code>git add -- service.conf</code> делает blob результата доступным и заменяет три конфликтные записи одной обычной: path=<code>service.conf</code>, mode=<code>100644</code>, stage=<code>0</code>, oid=<code class="gm-oid">eb3961daf40324010a7213211a1f90bf06abf534</code>. Этот blob содержит те же 10 байт с портом 8443. HEAD всё ещё M, MERGE_HEAD всё ещё T. <code>git ls-files --unmerged -- service.conf</code> теперь ничего не выводит, а <code>git ls-files --stage -- service.conf</code> показывает stage 0. Повторная правка после add снова разойдётся с подготовленным результатом.</li>
+<li><strong>Сохраняем итог слияния.</strong> После проверки файла и связанных компонентов успешный <code>git merge --continue</code> создаёт R: его tree содержит подготовленный blob, первый parent — M, второй — T. Main перемещается на R; topic остаётся на T. Режим слияния завершается, служебный MERGE_HEAD удалён. При отсутствии дополнительных правок индекс и файл совпадают с R. Старые A/M/T и их blob не переписаны.</li>
+</ol>
+<p>Эта картина относится к одному конфликту содержимого, где существуют все три варианта. При add/delete или rename/delete некоторые стадии отсутствуют, а путь рабочего результата может измениться. Разделы выше объясняют такие случаи; их нельзя заменить предположением о трёх обязательных строках. Структурное разрешение означает выбранную stage 0, а работоспособность итоговой программы устанавливают отдельной проверкой.</p>
+<p class="sources">Механизм: <a href="https://raw.githubusercontent.com/git/git/v2.43.0/Documentation/git-merge.txt">Git 2.43.0: TRUE MERGE и разрешение конфликта</a>, <a href="https://raw.githubusercontent.com/git/git/v2.43.0/Documentation/git-ls-files.txt">формат стадий ls-files</a>, <a href="https://raw.githubusercontent.com/git/git/v2.43.0/Documentation/git-add.txt">выбор подготовленного содержимого</a>. Это исходная модель учебника; состояния merge/add/continue здесь не исполняются.</p>
+</figure>
+<!-- GIT_MERGE_FILE_CUTAWAY_V1_END -->
+
 <h2>Завершение и отмена</h2>
 <p>Проверьте подготовленный итог, выполните проверку программы и затем <code>git merge --continue</code>. <code>--continue</code> завершает остановленное слияние, создавая предусмотренный коммит. У коммита будут оба родителя. Если решение откладывается, <code>git merge --abort</code> пытается вернуть состояние до начала операции. Поэтому начинать сложное слияние удобнее из чистого рабочего состояния: при смешении прежних незакоммиченных правок и правок разрешения восстановить намерение существенно труднее.</p>
 <p><code>git merge --no-ff topic</code> требует отдельный коммит слияния даже там, где возможно быстрое перемещение. <code>--no-ff</code> фиксирует в графе событие интеграции. Оно не добавляет тестирование и не сохраняет «правильный порядок» автоматически. <code>git merge --squash topic</code> подготавливает объединённый файловый результат без записи связи с topic как родителем следующего коммита. Последующий обычный коммит будет иметь одного родителя; граф не будет знать, что вся боковая линия слита именно как история.</p>

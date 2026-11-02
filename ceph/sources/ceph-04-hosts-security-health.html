@@ -1,0 +1,65 @@
+<header><h1>Принять первый OSD и проверить доступ</h1>
+<p>Добавление host, назначение диска и готовность PG — разные этапы.
+Первый участник проверяется через собственную VM-консоль,
+а контрольные данные его приёмки сохраняются до расширения в главе09.</p></header>
+<h2>Ключи и сети относятся к разным ролям</h2>
+<p>SSH cephops управляет гостевой ОС, CephX client.admin управляет Ceph,
+S3 user управляет разрешёнными API-объектами RGW.
+Ни один из этих секретов не заменяет другой.
+В bootstrap выбран собственный SSH key из access-01;
+появление /etc/ceph/ceph.pub не предполагается.
+Cephadm хранит daemon state под /var/lib/ceph/FSID,
+а минимальный /etc/ceph/ceph.conf не содержит все пользовательские данные.</p>
+<p>Public network — закрытая клиентская сеть 10.77.0.0/24.
+MON использует TCP3300/6789, OSD и другие daemon listeners —
+выбранные порты диапазона TCP6800–7568, SSH управления — TCP22.
+Firewall ограничивают требуемыми узлами и источниками, не отключают целиком.
+Правила гипервизора и гостя проверяются отдельно.
+RGW позже получает свой HTTPS8443, а не право открыть всю рабочую LAN.</p>
+<h2>Первый отдельный диск</h2>
+<p>В ceph1 после bootstrap и source reenter.bash принят один MON/MGR,
+OSD ещё отсутствуют. Отдельный новый data disk VM должен быть
+однозначно сопоставлен с устройством Linux. /dev/vdb ниже — выбранный
+пример только после сверки serial, размера и конфигурации гипервизора.
+В консоли этой VM выполните чтение инвентаря:</p>
+<pre><code class="language-bash">lsblk --output NAME,PATH,SIZE,TYPE,FSTYPE,MOUNTPOINTS,SERIAL,MODEL
+sudo wipefs --no-act /dev/vdb
+sudo pvs
+</code></pre>
+<p>На data disk не должно быть разделов, файловой системы, LVM,
+mountpoints или найденных сигнатур. Wipefs --no-act только показывает
+сведения; здесь нет zap или стирания. Неизвестное устройство
+не разрешается «почистить» ради следующего шага.
+На ceph1 через c дополнительно проверьте:</p>
+<pre><code class="language-bash">c orch device ls --hostname=ceph1 --wide --refresh
+c osd tree
+</code></pre>
+<p>Только если именно ceph1:/dev/vdb имеет Available без reject reasons
+и выбранный пустой диск подтверждён владельцем:</p>
+<pre><code class="language-bash">c orch daemon add osd ceph1:/dev/vdb
+c orch ps --daemon-type osd --refresh
+c osd tree
+c osd df tree
+</code></pre>
+<p>Cephadm создаёт OSD и размещает его daemon. Запишите фактический OSD ID,
+его host, устройство, image и состояние up/in; он не обязан быть 0.
+До принятия должны отсутствовать неожиданные вторые OSD.
+Это разрешает малый опыт главы 09, но не даёт HA:
+единственная копия погибнет вместе с этим устройством.</p>
+<h2>Граница первого этапа</h2>
+<p>На этом установка первого OSD заканчивается: ceph2–ceph4 пока
+не добавляйте. В главах05–08 разберите размещение и восстановление,
+затем в <a href="#ceph-09-rados-lab">главе09</a> выполните опыт1/1
+и read-probe-01. Подготовка новых VM и расширение стоят там после
+этой проверки; дальше тот же объект будет прочитан при защите3/2.</p>
+<h2>Приёмка и остановка</h2>
+<p>При нехватке RAM, OOM, full/backfillfull, clock skew,
+недоступном host или unexpected device следующий этап не начинается.
+Запишите c quorum_status,c mgr dump,c osd tree,c pg stat,c health detail
+и сравнение контрольных данных. Число работающих процессов само по себе
+не подтверждает нужную защиту или допустимую историю PG.</p>
+<p class="sources"><a href="https://github.com/ceph/ceph/blob/v20.2.4/doc/cephadm/host-management.rst">hosts</a>;
+<a href="https://github.com/ceph/ceph/blob/v20.2.4/doc/cephadm/services/osd.rst">адресные OSD</a>;
+<a href="https://github.com/ceph/ceph/blob/v20.2.4/doc/cephadm/services/mon.rst">MON placement</a>;
+<a href="https://github.com/ceph/ceph/blob/v20.2.4/doc/rados/configuration/network-config-ref.rst">сети</a>.
+Это инструкция для будущего собственного VM-опыта; кластер здесь не запускался.</p>

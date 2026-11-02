@@ -11,7 +11,7 @@
     "slug": "linux",
     "title": "Linux: от команды процессора до работающей службы",
     "volume": "III",
-    "words": 55704,
+    "words": 56264,
     "chapters": 19,
     "terms": 348
   },
@@ -19,7 +19,7 @@
     "slug": "bash",
     "title": "Bash: от объектов ядра до надёжного сценария",
     "volume": "IV",
-    "words": 52872,
+    "words": 53986,
     "chapters": 19,
     "terms": 273
   },
@@ -27,7 +27,7 @@
     "slug": "postgres",
     "title": "PostgreSQL: от SQL до эксплуатации и высокой доступности",
     "volume": "IX",
-    "words": 76719,
+    "words": 77434,
     "chapters": 25,
     "terms": 441
   },
@@ -43,7 +43,7 @@
     "slug": "git",
     "title": "Git: от байтов объектов до совместной работы и восстановления",
     "volume": "VI",
-    "words": 48751,
+    "words": 49017,
     "chapters": 27,
     "terms": 178
   },
@@ -51,14 +51,14 @@
     "slug": "go",
     "title": "Go: сборка, компилятор и исполняемая программа",
     "volume": "VII",
-    "words": 63853,
+    "words": 65087,
     "chapters": 24,
     "terms": 170
   },
   {
     "slug": "jenkins",
     "title": "Jenkins: от установки и плагинов до устройства и эксплуатации Pipeline",
-    "volume": "XVI",
+    "volume": "XIX",
     "words": 30240,
     "chapters": 16,
     "terms": 88
@@ -66,7 +66,7 @@
   {
     "slug": "gitlab",
     "title": "GitLab: платформа, исполнение CI и эксплуатация",
-    "volume": "XVII",
+    "volume": "XX",
     "words": 24553,
     "chapters": 18,
     "terms": 167
@@ -74,7 +74,7 @@
   {
     "slug": "practicum",
     "title": "Практикум: от своей сети до эксплуатации продукта",
-    "volume": "XXVI",
+    "volume": "XXIX",
     "words": 39953,
     "chapters": 26,
     "terms": 38
@@ -83,14 +83,14 @@
     "slug": "docker",
     "title": "Docker: от образа до работающей и восстанавливаемой системы",
     "volume": "VIII",
-    "words": 58113,
+    "words": 59496,
     "chapters": 18,
     "terms": 142
   },
   {
     "slug": "sonarqube",
     "title": "SonarQube: от установки до доказуемой проверки изменений",
-    "volume": "XIII",
+    "volume": "XVI",
     "words": 21114,
     "chapters": 15,
     "terms": 183
@@ -114,7 +114,7 @@
   {
     "slug": "nexus",
     "title": "Nexus Repository: артефакты, Go-модули и сохранение состояния",
-    "volume": "XIV",
+    "volume": "XVII",
     "words": 21858,
     "chapters": 19,
     "terms": 94
@@ -122,15 +122,15 @@
   {
     "slug": "kubernetes",
     "title": "Kubernetes: от API до процесса, пакета и восстановления",
-    "volume": "XXIII",
-    "words": 26298,
+    "volume": "XXVI",
+    "words": 26296,
     "chapters": 26,
     "terms": 130
   },
   {
     "slug": "helm",
     "title": "Helm: типы, шаблоны, пакеты и жизненный цикл релиза",
-    "volume": "XXIV",
+    "volume": "XXVII",
     "words": 18365,
     "chapters": 21,
     "terms": 97
@@ -146,7 +146,7 @@
   {
     "slug": "vault",
     "title": "HashiCorp Vault: от доверенной поставки до отзыва и восстановления",
-    "volume": "XX",
+    "volume": "XXIII",
     "words": 15982,
     "chapters": 19,
     "terms": 56
@@ -154,7 +154,7 @@
   {
     "slug": "grafana",
     "title": "Grafana: от вопроса к данным, графику и проверяемому сигналу",
-    "volume": "XXII",
+    "volume": "XXV",
     "words": 16848,
     "chapters": 22,
     "terms": 85
@@ -162,7 +162,7 @@
   {
     "slug": "artifactory",
     "title": "Artifactory: от поставки до прослеживаемого выпуска Go",
-    "volume": "XV",
+    "volume": "XVIII",
     "words": 20146,
     "chapters": 20,
     "terms": 82
@@ -170,7 +170,7 @@
   {
     "slug": "argocd",
     "title": "Argo CD: GitOps, согласование состояния и эксплуатация",
-    "volume": "XXV",
+    "volume": "XXVIII",
     "words": 18956,
     "chapters": 21,
     "terms": 97
@@ -178,23 +178,23 @@
   {
     "slug": "terraform",
     "title": "Terraform: язык, граф исполнения и сохранённое состояние",
-    "volume": "XVIII",
-    "words": 20434,
+    "volume": "XXI",
+    "words": 20438,
     "chapters": 24,
     "terms": 89
   },
   {
     "slug": "ansible",
     "title": "Ansible: от SSH и одной задачи до управляемого выпуска Go",
-    "volume": "XIX",
-    "words": 20633,
+    "volume": "XXII",
+    "words": 20631,
     "chapters": 24,
     "terms": 96
   },
   {
     "slug": "prometheus",
     "title": "Prometheus и PromQL: измерение, вычисление и хранение",
-    "volume": "XXI",
+    "volume": "XXIV",
     "words": 17255,
     "chapters": 22,
     "terms": 93
@@ -206,5 +206,29 @@
     "words": 14336,
     "chapters": 20,
     "terms": 80
+  },
+  {
+    "slug": "s3",
+    "title": "S3: именованные байты, запросы и история объектов",
+    "volume": "XIII",
+    "words": 23103,
+    "chapters": 18,
+    "terms": 52
+  },
+  {
+    "slug": "minio",
+    "title": "MinIO: объект, кодированные части и восстановление",
+    "volume": "XIV",
+    "words": 22125,
+    "chapters": 13,
+    "terms": 46
+  },
+  {
+    "slug": "ceph",
+    "title": "Ceph: от объекта и карты до восстановления",
+    "volume": "XV",
+    "words": 31664,
+    "chapters": 28,
+    "terms": 46
   }
 ]

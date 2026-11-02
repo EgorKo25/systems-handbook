@@ -1,0 +1,173 @@
+<header><h1>Малый RADOS: одна запись, возврат и повторное чтение</h1>
+<p>Один принятый OSD позволяет проверить доступ к собственному объекту.
+Пул с одной копией используется только для этого малого стенда;
+последующее расширение сохраняет объект и его исходные байты.</p></header>
+<h2>Перед созданием пула</h2>
+<p>На ceph1 завершены главы03/04, принят ровно один OSD.
+Откройте Bash, cwd ~/ceph-book/labs, выполните source reenter.bash.
+Функции c/r относятся к принятому FSID и image.
+Собственные cephstudy и cephstudy-host ещё отсутствуют.
+Операции административные; их не выполняют в чужом кластере.</p>
+<p>Пул получает8 PG,8 значений pgp и autoscale-mode=off,
+чтобы в малом опыте не менялось количество PG. Это не настройка
+производительности для произвольной нагрузки.
+Правило выбирает разные host; исходные defaults3/2 сохраняются
+для других pools. Только cephstudy будет явно переведён в1/1.</p>
+<pre><code class="language-bash">cd "$HOME/ceph-book/labs"
+source pool-once.bash
+</code></pre>
+<p>Файл выполняет отдельный subshell внутри принятой Bash,
+поэтому видит функцию c и имеет собственный EXIT trap.
+Сначала проверяются defaults и отсутствие имён.
+Затем создаётся replicated rule и pool, application cephstudy
+помечает его назначение. Временное mon_allow_pool_size_one=true
+и --yes-i-really-mean-it разрешают именно переход size1,
+после которого guard возвращается в false даже при ошибке.
+Возврат guard не меняет уже созданный size пула.</p>
+<p>В выбранном default min_size=0 изменение size одновременно
+пересчитывает min_size по size−floor(size/2).
+Поэтому3/2→1/1 выполняется через size1, а затем проверяет min_size1.
+Min_size2 при текущем size1 недопустим.
+Восемь PG должны достичь active+clean до IO.
+Это проверка своего пула: внутренние pools малого кластера
+могут оставаться undersized, и их защита не снижается автоматически.</p>
+<h2>Какие байты будут записаны</h2>
+<p>Rados-roundtrip создаёт новый rados-01, input/report.txt,
+случайное уникальное имя report-UUID, исходный FSID и SHA256SUMS.inputs.
+Текст заканчивается LF — одним байтом перевода строки0x0a.
+Create эксклюзивно резервирует имя, но следующий put не является CAS;
+namespace этого малого опыта принадлежит одному оператору.</p>
+<pre><code class="language-bash">cd "$HOME/ceph-book/labs"
+source rados-roundtrip.bash
+</code></pre>
+<p>Cephadm shell получает явный mount hostdir:/study-input:ro.
+Внутри контейнера файл находится по /study-input/report.txt.
+Короткий --mount "$PWD/input" дал бы /mnt/input/report.txt,
+а не /mnt/report.txt: это грамматика cephadm, не предположение
+по синтаксису другой контейнерной программы.</p>
+<p>Rados get OBJECT - выводит payload в stdout. Bash с noclobber
+создаёт новый readback.bin и не усекает прежний файл.
+Stderr сохраняется отдельно. Cmp сравнивает вход и возврат,
+а квитанция RADOS-ACCEPTED создаётся после сравнения и manifests.
+Она доказывает выбранный roundtrip, но не HA или power-loss restore.</p>
+<h2>Вернуться, не записывая заново</h2>
+<p>В новой Bash сначала source reenter.bash, затем:</p>
+<pre><code class="language-bash">cd "$HOME/ceph-book/labs"
+source read-probe-01.bash
+</code></pre>
+<p>Probe сверяет manifests rados-01 и FSID, читает сохранённое имя,
+создаёт новый read-probe-01 и сравнивает байты.
+Он не повторяет create/put. Если первоначальный PUT завершился timeout,
+сначала нужно исследовать сохранённый объект и attempted receipt;
+автоматический повтор записи не является частью recovery.</p>
+<h2>Новые ceph2–ceph4</h2>
+<p>Расширение использует те же FSID и данные ceph1.
+Три новые личные Ubuntu22.04 amd64 VM получают адреса
+10.77.0.12/13/14 и имена ceph2/3/4.
+Для компактного опыта предлагаются 8 GiB RAM,4 vCPU,
+системный диск40 GiB и отдельный data disk32 GiB каждой.
+Это непроверенный бюджет; большой запасной профиль32 GiB RAM/VM
+не является минимумом. Бумажная модель четырёх устройств128 GiB
+в главах05/08 — другой заданный расчёт, не описание этих дисков.</p>
+<p>В консоли каждого нового гостя повторите только подготовку ОС
+из главы03 с его именем/адресом. Bootstrap на нём не выполняется.
+Скопируйте исходники labs в ~/ceph-book/labs.
+Из принятого runtime ceph1 через его консоль перепишите одну строку
+ceph-image.txt. Это публичная immutable reference, не secret.
+На каждой новой VM от student после проверки hostname:</p>
+<pre><code class="language-bash">cd "$HOME/ceph-book/labs"
+bash new-supply.sh
+# Для ceph2; на других VM меняются имя и ранее сверенный digest.
+bash runtime-accept-once.sh ceph2 'quay.io/ceph/ceph@sha256:REPLACE_WITH_ACCEPTED_64_HEX'
+bash new-cephops.sh
+</code></pre>
+<p>REPLACE_WITH_ACCEPTED_64_HEX заменяется ровно принятым digest ceph1
+до запуска. Скрипт проверяет и имя, и совпадение фактически полученного
+image. Строка с placeholder должна быть отвергнута, а не выполнена как
+«пример успешной установки». При отказе новый generation сохраняется.
+Повторно создавать пользователя и runtime для обхода отказа нельзя.</p>
+<h2>Доверие нового host через консоль</h2>
+<p>На каждой новой VM создайте новый собственный access-peer-01,
+перенесите только orchestrator_ed25519.pub из ceph1.
+Fingerprint сверяется с консолью ceph1. Затем установите public key
+cephops таким же блоком mkdir .ssh + noclobber authorized_keys,
+как в access-setup.bash; private key на новый host не переносится.
+Получите hostname,ip и полный host_ed25519 public key через его консоль.</p>
+<p>На ceph1 создайте новый expand-access-01. В нём сохраняются
+ceph2.host-ed25519.pub,ceph3.host-ed25519.pub,ceph4.host-ed25519.pub,
+полученные через эти консоли. После сравнения fingerprints создайте
+known_hosts для трёх адресов, как в access-setup.bash,
+но используйте identity из прежнего access-01.
+Прежние known_hosts и SHA256SUMS.access не меняются.</p>
+<p>Из expand-access-01 определите функцию ручного SSH
+с StrictHostKeyChecking=yes, UserKnownHostsFile=$PWD/known_hosts,
+GlobalKnownHostsFile=/dev/null, BatchMode=yes, IdentitiesOnly=yes
+и ключом ~/ceph-study/access-01/orchestrator_ed25519.
+Для каждого адреса до orch host add должны совпасть hostname -s,
+sudo -n id -u=0 и успешный sudo -n cephadm check-host --expect-hostname.
+Сверьте runtime manifests и digest на каждой VM. Сохраните новый manifest
+проверенных public inputs. Внутренний SSH cephadm всё равно имеет
+оговорённое в главе03 ослабление host checking.</p>
+<p>Полный проверочный блок — labs/expand-access-check.bash.
+До него новый expand-access-01 содержит три public key и
+console-fingerprints.txt: ровно по строке ceph2 SHA256:ФАКТИЧЕСКИЙ_ОТПЕЧАТОК
+для ceph2/3/4. Значения берутся только из VM-консолей и сверяются человеком.
+Скрипт строит новый known_hosts, проверяет fingerprints и runtime
+через защищённый ручной SSH. В этом маршруте student имеет home
+/home/student на всех гостях; иной home требует явной замены до запуска.
+После подготовки файлов выполните source ~/ceph-book/labs/expand-access-check.bash
+из уже принятой Bash.</p>
+<h2>Адресное добавление</h2>
+<p>В уже reentered Bash ceph1, только после трёх отдельных проверок:</p>
+<pre><code class="language-bash">c orch host add ceph2 10.77.0.12
+c orch host add ceph3 10.77.0.13
+c orch host add ceph4 10.77.0.14
+c orch host ls
+c orch device ls --wide --refresh
+</code></pre>
+<p>Любая ошибка прекращает назначение диска этого host.
+Для каждого data disk повторите console inventory и Available проверку.
+Только после этого адресно добавляются:</p>
+<pre><code class="language-bash">c orch daemon add osd ceph2:/dev/vdb
+c orch daemon add osd ceph3:/dev/vdb
+c orch daemon add osd ceph4:/dev/vdb
+c orch apply mon --placement="3 ceph1 ceph2 ceph3"
+c orch apply mgr --placement="2 ceph1 ceph2"
+</code></pre>
+<p>Команды не используют all-available-devices. После появления процессов
+проверяют четыре up/in OSD в четырёх host, quorum_names из трёх ожидаемых MON,
+активный MGR и минимум один standby, image digest и health detail.
+Эти условия ещё не переводят автоматически cephstudy из1/1 в3/2:
+переход и чтение старого объекта выполняются в следующем разделе.</p>
+<h2>Три копии после четырёхузловой приёмки</h2>
+<p>После полной приёмки расширения из предыдущих разделов, при остановленных собственных писателях
+и трёх допустимых host domains, из той же принятой Bash:</p>
+<pre><code class="language-bash">test "$(c config get mon osd_pool_default_min_size)" = 0
+c osd pool set cephstudy size 3
+c osd pool set cephstudy min_size 2
+c osd pool get cephstudy all
+c pg ls-by-pool cephstudy
+</code></pre>
+<p>Сначала size3, затем min_size2: обратный порядок при size1 был бы отвергнут.
+Теперь нужно дождаться восьми active+clean PG, проверить3/2,
+actual CRUSH-размещение и health. Только после завершённого переноса:</p>
+<pre><code class="language-bash">cd "$HOME/ceph-book/labs"
+source read-probe-02.bash
+</code></pre>
+<p>Второй probe читает исходный объект из rados-01 на новое имя выхода.
+Если он не совпал, расширение не принято даже при HEALTH_OK.
+На трёх hosts после потери одного нельзя восстановить3копии
+в разных host без нового допустимого места.</p>
+<h2>Разобрать отрицательный результат</h2>
+<p>Существующий generation прекращает первоначальное создание.
+Отказ create означает занятое имя или иную ошибку, которую нужно
+различить по коду/диагностике. Неизвестный PUT не даёт права заменить
+объект другим содержимым. Inactive PG требует исследования карты,
+peering и history, а не уменьшения min_size наугад.
+Если возврат отличается, сохраните оба файла и SHA256, не перезаписывайте
+исходный report.txt ради совпадения.</p>
+<p class="sources"><a href="https://github.com/ceph/ceph/blob/v20.2.4/src/mon/OSDMonitor.cc#L8069-L8142">size/min_size</a>;
+<a href="https://github.com/ceph/ceph/blob/v20.2.4/src/mon/OSDMonitor.cc#L8957-L9135">application metadata</a>;
+<a href="https://github.com/ceph/ceph/blob/v20.2.4/src/tools/rados/rados.cc#L478-L513">get stdout</a>;
+<a href="https://github.com/ceph/ceph/blob/v20.2.4/src/cephadm/cephadm.py#L2891-L2902">mount</a>.
+Native roundtrip этого рецепта ещё не выполнен.</p>

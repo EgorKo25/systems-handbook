@@ -1,0 +1,120 @@
+<header>
+  <h1>Первый объект должен пережить новый процесс</h1>
+  <p>Сервер предыдущей главы уже работает в первом терминале.
+  Этот маршрут выполняется во втором терминале той же VM.</p>
+</header>
+
+<h2>Сначала проверяем готовность</h2>
+<p>Подключаем созданный enter.sh. Проверяем HTTPS с собственным CA
+и серверную готовность к записи. Открытый TCP-порт или ответ
+liveness сами по себе не доказывают доступность bucket и данных.</p>
+<pre><code>set -euo pipefail
+source "$HOME/minio-study/enter.sh"
+curl --fail --silent --show-error --connect-timeout 2 --max-time 5 \
+  --cacert "$LAB_ROOT/tls/ca.crt" --output /dev/null \
+  https://127.0.0.1:19000/minio/health/cluster
+</code></pre>
+<p>Ожидается код 0. При connection refused сначала проверяем процесс
+и listener, при certificate error — доверие, срок и IP в SAN,
+при HTTP 503 — состояние сервера. При любом отказе следующий
+изменяющий блок не выполняем.</p>
+
+<h2>Alias — сохранённое клиентское подключение</h2>
+<p>Alias lab связывает имя с endpoint, credentials и параметрами
+адресации. Они сохраняются в отдельном каталоге mc. API S3v4
+выбирает подпись Signature Version 4. Path on требует адресацию
+с bucket в пути: https://127.0.0.1:19000/bucket/key.
+Для loopback не нужен отдельный DNS на каждый bucket.</p>
+<p>В закреплённом mc alias set умеет прочитать access key и secret
+key из двух строк stdin, когда они не переданы аргументами.
+Так пароль не появляется в argv команды. Bash tracing для этого
+блока включать нельзя.</p>
+<pre><code>begin_stage root-alias
+cat "$LAB_ROOT/secrets/root-user" "$LAB_ROOT/secrets/root-password" |
+  "${MC[@]}" alias set --api S3v4 --path on lab https://127.0.0.1:19000 \
+    &gt; "$SETUP_STAGE/stdout.private" \
+    2&gt; "$SETUP_STAGE/stderr.private"
+finish_stage
+</code></pre>
+<p>Ожидается успешное добавление alias с кодом 0. Это подтверждает
+настройку клиента, но ещё не доказывает запись объекта. config.json
+в mc содержит секретный материал и не включается в публичный экспорт.</p>
+
+<h2>Создаём bucket до объекта</h2>
+<p>Bucket создаёт клиент с соответствующими полномочиями.
+Versioning — хранение отдельных версий одного key. Включим его
+до первой загрузки: повторный PUT затем будет создавать новую
+версию, а не служить безобидным повтором проверки.</p>
+<pre><code>"${MC[@]}" mb lab/handbook-minio
+"${MC[@]}" version enable lab/handbook-minio
+"${MC[@]}" version info lab/handbook-minio
+</code></pre>
+<p>Все команды должны завершиться с кодом 0; info должен сообщить
+включённое versioning. При повторном прохождении bucket уже может
+существовать. Тогда не удаляем его и не добавляем --ignore-existing
+вслепую: возвращаемся к журналу своего состояния и проверяем,
+тот ли это проект. Отказ enabling versioning останавливает загрузку.</p>
+
+<h2>У входа и результата разные файлы</h2>
+<pre><code>test ! -e "$LAB_ROOT/fixtures/manifest-v1.txt"
+printf 'project=handbook-storage\nedition=1\n' \
+  &gt; "$LAB_ROOT/fixtures/manifest-v1.txt"
+
+"${MC[@]}" cp "$LAB_ROOT/fixtures/manifest-v1.txt" \
+  lab/handbook-minio/project/manifest.txt
+
+"${MC[@]}" stat lab/handbook-minio/project/manifest.txt
+"${MC[@]}" cat lab/handbook-minio/project/manifest.txt \
+  &gt; "$LAB_ROOT/downloads/manifest-first-read.txt"
+
+cmp "$LAB_ROOT/fixtures/manifest-v1.txt" \
+  "$LAB_ROOT/downloads/manifest-first-read.txt"
+</code></pre>
+<p>Первая строка fixture содержит 25 байт с LF, вторая — 10: stat должен показать size 35. Version ID выдаёт собственный сервер; готовый ID из книги не подставляется.</p>
+<p>cp получает локальный файл и передаёт его серверу. stat запрашивает
+сведения об объекте; фиксируем размер и version ID собственного
+результата. cat читает тело обратно. cmp проверяет точное совпадение
+байтов и возвращает 0 только при совпадении. Успешный stat без cmp
+не доказывает, что возвращено требуемое содержимое.</p>
+<p>Файл manifest-v1 остаётся эталоном, downloads — отдельной целью.
+Не загружаем результат поверх эталона и не удаляем предыдущую
+версию перед следующим упражнением. Если cmp сообщает различие,
+останавливаем дальнейшие изменения и исследуем размер, key,
+version ID и выбранный endpoint.</p>
+
+<h2>Новый процесс, прежние данные</h2>
+<p>В первом терминале останавливаем MinIO обычным Ctrl-C и ждём
+возврата оболочки. Каталоги остаются на диске. Затем запускаем
+тот же run-server.sh повторно с тем же data. Во втором терминале
+снова выполняем HTTPS health check и только после успеха читаем
+объект, не делая перед чтением нового cp.</p>
+<pre><code>"${MC[@]}" cat lab/handbook-minio/project/manifest.txt \
+  &gt; "$LAB_ROOT/downloads/manifest-after-restart.txt"
+cmp "$LAB_ROOT/fixtures/manifest-v1.txt" \
+  "$LAB_ROOT/downloads/manifest-after-restart.txt"
+</code></pre>
+<p>Критерий сохранения состояния: новый процесс возвращает те же
+байты из прежнего хранилища без повторной загрузки. Это ещё не
+backup/restore и не испытание отказа диска. Для проверки резерва
+позднее понадобится другая цель, собственная конфигурация доступа
+и доказательство восстановления требуемых версий.</p>
+
+<h2>Граница с Go-клиентом</h2>
+<p>Позже этот же bucket будет использовать общий object-study
+из s3/labs/object-client. Сначала установим и проверим этот helper
+по его инструкции и создадим ограниченный прикладной доступ.
+Профиль MinIO будет явно задавать backend=minio,
+endpoint=https://127.0.0.1:19000, region=us-east-1,
+bucket=handbook-minio и path-style addressing, а также собственный
+credentials profile и CA. Root credentials в Go-сервис не передаём.</p>
+<p>Общий клиент сравнивает наблюдаемое S3-поведение, но не обещает
+одинаковые server-side guarantees MinIO, RGW и AWS. Если helper
+не поддерживает отдельный CA или обязательную операцию этого опыта,
+сначала дорабатывается и проверяется его договор; параметры
+не угадываются по похожей CLI.</p>
+
+<p class="sources">Источники:
+<a href="https://raw.githubusercontent.com/minio/minio/RELEASE.2025-10-15T17-29-55Z/cmd/healthcheck-handler.go">server health semantics</a>,
+<a href="https://raw.githubusercontent.com/minio/mc/RELEASE.2025-08-13T08-35-41Z/cmd/alias-set.go">alias set и stdin credentials</a>,
+<a href="https://raw.githubusercontent.com/minio/mc/RELEASE.2025-08-13T08-35-41Z/cmd/mb-main.go">создание bucket</a>,
+<a href="https://raw.githubusercontent.com/minio/mc/RELEASE.2025-08-13T08-35-41Z/cmd/version-main.go">команды versioning</a>.</p>

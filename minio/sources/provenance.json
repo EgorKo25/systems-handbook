@@ -1,0 +1,137 @@
+{
+  "schema": "minio-source-provenance/v1",
+  "author_base": "9c97f1957e24c336a4c42833dfb889a0340868c6",
+  "checked_utc_date": "2026-11-02",
+  "server": {
+    "repository": "https://github.com/minio/minio",
+    "commit": "9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a",
+    "tag": "RELEASE.2025-10-15T17-29-55Z",
+    "license": "AGPL-3.0",
+    "archived": "2026-04-25",
+    "native_build": false
+  },
+  "mc": {
+    "repository": "https://github.com/minio/mc",
+    "commit": "7394ce0dd2a80935aded936b09fa12cbb3cb8096",
+    "tag": "RELEASE.2025-08-13T08-35-41Z",
+    "license": "AGPL-3.0",
+    "archived": "2026-07-14",
+    "native_help": false
+  },
+  "go": {
+    "version": "1.24.8",
+    "artifact": "go1.24.8.linux-amd64.tar.gz",
+    "sha256": "6842c516ca66c89d648a7f1dbe28e28c47b61b59f8f06633eb2ceb1188e9251d",
+    "source": "https://go.dev/dl/#go1.24.8",
+    "downloaded": false,
+    "maintained_current_branch": false
+  },
+  "retained": [
+    {
+      "path": "minio/sources/minio-07-healing-and-scanner.html",
+      "bytes": 75323,
+      "sha256": "0fa6afd67e9b102c0fce6838dd472965aa5076c67328425956061b46e40f1314",
+      "source": "storage19 received physical source"
+    },
+    {
+      "path": "minio/sources/minio-08-object-io.html",
+      "bytes": 53500,
+      "sha256": "708ef45384aba692d5092e9abd9858bce71b8f8b807025265a79c809be0c90e0",
+      "source": "thread 01a197c2-e09d-7003-9120-6878191e630f turn 01a19875-8837-7112-a1c2-d8c53f9d84b4; two exact HTML fences"
+    },
+    {
+      "path": "minio/sources/assets/minio-four-endpoint-healing.svg",
+      "bytes": 11361,
+      "sha256": "8dd5b37ba7e7bcc2297062801e8ffc6255f00c227196827f0a58cc853f6bd6e1"
+    }
+  ],
+  "history_inputs": [
+    {
+      "thread": "01a197c2-e09d-7003-9120-6878191e630f",
+      "turn": "01a197c2-e0ce-7b13-bf59-0c3a51b2b6b5",
+      "message": "msg_079f0354a2331dd5016ae75ec231fc8191bcd3318cba44a637",
+      "bytes": 71063,
+      "sha256": "1a3bafbb338c88b10a01f2ee73cdd1ab63865a30bc076b5416f60d98e9cff4f7",
+      "kind": "historical draft/correction; not filesystem file"
+    },
+    {
+      "thread": "01a197c2-e09d-7003-9120-6878191e630f",
+      "turn": "01a197cf-f96f-7750-9df8-b69b81f06fc3",
+      "message": "msg_079f0354a2331dd5016ae763e211cc8191a6281a7e5b146bc8",
+      "bytes": 60858,
+      "sha256": "5b348d48b0e260576caee448c64ada4d0871c266354a79f2360ffaebdb3bc5ad",
+      "kind": "historical draft/correction; not filesystem file"
+    },
+    {
+      "thread": "01a197c2-e09d-7003-9120-6878191e630f",
+      "turn": "01a197e4-4fb1-7be0-adc6-34de766d779e",
+      "message": "msg_079f0354a2331dd5016ae76a3ddf6881918a0737a5f6e078bf",
+      "bytes": 48847,
+      "sha256": "d86983c449870d1623fced090cde81e5324618eb6e7a357da9735dffe5fabf71",
+      "kind": "historical draft/correction; not filesystem file"
+    },
+    {
+      "thread": "01a197c2-e09d-7003-9120-6878191e630f",
+      "turn": "01a197fb-07ce-7002-b560-65cff6cd1b45",
+      "message": "msg_079f0354a2331dd5016ae76baee09081918845f320cbe0c80d",
+      "bytes": 2407,
+      "sha256": "2404a309256eba9f49f1d27eae32b16ae302d16bcaf45c8ab4c3d07eae5c60d2",
+      "kind": "historical draft/correction; not filesystem file"
+    },
+    {
+      "thread": "01a197c2-e09d-7003-9120-6878191e630f",
+      "turn": "01a19826-df15-7f63-b3c4-c1ca32fa0eb5",
+      "message": "msg_079f0354a2331dd5016ae777d8f2448191934ed06d972d1ddc",
+      "bytes": 8145,
+      "sha256": "a0dad497b84938b4aff7e2079623a2921fd97891f06a2ed6139d97a631db06cd",
+      "kind": "historical draft/correction; not filesystem file"
+    },
+    {
+      "thread": "01a197c2-e09d-7003-9120-6878191e630f",
+      "turn": "01a1982e-106b-7601-a201-3d4e19c1048c",
+      "message": "msg_079f0354a2331dd5016ae77a6cbc508191a3266dd8737bb93c",
+      "bytes": 19680,
+      "sha256": "63968391cfef78ae631fd9fbc4f2ac7bc5735df81367d88768e180aa1855abb5",
+      "kind": "historical draft/correction; not filesystem file"
+    }
+  ],
+  "new_primary_code": [
+    {
+      "url": "https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-server-pool-rebalance.go",
+      "git_blob_sha1": "c037f0ddc0807a7c4f9704f3a18450fd3b6ed050",
+      "utf8_bytes": 29386,
+      "sha256": "1197be82a79e8ef94e823a3f4d7b64379a58f75d74cf626c9038fdaf72538110"
+    },
+    {
+      "url": "https://github.com/minio/mc/blob/7394ce0dd2a80935aded936b09fa12cbb3cb8096/cmd/admin-rebalance-start.go",
+      "git_blob_sha1": "7761ed2e11d159ebb5b6f4d63c85b8c40364252a",
+      "utf8_bytes": 2463,
+      "sha256": "53a631ab9eb11c19d5b43ebb99fb7d51963550104d0d5487f18deb5978a4a514"
+    },
+    {
+      "url": "https://github.com/minio/mc/blob/7394ce0dd2a80935aded936b09fa12cbb3cb8096/cmd/admin-rebalance-status.go",
+      "git_blob_sha1": "9102823e31cf0912118794b97789e974f0b03582",
+      "utf8_bytes": 3648,
+      "sha256": "0a06911669c587fb9f885fd2c9260591b09e0f2412c2315679bf4dbfbb0f3832"
+    },
+    {
+      "url": "https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/admin-handlers-pools.go",
+      "git_blob_sha1": "c4f98c45485a6096e7485c0710f1f54154fb7101",
+      "utf8_bytes": 11317,
+      "sha256": "0be8f2aa5f67b782ecb24ecbfe577ff6760bb406445ca91fb6942bc2cc73a7fb"
+    },
+    {
+      "url": "https://github.com/minio/mc/blob/7394ce0dd2a80935aded936b09fa12cbb3cb8096/cmd/admin-rebalance-main.go",
+      "git_blob_sha1": "14db042ee16f52e9298ef5c0ba070462590d8a89",
+      "utf8_bytes": 1334,
+      "sha256": "e9231d496f6ddc41451a710ec6baf71f9efa441fe0f021f68e8ff461e482a808"
+    }
+  ],
+  "limits": [
+    "Author source-only; no canonical/registry/reader/Pages writes.",
+    "No native MinIO/mc/TLS/IAM/backup/HA or browser/print execution.",
+    "Models do not implement real Reed-Solomon/HighwayHash/xxhash/native IO.",
+    "AIStor is a separate licensed implementation; archival OSS behavior is not its contract.",
+    "object-study bridge is optional and remains dependent on S3 helper acceptance."
+  ]
+}

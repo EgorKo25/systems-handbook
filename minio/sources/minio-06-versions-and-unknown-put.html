@@ -1,0 +1,242 @@
+<header>
+<h1>Версия существует отдельно от последнего ответа клиента</h1>
+<p>Продолжаем тот же handbook-minio. Изменяющие опыты этой главы
+относятся к закреплённой OSS-реализации. Для AIStor отдельно
+проверяется лицензия: version-specific deletion недоступно в Free.</p>
+</header>
+
+<h2>Три разных действия над одним key</h2>
+<p>При включённом versioning новый PUT создаёт новую версию.
+Version ID выдаёт сервер; клиент сохраняет его как идентификатор
+результата. Предыдущая версия остаётся noncurrent — не текущей,
+но всё ещё существующей.</p>
+<p>DELETE без versionId создаёт delete marker — текущую отметку
+удаления. Обычное чтение key больше не возвращает прежнее тело,
+хотя старые версии могут оставаться доступными по ID. DELETE с
+конкретным versionId удаляет выбранную версию или выбранный marker.
+Это другое действие с другой судьбой данных.</p>
+<table>
+<thead><tr><th>Шаг</th><th>Текущий результат</th><th>Что сохраняется</th></tr></thead>
+<tbody>
+<tr><td>Первый PUT</td><td>V1</td><td>Тело V1</td></tr>
+<tr><td>Второй PUT</td><td>V2</td><td>Тела V1 и V2</td></tr>
+<tr><td>DELETE без ID</td><td>Marker M</td><td>V1, V2 и M</td></tr>
+<tr><td>Удалить именно M</td><td>Снова V2</td><td>V1 и V2; M удалён</td></tr>
+</tbody>
+</table>
+<p>V1/V2/M в таблице — обозначения, не готовые ID для копирования.
+В опыте используются только ID собственного сервера. Удаление
+marker не отменяет произвольные записи после контрольной точки.</p>
+
+<h2>Фиксируем исходную версию до изменения</h2>
+<p>Работаем во втором терминале той же VM с owner alias lab.
+HTTPS health должен успешно пройти прежде изменяющего блока.
+Helper object-study для этого опыта не требуется.</p>
+<pre><code>source "$HOME/minio-study/enter.sh"
+cd "$LAB_ROOT"
+begin_stage versions-v2 "$LAB_ROOT/exercises/versions-v2"
+EX="$LAB_ROOT/exercises/versions-v2"
+mkdir -- "$EX"
+
+"${MC[@]}" --json version info lab/handbook-minio &gt; "$EX/versioning.json"
+python3 -B - "$EX/versioning.json" &lt;&lt;'PY'
+import json, sys
+data = json.load(open(sys.argv[1]))
+if data.get("status") != "success" or data.get("versioning", {}).get("status") != "Enabled":
+    raise SystemExit("Для опыта требуется подтверждённое Enabled без исключений.")
+if data["versioning"].get("ExcludedPrefixes") or data["versioning"].get("ExcludeFolders"):
+    raise SystemExit("Исходное состояние содержит исключения versioning.")
+PY
+
+"${MC[@]}" --json stat lab/handbook-minio/project/manifest.txt &gt; "$EX/v1.json"
+
+version_id() {
+    python3 -B - "$1" &lt;&lt;'PY'
+import json, sys, uuid
+data = json.load(open(sys.argv[1]))
+value = data.get("versionID", "")
+if data.get("status") != "success" or not isinstance(data.get("size"), int):
+    raise SystemExit("Неожиданная metadata объекта.")
+try:
+    uuid.UUID(value)
+except Exception:
+    raise SystemExit("Нет пригодного version ID закреплённого OSS-профиля.")
+print(value)
+PY
+}
+
+V1="$(version_id "$EX/v1.json")"
+"${MC[@]}" cat --version-id "$V1" \
+  lab/handbook-minio/project/manifest.txt &gt; "$EX/v1-read.txt"
+cmp "$LAB_ROOT/fixtures/manifest-v1.txt" "$EX/v1-read.txt"
+</code></pre>
+<p>Если исходные байты уже изменены, опыт останавливается.
+Включение versioning не восстанавливает задним числом содержимое,
+которое было перезаписано до его включения.</p>
+
+<h2>Новый PUT, прежняя версия</h2>
+<pre><code>printf 'project=handbook-storage\nedition=2\n' &gt; "$EX/manifest-v2.txt"
+
+"${MC[@]}" cp "$EX/manifest-v2.txt" \
+  lab/handbook-minio/project/manifest.txt
+
+"${MC[@]}" --json stat lab/handbook-minio/project/manifest.txt &gt; "$EX/v2.json"
+V2="$(version_id "$EX/v2.json")"
+test "$V1" != "$V2"
+
+"${MC[@]}" cat lab/handbook-minio/project/manifest.txt &gt; "$EX/current-v2.txt"
+cmp "$EX/manifest-v2.txt" "$EX/current-v2.txt"
+
+"${MC[@]}" cat --version-id "$V1" \
+  lab/handbook-minio/project/manifest.txt &gt; "$EX/old-v1.txt"
+cmp "$LAB_ROOT/fixtures/manifest-v1.txt" "$EX/old-v1.txt"
+
+"${MC[@]}" ls --versions lab/handbook-minio/project/manifest.txt
+</code></pre>
+<p>Новая текущая версия возвращает edition=2, а чтение V1 — edition=1.
+Два успешных cmp доказывают различие поведения на одном сохранённом
+серверном состоянии. ETag и version ID не заменяют сравнение тела.</p>
+
+<h2>Dry-run и настоящий DELETE сравниваются без reset</h2>
+<p>Dry-run получает исходное состояние с текущей V2, но не выполняет
+удаление. Следом проверяем, что current version ID прежний.
+Затем DELETE без ID выполняется на том же состоянии.</p>
+<pre><code>"${MC[@]}" rm --dry-run lab/handbook-minio/project/manifest.txt
+"${MC[@]}" --json stat lab/handbook-minio/project/manifest.txt &gt; "$EX/after-dry-run.json"
+test "$(version_id "$EX/after-dry-run.json")" = "$V2"
+
+"${MC[@]}" --json rm lab/handbook-minio/project/manifest.txt &gt; "$EX/delete-marker.json"
+
+M="$(python3 -B - "$EX/delete-marker.json" &lt;&lt;'PY'
+import json, sys, uuid
+data = json.load(open(sys.argv[1]))
+value = data.get("versionID", "")
+if data.get("status") != "success" or data.get("deleteMarker") is not True:
+    raise SystemExit("Создание delete marker не подтверждено.")
+try:
+    uuid.UUID(value)
+except Exception:
+    raise SystemExit("Нет пригодного ID delete marker.")
+print(value)
+PY
+)"
+
+"${MC[@]}" ls --versions lab/handbook-minio/project/manifest.txt
+"${MC[@]}" cat --version-id "$V2" \
+  lab/handbook-minio/project/manifest.txt &gt; "$EX/v2-under-marker.txt"
+cmp "$EX/manifest-v2.txt" "$EX/v2-under-marker.txt"
+</code></pre>
+<pre><code>if "${MC[@]}" --json cat \
+    lab/handbook-minio/project/manifest.txt \
+    &gt; "$EX/current-under-marker.private.json" \
+    2&gt; "$EX/current-under-marker.private.err"
+then
+    printf '%s\n' 'Неожиданно получено текущее тело под marker; остановка.' &gt;&amp;2
+    exit 1
+fi
+
+python3 -B - "$EX/current-under-marker.private.json" &lt;&lt;'PY'
+import json, sys
+try:
+    with open(sys.argv[1]) as stream:
+        data = json.load(stream)
+except Exception:
+    raise SystemExit("Не подтверждён ожидаемый отказ current lookup.")
+error = data.get("error") if isinstance(data, dict) else None
+cause = error.get("cause") if isinstance(error, dict) else None
+if (not isinstance(cause, dict)
+        or data.get("status") != "error"
+        or cause.get("message") != "Object does not exist"
+        or cause.get("error") != {}):
+    raise SystemExit("Получена другая причина отказа; опыт не принят.")
+PY
+</code></pre>
+<p>В закреплённом mc команда cat сначала запрашивает сведения
+об объекте. Текущий delete marker преобразуется в ObjectMissing;
+до чтения тела команда не доходит. Здесь ожидается отказ lookup
+с сообщением Object does not exist. Сохранённый ответ DELETE
+подтверждает marker M, а чтение V2 по ID возвращает прежние байты.
+Проверки используются вместе: одно сообщение ObjectMissing
+само по себе не устанавливает причину отсутствия текущего тела.</p>
+<p>JSON checker выведен из исходников и ещё требует native-проверки.
+Неизвестный формат, TLS error или timeout останавливают опыт.</p>
+
+
+<h2>Осознанно удаляем только собственный marker</h2>
+<p>Следующий шаг изменяет историю: выбранный marker M удаляется.
+Тела V1/V2 сохраняются. Перед выполнением сверяем M с сохранённым
+ответом и списком версий. В опыте нет параллельного writer и lifecycle.</p>
+<pre><code>"${MC[@]}" rm --version-id "$M" \
+  lab/handbook-minio/project/manifest.txt
+
+"${MC[@]}" --json stat lab/handbook-minio/project/manifest.txt &gt; "$EX/after-marker-removal.json"
+test "$(version_id "$EX/after-marker-removal.json")" = "$V2"
+
+"${MC[@]}" cat lab/handbook-minio/project/manifest.txt &gt; "$EX/revealed-v2.txt"
+cmp "$EX/manifest-v2.txt" "$EX/revealed-v2.txt"
+finish_stage
+</code></pre>
+<p>Это управление версиями собственного учебного объекта, не
+восстановление резервной копии. Если вместо M передать V1,
+удалится тело V1. Поэтому в коде нет выбора «первой строки ls»,
+массового --versions --recursive и автоматической очистки.</p>
+
+<h2>Timeout записи не является ответом «объект не сохранён»</h2>
+<p>Представим PUT с operation ID O. Клиент отправил тело, сервер
+закрепил новую версию V3, но ответ потерялся. Клиент завершился
+по deadline. Он знает, что не получил подтверждение, но не знает,
+закончилась ли запись до разрыва соединения.</p>
+<p>Новый PUT того же тела в versioned bucket способен создать V4.
+Даже при одинаковых байтах это другая версия. Retry внутри SDK
+также входит в этот анализ; один вызов прикладного метода не
+обязательно равен одному HTTP-запросу.</p>
+<p>Для воспроизводимого исследования до отправки сохраняют намерение:
+endpoint identity, bucket/key, operation ID, длину и собственный
+SHA-256 тела. Operation ID передают как
+x-amz-meta-operation-id. Это metadata для сопоставления, а не
+серверный ключ идемпотентности.</p>
+<p>После неоднозначного исхода сначала прекращаются зависимые
+изменения. Перечисляются все версии нужного key, с учётом пагинации
+и delete markers. Кандидат проверяется по metadata operation ID,
+затем читается по конкретному version ID и сравнивается с исходными
+байтами. Обычный HEAD текущего key недостаточен: другой writer мог
+создать более новую версию, а DELETE — текущий marker.</p>
+<table>
+<thead><tr><th>Наблюдение</th><th>Допустимый вывод</th></tr></thead>
+<tbody>
+<tr><td>Один кандидат O, совпали байты</td><td>Найдена сохранённая версия намерения; фиксируем её ID</td></tr>
+<tr><td>Несколько совпавших версий O</td><td>Есть дубли; exactly-once не достигнуто</td></tr>
+<tr><td>Совпал O, байты другие</td><td>Нарушен договор намерения; остановка и расследование</td></tr>
+<tr><td>Кандидат пока не найден</td><td>Нет подтверждения в данном наблюдении; это не доказательство, что старый запрос уже не сможет завершиться</td></tr>
+</tbody>
+</table>
+<p>Отсутствие кандидата разрешает автоматический retry только при
+дополнительном прикладном договоре: например, заранее выбранном уникальном key
+с проверенным create-only либо согласованном durable журнале
+операций. В повторах одного намерения сохраняются тот же key,
+operation ID и исходные bytes; новый key каждой попытки создаёт другой
+объект. После unknown или 412 сначала ищут результат. Create-only
+сам по себе не обеспечивает exactly-once. Политика повторов не выводится из одного timeout.</p>
+
+<h2>Как читать exit code и receipt object-study</h2>
+<p>В согласованном v1 exit 0 означает подтверждённый результат,
+2 — validation до отправки, 3 — явный отказ сервиса, 4 —
+transport/deadline/cancel с неизвестным исходом PUT, 5 — локальный
+I/O, integrity либо final commit failure. Эти коды ещё требуют
+проверки реализации на настоящем сервере.</p>
+<p>Exit code описывает причину завершения, outcome — подтверждённость серверной операции. Код 3 может сочетаться с unknown: предыдущая попытка могла записать объект, повтор получил 412. По консервативному SPEC v1 неуспешный PUT после HTTPClient.Do имеет unknown. Ошибка открытия или предварительного хеширования source до отправки означает rejected. Код 5 возможен после подтверждённого PUT: ошибка закрытия локального source не отменяет серверную запись. При GET ошибка fsync каталога после hard link может оставить полное конечное имя; повтор поверх него запрещён.</p>
+<p>Helper добавляет подписанный x-amz-meta-operation-id и возвращает
+operation_id в очищенном receipt. Но процесс может погибнуть до
+receipt; тогда ID может быть утрачен. В v1 не обещаны durable intent
+journal и exactly-once. Нельзя описывать receipt как уже существующую
+защиту от всех неоднозначных исходов.</p>
+<p>Настоящий timeout experiment в этой фазе не выполнялся.
+Приведённая таблица — причинная модель, а не выдуманный журнал
+сетевого отказа.</p>
+
+<p class="sources">Закреплённые источники:
+<a href="https://raw.githubusercontent.com/minio/minio/RELEASE.2025-10-15T17-29-55Z/docs/bucket/versioning/README.md">версионная модель</a>,
+<a href="https://raw.githubusercontent.com/minio/mc/RELEASE.2025-08-13T08-35-41Z/cmd/rm-main.go">dry-run, marker и version-id</a>,
+<a href="https://raw.githubusercontent.com/minio/mc/RELEASE.2025-08-13T08-35-41Z/cmd/stat.go">stat JSON</a>,
+<a href="https://raw.githubusercontent.com/minio/mc/RELEASE.2025-08-13T08-35-41Z/cmd/cat-main.go">чтение конкретной версии</a>,
+<a href="https://raw.githubusercontent.com/minio/mc/RELEASE.2025-08-13T08-35-41Z/cmd/ls-main.go">перечисление версий</a>.</p>

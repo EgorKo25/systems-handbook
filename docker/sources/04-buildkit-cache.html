@@ -74,6 +74,52 @@ ENTRYPOINT ["/echo"]</code></pre>
 <p>Сборщик сохраняет результаты операций и сведения об их входах. При следующем запросе он ищет пригодный сохранённый результат. Если найден результат нужной операции с теми же учитываемыми входами, запуск компилятора вообще не требуется. В журнале это обычно отмечено как <code>CACHED</code>. Надпись возле <code>RUN go test</code> означает, что BuildKit повторно использовал результат прежнего успешного шага; тестовый процесс в этот раз мог не запускаться.</p>
 <p>Для нашего Dockerfile удобно проследить такие зависимости: база → <code>WORKDIR</code> → <code>COPY go.mod</code> → <code>COPY cmd</code> → тесты → компиляция → перенос бинарника. Если изменить тело обработчика в <code>main.go</code>, ранние операции с базой и <code>go.mod</code> могут сохраниться, но результат копирования <code>cmd</code> изменится. Тестовый и сборочный шаги теперь получают другую файловую систему и должны быть пересмотрены. Если поменять только внешний файл <code>backups/copy.tar</code>, который исключён из контекста, входы этой цепочки останутся прежними.</p>
 <p>Проверка <code>COPY</code> учитывает содержимое и существенные метаданные файлов; одна лишь смена времени модификации <code>mtime</code> не требует отмены кэша. У обычного <code>RUN</code> нет обещания каждый раз проверять внешний сайт. Если прежний <code>RUN</code> получил пакет по сети и теперь взят из кэша, удалённый пакет заново не запрашивался. Поэтому <code>RUN apt-get update</code> из старого кэша не подтверждает свежесть списка пакетов. Политику обновления надо задавать отдельно от ускорения сборки. <a href="https://docs.docker.com/build/cache/invalidation/">Правила пригодности кэша</a>.</p>
+<figure id="docker-build-inputs-cache" class="docker04-cache-cut">
+<style>
+.docker04-cache-cut{margin:1.5em 0;color:inherit}
+.docker04-cache-cut svg{display:block;width:100%;max-width:27rem;height:auto;min-width:0;margin:auto;color:inherit}
+.docker04-cache-cut figcaption{margin:.8em 0}
+.docker04-cache-cut code{overflow-wrap:anywhere}
+@media print{.docker04-cache-cut{color:#000!important;background:#fff!important;break-inside:auto!important}.docker04-cache-cut svg{width:auto;max-width:100%;max-height:180mm;break-inside:avoid}}
+</style>
+<h3 id="docker-build-inputs-cache-title">Один изменённый байт: какие результаты ещё пригодны</h3>
+<p>Условие карты: первая сборка успешна, её результаты сохранены, результатов новой версии ещё нет. Во второй сборке меняем только <code>var version = "lesson1"</code> на <code>var version = "lesson2"</code> в <code>labs/echo/cmd/echo/main.go</code>. Разрешённая база, frontend, BUILDPLATFORM, целевая платформа, остальные аргументы и метаданные входов прежние; кэш не очищен. Это разбор зависимостей, не выполненная сборка.</p>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 640" role="img" aria-labelledby="d04-cache-svg-title d04-cache-svg-desc">
+<title id="d04-cache-svg-title">Изменение version проходит через COPY cmd, тесты и сборку</title>
+<desc id="d04-cache-svg-desc">В строке lesson1 последний байт 31 заменён на 32, получается lesson2. Неизменные база, WORKDIR и COPY go.mod пригодны для повторного использования. COPY cmd получает другие байты, затем оба RUN получают другую файловую систему. Последняя стадия копирует полученный /out/echo; кэш компилятора к этим файловым байтам не добавляется. Это выбранный сценарий со старым кэшем, без сохранённых результатов новой версии.</desc>
+<defs><marker id="d04-cache-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L8 4L0 8Z" fill="currentColor"/></marker></defs>
+<g fill="currentColor" font-family="system-ui,sans-serif" font-size="17">
+<text x="8" y="25" font-weight="700">Байты строки version</text>
+<text x="8" y="52" font-family="monospace">6c 65 73 73 6f 6e</text>
+<rect x="232" y="30" width="60" height="58" fill="none" stroke="currentColor"/>
+<text x="247" y="53" font-family="monospace">31</text><text x="247" y="78" font-family="monospace">32</text>
+<text x="8" y="79">lesson1 → lesson2</text>
+<text x="8" y="110">Смещение 281, от нуля.</text>
+<text x="8" y="136">main.go: 5317 байтов → 5317.</text>
+<path d="M22 166V552" fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#d04-cache-arrow)"/>
+<circle cx="22" cy="183" r="4"/><circle cx="22" cy="247" r="4"/><circle cx="22" cy="311" r="4"/><circle cx="22" cy="375" r="4"/><circle cx="22" cy="439" r="4"/><circle cx="22" cy="503" r="4"/>
+<text x="40" y="188">FROM + WORKDIR</text><text x="246" y="188">HIT</text>
+<text x="40" y="214" font-size="16">Прежняя база и /src.</text>
+<text x="40" y="252">COPY go.mod</text><text x="246" y="252">HIT</text>
+<text x="40" y="278" font-size="16">Те же 44 байта go.mod.</text>
+<text x="40" y="316">COPY cmd</text><text x="238" y="316">MISS</text>
+<text x="40" y="342" font-size="16">В /src/cmd уже lesson2.</text>
+<text x="40" y="380">RUN go test</text><text x="238" y="380">MISS</text>
+<text x="40" y="406" font-size="16">Команда та же; вход иной.</text>
+<text x="40" y="444">RUN go build</text><text x="238" y="444">MISS</text>
+<text x="40" y="470" font-size="16">Новый /out/echo, если успех.</text>
+<text x="40" y="508">COPY из build</text><text x="229" y="508">MISS*</text>
+<text x="40" y="534" font-size="16">В scratch попадает /echo.</text>
+<path d="M8 572H292" fill="none" stroke="currentColor" stroke-dasharray="5 4"/>
+<text x="8" y="602">Go-кэш может помочь RUN.</text>
+<text x="8" y="629">Это не байты слоя /echo.</text>
+</g></svg>
+<figcaption>HIT — пригоден сохранённый результат операции; соответствующие файловые байты можно взять без её исполнения. MISS — под новые входы такого результата в выбранном кэше нет. Стрелка показывает зависимость следующей операции от результата предыдущей. Значения 31 и 32 — шестнадцатеричные байты ASCII, а не фрагменты ключа BuildKit. Размер и смещение вычислены по поставленному main.go; реальный ключ здесь не выдумывается.</figcaption>
+<p><strong>Что сопоставляется.</strong> Для COPY существенны описание операции, выбранные файлы с содержимым и учитываемыми метаданными, а также входная файловая система назначения. Для RUN — операция, окружение, рабочий каталог, настройки подключений и зависимые результаты. В нашем втором RUN используются ещё TARGETOS/TARGETARCH. BuildKit работает с графом LLB и зависимостями содержимого: это не один SHA от текста Dockerfile. Одинаковая команда поверх другой <code>/src/cmd</code> не означает прежний вход.</p>
+<p><strong>Какие байты выходят.</strong> COPY go.mod сохраняет прежние байты модуля. COPY cmd добавляет исходник с lesson2. Успешные тесты позволяют продолжить сборку; ошибка останавливает путь к финальному образу. Звёздочка у последнего COPY требует проверить результат: он читает именно <code>/out/echo</code>. Для этой правки ожидается бинарник с новой строкой версии; его байты здесь не получены. Если при другом изменении выбранные байты результата совпадут с прежними, вывод о промахе последнего COPY нельзя делать только по факту повторного RUN.</p>
+<p><strong>Три разных хранилища.</strong> Сохранённый результат RUN позволяет вообще не запускать Go. Cache mount <code>/root/.cache/go-build</code> помогает уже запущенному Go переиспользовать пакеты; его содержимое не является обычным входом ключа и не попадает в финальный слой от подключения. Module cache <code>/go/pkg/mod</code> хранит загруженные исходники зависимостей: отдельного такого mount и сторонних модулей в этом Dockerfile нет. Результат последней COPY — файл <code>/echo</code>, а не перенос этих кэшей.</p>
+<p>Только смена mtime не даёт изображённого изменения содержимого. Правка исключённого <code>backups/copy.tar</code> тоже не меняет выбранные входы. Карта опирается на <a href="https://docs.docker.com/build/buildkit/#llb">описание LLB</a>, <a href="https://docs.docker.com/build/cache/invalidation/">правила проверки кэша</a> и <a href="https://docs.docker.com/build/cache/optimize/#use-cache-mounts">назначение cache mount</a>; фактические попадания проверяют по журналу своего builder.</p>
+</figure>
 <h2>Кэш шага и кэш компилятора дают разный выигрыш</h2>
 <p>Допустим, шаг <code>RUN go build</code> пришлось выполнить снова из-за изменения одного Go-файла. Подключение <code>--mount=type=cache,target=/root/.cache/go-build</code> предоставляет ему сохраняемый каталог кэша Go. BuildKit запустил команду, но уже сам Go может взять ранее собранные пакеты и пересобрать только необходимые. Это второй уровень ускорения: он работает внутри шага, который на первом уровне не удалось целиком пропустить.</p>
 <table><thead><tr><th>Что сохранено</th><th>Кто решает использовать</th><th>Что происходит при попадании</th></tr></thead><tbody>

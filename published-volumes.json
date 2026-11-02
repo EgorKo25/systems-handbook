@@ -130,6 +130,21 @@
       "slug": "flyway",
       "title": "Flyway",
       "build": "managed"
+    },
+    {
+      "slug": "s3",
+      "title": "S3 и объектное хранение",
+      "build": "managed"
+    },
+    {
+      "slug": "minio",
+      "title": "MinIO",
+      "build": "managed"
+    },
+    {
+      "slug": "ceph",
+      "title": "Ceph",
+      "build": "managed"
     }
   ],
   "reading_order": [
@@ -145,6 +160,9 @@
     "flyway",
     "cache",
     "mongodb",
+    "s3",
+    "minio",
+    "ceph",
     "sonarqube",
     "nexus",
     "artifactory",

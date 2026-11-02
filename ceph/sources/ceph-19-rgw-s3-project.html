@@ -1,0 +1,108 @@
+<header><h1>Приложение отчётов через RGW</h1>
+<p>Приложение сохраняет байты по bucket/key и проверяет полученный результат.
+Свойства RGW подтверждаются на его endpoint; название S3 API
+не переносит сюда все гарантии Amazon S3 или MinIO.</p></header>
+<h2>Сначала bucket и адресация</h2>
+<p>Bucket — именованная область S3-объектов; key — имя внутри неё.
+Выбран bucket reports-study, HTTPS endpoint из главы 18,
+path-style адресация и явно заданная region, согласованная
+с конфигурацией zonegroup RGW. Path-style даёт путь
+/reports-study/reports/day-1.txt. Virtual-host style перенёс бы
+bucket в DNS-имя и потребовал другого DNS/SAN.
+Эти формы не меняют namespace клиента RADOS напрямую.</p>
+<p>Для создания и проверки bucket поставлен отдельный малый исходник
+<code>labs/rgw-adminbucket</code>: он выполняет только CreateBucket/HeadBucket
+и не расширяет object-study. Используются Go1.27.3 и SDKv2:
+core1.47.1, service/s3 1.114.0, smithy1.28.1. Прочтите его README,
+получите зависимости по go.mod, сохраните проверенный go.sum и выполните
+сборку/проверку. Эти действия здесь не выполнялись; готовый binary
+или offline dependency bundle не заявлен.</p>
+<p>Helper принимает тот же targets.json и отдельный credentials file.
+После подготовки JSON ниже и приёмки TLS/user главы18, из собственного
+каталога приложения выполните принятый binary:</p>
+<pre><code class="language-bash">rgw-adminbucket --config config/targets.json --target rgw-study --timeout 30s create
+rgw-adminbucket --config config/targets.json --target rgw-study --timeout 30s head
+</code></pre>
+<p>Create не задаёт LocationConstraint и относится только к принятому
+локальному default placement однозонного RGW. Для иного zonegroup требуется
+другая явная настройка. Успешное создание уже принадлежащего пользователю
+bucket тоже может вернуть успех: output confirmed_exists не обещает,
+что имя только что появилось. Head подтверждает доступ к выбранной корзине.
+Любой failed create после отправки консервативно даёт unknown outcome.
+Нужны native-проверки именно endpoint20.2.4, signed headers SDK, своего/чужого
+имени и отказов TLS; до них RGW-лаборатория не считается замкнутой.</p>
+<h2>Не обязательная зависимость: общий object-study</h2>
+<p>Object-study — клиент общего S3-проекта библиотеки.
+Его код принадлежит S3-тому, здесь он не дублируется.
+Сначала клиент должен быть собран из полного принятого исходника
+с закреплёнными зависимостями и справкой. Наличие JSON ниже
+не доказывает существование установленного бинарника или совместимость
+конкретного checksum/SigV4 пути SDK с нашим RGW 20.2.4.
+Для самостоятельного использования RGW допустим другой принятый
+S3-клиент, если он выполняет те же явные операции и проверки.</p>
+<p>В новом приложении public targets.json содержит только настройку цели.
+Credentials находятся в отдельном файле mode 0600.
+Относительные пути считаются от каталога targets.json,
+не от случайного текущего cwd:</p>
+<pre><code class="language-json">{
+ "schema_version":1,
+ "targets":{"rgw-study":{
+  "backend":"ceph-rgw","endpoint":"https://rgw-ceph.study:8443",
+  "region":"EXPLICIT_RGW_REGION","bucket":"reports-study",
+  "addressing":"path","profile":"rgw-app",
+  "credentials_file":"../secrets/object-credentials.json",
+  "ca_file":"../tls/ca.crt"
+ }}
+}
+</code></pre>
+<p>EXPLICIT_RGW_REGION — обязательная замена до запуска, не пригодная
+строка region по умолчанию. Приватный файл имеет schema_version=1
+и profiles.rgw-app с access_key_id/secret_access_key из выбранной пары.
+Ключи из user.json не вставляют в shell history или public targets.
+Сеансовые credentials требуют session_token и expires_at вместе.
+Ambient AWS chain не используется: чужой профиль машины не должен
+незаметно выбрать другого пользователя или Amazon endpoint.</p>
+<h2>Один write/read и неизвестный результат</h2>
+<p>После приёмки клиента и endpoint в отдельном новом каталоге приложения
+подготовьте input/report.txt, его длину и SHA-256.
+Ниже root flags стоят перед командой; двойной дефис отделяет key
+от опций. Это контракт клиента, не утверждение о его исполнении:</p>
+<pre><code class="language-bash">object-study --config config/targets.json --target rgw-study --timeout 30s \
+ put --source input/report.txt --create-only -- reports/day-1.txt
+object-study --config config/targets.json --target rgw-study \
+ head -- reports/day-1.txt
+object-study --config config/targets.json --target rgw-study \
+ get --output readback-01.bin --max-bytes 1048576 -- reports/day-1.txt
+</code></pre>
+<p>Create-only не перезаписывает существующее имя. Успех PUT означает
+полученный подтверждённый ответ; затем проверяются длина, checksum
+и возвращённые байты GET. Get должен сохранить новый output только после
+полного чтения, сверки длины/целостности и no-clobber commit.
+Обрезанное тело, превышение max-bytes или существующий output не дают
+успешного файла.</p>
+<p>Потерянный ответ PUT оставляет unknown outcome: сервер мог сохранить
+данные. Повтор create-only может получить 412, потому что предыдущая
+попытка уже заняла имя. Последний явный отказ не опровергает первоначальную
+запись. Сравните operation ID, длину, ожидаемый checksum и при наличии
+version ID прочитайте выбранную версию. Operation ID — признак попытки,
+а не exactly-once гарантия сервера. Не снимайте условие записи
+для «исправления» timeout.</p>
+<h2>Приёмочный набор сервера</h2>
+<p>На реальном RGW отдельно принимаются PUT→HEAD→GET,
+ошибка неверного секрета, недоверенный CA, неверное имя сертификата,
+запрет чужого bucket, create-only при занятом key, обрезанный transport
+и version-specific GET при включённом versioning. Для каждого опыта
+записываются версия RGW, конфигурация bucket, клиент/SDK version,
+полученный status и сравнение байтов. Полная поддержка API не выводится
+из одного удачного PUT.</p>
+<p>Object-study v1 не имеет list/delete/multipart/presign и не создаёт
+bucket. Отдельный rgw-adminbucket после собственной приёмки только
+создаёт и проверяет корзину через CreateBucket/HeadBucket.
+Команд для list/delete/multipart/presign в этом комплекте нет;
+для них нужны отдельно принятые инструменты. Том объясняет механизм RGW,
+а полная поставка общего клиента и его native acceptance остаются
+отдельной зависимостью.</p>
+<p class="sources"><a href="https://github.com/ceph/ceph/blob/v20.2.4/doc/radosgw/s3/bucketops.rst">операции bucket RGW</a>;
+<a href="https://github.com/ceph/ceph/blob/v20.2.4/doc/dev/radosgw/bucket_index.rst">локальная видимость</a>;
+<a href="https://github.com/ceph/ceph/blob/v20.2.4/doc/radosgw/s3.rst">S3 API RGW</a>.
+Конфигурация и команды клиента требуют собственной приёмки.</p>

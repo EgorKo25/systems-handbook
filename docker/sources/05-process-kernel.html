@@ -71,6 +71,79 @@
 <p>Если память получить не удаётся и освобождение не помогает, возможен <strong>OOM</strong>, out of memory. Ядро может завершить процесс, чтобы освободить ресурсы. Исследуют изменения <code>memory.events</code>, журнал ядра и поле <code>State.OOMKilled</code>. Код завершения 137 часто связан с SIGKILL, но сам по себе не доказывает OOM: такой сигнал мог отправить оператор или Docker после тайм-аута остановки, а программа вообще способна явно завершиться с кодом 137.</p>
 <p>В нашем запуске <code>--memory=256m</code> задаёт предел памяти 256 МиБ, а <code>--memory-swap=256m</code> — суммарный разрешённый объём памяти и подкачки по правилам Docker. При равенстве этих двух значений дополнительная подкачка для группы не разрешается, если соответствующие ограничения поддерживаются хостом. Это не «ещё 256 МиБ swap». Наличие swap на хосте и возможность ограничить его для контейнера проверяют отдельно. <a href="https://docs.docker.com/engine/containers/resource_constraints/">Семантика ограничений Docker</a>.</p>
 <p><code>docker stats</code> показывает обработанное представление метрик; на Linux клиент, в частности, вычитает определённый файловый кэш из отображаемого потребления. Число из этой колонки нельзя без поправок приравнивать к <code>memory.current</code>, RSS процесса — объёму его страниц в оперативной памяти, включая совместно используемые, — или памяти, которую считает Go. Мягкая цель Go <code>GOMEMLIMIT</code> управляет памятью runtime Go и тоже не заменяет внешний предел. Когда будете подбирать её, оставляйте место для памяти вне этой области и наблюдайте реальные пики под нужной нагрузкой; подробный опыт с бюджетами находится в <a href="#13-resource-efficiency">главе о ресурсах</a>.</p>
+
+<figure id="docker-process-namespace-cgroup" class="docker-process-cut" aria-labelledby="docker-process-cut-title">
+<style>
+.docker-process-cut{margin:1.5em 0;color:inherit}
+.docker-process-cut svg{display:block;width:100%;max-width:400px;height:auto;margin:1em auto;color:inherit}
+.docker-process-cut figcaption,.docker-process-cut .cut-text{max-width:48rem;margin:1em auto;overflow-wrap:anywhere}
+.docker-process-cut code{overflow-wrap:anywhere}
+@media print{.docker-process-cut{color:#000!important;background:#fff!important;break-inside:auto}.docker-process-cut svg{break-inside:avoid;max-width:90mm}.docker-process-cut figcaption,.docker-process-cut .cut-text{color:#000!important;background:transparent!important}}
+</style>
+<h3 id="docker-process-cut-title">Один процесс: номера отдельно, бюджет отдельно</h3>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 570" role="img" aria-labelledby="docker-pid-cut-title docker-pid-cut-desc">
+<title id="docker-pid-cut-title">Вложенные PID-области одного Linux-ядра</title>
+<desc id="docker-pid-cut-desc">Внешняя PID-область содержит свой init и две вложенные области A и B. Процесс A нарисован один раз: его номер с хоста 24718, из области A — 1. Другой процесс B имеет номер с хоста 24800, из B — тоже 1. Оба обращаются к одному Linux-ядру.</desc>
+<g font-family="system-ui,sans-serif" font-size="16" fill="currentColor">
+<rect x="8" y="10" width="304" height="428" rx="8" fill="none" stroke="currentColor" stroke-width="2"/>
+<text x="20" y="38" font-weight="700">Внешняя PID-область хоста</text>
+<text x="20" y="65">Её init: PID 1</text>
+<rect x="20" y="85" width="280" height="151" rx="6" fill="none" stroke="currentColor" stroke-dasharray="6 4"/>
+<text x="32" y="111" font-weight="700">Вложенная область A</text>
+<ellipse cx="160" cy="157" rx="109" ry="30" fill="currentColor" fill-opacity=".06" stroke="currentColor" stroke-width="2"/>
+<text x="160" y="163" text-anchor="middle">Один процесс A: /echo</text>
+<text x="32" y="211">С хоста: 24718 · из A: 1</text>
+<rect x="20" y="256" width="280" height="151" rx="6" fill="none" stroke="currentColor" stroke-dasharray="6 4"/>
+<text x="32" y="282" font-weight="700">Вложенная область B</text>
+<ellipse cx="160" cy="328" rx="109" ry="30" fill="currentColor" fill-opacity=".06" stroke="currentColor" stroke-width="2"/>
+<text x="160" y="334" text-anchor="middle">Другой процесс B</text>
+<text x="32" y="382">С хоста: 24800 · из B: 1</text>
+<path d="M160 438V474M154 466L160 474L166 466" fill="none" stroke="currentColor" stroke-width="2"/>
+<rect x="8" y="484" width="304" height="74" fill="currentColor" fill-opacity=".08" stroke="currentColor" stroke-width="2"/>
+<text x="160" y="511" text-anchor="middle" font-weight="700">Одно ядро Linux</text>
+<text x="160" y="537" text-anchor="middle">Системные вызовы обоих</text>
+</g>
+</svg>
+<p class="cut-text">Пунктир обозначает PID-области, а не виртуальные машины и не разделы памяти. A и B — разные процессы; два номера возле A обозначают один и тот же процесс. Хост видит обоих, но обычный поиск PID внутри A не находит B. На рисунке не показаны отдельные mount, network и user namespaces: их состав проверяют независимо.</p>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 610" role="img" aria-labelledby="docker-cgroup-cut-title docker-cgroup-cut-desc">
+<title id="docker-cgroup-cut-title">Отдельная иерархия ресурсов и расход CPU-бюджета</title>
+<desc id="docker-cgroup-cut-desc">В дереве cgroup v2 группа A содержит процесс с хостовым PID 24718, соседняя группа B — другой процесс. Для A заданы cpu.max 150000 100000, memory.max 268435456 байт, pids.max 128 задач. Ниже два непрерывно работающих потока на двух CPU расходуют по 75 миллисекунд: суммарная квота 150 миллисекунд исчерпана, оставшиеся 25 миллисекунд периода показаны как ожидание.</desc>
+<g font-family="system-ui,sans-serif" font-size="16" fill="currentColor">
+<text x="12" y="25" font-weight="700">Другой срез: дерево cgroup v2</text>
+<rect x="20" y="43" width="280" height="38" fill="none" stroke="currentColor"/>
+<text x="32" y="68">Родительская группа</text>
+<path d="M34 81V279M34 112H54M34 264H54" stroke="currentColor" fill="none" stroke-width="2"/>
+<rect x="55" y="92" width="245" height="128" fill="currentColor" fill-opacity=".05" stroke="currentColor" stroke-width="2"/>
+<text x="67" y="117" font-weight="700">Группа A · PID 24718</text>
+<text x="67" y="144">cpu.max: 150000 100000</text>
+<text x="67" y="171">memory.max: 268435456</text>
+<text x="67" y="198">pids.max: 128</text>
+<rect x="55" y="244" width="245" height="40" fill="none" stroke="currentColor"/>
+<text x="67" y="270">Группа B · PID 24800</text>
+<text x="12" y="319" font-weight="700">Бюджет одного периода A</text>
+<text x="12" y="345">Два потока · два доступных CPU</text>
+<text x="12" y="373">0 мс</text><text x="234" y="373" text-anchor="middle">75</text><text x="308" y="373" text-anchor="end">100</text>
+<rect x="12" y="386" width="222" height="35" fill="currentColor" fill-opacity=".10" stroke="currentColor"/>
+<rect x="234" y="386" width="74" height="35" fill="none" stroke="currentColor" stroke-dasharray="3 3"/>
+<text x="22" y="409">CPU 0: 75 мс работы</text>
+<rect x="12" y="433" width="222" height="35" fill="currentColor" fill-opacity=".10" stroke="currentColor"/>
+<rect x="234" y="433" width="74" height="35" fill="none" stroke="currentColor" stroke-dasharray="3 3"/>
+<text x="22" y="456">CPU 1: 75 мс работы</text>
+<path d="M271 476V489H176" fill="none" stroke="currentColor"/>
+<text x="12" y="511">75 + 75 = 150 мс CPU</text>
+<text x="12" y="537">25 мс: квота исчерпана</text>
+<text x="12" y="575">Следующий период:</text>
+<text x="12" y="599">бюджет отсчитывается заново</text>
+</g>
+</svg>
+<figcaption>Условные PID и имена групп служат для сопоставления, а не взяты с компьютера читателя. Пределы группы A соответствуют параметрам опыта этой главы. Иерархия cgroup не является деревом PID namespaces; её родительские ограничения тоже действуют. Карта PID не выделяет CPU или RAM.</figcaption>
+<div class="cut-text">
+<p><strong>Как читать поля.</strong> Для основного потока A строка <code>NSpid: 24718 1</code> в хостовом procfs связывает внешний и внутренний номера; у остальных потоков собственные TID. <code>cpu.max</code> задаёт квоту и период в микросекундах. <code>memory.max</code> — предел учтённой памяти в байтах, <code>pids.max</code> — предел задач, включая потоки. Текущее потребление читают отдельно: <code>memory.current</code>, <code>pids.current</code>, накопленное время — из <code>cpu.stat</code>. Лимит не равен текущему расходу.</p>
+<p><strong>Условия шкалы.</strong> Оба потока всё время готовы исполняться, период начинается в точке 0, доступны два CPU, нет конкуренции и дополнительного burst-бюджета. Это расчёт 2 × 75 = 150 мс CPU за 100 мс настенного времени, а не записанная трасса планировщика. Один поток на одном CPU не расходует этот бюджет с такой скоростью.</p>
+<p><strong>Границы.</strong> Показан rootful Linux Engine с cgroup v2 и доступными контроллерами. В Desktop ядро находится в Linux VM; это по-прежнему одно ядро для её Linux-контейнеров. Rootless требует своих условий делегирования; <code>State.Pid</code> и пути cgroup могут относиться к другой области наблюдения. Чтение правильного хостового procfs обязательно; эта иллюстрация не предлагает менять namespaces или лимиты хоста.</p>
+<p class="sources">Основания: <a href="https://man7.org/linux/man-pages/man7/pid_namespaces.7.html">Linux PID namespaces</a>, <a href="https://man7.org/linux/man-pages/man5/proc_pid_status.5.html">NSpid и NStgid</a>, <a href="https://www.kernel.org/doc/html/v6.8/admin-guide/cgroup-v2.html">cgroup v2, Linux 6.8</a>, <a href="https://docs.docker.com/engine/containers/resource_constraints/">параметры ресурсов Docker</a>.</p>
+</div>
+</figure>
 <h2>Почему у первого процесса особые обязанности</h2>
 <p>Первый процесс внутри PID namespace имеет номер 1 и выполняет роль <strong>init</strong> этой области. Если родитель дочернего процесса умер, оставшийся потомок может быть передан init либо подходящему процессу, назначенному собирать потомков. Когда ребёнок завершился, родитель должен забрать сведения о результате через <code>wait</code> или родственный вызов. До этого остаётся <strong>зомби</strong>: уже не работающая программа с сохранённой записью о завершении. Увеличение лимита Go-кучи не заставит родителя выполнить <code>wait</code>.</p>
 <p>Для PID 1 действуют и особые правила сигналов: нельзя рассчитывать, что любой сигнал с обычным действием завершения убьёт его так же, как рядовой процесс. Наш сервер явно подписывается на SIGTERM и SIGINT через <code>signal.NotifyContext</code>. JSON-запись <code>ENTRYPOINT ["/echo"]</code> запускает бинарник непосредственно. При shell-записи может появиться промежуточная <code>/bin/sh -c</code>; тогда надо отдельно разбираться, кому доставлен сигнал и кто собирает дочерние процессы. В пустом scratch такая оболочка к тому же отсутствует.</p>

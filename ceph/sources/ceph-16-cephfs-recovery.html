@@ -1,0 +1,117 @@
+<header><h1>Создать CephFS и различить failover, replay и repair</h1>
+<p>Работающий standby MDS может заменить активный процесс.
+Он не восстанавливает автоматически потерянные metadata PG.
+Разделим штатное продолжение и повреждение устойчивого состояния.</p></header>
+<h2>Создание после принятия четырёх узлов</h2>
+<p>Продолжается тот же FSID, c из reenter.bash. До изменения нужны
+active+clean PG, принятые ceph1–ceph4, запас памяти для двух MDS
+и свободное имя fsstudy, проверенное через c fs volume ls.
+Не запускайте CephFS одновременно с RGW на малой VM ради проверки,
+«поместятся ли» они. Память MDS зависит от metadata working set.</p>
+<pre><code class="language-bash">c fs volume create fsstudy --placement="2 ceph1 ceph2"
+c fs volume info fsstudy
+c fs status fsstudy
+c orch ps --daemon-type mds
+c fs get fsstudy
+</code></pre>
+<p>Volume interface создаёт файловую систему, data и metadata pools
+и просит orchestrator развернуть MDS. Два процесса при max_mds=1
+не означают два активных rank. Rank — логическая роль обслуживания
+части metadata; один daemon занимает rank, другой может быть standby.
+Проверьте фактические pools, size/min_size, CRUSH rules, состояния PG,
+активный rank 0 и наличие standby. Имена pools берите из fs get/info,
+а не из предположения о строке имени volume.</p>
+<h2>Подготовить клиент без передачи admin key</h2>
+<p>Для учебного mount используйте отдельную собственную Linux VM
+или заранее выбранную ceph4 с достаточным ресурсом. На ней ceph-fuse
+должен быть получен из проверенного репозитория 20.2.4 с сохранением
+точной package version, как для cephadm; команда ceph-fuse --version
+должна сообщить Ceph 20.2.4. Установка из случайного старого Ubuntu
+пакета не подтверждает поддержку нового CephX key type.
+FUSE — интерфейс файловой системы в userspace; mount здесь требует sudo.</p>
+<p>Администратор сначала создаёт отдельный bootstrap-клиент fsoperator
+через c fs authorize fsstudy client.fsoperator / rw. Его keyring сохраняется
+в новый файл с mode 0600. Минимальный ceph.conf получают командой
+c config generate-minimal-conf. Эти два принятых файла передают через
+проверенный защищённый канал только на учебный клиент, в новый
+~/ceph-fs-client-01. FSID и MON addresses сверяют с исходным кластером.
+Admin keyring клиенту не передают.</p>
+<p>На клиентской VM от student, где client.conf и operator.keyring уже
+приняты и каталог mnt отсутствует:</p>
+<pre><code class="language-bash">cd "$HOME/ceph-fs-client-01"
+systemd-detect-virt --vm
+test "$(stat -c %a operator.keyring)" = 600
+mkdir -m 0700 mnt
+sudo ceph-fuse --id fsoperator --client_fs fsstudy \
+ -c "$PWD/client.conf" -k "$PWD/operator.keyring" "$PWD/mnt"
+findmnt --target "$PWD/mnt"
+</code></pre>
+<p>Проверьте тип FUSE и выбранную точку mount до записи.
+После mount администратор создаёт /reports и назначает владельцем
+student этой клиентской VM; создание останавливается при существующем
+каталоге, поэтому не меняет права чужого поддерева. Из ceph-fs-client-01:
+</p>
+<pre><code class="language-bash">sudo mkdir -m 0700 -- mnt/reports
+sudo chown "$(id -u):$(id -g)" -- mnt/reports
+python3 -B - &lt;&lt;'PY'
+import hashlib, os
+payload = b"CephFS report\n"
+with open("mnt/reports/report.txt", "xb") as f:
+    f.write(payload)
+    f.flush()
+    os.fsync(f.fileno())
+with open("mnt/reports/report.txt", "rb") as f:
+    returned = f.read()
+if returned != payload:
+    raise SystemExit("CephFS bytes differ")
+print(hashlib.sha256(returned).hexdigest())
+PY
+</code></pre>
+<p>Это новый файл; существующее имя не перезаписывается.
+Новый client.reports из главы 15 получает только поддерево.
+Размонтирование выполняют после закрытия файлов и выхода cwd из mnt:
+sudo umount "$HOME/ceph-fs-client-01/mnt". Существующий mount
+не создают повторно и не закрывают ленивым unmount ради скрытия ошибки.</p>
+<h2>Зачем MDS journal</h2>
+<p>MDS изменяет metadata в памяти, записывает необходимые события журнала
+в RADOS и позднее обновляет основное устойчивое представление metadata.
+Replay читает сохранённую историю, чтобы восстановить согласованное
+состояние после остановки процесса. Standby не выбирает «самые свежие»
+inode на глаз. Переходы replay, resolve, reconnect, rejoin и clientreplay
+относятся к восстановлению ролей и клиентского состояния до active.</p>
+<p>При нескольких активных ranks resolve/rejoin согласуют распределённые
+metadata и участие других MDS. При одном active rank путь проще,
+но клиентам всё ещё может потребоваться reconnect и передача
+предусмотренных сведений. Время до нового active включает чтение журнала
+и восстановление кэша; число запущенных процессов не задаёт RTO.</p>
+<h2>Что проверяется при отказе</h2>
+<p>Штатный опыт на собственном стенде планируют только после backup
+контрольных файлов. Сохраняют fs status, rank→daemon, standby и checksum
+файла. Останавливают ровно выбранный MDS способом управления службой,
+затем наблюдают смену daemon у того же rank и возвращение active.
+Старый daemon и клиентские запросы могут ждать переходов протокола;
+контрольное чтение после failover обязательно.
+Этот текст не содержит команды намеренного повреждения journal.</p>
+<p>Если metadata pool недоступен, запуск ещё одного MDS не создаёт
+пропавшие данные. Если MDS отмечен damaged, нужны диагностика и копия
+устойчивого состояния. Journal export перед опасным repair сохраняет
+вход расследования. Reset journal может потерять metadata, оставить
+orphan objects и нарушить распределение inode numbers.
+Recover_dentries тоже не гарантирует самосогласованного результата.
+Эти инструменты требуют offline filesystem и экспертного плана.</p>
+<h2>Восстановить файл отдельно</h2>
+<p>Резервная копия CephFS должна сохранять имена, содержимое, необходимые
+xattrs, ACL, ownership и прикладную точку. Для малого учебного файла
+достаточно явно перечислить ожидаемые свойства и восстановить под другим
+именем или в отдельном volume. Для полноценного дерева одной checksum
+tar-файла недостаточно: нужны распаковка, сравнение структуры и прикладное
+чтение. Snapshot остаётся в том же кластере и покрывает другую угрозу.</p>
+<p>Задание: standby стал active, но checksum контрольного файла не совпала.
+Считать failover принятым нельзя. Сначала установите, какую версию файла
+создало приложение и был ли завершён fsync; затем исследуйте объектные
+и клиентские ошибки. Успешная смена роли MDS не доказывает нужные байты.</p>
+<p class="sources"><a href="https://github.com/ceph/ceph/blob/v20.2.4/doc/cephfs/fs-volumes.rst">volume interface</a>;
+<a href="https://github.com/ceph/ceph/blob/v20.2.4/doc/cephfs/mount-using-fuse.rst">FUSE</a>;
+<a href="https://github.com/ceph/ceph/blob/v20.2.4/doc/cephfs/mds-states.rst">MDS states</a>;
+<a href="https://github.com/ceph/ceph/blob/v20.2.4/doc/cephfs/disaster-recovery-experts.rst">границы repair</a>.
+Mount, failover и restore на сервере в этой поставке не исполнялись.</p>

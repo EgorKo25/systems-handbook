@@ -1,0 +1,95 @@
+<header><h1>Восстановить RBD на новое имя</h1>
+<p>Проверим резервную копию через экспорт снимка и импорт отдельного image.
+Приёмка состоит из сравнения байтов и чтения результата приложением,
+а не из одного успешного создания архива.</p></header>
+<h2>Какая точка сохранена</h2>
+<p>Полный raw export содержит логическое содержимое выбранного image
+или snapshot. Он не сохраняет автоматически всю историю снимков,
+параметры подключения приложения и его данные в других image.
+Export format 2 умеет сохранять больше метаданных и снимки; здесь выбран
+простой format 1, чтобы сравнение байтов имело определённый смысл.
+Для базы данных сначала требуется её штатная согласованная точка.</p>
+<p>В этой практике RBD-кэш не используется для работающего приложения:
+образ создаётся userspace import и не подключён гостевой файловой системе.
+Предпосылки — принятый пул rbdstudy 3/2 из главы 10,
+активные чистые PG, reentered Bash ceph1 и три свободных имени:
+source-raw, restored-raw, snapshot b0. Проверка b ls rbdstudy должна
+предшествовать изменению. Существующее имя останавливает первое создание.</p>
+<h2>Сохраняемые входы</h2>
+<p>В ceph1 от student создайте новый собственный rbd-backup-01.
+Ничего из прежних rados-01 не перезаписывается. Python генерирует
+1048576 байт с повторением значений 0…255. Умножение относится
+к bytes, а не к текстовой кодировке.</p>
+<pre><code class="language-bash">set -euo pipefail
+umask 077
+set -o noclobber
+mkdir -m 0700 "$HOME/ceph-study/rbd-backup-01"
+cd "$HOME/ceph-study/rbd-backup-01"
+mkdir -m 0700 input
+python3 -B - &gt; input/source.raw &lt;&lt;'PY'
+import sys
+sys.stdout.buffer.write(bytes(range(256))*4096)
+PY
+sha256sum input/source.raw &gt; SHA256SUMS.input
+sudo cephadm --image "$image" shell --fsid "$fsid" \
+ --mount "$PWD/input:/study-input:ro" -- \
+ rbd import /study-input/source.raw rbdstudy/source-raw
+b info rbdstudy/source-raw --format json
+b snap create rbdstudy/source-raw@b0
+b export rbdstudy/source-raw@b0 - &gt; backup.raw 2&gt; export.stderr.txt
+cmp -- input/source.raw backup.raw
+sha256sum backup.raw &gt; SHA256SUMS.backup
+</code></pre>
+<p>Знак - выбирает stdout, shell noclobber запрещает усечь старый backup.raw.
+Stderr сохраняется отдельно и не смешивается с двоичными байтами.
+Cmp проверяет, что полный экспорт выбранной точки вернул исходные байты.
+Размер 1048576 из info сравнивается с размером входа; число allocated
+objects может быть другим, поскольку image разрежен и имеет свой layout.</p>
+<h2>Новая цель и обратное чтение</h2>
+<p>Не удаляя source-raw, импортируйте принятый backup на отсутствующее имя.
+Каталог для mount содержит только backup; права и источник остаются
+под контролем владельца.</p>
+<pre><code class="language-bash">mkdir -m 0700 restore-input
+cat backup.raw &gt; restore-input/backup.raw
+sudo cephadm --image "$image" shell --fsid "$fsid" \
+ --mount "$PWD/restore-input:/restore-input:ro" -- \
+ rbd import /restore-input/backup.raw rbdstudy/restored-raw
+b info rbdstudy/restored-raw --format json
+b export rbdstudy/restored-raw - &gt; restored.raw 2&gt; restore-export.stderr.txt
+cmp -- input/source.raw restored.raw
+sha256sum restored.raw &gt; SHA256SUMS.restore
+</code></pre>
+<p>Совпадение показывает восстановимость выбранного полного raw-содержимого
+на новом image в этом кластере. Это ещё не восстановление после гибели
+кластера: оба image и backup на ceph1 могут погибнуть вместе.
+Независимый backup перемещают в отдельный принятый домен хранения,
+проверяют его длину и checksum там, затем повторяют импорт в отдельном
+целевом кластере и прикладную проверку. Учётные данные и карта подключения
+должны быть подготовлены для этой цели, а не скопированы из надежды,
+что имена OSD и FSID сохранятся.</p>
+<h2>Инкрементальная последовательность</h2>
+<p>Export-diff описывает изменения между заданными снимками: границы,
+данные/нулевые области, resize и имена начального и конечного снимков.
+Порядок важен. При import-diff начальный снимок должен уже существовать,
+а конечный ещё не должен существовать. Нельзя поменять местами d01 и d12
+лишь потому, что оба файла имеют корректную SHA-256.</p>
+<p>Условная цепочка: полная b0 → diff b0…b1 → diff b1…b2.
+Для восстановления b2 требуются все три входа и одинаковая основа.
+Разрыв одного diff делает эту точку недоказанной. Держите каталог с явными
+from/to snapshot, image identity, размерами и checksum; проверяйте применение
+в новом image. Повтор после неизвестного результата import-diff требует
+проверки снимков, а не автоматического применения поверх текущих байтов.</p>
+<h2>RPO и RTO на числах</h2>
+<p>RPO — допустимая потеря последних изменений. При успешном backup в 12:00
+и аварии в 12:17 эта копия не обещает записи последних 17 минут.
+RTO — время до принятого восстановления сервиса, включая получение данных,
+импорт, replay приложения и проверку. Для 80 GiB по полезной скорости
+100 MiB/s одна только передача занимает не меньше 819.2 s.
+Это нижняя граница с заданной скоростью, а не измеренная длительность RTO.</p>
+<p>Задание: если экспорт завершился, но checksum на внешней цели отличается,
+можно ли удалять источник? Нет: внешняя копия не принята. Если restored image
+содержит нужные байты, но приложение не запускается из-за потерянных ключей
+шифрования, backup contract тоже не выполнен.</p>
+<p class="sources"><a href="https://github.com/ceph/ceph/blob/v20.2.4/doc/man/8/rbd.rst">export/import и diff</a>;
+<a href="https://github.com/ceph/ceph/blob/v20.2.4/doc/rbd/rbd-snapshot.rst">согласование снимка</a>.
+Команды этого опыта не исполнялись на реальном кластере.</p>

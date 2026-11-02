@@ -50,7 +50,7 @@
     {
       "id": "09-functions-arrays",
       "title": "Функции и массивы",
-      "words": 2096
+      "words": 2537
     },
     {
       "id": "10-errors-and-traps",
@@ -70,7 +70,7 @@
     {
       "id": "13-jobs-signals",
       "title": "Фоновые процессы и сигналы",
-      "words": 2128
+      "words": 2801
     },
     {
       "id": "14-scripts-and-portability",
@@ -103,7 +103,7 @@
       "words": 6093
     }
   ],
-  "words": 52872,
+  "words": 53986,
   "terms": 273,
   "external_assets": 0
 }

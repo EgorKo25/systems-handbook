@@ -1,0 +1,220 @@
+<header><h1>Сначала происхождение программы, затем запуск</h1><p>Получим два executable — сервер MinIO и клиент mc — из закреплённых официальных исходников и сохраним рядом сведения, позволяющие проверить их происхождение.</p></header>
+<h2>Ресурсы учебного профиля</h2>
+<p>Для машины с 8 GiB RAM предлагается одна личная VM с 2 vCPU,
+4 GiB RAM и хотя бы 20 GiB свободного диска. На машине с 16 GiB
+можно выделить VM 6–8 GiB RAM и 2–4 vCPU. Это предлагаемый бюджет
+для небольшого учебного потока, а не проверенный vendor minimum.
+Сборку и нагрузку сначала выполняем последовательно. Остальные
+тяжёлые серверы книги в это время останавливаем.</p>
+<p>Начальный профиль имеет один процесс MinIO и один каталог данных.
+Он позволяет исследовать настоящий S3 API, credentials, версии,
+TLS и сохранение состояния. Он не защищает данные от отказа диска
+или VM. Для физического erasure-опыта понадобятся отдельные устройства
+и отдельно описанные домены отказа — общие причины одновременной потери ресурсов; объём RAM сам по себе этого
+не создаёт.</p>
+
+
+<p>Рецепт предназначен для личной Linux amd64 VM с правом записи. При подготовке книги загрузка, сборка и native help не исполнялись; ниже отделены ожидаемые результаты читательского запуска от проверок источников.</p>
+<h2>Источник и дата версии</h2>
+<p>Официальные страницы повторно проверены 2 ноября 2026 года. Server repository архивирован 25 апреля 2026, mc — 14 июля. Выбраны Server RELEASE.2025-10-15T17-29-55Z, commit 9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a, и mc RELEASE.2025-08-13T08-35-41Z, commit 7394ce0dd2a80935aded936b09fa12cbb3cb8096. Дата публикации Server release — 16 октября 2025; имя тега содержит дату сборочного поколения, не дату сегодняшней проверки.</p>
+<p>Оба исходника имеют AGPLv3; сохраняйте полученные LICENSE/NOTICE. Старые dl.min.io server/client URL при проверке 1 ноября вернули HTTP 410. Рецепт не предполагает доступность прежних binaries, Docker Hub tags или checksums и не подставляет сторонний fork. Современная AIStor — другая поставка и лицензия: её download route и издание проверяют отдельно. Здесь она не устанавливается.</p>
+<h2>Программы до команд</h2>
+<p>В гостевой VM заранее нужны Bash, Git, Python 3, OpenSSL, curl, tar и GNU coreutils. Работает обычный пользователь без sudo. Go ещё не установлен: сначала создаётся корень, затем отдельный toolchain — набор компилятора и сопутствующих инструментов — внутри него. Общий Go других томов не заменяется.</p>
+<p>Go 1.24.8 выпущен 7 октября 2025; это исторический вход архивной сборки, уже не современная сопровождаемая ветка. Server go.mod объявляет go 1.24.0 и toolchain go1.24.8; mc — go 1.23.0 и toolchain go1.23.10. Выбор единого 1.24.8 для этих исходников остаётся статически подготовленным рецептом. Официальный linux-amd64 archive SHA указан ниже; ARM64 требует другого файла и другого hash.</p>
+<h2>Новый постоянный каталог и этапы</h2>
+<pre><code>set -euo pipefail
+set -C
+umask 077
+
+for tool in bash git python3 openssl curl sha256sum cmp tar; do
+    command -v "$tool" &gt;/dev/null
+done
+
+export LAB_ROOT="$HOME/minio-study"
+if ! mkdir -- "$LAB_ROOT"; then
+    printf '%s\n' 'LAB_ROOT уже существует. Используйте вход в прежний стенд; init повторять нельзя.' &gt;&amp;2
+    exit 1
+fi
+
+mkdir -p "$LAB_ROOT"/{.setup,toolchains,src,bin,cache/build,cache/mod,cache/gopath,evidence,mc,exercises,tmp}
+mkdir -- "$LAB_ROOT/.setup/root-layout"
+</code></pre>
+<p>mkdir без -p резервирует новый LAB_ROOT и отказывает при существующем пути. HOME остаётся настоящим домашним каталогом. src хранит исходники, bin — результаты, cache — зависимости, evidence — сведения сборки, tmp — временные файлы. Проект не хранится единственной копией в /tmp. Следующий helper создаётся в новом корне; set -C запрещает shell перезаписывать существующие выходы.</p>
+<pre><code>cat &gt; "$LAB_ROOT/setup-helpers.sh" &lt;&lt;'SH'
+begin_stage() {
+    local name="$1"
+    shift
+    SETUP_STAGE="$LAB_ROOT/.setup/$name"
+    if ! mkdir -- "$SETUP_STAGE"; then
+        printf '%s\n' 'Этап уже начат. Повтор запрещён; сохраните и разберите прежнее состояние.' &gt;&amp;2
+        return 1
+    fi
+    local output
+    for output in "$@"; do
+        if [[ -e "$output" || -L "$output" ]]; then
+            printf 'Уже существует выход: %s\n' "$output" &gt;&amp;2
+            return 1
+        fi
+    done
+}
+finish_stage() {
+    printf '%s\n' complete &gt; "$SETUP_STAGE/COMPLETE"
+}
+SH
+
+source "$LAB_ROOT/setup-helpers.sh"
+
+SETUP_STAGE="$LAB_ROOT/.setup/root-layout"
+finish_stage
+</code></pre>
+<p>Каталог .setup/ИМЯ означает начало этапа. COMPLETE создаётся лишь после всех его проверок. begin_stage отвергает существующий выход и символическую ссылку, включая оборванную. Если действие прервалось, повтор поверх частичного состояния запрещён. Сохраните закрытый корень для разбора; удаление stage не восстанавливает потерянный ключ или данные. Обычный restart позднее читает enter.sh/run-server.sh и ничего не генерирует.</p>
+<h2>Архивный Go внутри LAB_ROOT</h2>
+<p>curl --fail считает HTTP error отказом, --location следует redirects, --proto/--proto-redir допускают HTTPS. sha256sum --check сверяет bytes до tar; --no-same-owner не восстанавливает чужого владельца. GOTOOLCHAIN=local запрещает неявную загрузку другого компилятора. Контрольная сумма (checksum), то есть вычисленное по bytes значение для сравнения, прочитана на официальной странице 1 ноября; наличие записи не выдаётся за выполненную здесь загрузку.</p>
+<pre><code>test -f "$LAB_ROOT/.setup/root-layout/COMPLETE"
+begin_stage toolchain-go1.24.8 "$LAB_ROOT/toolchains/go1.24.8"
+mkdir -- "$LAB_ROOT/toolchains/go1.24.8"
+GO_STAGE="$LAB_ROOT/toolchains/go1.24.8"
+
+(
+    cd "$GO_STAGE"
+    curl --fail --location --proto '=https' --proto-redir '=https' \
+      --output go1.24.8.linux-amd64.tar.gz \
+      https://go.dev/dl/go1.24.8.linux-amd64.tar.gz
+
+    printf '%s  %s\n' \
+      6842c516ca66c89d648a7f1dbe28e28c47b61b59f8f06633eb2ceb1188e9251d \
+      go1.24.8.linux-amd64.tar.gz |
+      sha256sum --check -
+
+    tar --extract --gzip --no-same-owner \
+      --file go1.24.8.linux-amd64.tar.gz
+)
+
+export GO_ARCHIVE="$GO_STAGE/go/bin/go"
+test "$(env -i PATH=/usr/bin:/bin HOME="$HOME" TMPDIR="$LAB_ROOT/tmp" \
+    LANG=C LC_ALL=C GOENV=off GOFLAGS= GOWORK=off GOTOOLCHAIN=local \
+    "$GO_ARCHIVE" version)" = "go version go1.24.8 linux/amd64"
+finish_stage
+</code></pre>
+<p>Успех означает точную строку go version go1.24.8 linux/amd64 и COMPLETE. При отказе сети, checksum или исполнения зависимая сборка не начинается. Совпадение hash не устраняет известные ограничения старой ветки.</p>
+<h2>Закреплённые исходники и зависимости</h2>
+<p>Git получает официальный source по HTTPS; полный commit сравнивается с выбранным. Это закрепляет состояние Git, но не является самостоятельной криптографической проверкой подписи владельца. GOENV=off исключает пользовательский файл настроек Go, пустой GOFLAGS — чужие флаги, GOWORK=off — внешний workspace. HOME сохраняется; остальные значения задаются только дочернему процессу.</p>
+<pre><code>test -f "$LAB_ROOT/.setup/root-layout/COMPLETE"
+test -f "$LAB_ROOT/.setup/toolchain-go1.24.8/COMPLETE"
+GO_ARCHIVE="$LAB_ROOT/toolchains/go1.24.8/go/bin/go"
+test -x "$GO_ARCHIVE"
+GO_CMD=(env -i
+    PATH=/usr/bin:/bin HOME="$HOME" TMPDIR="$LAB_ROOT/tmp"
+    LANG=C LC_ALL=C
+    GOENV=off GOFLAGS= GOWORK=off GOTOOLCHAIN=local
+    GOOS=linux GOARCH=amd64 GOAMD64=v1 CGO_ENABLED=0
+    GOPROXY=https://proxy.golang.org,direct GOSUMDB=sum.golang.org
+    GOCACHE="$LAB_ROOT/cache/build"
+    GOMODCACHE="$LAB_ROOT/cache/mod"
+    GOPATH="$LAB_ROOT/cache/gopath"
+    GOMAXPROCS=2
+    "$GO_ARCHIVE")
+test "$("${GO_CMD[@]}" version)" = "go version go1.24.8 linux/amd64"
+
+begin_stage source-build \
+  "$LAB_ROOT/src/server" "$LAB_ROOT/src/mc" \
+  "$LAB_ROOT/bin/minio" "$LAB_ROOT/bin/mc" \
+  "$LAB_ROOT/evidence/source-build"
+mkdir -- "$LAB_ROOT/src/server" "$LAB_ROOT/src/mc" \
+  "$LAB_ROOT/evidence/source-build"
+git clone --no-checkout https://github.com/minio/minio.git "$LAB_ROOT/src/server"
+git -C "$LAB_ROOT/src/server" checkout --detach 9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a
+test "$(git -C "$LAB_ROOT/src/server" rev-parse HEAD)" = 9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a
+
+git clone --no-checkout https://github.com/minio/mc.git "$LAB_ROOT/src/mc"
+git -C "$LAB_ROOT/src/mc" checkout --detach 7394ce0dd2a80935aded936b09fa12cbb3cb8096
+test "$(git -C "$LAB_ROOT/src/mc" rev-parse HEAD)" = 7394ce0dd2a80935aded936b09fa12cbb3cb8096
+(
+    cd "$LAB_ROOT/src/server"
+    "${GO_CMD[@]}" mod download
+    "${GO_CMD[@]}" mod verify
+    "${GO_CMD[@]}" build -mod=readonly -p 1 -trimpath -o "$LAB_ROOT/bin/minio" .
+)
+(
+    cd "$LAB_ROOT/src/mc"
+    "${GO_CMD[@]}" mod download
+    "${GO_CMD[@]}" mod verify
+    CGO_ENABLED=0 "${GO_CMD[@]}" build -mod=readonly -p 1 -trimpath -o "$LAB_ROOT/bin/mc" .
+)
+</code></pre>
+<p>go.mod задаёт требования модулей; minimal version selection — алгоритм выбора минимально достаточных версий модулей — выбирает согласованный набор по этим требованиям, а не самый новый release. go.sum содержит известные хеши module contents и go.mod. mod download получает выбранные зависимости, mod verify проверяет локальный module cache — каталог сохранённого содержимого зависимостей. Сборка не герметична: остаются сеть, системный Git, доверенные CA VM и внешние модули. -mod=readonly запрещает build менять требования, -p 1 и GOMAXPROCS=2 уменьшают конкуренцию, -trimpath убирает часть локальных путей. Точного предела RAM эти параметры не обещают.</p>
+<h2>Что считать идентичностью собственной сборки</h2>
+<p>Обычный go build не вызывает gen-ldflags — скрипт поставщика, передающий линкеру значения версии и commit. По закреплённым constants ожидается DEVELOPMENT.GOGET; совпадение баннера --version с RELEASE-tag не требуется. Идентичность сохраняют полный commit, buildinfo и SHA-256 собственного результата. Следующий блок формирует ровно 22 файла evidence — локальных сведений о происхождении сборки и завершает source-build лишь после всех проверок.</p>
+<pre><code>EVIDENCE="$LAB_ROOT/evidence/source-build"
+mkdir -- "$EVIDENCE/help"
+
+git -C "$LAB_ROOT/src/server" rev-parse HEAD &gt; "$EVIDENCE/server.commit"
+git -C "$LAB_ROOT/src/mc" rev-parse HEAD &gt; "$EVIDENCE/mc.commit"
+test "$(cat "$EVIDENCE/server.commit")" = 9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a
+test "$(cat "$EVIDENCE/mc.commit")" = 7394ce0dd2a80935aded936b09fa12cbb3cb8096
+
+"${GO_CMD[@]}" version -m "$LAB_ROOT/bin/minio" &gt; "$EVIDENCE/minio.buildinfo.txt"
+"${GO_CMD[@]}" version -m "$LAB_ROOT/bin/mc" &gt; "$EVIDENCE/mc.buildinfo.txt"
+sha256sum "$LAB_ROOT/bin/minio" "$LAB_ROOT/bin/mc" &gt; "$EVIDENCE/binaries.sha256"
+
+MINIO_EVIDENCE=(env -i
+    PATH=/usr/bin:/bin HOME="$HOME" TMPDIR="$LAB_ROOT/tmp"
+    LANG=C LC_ALL=C MINIO_UPDATE=off
+    "$LAB_ROOT/bin/minio")
+MC_EVIDENCE=(env -i
+    PATH=/usr/bin:/bin HOME="$HOME" TMPDIR="$LAB_ROOT/tmp"
+    LANG=C LC_ALL=C MC_UPDATE=off MINIO_UPDATE=off
+    "$LAB_ROOT/bin/mc" --config-dir "$LAB_ROOT/mc" --disable-pager)
+
+"${MINIO_EVIDENCE[@]}" --version &gt; "$EVIDENCE/minio.version.txt"
+"${MC_EVIDENCE[@]}" --version &gt; "$EVIDENCE/mc.version.txt"
+"${MINIO_EVIDENCE[@]}" --help &gt; "$EVIDENCE/help/minio.txt"
+"${MINIO_EVIDENCE[@]}" server --help &gt; "$EVIDENCE/help/minio-server.txt"
+
+for spec in \
+    "mc:" \
+    "mc-alias-set:alias set" \
+    "mc-mb:mb" \
+    "mc-version-enable:version enable" \
+    "mc-version-info:version info" \
+    "mc-cp:cp" \
+    "mc-stat:stat" \
+    "mc-cat:cat" \
+    "mc-admin-user-svcacct-add:admin user svcacct add" \
+    "mc-admin-user-svcacct-info:admin user svcacct info" \
+    "mc-admin-user-svcacct-disable:admin user svcacct disable" \
+    "mc-ls:ls" \
+    "mc-rm:rm"
+do
+    name="${spec%%:*}"
+    words="${spec#*:}"
+    leaf=()
+    if [[ -n "$words" ]]; then
+        read -r -a leaf &lt;&lt;&lt; "$words"
+    fi
+    "${MC_EVIDENCE[@]}" "${leaf[@]}" --help &gt; "$EVIDENCE/help/$name.txt"
+    test -s "$EVIDENCE/help/$name.txt"
+done
+
+for name in \
+    server.commit mc.commit \
+    minio.buildinfo.txt mc.buildinfo.txt \
+    minio.version.txt mc.version.txt binaries.sha256 \
+    help/minio.txt help/minio-server.txt
+do
+    test -s "$EVIDENCE/$name"
+done
+finish_stage
+</code></pre>
+<p>--config-dir ставится сразу после executable mc: конфигурация и CA инициализируются до конечной подкоманды (leaf), например stat. --disable-pager сохраняет help непосредственно. --version остаётся root-опцией. Native help и version читатель получает после своей сборки; книга их не имитирует. Checksums результатов не опубликованы как универсальные: они вычисляются локально.</p>
+<p>Для автономной повторной сборки сохраняют toolchain, исходники, выбранные модули, go.mod/go.sum и лицензии. Один executable — иной, более узкий результат. Кэши, runtime, ключи и private state читателя не включают в публичные исходники тома.</p>
+<p class="sources">Источники:
+<a href="https://github.com/minio/minio/releases/tag/RELEASE.2025-10-15T17-29-55Z">Server release</a>,
+<a href="https://github.com/minio/mc/releases/tag/RELEASE.2025-08-13T08-35-41Z">mc release</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/go.mod">Server go.mod</a>,
+<a href="https://github.com/minio/mc/blob/7394ce0dd2a80935aded936b09fa12cbb3cb8096/go.mod">mc go.mod</a>,
+<a href="https://go.dev/dl/#go1.24.8">Go archive/hash</a>,
+<a href="https://go.dev/doc/security/policy">Go support policy</a>,
+<a href="https://go.dev/ref/mod">Go modules</a>,
+<a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/build-constants.go">Server constants</a>,
+<a href="https://github.com/minio/mc/blob/7394ce0dd2a80935aded936b09fa12cbb3cb8096/cmd/build-constants.go">mc constants</a>.</p>

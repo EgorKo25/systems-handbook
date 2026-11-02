@@ -27811,13 +27811,6 @@
         "result": "Это не Kubernetes --context."
       },
       {
-        "flag": "--server АДРЕС",
-        "action": "Указать сервер Argo API.",
-        "when": "Прямое подключение без выбора сохранённого имени.",
-        "example": "argocd --server localhost:8443 --config \"$LAB_ROOT/private/argocd-config\" app list",
-        "result": "В admin-командах с флагами Kubernetes локальный --server затеняет это значение."
-      },
-      {
         "flag": "--server-crt ФАЙЛ",
         "action": "Использовать доверенный сертификат сервера.",
         "when": "Проверенный сертификат локального либо другого собственного адреса сервера.",
@@ -27881,7 +27874,6 @@
       "argocd",
       "argocd",
       "argocd",
-      "argocd",
       "argocd"
     ],
     "persistentScopes": [
@@ -27891,7 +27883,6 @@
       "argocd": [
         "--config ФАЙЛ",
         "--argocd-context ИМЯ",
-        "--server АДРЕС",
         "--server-crt ФАЙЛ",
         "--grpc-web",
         "--core",
@@ -27903,7 +27894,6 @@
       "argocd admin": [
         "--config ФАЙЛ",
         "--argocd-context ИМЯ",
-        "--server АДРЕС",
         "--server-crt ФАЙЛ",
         "--grpc-web",
         "--core",
@@ -31787,13 +31777,6 @@
         "result": "Это не Kubernetes --context."
       },
       {
-        "flag": "--server АДРЕС",
-        "action": "Указать сервер Argo API.",
-        "when": "Прямое подключение без выбора сохранённого имени.",
-        "example": "argocd --server localhost:8443 --config \"$LAB_ROOT/private/argocd-config\" app list",
-        "result": "В admin-командах с флагами Kubernetes локальный --server затеняет это значение."
-      },
-      {
         "flag": "--server-crt ФАЙЛ",
         "action": "Использовать доверенный сертификат сервера.",
         "when": "Проверенный сертификат локального либо другого собственного адреса сервера.",
@@ -31858,7 +31841,6 @@
       "argocd",
       "argocd",
       "argocd",
-      "argocd",
       "argocd"
     ],
     "persistentScopes": [
@@ -31868,7 +31850,6 @@
       "argocd": [
         "--config ФАЙЛ",
         "--argocd-context ИМЯ",
-        "--server АДРЕС",
         "--server-crt ФАЙЛ",
         "--grpc-web",
         "--core",
@@ -31880,7 +31861,6 @@
       "argocd admin": [
         "--config ФАЙЛ",
         "--argocd-context ИМЯ",
-        "--server АДРЕС",
         "--server-crt ФАЙЛ",
         "--grpc-web",
         "--core",
@@ -31963,13 +31943,6 @@
         "result": "Это не Kubernetes --context."
       },
       {
-        "flag": "--server АДРЕС",
-        "action": "Указать сервер Argo API.",
-        "when": "Прямое подключение без выбора сохранённого имени.",
-        "example": "argocd --server localhost:8443 --config \"$LAB_ROOT/private/argocd-config\" app list",
-        "result": "В admin-командах с флагами Kubernetes локальный --server затеняет это значение."
-      },
-      {
         "flag": "--server-crt ФАЙЛ",
         "action": "Использовать доверенный сертификат сервера.",
         "when": "Проверенный сертификат локального либо другого собственного адреса сервера.",
@@ -32035,7 +32008,6 @@
       "argocd",
       "argocd",
       "argocd",
-      "argocd",
       "argocd"
     ],
     "persistentScopes": [
@@ -32045,7 +32017,6 @@
       "argocd": [
         "--config ФАЙЛ",
         "--argocd-context ИМЯ",
-        "--server АДРЕС",
         "--server-crt ФАЙЛ",
         "--grpc-web",
         "--core",
@@ -32057,7 +32028,6 @@
       "argocd admin": [
         "--config ФАЙЛ",
         "--argocd-context ИМЯ",
-        "--server АДРЕС",
         "--server-crt ФАЙЛ",
         "--grpc-web",
         "--core",
@@ -32133,13 +32103,6 @@
         "result": "Это не Kubernetes --context."
       },
       {
-        "flag": "--server АДРЕС",
-        "action": "Указать сервер Argo API.",
-        "when": "Прямое подключение без выбора сохранённого имени.",
-        "example": "argocd --server localhost:8443 --config \"$LAB_ROOT/private/argocd-config\" app list",
-        "result": "В admin-командах с флагами Kubernetes локальный --server затеняет это значение."
-      },
-      {
         "flag": "--server-crt ФАЙЛ",
         "action": "Использовать доверенный сертификат сервера.",
         "when": "Проверенный сертификат локального либо другого собственного адреса сервера.",
@@ -32204,7 +32167,6 @@
       "argocd",
       "argocd",
       "argocd",
-      "argocd",
       "argocd"
     ],
     "persistentScopes": [
@@ -32214,7 +32176,6 @@
       "argocd": [
         "--config ФАЙЛ",
         "--argocd-context ИМЯ",
-        "--server АДРЕС",
         "--server-crt ФАЙЛ",
         "--grpc-web",
         "--core",
@@ -32226,7 +32187,6 @@
       "argocd admin": [
         "--config ФАЙЛ",
         "--argocd-context ИМЯ",
-        "--server АДРЕС",
         "--server-crt ФАЙЛ",
         "--grpc-web",
         "--core",
@@ -32238,7 +32198,6 @@
       "argocd admin settings": [
         "--config ФАЙЛ",
         "--argocd-context ИМЯ",
-        "--server АДРЕС",
         "--server-crt ФАЙЛ",
         "--grpc-web",
         "--core",
@@ -32250,7 +32209,6 @@
       "argocd admin settings rbac": [
         "--config ФАЙЛ",
         "--argocd-context ИМЯ",
-        "--server АДРЕС",
         "--server-crt ФАЙЛ",
         "--grpc-web",
         "--core",
@@ -32347,13 +32305,6 @@
         "result": "Это не Kubernetes --context."
       },
       {
-        "flag": "--server АДРЕС",
-        "action": "Указать сервер Argo API.",
-        "when": "Прямое подключение без выбора сохранённого имени.",
-        "example": "argocd --server localhost:8443 --config \"$LAB_ROOT/private/argocd-config\" app list",
-        "result": "В admin-командах с флагами Kubernetes локальный --server затеняет это значение."
-      },
-      {
         "flag": "--server-crt ФАЙЛ",
         "action": "Использовать доверенный сертификат сервера.",
         "when": "Проверенный сертификат локального либо другого собственного адреса сервера.",
@@ -32421,7 +32372,6 @@
       "argocd",
       "argocd",
       "argocd",
-      "argocd",
       "argocd"
     ],
     "persistentScopes": [
@@ -32431,7 +32381,6 @@
       "argocd": [
         "--config ФАЙЛ",
         "--argocd-context ИМЯ",
-        "--server АДРЕС",
         "--server-crt ФАЙЛ",
         "--grpc-web",
         "--core",
@@ -32443,7 +32392,6 @@
       "argocd admin": [
         "--config ФАЙЛ",
         "--argocd-context ИМЯ",
-        "--server АДРЕС",
         "--server-crt ФАЙЛ",
         "--grpc-web",
         "--core",
@@ -32455,7 +32403,6 @@
       "argocd admin settings": [
         "--config ФАЙЛ",
         "--argocd-context ИМЯ",
-        "--server АДРЕС",
         "--server-crt ФАЙЛ",
         "--grpc-web",
         "--core",
@@ -32467,7 +32414,6 @@
       "argocd admin settings rbac": [
         "--config ФАЙЛ",
         "--argocd-context ИМЯ",
-        "--server АДРЕС",
         "--server-crt ФАЙЛ",
         "--grpc-web",
         "--core",
@@ -35984,5 +35930,4744 @@
         "-postgresql.transactional.lock=ЗНАЧЕНИЕ"
       ]
     }
+  },
+  {
+    "name": "object-study",
+    "purpose": "Одна проверяемая операция над подготовленной целью.",
+    "syntax": "object-study --config FILE --target ID [--timeout 30s] COMMAND",
+    "volume": "s3",
+    "chapter": "s3-04-access-profiles",
+    "aliases": [],
+    "flags": [
+      {
+        "flag": "--config FILE",
+        "action": "Выбрать targets.json.",
+        "when": "До команды; абсолютный путь упрощает повтор.",
+        "example": "--config /home/learner/object-study-lab/config/targets.json",
+        "result": "Загрузка только указанного собственного формата."
+      },
+      {
+        "flag": "--target ID",
+        "action": "Выбрать запись targets, затем её profile.",
+        "when": "До команды, ровно один раз.",
+        "example": "--target study",
+        "result": "Endpoint и credentials не угадываются."
+      },
+      {
+        "flag": "--timeout DURATION",
+        "action": "Конечный срок одной операции, включая Body.",
+        "when": "По умолчанию 30s, больше нуля, не более 15m.",
+        "example": "--timeout 30s",
+        "result": "Deadline, не команда отката сервера."
+      }
+    ],
+    "situations": [],
+    "source": "#s3-04-access-profiles",
+    "sources": [
+      {
+        "title": "Описание и первичный источник",
+        "url": "#s3-04-access-profiles"
+      }
+    ],
+    "flagScopes": [
+      "object-study",
+      "object-study",
+      "object-study"
+    ]
+  },
+  {
+    "name": "object-study put",
+    "purpose": "Создать объект или заменить ожидаемое состояние.",
+    "syntax": "object-study --config FILE --target ID put --source FILE (--create-only|--if-match ETAG) -- KEY",
+    "volume": "s3",
+    "chapter": "s3-04-access-profiles",
+    "aliases": [],
+    "flags": [
+      {
+        "flag": "--source FILE",
+        "action": "Открыть обычный локальный неизменяемый источник.",
+        "when": "До -- KEY; предел helper 64 MiB.",
+        "example": "--source /home/learner/object-study-lab/fixtures/hello-v1.bin",
+        "result": "Prehash, затем явный checksum SHA256."
+      },
+      {
+        "flag": "--create-only",
+        "action": "Требовать отсутствия текущего тела.",
+        "when": "Ровно одно из двух условий.",
+        "example": "--create-only",
+        "result": "If-None-Match: *."
+      },
+      {
+        "flag": "--if-match ETAG",
+        "action": "Заменять при совпадении непрозрачного ETag.",
+        "when": "Вместо create-only, с сохранёнными кавычками.",
+        "example": "--if-match '\"E1\"'",
+        "result": "If-Match; при отказе условие не снимают."
+      },
+      {
+        "flag": "-- KEY",
+        "action": "Закончить параметры и передать исходный ключ.",
+        "when": "Последние два аргумента, без URL-кодирования.",
+        "example": "-- 'lessons/2026-11/hello +%.txt'",
+        "result": "SDK кодирует выбранные байты."
+      },
+      {
+        "flag": "--config FILE",
+        "action": "Выбрать targets.json.",
+        "when": "До команды; абсолютный путь упрощает повтор.",
+        "example": "--config /home/learner/object-study-lab/config/targets.json",
+        "result": "Загрузка только указанного собственного формата."
+      },
+      {
+        "flag": "--target ID",
+        "action": "Выбрать запись targets, затем её profile.",
+        "when": "До команды, ровно один раз.",
+        "example": "--target study",
+        "result": "Endpoint и credentials не угадываются."
+      },
+      {
+        "flag": "--timeout DURATION",
+        "action": "Конечный срок одной операции, включая Body.",
+        "when": "По умолчанию 30s, больше нуля, не более 15m.",
+        "example": "--timeout 30s",
+        "result": "Deadline, не команда отката сервера."
+      }
+    ],
+    "situations": [],
+    "source": "#s3-08-conditions-ranges",
+    "sources": [
+      {
+        "title": "Описание и первичный источник",
+        "url": "#s3-08-conditions-ranges"
+      }
+    ],
+    "flagScopes": [
+      "object-study put",
+      "object-study put",
+      "object-study put",
+      "object-study put",
+      "object-study",
+      "object-study",
+      "object-study"
+    ],
+    "prefixFlags": {
+      "object-study": [
+        "--config FILE",
+        "--target ID",
+        "--timeout DURATION"
+      ]
+    }
+  },
+  {
+    "name": "object-study get",
+    "purpose": "Принять полную копию в новое локальное имя.",
+    "syntax": "object-study --config FILE --target ID get --output NEWFILE --max-bytes N [--version-id ID] -- KEY",
+    "volume": "s3",
+    "chapter": "s3-04-access-profiles",
+    "aliases": [],
+    "flags": [
+      {
+        "flag": "--output NEWFILE",
+        "action": "Публиковать только новое имя в приватном каталоге.",
+        "when": "Существующее имя не перезаписывается.",
+        "example": "--output /home/learner/object-study-lab/outputs/hello-copy.bin",
+        "result": "До принятия используется собственный .part."
+      },
+      {
+        "flag": "--max-bytes N",
+        "action": "Задать верхний предел тела.",
+        "when": "Не заменяет ожидаемый размер и хеш.",
+        "example": "--max-bytes 14",
+        "result": "Известная длина и EOF проверяются отдельно."
+      },
+      {
+        "flag": "--version-id ID",
+        "action": "Выбрать предусмотренную сохранённую версию.",
+        "when": "До --, не превращать строку null в отсутствие.",
+        "example": "--version-id v-example",
+        "result": "Обычная версия не равна mutable null-version."
+      },
+      {
+        "flag": "-- KEY",
+        "action": "Передать исходный ключ.",
+        "when": "Последние два аргумента.",
+        "example": "-- 'lessons/2026-11/hello +%.txt'",
+        "result": "Полный GET без Range."
+      },
+      {
+        "flag": "--config FILE",
+        "action": "Выбрать targets.json.",
+        "when": "До команды; абсолютный путь упрощает повтор.",
+        "example": "--config /home/learner/object-study-lab/config/targets.json",
+        "result": "Загрузка только указанного собственного формата."
+      },
+      {
+        "flag": "--target ID",
+        "action": "Выбрать запись targets, затем её profile.",
+        "when": "До команды, ровно один раз.",
+        "example": "--target study",
+        "result": "Endpoint и credentials не угадываются."
+      },
+      {
+        "flag": "--timeout DURATION",
+        "action": "Конечный срок одной операции, включая Body.",
+        "when": "По умолчанию 30s, больше нуля, не более 15m.",
+        "example": "--timeout 30s",
+        "result": "Deadline, не команда отката сервера."
+      }
+    ],
+    "situations": [],
+    "source": "#s3-07-local-copy",
+    "sources": [
+      {
+        "title": "Описание и первичный источник",
+        "url": "#s3-07-local-copy"
+      }
+    ],
+    "flagScopes": [
+      "object-study get",
+      "object-study get",
+      "object-study get",
+      "object-study get",
+      "object-study",
+      "object-study",
+      "object-study"
+    ],
+    "prefixFlags": {
+      "object-study": [
+        "--config FILE",
+        "--target ID",
+        "--timeout DURATION"
+      ]
+    }
+  },
+  {
+    "name": "object-study head",
+    "purpose": "Получить сведения выбранного состояния без тела.",
+    "syntax": "object-study --config FILE --target ID head [--version-id ID] -- KEY",
+    "volume": "s3",
+    "chapter": "s3-04-access-profiles",
+    "aliases": [],
+    "flags": [
+      {
+        "flag": "--version-id ID",
+        "action": "Выбрать версию.",
+        "when": "До -- KEY.",
+        "example": "--version-id v-example",
+        "result": "Не скачивает и не хеширует тело."
+      },
+      {
+        "flag": "-- KEY",
+        "action": "Передать исходный ключ.",
+        "when": "Последние два аргумента.",
+        "example": "-- 'lessons/2026-11/hello +%.txt'",
+        "result": "ETag/version/checksum из ответа, не проверка всех байтов."
+      },
+      {
+        "flag": "--config FILE",
+        "action": "Выбрать targets.json.",
+        "when": "До команды; абсолютный путь упрощает повтор.",
+        "example": "--config /home/learner/object-study-lab/config/targets.json",
+        "result": "Загрузка только указанного собственного формата."
+      },
+      {
+        "flag": "--target ID",
+        "action": "Выбрать запись targets, затем её profile.",
+        "when": "До команды, ровно один раз.",
+        "example": "--target study",
+        "result": "Endpoint и credentials не угадываются."
+      },
+      {
+        "flag": "--timeout DURATION",
+        "action": "Конечный срок одной операции, включая Body.",
+        "when": "По умолчанию 30s, больше нуля, не более 15m.",
+        "example": "--timeout 30s",
+        "result": "Deadline, не команда отката сервера."
+      }
+    ],
+    "situations": [],
+    "source": "#s3-07-read",
+    "sources": [
+      {
+        "title": "Описание и первичный источник",
+        "url": "#s3-07-read"
+      }
+    ],
+    "flagScopes": [
+      "object-study head",
+      "object-study head",
+      "object-study",
+      "object-study",
+      "object-study"
+    ],
+    "prefixFlags": {
+      "object-study": [
+        "--config FILE",
+        "--target ID",
+        "--timeout DURATION"
+      ]
+    }
+  },
+  {
+    "name": "python3 s3/labs/storage_models.py",
+    "purpose": "Выполнить синтетические модели без сети.",
+    "syntax": "python3 -B s3/labs/storage_models.py COMMAND",
+    "volume": "s3",
+    "chapter": "s3-16-exercises",
+    "aliases": [],
+    "flags": [
+      {
+        "flag": "-u",
+        "action": "Отключить обычную буферизацию stdout/stderr Python.",
+        "when": "Уменьшить задержку сообщений в конвейере.",
+        "example": "python3 -u worker.py",
+        "result": "Записи не ждут обычного заполнения буфера Python; буферы следующей программы остаются отдельными."
+      },
+      {
+        "flag": "-B",
+        "action": "Не записывать .pyc при импортах.",
+        "when": "Не оставлять новые кеши байткода в автономном комплекте.",
+        "example": "python3 -B linux_labs.py 01",
+        "result": "Лаборатория выполнится без обычной записи новых .pyc её импортов."
+      }
+    ],
+    "situations": [],
+    "source": "#s3-16-tools",
+    "sources": [
+      {
+        "title": "Описание и первичный источник",
+        "url": "#s3-16-tools"
+      }
+    ],
+    "flagScopes": [
+      "python3",
+      "python3"
+    ],
+    "parentOptions": "prefix-only",
+    "prefixFlags": {
+      "python3": [
+        "-u",
+        "-B"
+      ]
+    }
+  },
+  {
+    "name": "python3 s3/labs/storage_models.py state-init",
+    "purpose": "Создать JSON модели одного ключа.",
+    "syntax": "python3 -B s3/labs/storage_models.py state-init --mode MODE",
+    "volume": "s3",
+    "chapter": "s3-16-exercises",
+    "aliases": [],
+    "flags": [
+      {
+        "flag": "--mode MODE",
+        "action": "Выбрать unversioned, enabled или suspended.",
+        "when": "Новое состояние для отдельного опыта.",
+        "example": "--mode enabled",
+        "result": "Пустая history и next_id=1."
+      },
+      {
+        "flag": "-u",
+        "action": "Отключить обычную буферизацию stdout/stderr Python.",
+        "when": "Уменьшить задержку сообщений в конвейере.",
+        "example": "python3 -u worker.py",
+        "result": "Записи не ждут обычного заполнения буфера Python; буферы следующей программы остаются отдельными."
+      },
+      {
+        "flag": "-B",
+        "action": "Не записывать .pyc при импортах.",
+        "when": "Не оставлять новые кеши байткода в автономном комплекте.",
+        "example": "python3 -B linux_labs.py 01",
+        "result": "Лаборатория выполнится без обычной записи новых .pyc её импортов."
+      }
+    ],
+    "situations": [],
+    "source": "#s3-16-save",
+    "sources": [
+      {
+        "title": "Описание и первичный источник",
+        "url": "#s3-16-save"
+      }
+    ],
+    "flagScopes": [
+      "python3 s3/labs/storage_models.py state-init",
+      "python3",
+      "python3"
+    ],
+    "parentOptions": "prefix-only",
+    "prefixFlags": {
+      "python3": [
+        "-u",
+        "-B"
+      ],
+      "python3 s3/labs/storage_models.py": []
+    }
+  },
+  {
+    "name": "python3 s3/labs/storage_models.py state-step",
+    "purpose": "Прочитать предыдущее состояние из stdin и вывести новое.",
+    "syntax": "python3 -B s3/labs/storage_models.py state-step --event JSON",
+    "volume": "s3",
+    "chapter": "s3-16-exercises",
+    "aliases": [],
+    "flags": [
+      {
+        "flag": "--event JSON",
+        "action": "Передать синтетическое действие put/get/delete.",
+        "when": "Никаких credentials; JSON в кавычках shell.",
+        "example": "--event '{\"op\":\"get\"}'",
+        "result": "Результат одного модельного запроса, не receipt SDK."
+      },
+      {
+        "flag": "-u",
+        "action": "Отключить обычную буферизацию stdout/stderr Python.",
+        "when": "Уменьшить задержку сообщений в конвейере.",
+        "example": "python3 -u worker.py",
+        "result": "Записи не ждут обычного заполнения буфера Python; буферы следующей программы остаются отдельными."
+      },
+      {
+        "flag": "-B",
+        "action": "Не записывать .pyc при импортах.",
+        "when": "Не оставлять новые кеши байткода в автономном комплекте.",
+        "example": "python3 -B linux_labs.py 01",
+        "result": "Лаборатория выполнится без обычной записи новых .pyc её импортов."
+      }
+    ],
+    "situations": [],
+    "source": "#s3-16-save",
+    "sources": [
+      {
+        "title": "Описание и первичный источник",
+        "url": "#s3-16-save"
+      }
+    ],
+    "flagScopes": [
+      "python3 s3/labs/storage_models.py state-step",
+      "python3",
+      "python3"
+    ],
+    "parentOptions": "prefix-only",
+    "prefixFlags": {
+      "python3": [
+        "-u",
+        "-B"
+      ],
+      "python3 s3/labs/storage_models.py": []
+    }
+  },
+  {
+    "name": "python3 s3/labs/storage_models.py check",
+    "purpose": "Воспроизвести группу check на фиксированных входах.",
+    "syntax": "python3 -B s3/labs/storage_models.py check",
+    "volume": "s3",
+    "chapter": "s3-16-exercises",
+    "aliases": [],
+    "flags": [
+      {
+        "flag": "-u",
+        "action": "Отключить обычную буферизацию stdout/stderr Python.",
+        "when": "Уменьшить задержку сообщений в конвейере.",
+        "example": "python3 -u worker.py",
+        "result": "Записи не ждут обычного заполнения буфера Python; буферы следующей программы остаются отдельными."
+      },
+      {
+        "flag": "-B",
+        "action": "Не записывать .pyc при импортах.",
+        "when": "Не оставлять новые кеши байткода в автономном комплекте.",
+        "example": "python3 -B linux_labs.py 01",
+        "result": "Лаборатория выполнится без обычной записи новых .pyc её импортов."
+      }
+    ],
+    "situations": [],
+    "source": "#s3-16-tools",
+    "sources": [
+      {
+        "title": "Описание и первичный источник",
+        "url": "#s3-16-tools"
+      }
+    ],
+    "flagScopes": [
+      "python3",
+      "python3"
+    ],
+    "parentOptions": "prefix-only",
+    "prefixFlags": {
+      "python3": [
+        "-u",
+        "-B"
+      ],
+      "python3 s3/labs/storage_models.py": []
+    }
+  },
+  {
+    "name": "python3 s3/labs/storage_models.py checksums",
+    "purpose": "Воспроизвести группу checksums на фиксированных входах.",
+    "syntax": "python3 -B s3/labs/storage_models.py checksums",
+    "volume": "s3",
+    "chapter": "s3-16-exercises",
+    "aliases": [],
+    "flags": [
+      {
+        "flag": "-u",
+        "action": "Отключить обычную буферизацию stdout/stderr Python.",
+        "when": "Уменьшить задержку сообщений в конвейере.",
+        "example": "python3 -u worker.py",
+        "result": "Записи не ждут обычного заполнения буфера Python; буферы следующей программы остаются отдельными."
+      },
+      {
+        "flag": "-B",
+        "action": "Не записывать .pyc при импортах.",
+        "when": "Не оставлять новые кеши байткода в автономном комплекте.",
+        "example": "python3 -B linux_labs.py 01",
+        "result": "Лаборатория выполнится без обычной записи новых .pyc её импортов."
+      }
+    ],
+    "situations": [],
+    "source": "#s3-16-tools",
+    "sources": [
+      {
+        "title": "Описание и первичный источник",
+        "url": "#s3-16-tools"
+      }
+    ],
+    "flagScopes": [
+      "python3",
+      "python3"
+    ],
+    "parentOptions": "prefix-only",
+    "prefixFlags": {
+      "python3": [
+        "-u",
+        "-B"
+      ],
+      "python3 s3/labs/storage_models.py": []
+    }
+  },
+  {
+    "name": "python3 s3/labs/storage_models.py ranges",
+    "purpose": "Воспроизвести группу ranges на фиксированных входах.",
+    "syntax": "python3 -B s3/labs/storage_models.py ranges",
+    "volume": "s3",
+    "chapter": "s3-16-exercises",
+    "aliases": [],
+    "flags": [
+      {
+        "flag": "-u",
+        "action": "Отключить обычную буферизацию stdout/stderr Python.",
+        "when": "Уменьшить задержку сообщений в конвейере.",
+        "example": "python3 -u worker.py",
+        "result": "Записи не ждут обычного заполнения буфера Python; буферы следующей программы остаются отдельными."
+      },
+      {
+        "flag": "-B",
+        "action": "Не записывать .pyc при импортах.",
+        "when": "Не оставлять новые кеши байткода в автономном комплекте.",
+        "example": "python3 -B linux_labs.py 01",
+        "result": "Лаборатория выполнится без обычной записи новых .pyc её импортов."
+      }
+    ],
+    "situations": [],
+    "source": "#s3-16-tools",
+    "sources": [
+      {
+        "title": "Описание и первичный источник",
+        "url": "#s3-16-tools"
+      }
+    ],
+    "flagScopes": [
+      "python3",
+      "python3"
+    ],
+    "parentOptions": "prefix-only",
+    "prefixFlags": {
+      "python3": [
+        "-u",
+        "-B"
+      ],
+      "python3 s3/labs/storage_models.py": []
+    }
+  },
+  {
+    "name": "python3 s3/labs/storage_models.py multipart",
+    "purpose": "Воспроизвести группу multipart на фиксированных входах.",
+    "syntax": "python3 -B s3/labs/storage_models.py multipart",
+    "volume": "s3",
+    "chapter": "s3-16-exercises",
+    "aliases": [],
+    "flags": [
+      {
+        "flag": "-u",
+        "action": "Отключить обычную буферизацию stdout/stderr Python.",
+        "when": "Уменьшить задержку сообщений в конвейере.",
+        "example": "python3 -u worker.py",
+        "result": "Записи не ждут обычного заполнения буфера Python; буферы следующей программы остаются отдельными."
+      },
+      {
+        "flag": "-B",
+        "action": "Не записывать .pyc при импортах.",
+        "when": "Не оставлять новые кеши байткода в автономном комплекте.",
+        "example": "python3 -B linux_labs.py 01",
+        "result": "Лаборатория выполнится без обычной записи новых .pyc её импортов."
+      }
+    ],
+    "situations": [],
+    "source": "#s3-16-tools",
+    "sources": [
+      {
+        "title": "Описание и первичный источник",
+        "url": "#s3-16-tools"
+      }
+    ],
+    "flagScopes": [
+      "python3",
+      "python3"
+    ],
+    "parentOptions": "prefix-only",
+    "prefixFlags": {
+      "python3": [
+        "-u",
+        "-B"
+      ],
+      "python3 s3/labs/storage_models.py": []
+    }
+  },
+  {
+    "name": "python3 s3/labs/storage_models.py listing",
+    "purpose": "Воспроизвести группу listing на фиксированных входах.",
+    "syntax": "python3 -B s3/labs/storage_models.py listing",
+    "volume": "s3",
+    "chapter": "s3-16-exercises",
+    "aliases": [],
+    "flags": [
+      {
+        "flag": "-u",
+        "action": "Отключить обычную буферизацию stdout/stderr Python.",
+        "when": "Уменьшить задержку сообщений в конвейере.",
+        "example": "python3 -u worker.py",
+        "result": "Записи не ждут обычного заполнения буфера Python; буферы следующей программы остаются отдельными."
+      },
+      {
+        "flag": "-B",
+        "action": "Не записывать .pyc при импортах.",
+        "when": "Не оставлять новые кеши байткода в автономном комплекте.",
+        "example": "python3 -B linux_labs.py 01",
+        "result": "Лаборатория выполнится без обычной записи новых .pyc её импортов."
+      }
+    ],
+    "situations": [],
+    "source": "#s3-16-tools",
+    "sources": [
+      {
+        "title": "Описание и первичный источник",
+        "url": "#s3-16-tools"
+      }
+    ],
+    "flagScopes": [
+      "python3",
+      "python3"
+    ],
+    "parentOptions": "prefix-only",
+    "prefixFlags": {
+      "python3": [
+        "-u",
+        "-B"
+      ],
+      "python3 s3/labs/storage_models.py": []
+    }
+  },
+  {
+    "name": "python3 s3/labs/storage_models.py budget",
+    "purpose": "Воспроизвести группу budget на фиксированных входах.",
+    "syntax": "python3 -B s3/labs/storage_models.py budget",
+    "volume": "s3",
+    "chapter": "s3-16-exercises",
+    "aliases": [],
+    "flags": [
+      {
+        "flag": "-u",
+        "action": "Отключить обычную буферизацию stdout/stderr Python.",
+        "when": "Уменьшить задержку сообщений в конвейере.",
+        "example": "python3 -u worker.py",
+        "result": "Записи не ждут обычного заполнения буфера Python; буферы следующей программы остаются отдельными."
+      },
+      {
+        "flag": "-B",
+        "action": "Не записывать .pyc при импортах.",
+        "when": "Не оставлять новые кеши байткода в автономном комплекте.",
+        "example": "python3 -B linux_labs.py 01",
+        "result": "Лаборатория выполнится без обычной записи новых .pyc её импортов."
+      }
+    ],
+    "situations": [],
+    "source": "#s3-16-tools",
+    "sources": [
+      {
+        "title": "Описание и первичный источник",
+        "url": "#s3-16-tools"
+      }
+    ],
+    "flagScopes": [
+      "python3",
+      "python3"
+    ],
+    "parentOptions": "prefix-only",
+    "prefixFlags": {
+      "python3": [
+        "-u",
+        "-B"
+      ],
+      "python3 s3/labs/storage_models.py": []
+    }
+  },
+  {
+    "name": "python3 s3/labs/storage_models.py scenarios",
+    "purpose": "Воспроизвести группу scenarios на фиксированных входах.",
+    "syntax": "python3 -B s3/labs/storage_models.py scenarios",
+    "volume": "s3",
+    "chapter": "s3-16-exercises",
+    "aliases": [],
+    "flags": [
+      {
+        "flag": "-u",
+        "action": "Отключить обычную буферизацию stdout/stderr Python.",
+        "when": "Уменьшить задержку сообщений в конвейере.",
+        "example": "python3 -u worker.py",
+        "result": "Записи не ждут обычного заполнения буфера Python; буферы следующей программы остаются отдельными."
+      },
+      {
+        "flag": "-B",
+        "action": "Не записывать .pyc при импортах.",
+        "when": "Не оставлять новые кеши байткода в автономном комплекте.",
+        "example": "python3 -B linux_labs.py 01",
+        "result": "Лаборатория выполнится без обычной записи новых .pyc её импортов."
+      }
+    ],
+    "situations": [],
+    "source": "#s3-16-tools",
+    "sources": [
+      {
+        "title": "Описание и первичный источник",
+        "url": "#s3-16-tools"
+      }
+    ],
+    "flagScopes": [
+      "python3",
+      "python3"
+    ],
+    "parentOptions": "prefix-only",
+    "prefixFlags": {
+      "python3": [
+        "-u",
+        "-B"
+      ],
+      "python3 s3/labs/storage_models.py": []
+    }
+  },
+  {
+    "name": "python3 s3/labs/sigv4_vectors.py",
+    "purpose": "Пересчитать публичные вымышленные SigV4-векторы.",
+    "syntax": "python3 -B s3/labs/sigv4_vectors.py",
+    "volume": "s3",
+    "chapter": "s3-06-signature",
+    "aliases": [],
+    "flags": [
+      {
+        "flag": "-u",
+        "action": "Отключить обычную буферизацию stdout/stderr Python.",
+        "when": "Уменьшить задержку сообщений в конвейере.",
+        "example": "python3 -u worker.py",
+        "result": "Записи не ждут обычного заполнения буфера Python; буферы следующей программы остаются отдельными."
+      },
+      {
+        "flag": "-B",
+        "action": "Не записывать .pyc при импортах.",
+        "when": "Не оставлять новые кеши байткода в автономном комплекте.",
+        "example": "python3 -B linux_labs.py 01",
+        "result": "Лаборатория выполнится без обычной записи новых .pyc её импортов."
+      }
+    ],
+    "situations": [],
+    "source": "#s3-06-signature",
+    "sources": [
+      {
+        "title": "Описание и первичный источник",
+        "url": "#s3-06-signature"
+      }
+    ],
+    "flagScopes": [
+      "python3",
+      "python3"
+    ],
+    "parentOptions": "prefix-only",
+    "prefixFlags": {
+      "python3": [
+        "-u",
+        "-B"
+      ]
+    }
+  },
+  {
+    "name": "python3 s3/labs/object_operations.py",
+    "purpose": "Проверить модель версий и принятой копии главы07.",
+    "syntax": "python3 -B s3/labs/object_operations.py",
+    "volume": "s3",
+    "chapter": "s3-07-object-operations",
+    "aliases": [],
+    "flags": [
+      {
+        "flag": "-u",
+        "action": "Отключить обычную буферизацию stdout/stderr Python.",
+        "when": "Уменьшить задержку сообщений в конвейере.",
+        "example": "python3 -u worker.py",
+        "result": "Записи не ждут обычного заполнения буфера Python; буферы следующей программы остаются отдельными."
+      },
+      {
+        "flag": "-B",
+        "action": "Не записывать .pyc при импортах.",
+        "when": "Не оставлять новые кеши байткода в автономном комплекте.",
+        "example": "python3 -B linux_labs.py 01",
+        "result": "Лаборатория выполнится без обычной записи новых .pyc её импортов."
+      }
+    ],
+    "situations": [],
+    "source": "#s3-07-object-operations",
+    "sources": [
+      {
+        "title": "Описание и первичный источник",
+        "url": "#s3-07-object-operations"
+      }
+    ],
+    "flagScopes": [
+      "python3",
+      "python3"
+    ],
+    "parentOptions": "prefix-only",
+    "prefixFlags": {
+      "python3": [
+        "-u",
+        "-B"
+      ]
+    }
+  },
+  {
+    "name": "minio",
+    "aliases": [],
+    "purpose": "Запустить выбранную серверную программу или открыть её справку.",
+    "syntax": "minio [ГЛОБАЛЬНЫЕ ОПЦИИ] КОМАНДА",
+    "chapter": "minio-03-workbench",
+    "volume": "minio",
+    "source": "https://raw.githubusercontent.com/minio/minio/RELEASE.2025-10-15T17-29-55Z/cmd/main.go",
+    "sources": [
+      {
+        "title": "Закреплённый официальный исходник",
+        "url": "https://raw.githubusercontent.com/minio/minio/RELEASE.2025-10-15T17-29-55Z/cmd/main.go"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-S КАТАЛОГ / --certs-dir КАТАЛОГ",
+        "action": "Выбрать каталог сертификата и закрытого ключа сервера.",
+        "when": "До server явно указать подготовленное TLS-состояние.",
+        "example": "minio --certs-dir ./tls server --address 127.0.0.1:19000 ./data",
+        "result": "Сервер использует public.crt и private.key из ./tls; имя каталога не отключает проверку их пригодности."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку выбранной команды.",
+        "when": "Сверить CLI собственной сборки.",
+        "example": "minio --help",
+        "result": "Печатается справка; сервер хранения не запускается."
+      },
+      {
+        "flag": "--version",
+        "action": "Показать встроенную метку сборки и runtime.",
+        "when": "Сохранить сведения о полученной программе.",
+        "example": "minio --version",
+        "result": "Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "minio",
+      "minio",
+      "minio"
+    ]
+  },
+  {
+    "name": "minio server",
+    "aliases": [],
+    "purpose": "Запустить процесс хранения с заданными endpoints.",
+    "syntax": "minio [ГЛОБАЛЬНЫЕ ОПЦИИ] server [ОПЦИИ SERVER] ENDPOINT...",
+    "chapter": "minio-03-workbench",
+    "volume": "minio",
+    "source": "https://raw.githubusercontent.com/minio/minio/RELEASE.2025-10-15T17-29-55Z/cmd/server-main.go",
+    "sources": [
+      {
+        "title": "Закреплённый официальный исходник",
+        "url": "https://raw.githubusercontent.com/minio/minio/RELEASE.2025-10-15T17-29-55Z/cmd/server-main.go"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "--address АДРЕС:ПОРТ",
+        "action": "Выбрать listener API.",
+        "when": "Ограничить личный стенд loopback.",
+        "example": "minio server --address 127.0.0.1:19000 ./data",
+        "result": "API слушает только указанный адрес; это не настройка порта браузерного интерфейса."
+      },
+      {
+        "flag": "--console-address АДРЕС:ПОРТ",
+        "action": "Выбрать listener браузерного интерфейса.",
+        "when": "Зафиксировать отдельный адрес интерфейса.",
+        "example": "minio server --console-address 127.0.0.1:19001 ./data",
+        "result": "Интерфейс получает указанный listener; S3-клиенту нужен API endpoint."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку выбранной команды.",
+        "when": "Сверить CLI собственной сборки.",
+        "example": "minio server --help",
+        "result": "Печатается справка; сервер хранения не запускается."
+      },
+      {
+        "flag": "-S КАТАЛОГ / --certs-dir КАТАЛОГ",
+        "action": "Выбрать каталог сертификата и закрытого ключа сервера.",
+        "when": "До server явно указать подготовленное TLS-состояние.",
+        "example": "minio --certs-dir ./tls server --address 127.0.0.1:19000 ./data",
+        "result": "Сервер использует public.crt и private.key из ./tls; имя каталога не отключает проверку их пригодности."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку выбранной команды.",
+        "when": "Сверить CLI собственной сборки.",
+        "example": "minio --help",
+        "result": "Печатается справка; сервер хранения не запускается."
+      },
+      {
+        "flag": "--version",
+        "action": "Показать встроенную метку сборки и runtime.",
+        "when": "Сохранить сведения о полученной программе.",
+        "example": "minio --version",
+        "result": "Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "minio server",
+      "minio server",
+      "minio server",
+      "minio",
+      "minio",
+      "minio"
+    ],
+    "prefixFlags": {
+      "minio": [
+        "-S КАТАЛОГ / --certs-dir КАТАЛОГ",
+        "-h / --help",
+        "--version"
+      ]
+    }
+  },
+  {
+    "name": "mc",
+    "aliases": [],
+    "purpose": "Клиент выбранной объектной цели. Доступ определяют alias, credentials и серверная policy.",
+    "syntax": "mc [ГЛОБАЛЬНЫЕ ОПЦИИ] КОМАНДА",
+    "chapter": "minio-04-first-object",
+    "volume": "minio",
+    "source": "https://raw.githubusercontent.com/minio/mc/RELEASE.2025-08-13T08-35-41Z/cmd/flags.go",
+    "sources": [
+      {
+        "title": "Закреплённый официальный исходник",
+        "url": "https://raw.githubusercontent.com/minio/mc/RELEASE.2025-08-13T08-35-41Z/cmd/flags.go"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается при root registerBefore и initMC(). Флаг зарегистрирован также у namespace/leaf, но поздний setGlobalsFromContext не повторяет эту инициализацию. В рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "--version",
+        "action": "Показать встроенную метку сборки и runtime.",
+        "when": "Сохранить сведения о полученной программе.",
+        "example": "mc --version",
+        "result": "Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "mc",
+      "mc",
+      "mc",
+      "mc",
+      "mc"
+    ]
+  },
+  {
+    "name": "mc alias set",
+    "aliases": [
+      "mc alias s"
+    ],
+    "purpose": "Сохранить или заменить alias. Явное --api может исключить сетевую signature probe.",
+    "syntax": "mc [ГЛОБАЛЬНЫЕ ОПЦИИ] alias set [ОПЦИИ] ИМЯ ENDPOINT [ACCESS_KEY] [SECRET_KEY]",
+    "chapter": "minio-04-first-object",
+    "volume": "minio",
+    "source": "https://raw.githubusercontent.com/minio/mc/RELEASE.2025-08-13T08-35-41Z/cmd/alias-set.go",
+    "sources": [
+      {
+        "title": "Закреплённый официальный исходник",
+        "url": "https://raw.githubusercontent.com/minio/mc/RELEASE.2025-08-13T08-35-41Z/cmd/alias-set.go"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "--api ПОДПИСЬ",
+        "action": "Задать S3v4 или S3v2.",
+        "when": "Закрепить S3v4.",
+        "example": "mc alias set --api S3v4 lab https://127.0.0.1:19000",
+        "result": "При отсутствии credentials в argv читается stdin; успех сохранения не равен успешному PUT."
+      },
+      {
+        "flag": "--path РЕЖИМ",
+        "action": "Выбрать on, off или auto для bucket addressing.",
+        "when": "Работать с loopback без bucket DNS.",
+        "example": "mc alias set --path on lab https://127.0.0.1:19000",
+        "result": "В on bucket находится в URL path."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается при root registerBefore и initMC(). Флаг зарегистрирован также у namespace/leaf, но поздний setGlobalsFromContext не повторяет эту инициализацию. В рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "--version",
+        "action": "Показать встроенную метку сборки и runtime.",
+        "when": "Сохранить сведения о полученной программе.",
+        "example": "mc --version",
+        "result": "Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "mc alias set",
+      "mc alias set",
+      "mc alias set",
+      "mc alias set",
+      "mc alias set",
+      "mc alias set",
+      "mc",
+      "mc",
+      "mc",
+      "mc",
+      "mc",
+      "mc alias",
+      "mc alias",
+      "mc alias",
+      "mc alias"
+    ],
+    "prefixFlags": {
+      "mc": [
+        "-h / --help",
+        "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "--disable-pager / --dp",
+        "--json",
+        "--version"
+      ],
+      "mc alias": [
+        "-h / --help",
+        "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "--disable-pager / --dp",
+        "--json"
+      ]
+    }
+  },
+  {
+    "name": "mc mb",
+    "aliases": [],
+    "purpose": "Создать bucket либо локальную directory-цель. Для серверного опыта указывается alias/bucket.",
+    "syntax": "mc [ГЛОБАЛЬНЫЕ ОПЦИИ] mb [ОПЦИИ] TARGET [TARGET...]",
+    "chapter": "minio-04-first-object",
+    "volume": "minio",
+    "source": "https://raw.githubusercontent.com/minio/mc/RELEASE.2025-08-13T08-35-41Z/cmd/mb-main.go",
+    "sources": [
+      {
+        "title": "Закреплённый официальный исходник",
+        "url": "https://raw.githubusercontent.com/minio/mc/RELEASE.2025-08-13T08-35-41Z/cmd/mb-main.go"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "--ignore-existing / -p",
+        "action": "Не считать уже существующую цель ошибкой.",
+        "when": "Только после независимой проверки её принадлежности и настроек.",
+        "example": "mc mb --ignore-existing lab/handbook-minio",
+        "result": "Не проверяет автоматически versioning, Object Lock и прежние данные."
+      },
+      {
+        "flag": "--region REGION",
+        "action": "Задать регион создаваемого bucket.",
+        "when": "Закрепить требуемое имя региона.",
+        "example": "mc mb --region us-east-1 lab/handbook-minio",
+        "result": "Создание должно подтвердить сервер; region не выбирает endpoint."
+      },
+      {
+        "flag": "--with-versioning",
+        "action": "После создания включить versioning.",
+        "when": "Осознанно создать новый versioned bucket.",
+        "example": "mc mb --with-versioning lab/new-study",
+        "result": "Это последовательные действия; ошибка включения не доказывает, что bucket не был создан."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается при root registerBefore и initMC(). Флаг зарегистрирован также у namespace/leaf, но поздний setGlobalsFromContext не повторяет эту инициализацию. В рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "--version",
+        "action": "Показать встроенную метку сборки и runtime.",
+        "when": "Сохранить сведения о полученной программе.",
+        "example": "mc --version",
+        "result": "Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "mc mb",
+      "mc mb",
+      "mc mb",
+      "mc mb",
+      "mc mb",
+      "mc mb",
+      "mc mb",
+      "mc",
+      "mc",
+      "mc",
+      "mc",
+      "mc"
+    ],
+    "prefixFlags": {
+      "mc": [
+        "-h / --help",
+        "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "--disable-pager / --dp",
+        "--json",
+        "--version"
+      ]
+    }
+  },
+  {
+    "name": "mc version enable",
+    "aliases": [],
+    "purpose": "Включить versioning выбранного bucket. Ранее утраченные данные от этого не появляются.",
+    "syntax": "mc [ГЛОБАЛЬНЫЕ ОПЦИИ] version enable ALIAS/BUCKET",
+    "chapter": "minio-04-first-object",
+    "volume": "minio",
+    "source": "https://raw.githubusercontent.com/minio/mc/RELEASE.2025-08-13T08-35-41Z/cmd/version-enable.go",
+    "sources": [
+      {
+        "title": "Закреплённый официальный исходник",
+        "url": "https://raw.githubusercontent.com/minio/mc/RELEASE.2025-08-13T08-35-41Z/cmd/version-enable.go"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается при root registerBefore и initMC(). Флаг зарегистрирован также у namespace/leaf, но поздний setGlobalsFromContext не повторяет эту инициализацию. В рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "--version",
+        "action": "Показать встроенную метку сборки и runtime.",
+        "when": "Сохранить сведения о полученной программе.",
+        "example": "mc --version",
+        "result": "Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "mc version enable",
+      "mc version enable",
+      "mc version enable",
+      "mc version enable",
+      "mc",
+      "mc",
+      "mc",
+      "mc",
+      "mc",
+      "mc version",
+      "mc version",
+      "mc version",
+      "mc version"
+    ],
+    "prefixFlags": {
+      "mc": [
+        "-h / --help",
+        "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "--disable-pager / --dp",
+        "--json",
+        "--version"
+      ],
+      "mc version": [
+        "-h / --help",
+        "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "--disable-pager / --dp",
+        "--json"
+      ]
+    }
+  },
+  {
+    "name": "mc version info",
+    "aliases": [],
+    "purpose": "Прочитать серверную конфигурацию versioning, включая возможные исключения.",
+    "syntax": "mc [ГЛОБАЛЬНЫЕ ОПЦИИ] version info ALIAS/BUCKET",
+    "chapter": "minio-04-first-object",
+    "volume": "minio",
+    "source": "https://raw.githubusercontent.com/minio/mc/RELEASE.2025-08-13T08-35-41Z/cmd/version-info.go",
+    "sources": [
+      {
+        "title": "Закреплённый официальный исходник",
+        "url": "https://raw.githubusercontent.com/minio/mc/RELEASE.2025-08-13T08-35-41Z/cmd/version-info.go"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается при root registerBefore и initMC(). Флаг зарегистрирован также у namespace/leaf, но поздний setGlobalsFromContext не повторяет эту инициализацию. В рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "--version",
+        "action": "Показать встроенную метку сборки и runtime.",
+        "when": "Сохранить сведения о полученной программе.",
+        "example": "mc --version",
+        "result": "Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "mc version info",
+      "mc version info",
+      "mc version info",
+      "mc version info",
+      "mc",
+      "mc",
+      "mc",
+      "mc",
+      "mc",
+      "mc version",
+      "mc version",
+      "mc version",
+      "mc version"
+    ],
+    "prefixFlags": {
+      "mc": [
+        "-h / --help",
+        "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "--disable-pager / --dp",
+        "--json",
+        "--version"
+      ],
+      "mc version": [
+        "-h / --help",
+        "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "--disable-pager / --dp",
+        "--json"
+      ]
+    }
+  },
+  {
+    "name": "mc cp",
+    "aliases": [],
+    "purpose": "Передать содержимое между явно выбранными source и target. Новый PUT в versioned bucket создаёт версию.",
+    "syntax": "mc [ГЛОБАЛЬНЫЕ ОПЦИИ] cp [ОПЦИИ] SOURCE [SOURCE...] TARGET",
+    "chapter": "minio-04-first-object",
+    "volume": "minio",
+    "source": "https://raw.githubusercontent.com/minio/mc/RELEASE.2025-08-13T08-35-41Z/cmd/cp-main.go",
+    "sources": [
+      {
+        "title": "Закреплённый официальный исходник",
+        "url": "https://raw.githubusercontent.com/minio/mc/RELEASE.2025-08-13T08-35-41Z/cmd/cp-main.go"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "--version-id ID / --vid ID",
+        "action": "Выбрать версию источника.",
+        "when": "Копировать известное серверное состояние.",
+        "example": "mc cp --version-id V1 lab/handbook-minio/project/manifest.txt ./new-copy.txt",
+        "result": "ID относится к source; destination version ID не сохраняется автоматически."
+      },
+      {
+        "flag": "--disable-multipart",
+        "action": "Отключить multipart upload.",
+        "when": "Исследовать небольшой single-PUT опыт.",
+        "example": "mc cp --disable-multipart ./small.txt lab/handbook-minio/project/small.txt",
+        "result": "Меняется способ передачи; это не гарантия отсутствия retries или дубликатов версий."
+      },
+      {
+        "flag": "--attr СПИСОК",
+        "action": "Передать metadata в формате key=value;key=value.",
+        "when": "Сопоставлять собственное намерение с сохранённой версией.",
+        "example": "mc cp --attr \"operation-id=op-01\" ./small.txt lab/handbook-minio/project/small.txt",
+        "result": "Metadata не является серверным ключом идемпотентности."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается при root registerBefore и initMC(). Флаг зарегистрирован также у namespace/leaf, но поздний setGlobalsFromContext не повторяет эту инициализацию. В рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "--version",
+        "action": "Показать встроенную метку сборки и runtime.",
+        "when": "Сохранить сведения о полученной программе.",
+        "example": "mc --version",
+        "result": "Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "mc cp",
+      "mc cp",
+      "mc cp",
+      "mc cp",
+      "mc cp",
+      "mc cp",
+      "mc cp",
+      "mc",
+      "mc",
+      "mc",
+      "mc",
+      "mc"
+    ],
+    "prefixFlags": {
+      "mc": [
+        "-h / --help",
+        "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "--disable-pager / --dp",
+        "--json",
+        "--version"
+      ]
+    }
+  },
+  {
+    "name": "mc stat",
+    "aliases": [],
+    "purpose": "Прочитать metadata объекта или сведения bucket. Наличие metadata не доказывает совпадение тела.",
+    "syntax": "mc [ГЛОБАЛЬНЫЕ ОПЦИИ] stat [ОПЦИИ] TARGET [TARGET...]",
+    "chapter": "minio-04-first-object",
+    "volume": "minio",
+    "source": "https://raw.githubusercontent.com/minio/mc/RELEASE.2025-08-13T08-35-41Z/cmd/stat-main.go",
+    "sources": [
+      {
+        "title": "Закреплённый официальный исходник",
+        "url": "https://raw.githubusercontent.com/minio/mc/RELEASE.2025-08-13T08-35-41Z/cmd/stat-main.go"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "--version-id ID / --vid ID",
+        "action": "Выбрать конкретную версию.",
+        "when": "Не подменять результат текущим key.",
+        "example": "mc stat --version-id V1 lab/handbook-minio/project/manifest.txt",
+        "result": "Исследуется выбранная версия; требуется соответствующее право чтения версии."
+      },
+      {
+        "flag": "--no-list",
+        "action": "Отключить LIST fallback операции stat.",
+        "when": "Исследовать точный object target без перечисления.",
+        "example": "mc stat --no-list lab/handbook-minio/project/manifest.txt",
+        "result": "Отказ object lookup не маскируется успешным списком похожего prefix."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается при root registerBefore и initMC(). Флаг зарегистрирован также у namespace/leaf, но поздний setGlobalsFromContext не повторяет эту инициализацию. В рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "--version",
+        "action": "Показать встроенную метку сборки и runtime.",
+        "when": "Сохранить сведения о полученной программе.",
+        "example": "mc --version",
+        "result": "Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "mc stat",
+      "mc stat",
+      "mc stat",
+      "mc stat",
+      "mc stat",
+      "mc stat",
+      "mc",
+      "mc",
+      "mc",
+      "mc",
+      "mc"
+    ],
+    "prefixFlags": {
+      "mc": [
+        "-h / --help",
+        "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "--disable-pager / --dp",
+        "--json",
+        "--version"
+      ]
+    }
+  },
+  {
+    "name": "mc cat",
+    "aliases": [],
+    "purpose": "Прочитать тело в stdout. Redirect в новый файл сохраняет отдельную цель для cmp.",
+    "syntax": "mc [ГЛОБАЛЬНЫЕ ОПЦИИ] cat [ОПЦИИ] TARGET",
+    "chapter": "minio-04-first-object",
+    "volume": "minio",
+    "source": "https://raw.githubusercontent.com/minio/mc/RELEASE.2025-08-13T08-35-41Z/cmd/cat-main.go",
+    "sources": [
+      {
+        "title": "Закреплённый официальный исходник",
+        "url": "https://raw.githubusercontent.com/minio/mc/RELEASE.2025-08-13T08-35-41Z/cmd/cat-main.go"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "--version-id ID / --vid ID",
+        "action": "Прочитать заданную версию.",
+        "when": "Проверить старые байты под новым current version либо marker.",
+        "example": "mc cat --version-id V1 lab/handbook-minio/project/manifest.txt",
+        "result": "GET выбирает versionId; право GetObjectVersion отличается от GetObject."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается при root registerBefore и initMC(). Флаг зарегистрирован также у namespace/leaf, но поздний setGlobalsFromContext не повторяет эту инициализацию. В рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "--version",
+        "action": "Показать встроенную метку сборки и runtime.",
+        "when": "Сохранить сведения о полученной программе.",
+        "example": "mc --version",
+        "result": "Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "mc cat",
+      "mc cat",
+      "mc cat",
+      "mc cat",
+      "mc cat",
+      "mc",
+      "mc",
+      "mc",
+      "mc",
+      "mc"
+    ],
+    "prefixFlags": {
+      "mc": [
+        "-h / --help",
+        "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "--disable-pager / --dp",
+        "--json",
+        "--version"
+      ]
+    }
+  },
+  {
+    "name": "mc ls",
+    "aliases": [],
+    "purpose": "Перечислить объекты выбранной цели; список текущих объектов и история версий решают разные задачи.",
+    "syntax": "mc [ГЛОБАЛЬНЫЕ ОПЦИИ] ls [ОПЦИИ] TARGET [TARGET...]",
+    "chapter": "minio-06-versions-and-unknown-put",
+    "volume": "minio",
+    "source": "https://raw.githubusercontent.com/minio/mc/RELEASE.2025-08-13T08-35-41Z/cmd/ls-main.go",
+    "sources": [
+      {
+        "title": "Закреплённый официальный исходник",
+        "url": "https://raw.githubusercontent.com/minio/mc/RELEASE.2025-08-13T08-35-41Z/cmd/ls-main.go"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "--versions",
+        "action": "Включить предыдущие версии и markers.",
+        "when": "Исследовать историю key после DELETE.",
+        "example": "mc ls --versions lab/handbook-minio/project/manifest.txt",
+        "result": "Старые версии могут существовать при отсутствии текущего тела."
+      },
+      {
+        "flag": "--recursive / -r",
+        "action": "Перечислить вложенные prefixes.",
+        "when": "Адресно исследовать собственную область.",
+        "example": "mc ls --recursive lab/handbook-minio/project/",
+        "result": "Перечисление не превращает prefix в файловый каталог."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается при root registerBefore и initMC(). Флаг зарегистрирован также у namespace/leaf, но поздний setGlobalsFromContext не повторяет эту инициализацию. В рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "--version",
+        "action": "Показать встроенную метку сборки и runtime.",
+        "when": "Сохранить сведения о полученной программе.",
+        "example": "mc --version",
+        "result": "Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "mc ls",
+      "mc ls",
+      "mc ls",
+      "mc ls",
+      "mc ls",
+      "mc ls",
+      "mc",
+      "mc",
+      "mc",
+      "mc",
+      "mc"
+    ],
+    "prefixFlags": {
+      "mc": [
+        "-h / --help",
+        "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "--disable-pager / --dp",
+        "--json",
+        "--version"
+      ]
+    }
+  },
+  {
+    "name": "mc rm",
+    "aliases": [],
+    "purpose": "Удалить выбранный объект либо конкретную версию. Без versionId в versioned bucket может создаваться marker.",
+    "syntax": "mc [ГЛОБАЛЬНЫЕ ОПЦИИ] rm [ОПЦИИ] TARGET [TARGET...]",
+    "chapter": "minio-06-versions-and-unknown-put",
+    "volume": "minio",
+    "source": "https://raw.githubusercontent.com/minio/mc/RELEASE.2025-08-13T08-35-41Z/cmd/rm-main.go",
+    "sources": [
+      {
+        "title": "Закреплённый официальный исходник",
+        "url": "https://raw.githubusercontent.com/minio/mc/RELEASE.2025-08-13T08-35-41Z/cmd/rm-main.go"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "--dry-run",
+        "action": "Показать предполагаемое удаление без его выполнения.",
+        "when": "Сравнить поведение на сохранённом исходном состоянии.",
+        "example": "mc rm --dry-run lab/handbook-minio/project/manifest.txt",
+        "result": "Текущий version ID должен остаться прежним; это проверяется отдельно."
+      },
+      {
+        "flag": "--version-id ID / --vid ID",
+        "action": "Удалить ровно указанную версию либо marker.",
+        "when": "Осознанно удалить собственный marker M.",
+        "example": "mc rm --version-id M lab/handbook-minio/project/manifest.txt",
+        "result": "Удаление marker раскрывает предыдущую current version; удаление data version уничтожает её тело."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается при root registerBefore и initMC(). Флаг зарегистрирован также у namespace/leaf, но поздний setGlobalsFromContext не повторяет эту инициализацию. В рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "--version",
+        "action": "Показать встроенную метку сборки и runtime.",
+        "when": "Сохранить сведения о полученной программе.",
+        "example": "mc --version",
+        "result": "Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "mc rm",
+      "mc rm",
+      "mc rm",
+      "mc rm",
+      "mc rm",
+      "mc rm",
+      "mc",
+      "mc",
+      "mc",
+      "mc",
+      "mc"
+    ],
+    "prefixFlags": {
+      "mc": [
+        "-h / --help",
+        "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "--disable-pager / --dp",
+        "--json",
+        "--version"
+      ]
+    }
+  },
+  {
+    "name": "mc admin user svcacct add",
+    "aliases": [],
+    "purpose": "Создать service account для указанного parent. Ответ содержит новый secret и сохраняется только приватно.",
+    "syntax": "mc [ГЛОБАЛЬНЫЕ ОПЦИИ] admin user svcacct add [ОПЦИИ] ALIAS ACCOUNT",
+    "chapter": "minio-05-limited-access",
+    "volume": "minio",
+    "source": "https://raw.githubusercontent.com/minio/mc/RELEASE.2025-08-13T08-35-41Z/cmd/admin-user-svcacct-add.go",
+    "sources": [
+      {
+        "title": "Закреплённый официальный исходник",
+        "url": "https://raw.githubusercontent.com/minio/mc/RELEASE.2025-08-13T08-35-41Z/cmd/admin-user-svcacct-add.go"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "--policy ФАЙЛ",
+        "action": "Передать embedded policy.",
+        "when": "Ограничить service account.",
+        "example": "mc admin user svcacct add --policy ./policy.json lab study-admin",
+        "result": "Policy должна быть валидной и непустой; её отсутствие может означать наследование широких прав."
+      },
+      {
+        "flag": "--access-key ID",
+        "action": "Задать заранее сохранённый идентификатор.",
+        "when": "Иметь цель reconciliation после неоднозначного ответа.",
+        "example": "mc admin user svcacct add --access-key study-example lab study-admin",
+        "result": "Secret при отсутствии --secret-key генерирует клиент; его потерю info не исправляет."
+      },
+      {
+        "flag": "--name ТЕКСТ",
+        "action": "Задать понятное имя account.",
+        "when": "Сопоставлять доступ с проектом.",
+        "example": "mc admin user svcacct add --name \"handbook object client\" lab study-admin",
+        "result": "Имя не заменяет access key и не задаёт полномочия."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается при root registerBefore и initMC(). Флаг зарегистрирован также у namespace/leaf, но поздний setGlobalsFromContext не повторяет эту инициализацию. В рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "--version",
+        "action": "Показать встроенную метку сборки и runtime.",
+        "when": "Сохранить сведения о полученной программе.",
+        "example": "mc --version",
+        "result": "Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "mc admin user svcacct add",
+      "mc admin user svcacct add",
+      "mc admin user svcacct add",
+      "mc admin user svcacct add",
+      "mc admin user svcacct add",
+      "mc admin user svcacct add",
+      "mc admin user svcacct add",
+      "mc",
+      "mc",
+      "mc",
+      "mc",
+      "mc",
+      "mc admin",
+      "mc admin",
+      "mc admin",
+      "mc admin",
+      "mc admin user",
+      "mc admin user",
+      "mc admin user",
+      "mc admin user",
+      "mc admin user svcacct",
+      "mc admin user svcacct",
+      "mc admin user svcacct",
+      "mc admin user svcacct"
+    ],
+    "prefixFlags": {
+      "mc": [
+        "-h / --help",
+        "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "--disable-pager / --dp",
+        "--json",
+        "--version"
+      ],
+      "mc admin": [
+        "-h / --help",
+        "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "--disable-pager / --dp",
+        "--json"
+      ],
+      "mc admin user": [
+        "-h / --help",
+        "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "--disable-pager / --dp",
+        "--json"
+      ],
+      "mc admin user svcacct": [
+        "-h / --help",
+        "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "--disable-pager / --dp",
+        "--json"
+      ]
+    }
+  },
+  {
+    "name": "mc admin user svcacct info",
+    "aliases": [],
+    "purpose": "Прочитать состояние, parent и policy service account. Secret повторно не выдаётся.",
+    "syntax": "mc [ГЛОБАЛЬНЫЕ ОПЦИИ] admin user svcacct info [ОПЦИИ] ALIAS ACCESS_ID",
+    "chapter": "minio-05-limited-access",
+    "volume": "minio",
+    "source": "https://raw.githubusercontent.com/minio/mc/RELEASE.2025-08-13T08-35-41Z/cmd/admin-user-svcacct-info.go",
+    "sources": [
+      {
+        "title": "Закреплённый официальный исходник",
+        "url": "https://raw.githubusercontent.com/minio/mc/RELEASE.2025-08-13T08-35-41Z/cmd/admin-user-svcacct-info.go"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "--policy",
+        "action": "Показать policy как JSON.",
+        "when": "Проверить фактическое ограничение созданного account.",
+        "example": "mc admin user svcacct info --policy lab study-example",
+        "result": "Вывод описывает policy; работоспособность доступа принимается отдельными запросами."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается при root registerBefore и initMC(). Флаг зарегистрирован также у namespace/leaf, но поздний setGlobalsFromContext не повторяет эту инициализацию. В рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "--version",
+        "action": "Показать встроенную метку сборки и runtime.",
+        "when": "Сохранить сведения о полученной программе.",
+        "example": "mc --version",
+        "result": "Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "mc admin user svcacct info",
+      "mc admin user svcacct info",
+      "mc admin user svcacct info",
+      "mc admin user svcacct info",
+      "mc admin user svcacct info",
+      "mc",
+      "mc",
+      "mc",
+      "mc",
+      "mc",
+      "mc admin",
+      "mc admin",
+      "mc admin",
+      "mc admin",
+      "mc admin user",
+      "mc admin user",
+      "mc admin user",
+      "mc admin user",
+      "mc admin user svcacct",
+      "mc admin user svcacct",
+      "mc admin user svcacct",
+      "mc admin user svcacct"
+    ],
+    "prefixFlags": {
+      "mc": [
+        "-h / --help",
+        "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "--disable-pager / --dp",
+        "--json",
+        "--version"
+      ],
+      "mc admin": [
+        "-h / --help",
+        "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "--disable-pager / --dp",
+        "--json"
+      ],
+      "mc admin user": [
+        "-h / --help",
+        "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "--disable-pager / --dp",
+        "--json"
+      ],
+      "mc admin user svcacct": [
+        "-h / --help",
+        "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "--disable-pager / --dp",
+        "--json"
+      ]
+    }
+  },
+  {
+    "name": "mc admin user svcacct disable",
+    "aliases": [],
+    "purpose": "Отключить будущую авторизацию указанного service account, сохранив его идентичность для разбора.",
+    "syntax": "mc [ГЛОБАЛЬНЫЕ ОПЦИИ] admin user svcacct disable ALIAS ACCESS_ID",
+    "chapter": "minio-05-limited-access",
+    "volume": "minio",
+    "source": "https://raw.githubusercontent.com/minio/mc/RELEASE.2025-08-13T08-35-41Z/cmd/admin-user-svcacct-disable.go",
+    "sources": [
+      {
+        "title": "Закреплённый официальный исходник",
+        "url": "https://raw.githubusercontent.com/minio/mc/RELEASE.2025-08-13T08-35-41Z/cmd/admin-user-svcacct-disable.go"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается при root registerBefore и initMC(). Флаг зарегистрирован также у namespace/leaf, но поздний setGlobalsFromContext не повторяет эту инициализацию. В рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "--version",
+        "action": "Показать встроенную метку сборки и runtime.",
+        "when": "Сохранить сведения о полученной программе.",
+        "example": "mc --version",
+        "result": "Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "mc admin user svcacct disable",
+      "mc admin user svcacct disable",
+      "mc admin user svcacct disable",
+      "mc admin user svcacct disable",
+      "mc",
+      "mc",
+      "mc",
+      "mc",
+      "mc",
+      "mc admin",
+      "mc admin",
+      "mc admin",
+      "mc admin",
+      "mc admin user",
+      "mc admin user",
+      "mc admin user",
+      "mc admin user",
+      "mc admin user svcacct",
+      "mc admin user svcacct",
+      "mc admin user svcacct",
+      "mc admin user svcacct"
+    ],
+    "prefixFlags": {
+      "mc": [
+        "-h / --help",
+        "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "--disable-pager / --dp",
+        "--json",
+        "--version"
+      ],
+      "mc admin": [
+        "-h / --help",
+        "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "--disable-pager / --dp",
+        "--json"
+      ],
+      "mc admin user": [
+        "-h / --help",
+        "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "--disable-pager / --dp",
+        "--json"
+      ],
+      "mc admin user svcacct": [
+        "-h / --help",
+        "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "--disable-pager / --dp",
+        "--json"
+      ]
+    }
+  },
+  {
+    "name": "mc alias",
+    "aliases": [],
+    "purpose": "Группа команд для сохранённых aliases.",
+    "syntax": "mc alias [ОБЩИЕ ФЛАГИ] COMMAND ...",
+    "chapter": "minio-04-first-object",
+    "volume": "minio",
+    "source": "https://raw.githubusercontent.com/minio/mc/7394ce0dd2a80935aded936b09fa12cbb3cb8096/cmd/alias-main.go",
+    "sources": [
+      {
+        "title": "Закреплённая структура команды mc",
+        "url": "https://raw.githubusercontent.com/minio/mc/7394ce0dd2a80935aded936b09fa12cbb3cb8096/cmd/alias-main.go"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается при root registerBefore и initMC(). Флаг зарегистрирован также у namespace/leaf, но поздний setGlobalsFromContext не повторяет эту инициализацию. В рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "--version",
+        "action": "Показать встроенную метку сборки и runtime.",
+        "when": "Сохранить сведения о полученной программе.",
+        "example": "mc --version",
+        "result": "Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo."
+      }
+    ],
+    "situations": [
+      {
+        "problem": "Флаг распознан после namespace",
+        "explanation": "mc повторно регистрирует globalFlags на этом уровне. Это не доказывает одинаковый эффект всех позиций.",
+        "solution": "В маршруте ставьте --config-dir сразу после executable; локальные флаги — после имени конечной команды."
+      }
+    ],
+    "flagScopes": [
+      "mc alias",
+      "mc alias",
+      "mc alias",
+      "mc alias",
+      "mc",
+      "mc",
+      "mc",
+      "mc",
+      "mc"
+    ],
+    "prefixFlags": {
+      "mc": [
+        "-h / --help",
+        "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "--disable-pager / --dp",
+        "--json",
+        "--version"
+      ]
+    }
+  },
+  {
+    "name": "mc admin",
+    "aliases": [],
+    "purpose": "Группа административных команд сервера.",
+    "syntax": "mc admin [ОБЩИЕ ФЛАГИ] COMMAND ...",
+    "chapter": "minio-05-limited-access",
+    "volume": "minio",
+    "source": "https://raw.githubusercontent.com/minio/mc/7394ce0dd2a80935aded936b09fa12cbb3cb8096/cmd/admin-main.go",
+    "sources": [
+      {
+        "title": "Закреплённая структура команды mc",
+        "url": "https://raw.githubusercontent.com/minio/mc/7394ce0dd2a80935aded936b09fa12cbb3cb8096/cmd/admin-main.go"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается при root registerBefore и initMC(). Флаг зарегистрирован также у namespace/leaf, но поздний setGlobalsFromContext не повторяет эту инициализацию. В рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "--version",
+        "action": "Показать встроенную метку сборки и runtime.",
+        "when": "Сохранить сведения о полученной программе.",
+        "example": "mc --version",
+        "result": "Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo."
+      }
+    ],
+    "situations": [
+      {
+        "problem": "Флаг распознан после namespace",
+        "explanation": "mc повторно регистрирует globalFlags на этом уровне. Это не доказывает одинаковый эффект всех позиций.",
+        "solution": "В маршруте ставьте --config-dir сразу после executable; локальные флаги — после имени конечной команды."
+      }
+    ],
+    "flagScopes": [
+      "mc admin",
+      "mc admin",
+      "mc admin",
+      "mc admin",
+      "mc",
+      "mc",
+      "mc",
+      "mc",
+      "mc"
+    ],
+    "prefixFlags": {
+      "mc": [
+        "-h / --help",
+        "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "--disable-pager / --dp",
+        "--json",
+        "--version"
+      ]
+    }
+  },
+  {
+    "name": "mc admin user",
+    "aliases": [],
+    "purpose": "Группа команд управления учётными записями.",
+    "syntax": "mc admin user [ОБЩИЕ ФЛАГИ] COMMAND ...",
+    "chapter": "minio-05-limited-access",
+    "volume": "minio",
+    "source": "https://raw.githubusercontent.com/minio/mc/7394ce0dd2a80935aded936b09fa12cbb3cb8096/cmd/admin-user.go",
+    "sources": [
+      {
+        "title": "Закреплённая структура команды mc",
+        "url": "https://raw.githubusercontent.com/minio/mc/7394ce0dd2a80935aded936b09fa12cbb3cb8096/cmd/admin-user.go"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается при root registerBefore и initMC(). Флаг зарегистрирован также у namespace/leaf, но поздний setGlobalsFromContext не повторяет эту инициализацию. В рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "--version",
+        "action": "Показать встроенную метку сборки и runtime.",
+        "when": "Сохранить сведения о полученной программе.",
+        "example": "mc --version",
+        "result": "Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      }
+    ],
+    "situations": [
+      {
+        "problem": "Флаг распознан после namespace",
+        "explanation": "mc повторно регистрирует globalFlags на этом уровне. Это не доказывает одинаковый эффект всех позиций.",
+        "solution": "В маршруте ставьте --config-dir сразу после executable; локальные флаги — после имени конечной команды."
+      }
+    ],
+    "flagScopes": [
+      "mc admin user",
+      "mc admin user",
+      "mc admin user",
+      "mc admin user",
+      "mc",
+      "mc",
+      "mc",
+      "mc",
+      "mc",
+      "mc admin",
+      "mc admin",
+      "mc admin",
+      "mc admin"
+    ],
+    "prefixFlags": {
+      "mc": [
+        "-h / --help",
+        "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "--disable-pager / --dp",
+        "--json",
+        "--version"
+      ],
+      "mc admin": [
+        "-h / --help",
+        "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "--disable-pager / --dp",
+        "--json"
+      ]
+    }
+  },
+  {
+    "name": "mc admin user svcacct",
+    "aliases": [],
+    "purpose": "Группа команд управления service accounts.",
+    "syntax": "mc admin user svcacct [ОБЩИЕ ФЛАГИ] COMMAND ...",
+    "chapter": "minio-05-limited-access",
+    "volume": "minio",
+    "source": "https://raw.githubusercontent.com/minio/mc/7394ce0dd2a80935aded936b09fa12cbb3cb8096/cmd/admin-user-svcacct.go",
+    "sources": [
+      {
+        "title": "Закреплённая структура команды mc",
+        "url": "https://raw.githubusercontent.com/minio/mc/7394ce0dd2a80935aded936b09fa12cbb3cb8096/cmd/admin-user-svcacct.go"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается при root registerBefore и initMC(). Флаг зарегистрирован также у namespace/leaf, но поздний setGlobalsFromContext не повторяет эту инициализацию. В рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "--version",
+        "action": "Показать встроенную метку сборки и runtime.",
+        "when": "Сохранить сведения о полученной программе.",
+        "example": "mc --version",
+        "result": "Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      }
+    ],
+    "situations": [
+      {
+        "problem": "Флаг распознан после namespace",
+        "explanation": "mc повторно регистрирует globalFlags на этом уровне. Это не доказывает одинаковый эффект всех позиций.",
+        "solution": "В маршруте ставьте --config-dir сразу после executable; локальные флаги — после имени конечной команды."
+      }
+    ],
+    "flagScopes": [
+      "mc admin user svcacct",
+      "mc admin user svcacct",
+      "mc admin user svcacct",
+      "mc admin user svcacct",
+      "mc",
+      "mc",
+      "mc",
+      "mc",
+      "mc",
+      "mc admin",
+      "mc admin",
+      "mc admin",
+      "mc admin",
+      "mc admin user",
+      "mc admin user",
+      "mc admin user",
+      "mc admin user"
+    ],
+    "prefixFlags": {
+      "mc": [
+        "-h / --help",
+        "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "--disable-pager / --dp",
+        "--json",
+        "--version"
+      ],
+      "mc admin": [
+        "-h / --help",
+        "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "--disable-pager / --dp",
+        "--json"
+      ],
+      "mc admin user": [
+        "-h / --help",
+        "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "--disable-pager / --dp",
+        "--json"
+      ]
+    }
+  },
+  {
+    "name": "mc version",
+    "aliases": [],
+    "purpose": "Группа команд настройки versioning bucket.",
+    "syntax": "mc version [ОБЩИЕ ФЛАГИ] COMMAND ...",
+    "chapter": "minio-04-first-object",
+    "volume": "minio",
+    "source": "https://raw.githubusercontent.com/minio/mc/7394ce0dd2a80935aded936b09fa12cbb3cb8096/cmd/version-main.go",
+    "sources": [
+      {
+        "title": "Закреплённая структура команды mc",
+        "url": "https://raw.githubusercontent.com/minio/mc/7394ce0dd2a80935aded936b09fa12cbb3cb8096/cmd/version-main.go"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается при root registerBefore и initMC(). Флаг зарегистрирован также у namespace/leaf, но поздний setGlobalsFromContext не повторяет эту инициализацию. В рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "--version",
+        "action": "Показать встроенную метку сборки и runtime.",
+        "when": "Сохранить сведения о полученной программе.",
+        "example": "mc --version",
+        "result": "Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo."
+      }
+    ],
+    "situations": [
+      {
+        "problem": "Флаг распознан после namespace",
+        "explanation": "mc повторно регистрирует globalFlags на этом уровне. Это не доказывает одинаковый эффект всех позиций.",
+        "solution": "В маршруте ставьте --config-dir сразу после executable; локальные флаги — после имени конечной команды."
+      }
+    ],
+    "flagScopes": [
+      "mc version",
+      "mc version",
+      "mc version",
+      "mc version",
+      "mc",
+      "mc",
+      "mc",
+      "mc",
+      "mc"
+    ],
+    "prefixFlags": {
+      "mc": [
+        "-h / --help",
+        "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "--disable-pager / --dp",
+        "--json",
+        "--version"
+      ]
+    }
+  },
+  {
+    "name": "mc admin info",
+    "aliases": [],
+    "purpose": "Прочитать состояние deployment; это не запуск heal.",
+    "syntax": "mc [ROOT_FLAGS] admin info ALIAS",
+    "chapter": "minio-09-pools-and-operations",
+    "volume": "minio",
+    "source": "https://raw.githubusercontent.com/minio/mc/7394ce0dd2a80935aded936b09fa12cbb3cb8096/cmd/admin-info.go",
+    "sources": [
+      {
+        "title": "Закреплённый официальный исходник",
+        "url": "https://raw.githubusercontent.com/minio/mc/7394ce0dd2a80935aded936b09fa12cbb3cb8096/cmd/admin-info.go"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается при root registerBefore и initMC(). Флаг зарегистрирован также у namespace/leaf, но поздний setGlobalsFromContext не повторяет эту инициализацию. В рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "--version",
+        "action": "Показать встроенную метку сборки и runtime.",
+        "when": "Сохранить сведения о полученной программе.",
+        "example": "mc --version",
+        "result": "Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "mc admin info",
+      "mc admin info",
+      "mc admin info",
+      "mc admin info",
+      "mc",
+      "mc",
+      "mc",
+      "mc",
+      "mc",
+      "mc admin",
+      "mc admin",
+      "mc admin",
+      "mc admin"
+    ],
+    "prefixFlags": {
+      "mc": [
+        "-h / --help",
+        "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "--disable-pager / --dp",
+        "--json",
+        "--version"
+      ],
+      "mc admin": [
+        "-h / --help",
+        "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "--disable-pager / --dp",
+        "--json"
+      ]
+    }
+  },
+  {
+    "name": "mc admin rebalance",
+    "aliases": [],
+    "purpose": "Группа управления переносом между pools.",
+    "syntax": "mc [ROOT_FLAGS] admin rebalance COMMAND ALIAS",
+    "chapter": "minio-09-pools-and-operations",
+    "volume": "minio",
+    "source": "https://raw.githubusercontent.com/minio/mc/7394ce0dd2a80935aded936b09fa12cbb3cb8096/cmd/admin-rebalance-main.go",
+    "sources": [
+      {
+        "title": "Закреплённый официальный исходник",
+        "url": "https://raw.githubusercontent.com/minio/mc/7394ce0dd2a80935aded936b09fa12cbb3cb8096/cmd/admin-rebalance-main.go"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается при root registerBefore и initMC(). Флаг зарегистрирован также у namespace/leaf, но поздний setGlobalsFromContext не повторяет эту инициализацию. В рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "--version",
+        "action": "Показать встроенную метку сборки и runtime.",
+        "when": "Сохранить сведения о полученной программе.",
+        "example": "mc --version",
+        "result": "Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "mc admin rebalance",
+      "mc admin rebalance",
+      "mc admin rebalance",
+      "mc admin rebalance",
+      "mc",
+      "mc",
+      "mc",
+      "mc",
+      "mc",
+      "mc admin",
+      "mc admin",
+      "mc admin",
+      "mc admin"
+    ],
+    "prefixFlags": {
+      "mc": [
+        "-h / --help",
+        "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "--disable-pager / --dp",
+        "--json",
+        "--version"
+      ],
+      "mc admin": [
+        "-h / --help",
+        "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "--disable-pager / --dp",
+        "--json"
+      ]
+    }
+  },
+  {
+    "name": "mc admin rebalance start",
+    "aliases": [],
+    "purpose": "Принять задание rebalance подходящего multi-pool deployment; ID не означает завершение.",
+    "syntax": "mc [ROOT_FLAGS] admin rebalance start ALIAS",
+    "chapter": "minio-09-pools-and-operations",
+    "volume": "minio",
+    "source": "https://raw.githubusercontent.com/minio/mc/7394ce0dd2a80935aded936b09fa12cbb3cb8096/cmd/admin-rebalance-start.go",
+    "sources": [
+      {
+        "title": "Закреплённый официальный исходник",
+        "url": "https://raw.githubusercontent.com/minio/mc/7394ce0dd2a80935aded936b09fa12cbb3cb8096/cmd/admin-rebalance-start.go"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается при root registerBefore и initMC(). Флаг зарегистрирован также у namespace/leaf, но поздний setGlobalsFromContext не повторяет эту инициализацию. В рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "--version",
+        "action": "Показать встроенную метку сборки и runtime.",
+        "when": "Сохранить сведения о полученной программе.",
+        "example": "mc --version",
+        "result": "Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "mc admin rebalance start",
+      "mc admin rebalance start",
+      "mc admin rebalance start",
+      "mc admin rebalance start",
+      "mc",
+      "mc",
+      "mc",
+      "mc",
+      "mc",
+      "mc admin",
+      "mc admin",
+      "mc admin",
+      "mc admin",
+      "mc admin rebalance",
+      "mc admin rebalance",
+      "mc admin rebalance",
+      "mc admin rebalance"
+    ],
+    "prefixFlags": {
+      "mc": [
+        "-h / --help",
+        "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "--disable-pager / --dp",
+        "--json",
+        "--version"
+      ],
+      "mc admin": [
+        "-h / --help",
+        "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "--disable-pager / --dp",
+        "--json"
+      ],
+      "mc admin rebalance": [
+        "-h / --help",
+        "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "--disable-pager / --dp",
+        "--json"
+      ]
+    }
+  },
+  {
+    "name": "mc admin rebalance status",
+    "aliases": [],
+    "purpose": "Прочитать per-pool progress; Bytes и ETA имеют ограничения версии.",
+    "syntax": "mc [ROOT_FLAGS] admin rebalance status ALIAS",
+    "chapter": "minio-09-pools-and-operations",
+    "volume": "minio",
+    "source": "https://raw.githubusercontent.com/minio/mc/7394ce0dd2a80935aded936b09fa12cbb3cb8096/cmd/admin-rebalance-status.go",
+    "sources": [
+      {
+        "title": "Закреплённый официальный исходник",
+        "url": "https://raw.githubusercontent.com/minio/mc/7394ce0dd2a80935aded936b09fa12cbb3cb8096/cmd/admin-rebalance-status.go"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается при root registerBefore и initMC(). Флаг зарегистрирован также у namespace/leaf, но поздний setGlobalsFromContext не повторяет эту инициализацию. В рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "--version",
+        "action": "Показать встроенную метку сборки и runtime.",
+        "when": "Сохранить сведения о полученной программе.",
+        "example": "mc --version",
+        "result": "Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      },
+      {
+        "flag": "-h / --help",
+        "action": "Показать справку.",
+        "when": "Сверить собственную сборку до серверных действий.",
+        "example": "mc --help",
+        "result": "Справка не подтверждает доступность сервера."
+      },
+      {
+        "flag": "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "action": "Выбрать клиентское состояние.",
+        "when": "Изолировать alias и CA учебного проекта.",
+        "example": "mc --config-dir \"./state with spaces\" stat lab/handbook-minio/project/manifest.txt",
+        "result": "Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native."
+      },
+      {
+        "flag": "--disable-pager / --dp",
+        "action": "Отключить внутренний pager.",
+        "when": "Сохранить help в файл.",
+        "example": "mc --disable-pager --help",
+        "result": "Вывод доступен непосредственно через stdout."
+      },
+      {
+        "flag": "--json",
+        "action": "Выбрать структурированный вывод.",
+        "when": "Разбирать разрешённый несекретный результат либо закрытый credential workflow.",
+        "example": "mc --json stat lab/handbook-minio/project/manifest.txt",
+        "result": "Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "mc admin rebalance status",
+      "mc admin rebalance status",
+      "mc admin rebalance status",
+      "mc admin rebalance status",
+      "mc",
+      "mc",
+      "mc",
+      "mc",
+      "mc",
+      "mc admin",
+      "mc admin",
+      "mc admin",
+      "mc admin",
+      "mc admin rebalance",
+      "mc admin rebalance",
+      "mc admin rebalance",
+      "mc admin rebalance"
+    ],
+    "prefixFlags": {
+      "mc": [
+        "-h / --help",
+        "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "--disable-pager / --dp",
+        "--json",
+        "--version"
+      ],
+      "mc admin": [
+        "-h / --help",
+        "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "--disable-pager / --dp",
+        "--json"
+      ],
+      "mc admin rebalance": [
+        "-h / --help",
+        "-C КАТАЛОГ / --config-dir КАТАЛОГ",
+        "--disable-pager / --dp",
+        "--json"
+      ]
+    }
+  },
+  {
+    "name": "cold_copy.py snapshot",
+    "aliases": [],
+    "purpose": "После полной остановки единственного стенда создать новую приватную копию и inventory.",
+    "syntax": "python3 -B labs/cold_copy.py snapshot SOURCE DEST",
+    "chapter": "minio-10-backup-and-recovery",
+    "volume": "minio",
+    "source": "https://docs.python.org/3/library/shutil.html",
+    "sources": [
+      {
+        "title": "Закреплённый официальный исходник",
+        "url": "https://docs.python.org/3/library/shutil.html"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-h / --help",
+        "action": "Показать argparse help.",
+        "when": "Проверить аргументы до копирования.",
+        "example": "python3 -B labs/cold_copy.py --help",
+        "result": "Никакая копия не создаётся."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "cold_copy.py snapshot"
+    ],
+    "prefixFlags": {
+      "cold_copy.py": []
+    }
+  },
+  {
+    "name": "cold_copy.py verify",
+    "aliases": [],
+    "purpose": "Сравнить bytes snapshot с сохранённым inventory; не запускать MinIO.",
+    "syntax": "python3 -B labs/cold_copy.py verify SOURCE",
+    "chapter": "minio-10-backup-and-recovery",
+    "volume": "minio",
+    "source": "https://docs.python.org/3/library/shutil.html",
+    "sources": [
+      {
+        "title": "Закреплённый официальный исходник",
+        "url": "https://docs.python.org/3/library/shutil.html"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-h / --help",
+        "action": "Показать argparse help.",
+        "when": "Проверить аргументы до копирования.",
+        "example": "python3 -B labs/cold_copy.py --help",
+        "result": "Никакая копия не создаётся."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "cold_copy.py verify"
+    ],
+    "prefixFlags": {
+      "cold_copy.py": []
+    }
+  },
+  {
+    "name": "cold_copy.py restore",
+    "aliases": [],
+    "purpose": "Восстановить проверенный snapshot в новый отдельный runtime, не перезаписывая оригинал.",
+    "syntax": "python3 -B labs/cold_copy.py restore SOURCE DEST",
+    "chapter": "minio-10-backup-and-recovery",
+    "volume": "minio",
+    "source": "https://docs.python.org/3/library/shutil.html",
+    "sources": [
+      {
+        "title": "Закреплённый официальный исходник",
+        "url": "https://docs.python.org/3/library/shutil.html"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "-h / --help",
+        "action": "Показать argparse help.",
+        "when": "Проверить аргументы до копирования.",
+        "example": "python3 -B labs/cold_copy.py --help",
+        "result": "Никакая копия не создаётся."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "cold_copy.py restore"
+    ],
+    "prefixFlags": {
+      "cold_copy.py": []
+    }
+  },
+  {
+    "name": "cephadm",
+    "aliases": [],
+    "purpose": "Управлять развёртыванием в принятой личной VM.",
+    "syntax": "cephadm [ROOT FLAGS] COMMAND",
+    "chapter": "ceph-03-vm-install",
+    "volume": "ceph",
+    "source": "https://github.com/ceph/ceph/tree/v20.2.4/doc",
+    "sources": [
+      {
+        "title": "Ceph v20.2.4",
+        "url": "https://github.com/ceph/ceph/tree/v20.2.4"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "--image IMAGE",
+        "action": "Выбрать образ до подкоманды.",
+        "when": "Использовать принятый digest.",
+        "example": "cephadm --image \"$image\" inspect-image",
+        "result": "Проверяется фактическая версия образа; имя не удостоверяет издателя."
+      },
+      {
+        "flag": "--verbose",
+        "action": "Включить root diagnostic logging.",
+        "when": "Перед COMMAND; не JSON режима version.",
+        "example": "cephadm --verbose check-host",
+        "result": "Это другая область опции, чем version --verbose."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "cephadm",
+      "cephadm"
+    ]
+  },
+  {
+    "name": "cephadm version",
+    "aliases": [],
+    "purpose": "Прочитать версию установленного cephadm.",
+    "syntax": "cephadm version [--verbose]",
+    "chapter": "ceph-02-supply",
+    "volume": "ceph",
+    "source": "https://github.com/ceph/ceph/tree/v20.2.4/doc",
+    "sources": [
+      {
+        "title": "Ceph v20.2.4",
+        "url": "https://github.com/ceph/ceph/tree/v20.2.4"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "--verbose",
+        "action": "Вернуть подробные сведения версии в JSON.",
+        "when": "После version.",
+        "example": "cephadm version --verbose",
+        "result": "В20.2.4 root --verbose перед version не заменяет эту опцию."
+      },
+      {
+        "flag": "--image IMAGE",
+        "action": "Выбрать образ до подкоманды.",
+        "when": "Использовать принятый digest.",
+        "example": "cephadm --image \"$image\" inspect-image",
+        "result": "Проверяется фактическая версия образа; имя не удостоверяет издателя."
+      },
+      {
+        "flag": "--verbose",
+        "action": "Включить root diagnostic logging.",
+        "when": "Перед COMMAND; не JSON режима version.",
+        "example": "cephadm --verbose check-host",
+        "result": "Это другая область опции, чем version --verbose."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "cephadm version",
+      "cephadm",
+      "cephadm"
+    ],
+    "prefixFlags": {
+      "cephadm": [
+        "--image IMAGE",
+        "--verbose"
+      ]
+    }
+  },
+  {
+    "name": "cephadm shell",
+    "aliases": [],
+    "purpose": "Запустить argv в выбранном Ceph-образе.",
+    "syntax": "cephadm [ROOT FLAGS] shell [FLAGS] -- PROGRAM ARGS",
+    "chapter": "ceph-09-rados-lab",
+    "volume": "ceph",
+    "source": "https://github.com/ceph/ceph/tree/v20.2.4/doc",
+    "sources": [
+      {
+        "title": "Ceph v20.2.4",
+        "url": "https://github.com/ceph/ceph/tree/v20.2.4"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "--fsid FSID",
+        "action": "Адресовать принятый кластер.",
+        "when": "При нескольких экземплярах/явном повторном входе.",
+        "example": "cephadm --image \"$image\" shell --fsid \"$fsid\" -- ceph status",
+        "result": "Не выбирает другой кластер по похожему имени."
+      },
+      {
+        "flag": "--mount SRC:DST:OPTIONS",
+        "action": "Смонтировать выбранный каталог.",
+        "when": "Для входного файла ro; карточка показывает один mount.",
+        "example": "cephadm shell --mount \"$PWD/input:/study-input:ro\" -- rados -p cephstudy put report /study-input/report.txt",
+        "result": "В CLI nargs+; -- отделяет конец mount argv."
+      },
+      {
+        "flag": "--",
+        "action": "Завершить параметры оболочки.",
+        "when": "Перед PROGRAM.",
+        "example": "cephadm shell -- ceph -s",
+        "result": "-s принадлежит ceph, не cephadm."
+      },
+      {
+        "flag": "--image IMAGE",
+        "action": "Выбрать образ до подкоманды.",
+        "when": "Использовать принятый digest.",
+        "example": "cephadm --image \"$image\" inspect-image",
+        "result": "Проверяется фактическая версия образа; имя не удостоверяет издателя."
+      },
+      {
+        "flag": "--verbose",
+        "action": "Включить root diagnostic logging.",
+        "when": "Перед COMMAND; не JSON режима version.",
+        "example": "cephadm --verbose check-host",
+        "result": "Это другая область опции, чем version --verbose."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "cephadm shell",
+      "cephadm shell",
+      "cephadm shell",
+      "cephadm",
+      "cephadm"
+    ],
+    "prefixFlags": {
+      "cephadm": [
+        "--image IMAGE",
+        "--verbose"
+      ]
+    }
+  },
+  {
+    "name": "cephadm bootstrap",
+    "aliases": [],
+    "purpose": "Создать первоначальный control plane один раз.",
+    "syntax": "cephadm --image IMAGE bootstrap [FLAGS]",
+    "chapter": "ceph-03-vm-install",
+    "volume": "ceph",
+    "source": "https://github.com/ceph/ceph/tree/v20.2.4/doc",
+    "sources": [
+      {
+        "title": "Ceph v20.2.4",
+        "url": "https://github.com/ceph/ceph/tree/v20.2.4"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "--mon-ip IP",
+        "action": "Выбрать адрес первого MON.",
+        "when": "Только после проверки VM и сети.",
+        "example": "cephadm --image \"$image\" bootstrap --mon-ip 10.77.0.11",
+        "result": "Полный рецепт также передаёт FSID/config/SSH keys и сохраняет попытку."
+      },
+      {
+        "flag": "--config FILE",
+        "action": "Прочитать выбранный initial config.",
+        "when": "Из нового bootstrap generation.",
+        "example": "cephadm bootstrap --mon-ip 10.77.0.11 --config initial-ceph.conf",
+        "result": "Не разрешает перезаписать существующий кластер."
+      },
+      {
+        "flag": "--image IMAGE",
+        "action": "Выбрать образ до подкоманды.",
+        "when": "Использовать принятый digest.",
+        "example": "cephadm --image \"$image\" inspect-image",
+        "result": "Проверяется фактическая версия образа; имя не удостоверяет издателя."
+      },
+      {
+        "flag": "--verbose",
+        "action": "Включить root diagnostic logging.",
+        "when": "Перед COMMAND; не JSON режима version.",
+        "example": "cephadm --verbose check-host",
+        "result": "Это другая область опции, чем version --verbose."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "cephadm bootstrap",
+      "cephadm bootstrap",
+      "cephadm",
+      "cephadm"
+    ],
+    "prefixFlags": {
+      "cephadm": [
+        "--image IMAGE",
+        "--verbose"
+      ]
+    }
+  },
+  {
+    "name": "ceph",
+    "aliases": [],
+    "purpose": "Запросить или изменить состояние принятого кластера.",
+    "syntax": "ceph [FLAGS] COMMAND",
+    "chapter": "ceph-21-observation",
+    "volume": "ceph",
+    "source": "https://github.com/ceph/ceph/tree/v20.2.4/doc",
+    "sources": [
+      {
+        "title": "Ceph v20.2.4",
+        "url": "https://github.com/ceph/ceph/tree/v20.2.4"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "--format FORMAT",
+        "action": "Выбрать представление ответа.",
+        "when": "Для сохраняемых JSON observations.",
+        "example": "ceph status --format=json",
+        "result": "Код0 status не означает HEALTH_OK."
+      },
+      {
+        "flag": "-s",
+        "action": "Запросить краткое состояние.",
+        "when": "После принятия FSID.",
+        "example": "ceph -s",
+        "result": "Читать также health detail и PG состояния."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "ceph",
+      "ceph"
+    ]
+  },
+  {
+    "name": "ceph osd pool create",
+    "aliases": [],
+    "purpose": "Создать новый pool по принятому правилу.",
+    "syntax": "ceph osd pool create POOL PG_NUM PGP_NUM replicated [FLAGS]",
+    "chapter": "ceph-09-rados-lab",
+    "volume": "ceph",
+    "source": "https://github.com/ceph/ceph/tree/v20.2.4/doc",
+    "sources": [
+      {
+        "title": "Ceph v20.2.4",
+        "url": "https://github.com/ceph/ceph/tree/v20.2.4"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "--rule RULE",
+        "action": "Выбрать существующее правило CRUSH.",
+        "when": "После проверки отсутствия pool.",
+        "example": "ceph osd pool create cephstudy 8 8 replicated --rule=cephstudy-host --autoscale-mode=off",
+        "result": "Правило выбирает домены; свободные байты не заменяют домены."
+      },
+      {
+        "flag": "--autoscale-mode MODE",
+        "action": "Задать управление количеством PG.",
+        "when": "Off для фиксированного малого опыта.",
+        "example": "ceph osd pool create cephstudy 8 8 replicated --rule=cephstudy-host --autoscale-mode=off",
+        "result": "Не универсальная настройка производительности."
+      },
+      {
+        "flag": "--format FORMAT",
+        "action": "Выбрать представление ответа.",
+        "when": "Для сохраняемых JSON observations.",
+        "example": "ceph status --format=json",
+        "result": "Код0 status не означает HEALTH_OK."
+      },
+      {
+        "flag": "-s",
+        "action": "Запросить краткое состояние.",
+        "when": "После принятия FSID.",
+        "example": "ceph -s",
+        "result": "Читать также health detail и PG состояния."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "ceph osd pool create",
+      "ceph osd pool create",
+      "ceph",
+      "ceph"
+    ],
+    "prefixFlags": {
+      "ceph": [
+        "--format FORMAT",
+        "-s"
+      ],
+      "ceph osd": [],
+      "ceph osd pool": []
+    }
+  },
+  {
+    "name": "ceph osd pool set",
+    "aliases": [],
+    "purpose": "Изменить параметр выбранного pool.",
+    "syntax": "ceph osd pool set POOL KEY VALUE [FLAGS]",
+    "chapter": "ceph-09-rados-lab",
+    "volume": "ceph",
+    "source": "https://github.com/ceph/ceph/tree/v20.2.4/doc",
+    "sources": [
+      {
+        "title": "Ceph v20.2.4",
+        "url": "https://github.com/ceph/ceph/tree/v20.2.4"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "--yes-i-really-mean-it",
+        "action": "Подтвердить опасный size1 вместе с MON guard.",
+        "when": "Только для собственного одно-OSD пула.",
+        "example": "ceph osd pool set cephstudy size 1 --yes-i-really-mean-it",
+        "result": "Требуется mon_allow_pool_size_one; защита guard возвращается."
+      },
+      {
+        "flag": "--format FORMAT",
+        "action": "Выбрать представление ответа.",
+        "when": "Для сохраняемых JSON observations.",
+        "example": "ceph status --format=json",
+        "result": "Код0 status не означает HEALTH_OK."
+      },
+      {
+        "flag": "-s",
+        "action": "Запросить краткое состояние.",
+        "when": "После принятия FSID.",
+        "example": "ceph -s",
+        "result": "Читать также health detail и PG состояния."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "ceph osd pool set",
+      "ceph",
+      "ceph"
+    ],
+    "prefixFlags": {
+      "ceph": [
+        "--format FORMAT",
+        "-s"
+      ],
+      "ceph osd": [],
+      "ceph osd pool": []
+    }
+  },
+  {
+    "name": "rados",
+    "aliases": [],
+    "purpose": "Операции над внутренними объектами RADOS.",
+    "syntax": "rados [FLAGS] COMMAND",
+    "chapter": "ceph-09-rados-lab",
+    "volume": "ceph",
+    "source": "https://github.com/ceph/ceph/tree/v20.2.4/doc",
+    "sources": [
+      {
+        "title": "Ceph v20.2.4",
+        "url": "https://github.com/ceph/ceph/tree/v20.2.4"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "--pool POOL",
+        "action": "Выбрать pool.",
+        "when": "Перед операцией.",
+        "example": "rados --pool cephstudy get report -",
+        "result": "Знак- в get выбирает stdout; обычный filename может быть усечён программой."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "rados"
+    ]
+  },
+  {
+    "name": "rbd create",
+    "aliases": [],
+    "purpose": "Создать новый логический image.",
+    "syntax": "rbd create [FLAGS] POOL/IMAGE",
+    "chapter": "ceph-10-rbd-path",
+    "volume": "ceph",
+    "source": "https://github.com/ceph/ceph/tree/v20.2.4/doc",
+    "sources": [
+      {
+        "title": "Ceph v20.2.4",
+        "url": "https://github.com/ceph/ceph/tree/v20.2.4"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "--size SIZE",
+        "action": "Выбрать логический размер.",
+        "when": "Проверить отсутствие имени.",
+        "example": "rbd create --size 64M --object-size 4M --image-feature layering rbdstudy/report-disk",
+        "result": "64M не означает немедленное выделение64MiB на каждом OSD."
+      },
+      {
+        "flag": "--object-size SIZE",
+        "action": "Задать размер data object.",
+        "when": "Для разбора layout.",
+        "example": "rbd create --size 64M --object-size 4M rbdstudy/report-disk",
+        "result": "Для выбранного layout4MiB; сложное striping требует иных расчётов."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "rbd create",
+      "rbd create"
+    ],
+    "prefixFlags": {
+      "rbd": []
+    }
+  },
+  {
+    "name": "rbd export",
+    "aliases": [],
+    "purpose": "Экспортировать выбранное содержимое image/snapshot.",
+    "syntax": "rbd export IMAGE[@SNAP] DEST",
+    "chapter": "ceph-12-rbd-backup-restore",
+    "volume": "ceph",
+    "source": "https://github.com/ceph/ceph/tree/v20.2.4/doc",
+    "sources": [
+      {
+        "title": "Ceph v20.2.4",
+        "url": "https://github.com/ceph/ceph/tree/v20.2.4"
+      }
+    ],
+    "flags": [],
+    "situations": [],
+    "flagScopes": [],
+    "prefixFlags": {
+      "rbd": []
+    }
+  },
+  {
+    "name": "rbd import",
+    "aliases": [],
+    "purpose": "Создать новое image из принятого входа.",
+    "syntax": "rbd import SOURCE POOL/NEWIMAGE",
+    "chapter": "ceph-12-rbd-backup-restore",
+    "volume": "ceph",
+    "source": "https://github.com/ceph/ceph/tree/v20.2.4/doc",
+    "sources": [
+      {
+        "title": "Ceph v20.2.4",
+        "url": "https://github.com/ceph/ceph/tree/v20.2.4"
+      }
+    ],
+    "flags": [],
+    "situations": [],
+    "flagScopes": [],
+    "prefixFlags": {
+      "rbd": []
+    }
+  },
+  {
+    "name": "ceph fs authorize",
+    "aliases": [],
+    "purpose": "Назначить права отдельному CephFS-клиенту.",
+    "syntax": "ceph fs authorize FS CLIENT PATH ACCESS",
+    "chapter": "ceph-15-cephfs-caps-layout",
+    "volume": "ceph",
+    "source": "https://github.com/ceph/ceph/tree/v20.2.4/doc",
+    "sources": [
+      {
+        "title": "Ceph v20.2.4",
+        "url": "https://github.com/ceph/ceph/tree/v20.2.4"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "--format FORMAT",
+        "action": "Выбрать представление ответа.",
+        "when": "Для сохраняемых JSON observations.",
+        "example": "ceph status --format=json",
+        "result": "Код0 status не означает HEALTH_OK."
+      },
+      {
+        "flag": "-s",
+        "action": "Запросить краткое состояние.",
+        "when": "После принятия FSID.",
+        "example": "ceph -s",
+        "result": "Читать также health detail и PG состояния."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "ceph",
+      "ceph"
+    ],
+    "prefixFlags": {
+      "ceph": [
+        "--format FORMAT",
+        "-s"
+      ],
+      "ceph fs": []
+    }
+  },
+  {
+    "name": "rgw-adminbucket",
+    "aliases": [],
+    "purpose": "Создать/проверить bucket отдельным source-only helper.",
+    "syntax": "rgw-adminbucket --config FILE --target ID [--timeout DURATION] create|head",
+    "chapter": "ceph-19-rgw-s3-project",
+    "volume": "ceph",
+    "source": "https://github.com/ceph/ceph/tree/v20.2.4/doc",
+    "sources": [
+      {
+        "title": "Ceph v20.2.4",
+        "url": "https://github.com/ceph/ceph/tree/v20.2.4"
+      }
+    ],
+    "flags": [
+      {
+        "flag": "--config FILE",
+        "action": "Прочитать явные targets.",
+        "when": "Перед командой после native build gate.",
+        "example": "rgw-adminbucket --config config/targets.json --target rgw-study create",
+        "result": "Нет ambient AWS chain; private credentials отдельно."
+      },
+      {
+        "flag": "--timeout DURATION",
+        "action": "Ограничить одну операцию.",
+        "when": "Положительное время не более15m.",
+        "example": "rgw-adminbucket --config config/targets.json --target rgw-study --timeout 30s head",
+        "result": "Failed create может иметь unknown outcome."
+      }
+    ],
+    "situations": [],
+    "flagScopes": [
+      "rgw-adminbucket",
+      "rgw-adminbucket"
+    ]
   }
 ]

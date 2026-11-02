@@ -39,7 +39,9 @@ def free_port():
 
 
 def request(url, method='GET'):
-    with urllib.request.urlopen(urllib.request.Request(url, method=method), timeout=4) as r:
+    # These requests target only this runner's own loopback processes.
+    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+    with opener.open(urllib.request.Request(url, method=method), timeout=4) as r:
         return r.read().decode()
 
 

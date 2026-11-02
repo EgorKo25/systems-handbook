@@ -1,0 +1,362 @@
+<header>
+<h1>SigV4: от байтов PUT до Authorization</h1>
+<p>Возьмём тело из 14 байтов, имя объекта с пробелом, плюсом и процентом и вычислим подпись целиком. Затем теми же функциями подготовим ссылку GET и проследим, почему изменение пути, порта или времени даёт другой результат.</p>
+</header>
+
+<h2 id="s3-06-task">Что сервер проверяет вместе с запросом</h2>
+
+<p>Клиент хочет создать объект <code>lessons/2026-11/hello +%.txt</code> в корзине <code>study-s3</code>. Службе нужно установить, с каким ключом доступа связан запрос, изменились ли подписанные части и разрешено ли создание объекта. <strong>Учётные данные</strong>, credentials, содержат идентификатор доступа и секрет. Временные учётные данные дополнительно содержат токен сеанса и имеют срок действия. Идентификатор передаётся открыто; секрет используется в вычислениях и в запрос не помещается.</p>
+
+<p><strong>Аутентификация</strong> проверяет подтверждение, связанное с учётными данными. <strong>Авторизация</strong> применяет правила доступа к операции и ресурсу. Верно вычисленная подпись сама по себе не даёт права на PUT. В этой главе рассматривается AWS Signature Version 4, <strong>SigV4</strong>, с HMAC-SHA256. Это вариант с общим секретом. Асимметрические схемы используют отдельные закрытый и открытый ключи; SigV4a имеет другие вычисления и здесь не моделируется.</p>
+
+<p>Для воспроизводимости используем публичный вымышленный секрет. Он не соответствует учётной записи. Адрес <code>127.0.0.1:19000</code> тоже часть вектора: <strong>loopback</strong>, адрес самого компьютера, с которого сделан запрос. Модель ничего туда не отправляет. Эти данные нельзя заменить реальными credentials ради печати диагностического отчёта.</p>
+
+<p>В обычной программе сериализацию операции и подпись выполняет <strong>SDK</strong>, набор библиотек для обращения к службе. HTTP-клиент передаёт подготовленный запрос. Сервер заново составляет данные для проверки подписи и применяет свои проверки времени, учётных данных и доступа. Ниже мы вручную воспроизводим вычисления, чтобы понимать входы SDK. Учебный helper <code>object-study</code> по-прежнему имеет только команды <code>put</code>, <code>get</code> и <code>head</code>; команды presign у него нет. Роль SDK описана в <a href="https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_sigv-create-signed-request.html">AWS: создание подписанного запроса</a>.</p>
+
+<h2 id="s3-06-input">Исходные байты PUT</h2>
+
+<p>Тело — последовательность <code>object-lab v1</code> и байт конца строки <strong>LF</strong>, Line Feed, с числом <code>0A</code>. В <strong>ASCII</strong>, таблице кодирования используемых здесь латинских символов, каждый такой знак занимает один байт. Получаются 13 печатных байтов и один LF. Шестнадцатеричная запись, <strong>hex</strong>, показывает каждый байт двумя знаками; пробелы оформления в hex не нужны.</p>
+
+<pre><code>body text: object-lab v1\n
+body hex:  6f626a6563742d6c61622076310a
+body length: 14 bytes
+access key: AKIDEXAMPLE
+secret, ASCII: s3-lab-only-not-a-real-secret
+session token: absent
+timestamp, UTC: 20261101T090000Z
+region: us-east-1
+service: s3
+bucket: study-s3
+key: lessons/2026-11/hello +%.txt
+query pairs: []</code></pre>
+
+<p><strong>UTC</strong> — шкала времени, относительно которой задана отметка: 1 ноября 2026 года, 09:00:00 UTC. В строке <code>20261101T090000Z</code> ровно 16 ASCII-байтов; <code>T</code> разделяет дату и время, <code>Z</code> обозначает UTC. Регион и служба — буквальные входы подписи. В этом векторе регион выбран явно, а имя службы S3 — <code>s3</code>.</p>
+
+<p>Ниже полный учебный HTTP/1.1 PUT с уже вычисленным Authorization; его получение разберём далее. В строке запроса путь уже закодирован. В заголовках и после строки запроса каждый показанный переход на новую строку означает два байта <strong>CRLF</strong>: <code>0D 0A</code>. Пустая строка завершает заголовки. После неё тело оканчивается одним LF. Без дополнительного перевода строки после тела это 526 байтов. Код модели также печатает <code>wire_repr</code>, где CR и LF видны как <code>\r</code> и <code>\n</code>. Это иллюстрация байтов, а не команда отправки.</p>
+
+<pre><code>PUT /study-s3/lessons/2026-11/hello%20%2B%25.txt HTTP/1.1
+Host: 127.0.0.1:19000
+Content-Type: text/plain
+Content-Length: 14
+If-None-Match: *
+X-Amz-Content-Sha256: 874160ebe2d9a6a82abdec1966f3be5be4e0db5d575d4d00953c66baf6e30897
+X-Amz-Date: 20261101T090000Z
+Authorization: AWS4-HMAC-SHA256 Credential=AKIDEXAMPLE/20261101/us-east-1/s3/aws4_request, SignedHeaders=content-type;host;if-none-match;x-amz-content-sha256;x-amz-date, Signature=a1dcb907b99c7d2f0848413d81c80960dd54f2e49d212c2ae01110fbb60afc31
+
+object-lab v1
+</code></pre>
+
+<p><code>PUT</code> выбирает операцию. <code>/study-s3/...</code> задаёт корзину в пути — это адресация path style. <code>HTTP/1.1</code> задаёт версию HTTP. <code>Host</code> содержит узел и нестандартный порт. <code>Content-Type: text/plain</code> описывает тип тела, но не изменяет его байты. <code>Content-Length: 14</code> задаёт длину тела для HTTP. Условие <code>If-None-Match: *</code> требует создания при допустимом отсутствии текущего объекта по правилам операции. Здесь оно подписано: заменить условие, сохранив подпись, нельзя. Поведение записи и конкуренции рассматривает <a href="#s3-07-object-operations">глава об операциях с объектом</a>.</p>
+
+<p><code>X-Amz-Content-Sha256</code> сообщает выбранную характеристику тела; здесь это его SHA-256 в hex. <code>X-Amz-Date</code> содержит время подписывания. <code>Authorization</code> связывает идентификатор доступа, область подписи, список подписанных заголовков и окончательное значение подписи. <code>Content-Length</code> в наш подписанный список не включён: подпись этого вектора охватывает выбранные поля, а не буквальную копию всех HTTP-байтов. Формат строк HTTP задан в <a href="https://www.rfc-editor.org/rfc/rfc9112.html#section-2.1">RFC 9112, §2.1</a>.</p>
+
+<h2 id="s3-06-path">Из имени объекта в canonical URI</h2>
+
+<p><strong>URI</strong> — идентификатор ресурса; в HTTP-адресе нас сейчас интересует его путь. Имя объекта поступает как текст, который сначала кодируется в <strong>UTF-8</strong>, последовательности байтов для символов Unicode. Затем каждый байт, кроме латинских букв, цифр и <code>-._~</code>, записывается как <code>%HH</code> с прописными hex-цифрами. Такое представление называется percent-encoding. В пути S3 косые черты сохраняются. Буквальный процент из имени сам кодируется как <code>%25</code>, поэтому уже закодированный путь нельзя повторно передавать функции, ожидающей исходное имя.</p>
+
+<table>
+<thead><tr><th>Исходное имя или фрагмент</th><th>Байты UTF-8</th><th>Фрагмент пути</th></tr></thead>
+<tbody>
+<tr><td>пробел</td><td><code>20</code></td><td><code>%20</code></td></tr>
+<tr><td><code>+</code></td><td><code>2b</code></td><td><code>%2B</code></td></tr>
+<tr><td><code>%</code></td><td><code>25</code></td><td><code>%25</code></td></tr>
+<tr><td><code>ёж</code></td><td><code>d1 91 d0 b6</code></td><td><code>%D1%91%D0%B6</code></td></tr>
+<tr><td>три буквальных знака <code>%20</code></td><td><code>25 32 30</code></td><td><code>%2520</code></td></tr>
+<tr><td><code>a/b</code></td><td><code>61 2f 62</code></td><td><code>a/b</code></td></tr>
+<tr><td>буквальное <code>a%2Fb</code></td><td><code>61 25 32 46 62</code></td><td><code>a%252Fb</code></td></tr>
+</tbody>
+</table>
+
+<p>Наш путь получается таким:</p>
+<pre><code>/study-s3/lessons/2026-11/hello%20%2B%25.txt</code></pre>
+
+<p>Пробел не превращается в плюс. Кодирование HTML-форм с плюсом для пробела здесь не подходит. Не следует и «исправлять» имя файловой функцией: <code>a//b</code>, <code>a/b</code> и <code>a/../b</code> имеют разные исходные байты. Для S3 canonical URI не выполняет схлопывание двойных slash или удаление сегментов <code>..</code>. Общая URI-нормализация из других задач не определяет имя S3-объекта. Эти правила S3 приведены в <a href="https://docs.aws.amazon.com/AmazonS3/latest/developerguide/sig-v4-header-based-auth.html">AWS: canonical URI</a>; устройство percent-encoding и UTF-8 — в <a href="https://www.rfc-editor.org/rfc/rfc3986.html#section-2.1">RFC 3986, §2.1</a> и <a href="https://www.rfc-editor.org/rfc/rfc3629.html#section-3">RFC 3629, §3</a>.</p>
+
+<p>Даже одинаково выглядящие символы могут иметь разные байты. <code>é</code> — один символ с UTF-8 <code>c3 a9</code>; <code>e</code> и комбинируемый акцент — <code>65 cc 81</code>. Модель их не нормализует и получает разные пути и подписи. Так легче найти подмену представления до вычисления HMAC.</p>
+
+<h2 id="s3-06-query">Пары query: порядок, дубли и пустые значения</h2>
+
+<p><strong>Query</strong> — параметры после вопросительного знака в адресе. Для подписи имя и значение каждой пары кодируются отдельно; затем строится упорядоченная строка с <code>=</code> между ними и <code>&amp;</code> между парами. У нашего PUT query отсутствует, поэтому соответствующая часть canonical request пуста. Она всё равно имеет своё место и разделитель LF.</p>
+
+<p>Для отдельного примера возьмём пары <code>[("x","2"), ("x","1"), ("acl","")]</code>. В модели они упорядочиваются по закодированному имени, затем по закодированному значению. Получается <code>acl=&amp;x=1&amp;x=2</code>. Пустое значение сохраняет знак равенства; обе пары с именем <code>x</code> сохраняются. Перестановка исходных пар даёт тот же результат; превращение списка в словарь может потерять <code>x=2</code>. Это проверка канонизатора, а не заявление, что любая операция S3 принимает произвольный параметр <code>x</code>.</p>
+
+<p>Сортировка относится к закодированным строкам. Пары с именами <code>a</code> и <code>é</code> дают <code>%C3%A9=&amp;a=x</code>: знак процента имеет ASCII-код 37, буква <code>a</code> — 97. Для значения <code>+ /%</code> результат <code>%2B%20%2F%25</code>; slash внутри query кодируется. Если значение пустое, остаётся <code>x=</code>. Отправитель и проверяющая сторона должны получить одну canonical query, даже если исходные пары шли в другом порядке. Правила кодирования и пустого subresource описаны в <a href="https://docs.aws.amazon.com/AmazonS3/latest/developerguide/sig-v4-header-based-auth.html">AWS: canonical query</a>. Модель принимает исходные пары, а не разбирает произвольный URL.</p>
+
+<h2 id="s3-06-headers">Заголовки, которые входят в подпись</h2>
+
+<p><strong>Canonical headers</strong> — подготовленный блок выбранных заголовков. Имена приводятся к нижнему регистру и сортируются. У значений убираются внешние пробелы, последовательности обычных пробелов сжимаются до одного. Регистр значений сохраняется: <code>text/plain</code> не нужно преобразовывать произвольно. Наша модель допускает внешние пробелы и HTAB, горизонтальную табуляцию <code>09</code>; внутреннюю HTAB и повтор одного имени заголовка она отклоняет, чтобы не изображать полный HTTP-парсер. Перенос строки внутри значения также отклоняется.</p>
+
+<p>Из пяти выбранных заголовков получается блок ниже. После каждой строки есть LF, в том числе после последней. <strong>SignedHeaders</strong> — те же нормализованные имена, соединённые точкой с запятой без пробелов. Заголовок <code>host</code> обязателен. Нестандартный порт <code>19000</code> входит в его значение. Временный токен для заголовочной формы S3 потребовал бы <code>x-amz-security-token</code> и включения в подписываемые заголовки. Для <code>x-amz-content-sha256</code> S3 допускает особое правило: значение уже входит в последний элемент canonical request; наш пример дополнительно подписывает сам заголовок явно.</p>
+
+<pre><code>content-type:text/plain
+host:127.0.0.1:19000
+if-none-match:*
+x-amz-content-sha256:874160ebe2d9a6a82abdec1966f3be5be4e0db5d575d4d00953c66baf6e30897
+x-amz-date:20261101T090000Z
+</code></pre>
+
+<pre><code>content-type;host;if-none-match;x-amz-content-sha256;x-amz-date</code></pre>
+
+<p>Имена заголовков в исходном HTTP можно переставить и написать другим регистром; при той же нормализации эти canonical bytes сохранятся. Но <code>Host: 127.0.0.1:19001</code> уже даёт другое значение. Изменение <code>If-None-Match</code> тоже меняет запрос. Неподписанное поле не получает такой же защиты лишь потому, что расположено рядом. SDK выбирает набор заголовков по своим правилам; ручной пятиэлементный вектор не обещает совпадения с каждым SDK-запросом. В закреплённом <a href="https://github.com/aws/aws-sdk-go-v2/blob/release-2026-10-02/aws/signer/v4/v4.go">AWS Go signer</a> видны отдельные операции построения заголовков и списка имён; правила S3 приведены в <a href="https://docs.aws.amazon.com/AmazonS3/latest/developerguide/sig-v4-header-based-auth.html">спецификации подписи с заголовком</a>.</p>
+
+<h2 id="s3-06-payload">SHA-256 тела: байты, hex и Base64</h2>
+
+<p><strong>Хеш-функция</strong> вычисляет фиксированную характеристику байтов. SHA-256 выдаёт 32 байта. Их можно представить 64 hex-знаками или кодированием <strong>Base64</strong>, которое переводит группы битов в печатные символы; для 32 байтов здесь получается 44 знака с завершающим <code>=</code>. Это два представления одного результата. Hex-строка и Base64-строка имеют собственные ASCII-байты и не заменяют друг друга в поле протокола. Форматы описывает <a href="https://www.rfc-editor.org/rfc/rfc4648.html#section-4">RFC 4648</a>.</p>
+
+<pre><code>SHA256(body), hex:
+874160ebe2d9a6a82abdec1966f3be5be4e0db5d575d4d00953c66baf6e30897
+
+те же 32 байта, Base64:
+h0Fg6+LZpqgqvewZZvO+W+Tg211XXU0AlTxmuvbjCJc=</code></pre>
+
+<p>В этой подписи используется hex — как значение <code>x-amz-content-sha256</code> и как последний элемент canonical request. Base64 показана для сравнения представлений; заголовок checksum с таким значением в наш PUT не добавлен. <strong>Checksum</strong>, контрольная сумма тела, и <strong>ETag</strong>, возвращаемый службой идентификатор состояния по правилам операции, не становятся подписью SigV4. Значение ETag нельзя автоматически считать SHA-256 или MD5 тела. В частности, SDK может добавлять отдельную checksum и выбирать другой режим передачи; тогда его canonical request будет отличаться от этого учебного.</p>
+
+<h2 id="s3-06-canonical">Полный canonical request: 354 байта</h2>
+
+<p><strong>Канонизация</strong> создаёт однозначное представление частей запроса для вычисления подписи. Здесь соединяем шесть элементов: метод, URI, query, блок заголовков, SignedHeaders и hex-хеш тела. Точнее, между соседними элементами помещается один байт LF. Блок заголовков уже оканчивается LF; следующий разделитель создаёт видимую пустую строку перед SignedHeaders. Пустая query создаёт другую пустую строку после URI. После последнего хеша LF отсутствует.</p>
+
+<pre><code>PUT
+/study-s3/lessons/2026-11/hello%20%2B%25.txt
+
+content-type:text/plain
+host:127.0.0.1:19000
+if-none-match:*
+x-amz-content-sha256:874160ebe2d9a6a82abdec1966f3be5be4e0db5d575d4d00953c66baf6e30897
+x-amz-date:20261101T090000Z
+
+content-type;host;if-none-match;x-amz-content-sha256;x-amz-date
+874160ebe2d9a6a82abdec1966f3be5be4e0db5d575d4d00953c66baf6e30897</code></pre>
+
+<p>Это 354 ASCII-байта и 10 LF. Здесь нет ни версии HTTP, ни строкового имени <code>Authorization</code>, ни <code>Content-Length</code>. Нельзя взять весь показанный HTTP-запрос и просто вычислить его SHA-256: это другая последовательность. Хеш именно приведённых 354 байтов:</p>
+
+<pre><code>1916f06f0716be4ee42bfde94fb0ba08552e1b87f5a24193725c0097137c3ec6</code></pre>
+
+<p>Если заменить все canonical LF на CRLF, добавятся десять байтов, и длина станет 364. Если добавить только последний LF, длина станет 355. Оба варианта изменяют хеш. Окончания строк транспортного HTTP и разделители canonical request выполняют разные задачи.</p>
+
+<h2 id="s3-06-scope">String to sign: время и scope</h2>
+
+<p><strong>String to sign</strong>, строка для подписывания, отделяет содержание запроса от параметров подписи. Она состоит из четырёх ASCII-строк: обозначение алгоритма, полная отметка времени, <strong>scope</strong> и hex-хеш canonical request. Scope — строка <code>дата/регион/служба/aws4_request</code>. Короткая дата <code>20261101</code> берётся из UTC-отметки этого запроса. Регион и служба совпадают с теми, для которых создаётся подпись; <code>aws4_request</code> — буквальный завершающий элемент алгоритма.</p>
+
+<pre><code>AWS4-HMAC-SHA256
+20261101T090000Z
+20261101/us-east-1/s3/aws4_request
+1916f06f0716be4ee42bfde94fb0ba08552e1b87f5a24193725c0097137c3ec6</code></pre>
+
+<p>Это 133 байта: между четырьмя строками три LF, после последней строки перевода нет. Scope связывает вычисление с датой, регионом и службой; он не перечисляет разрешённые операции. Если оставить canonical request прежним, но заменить регион на <code>us-east-2</code>, изменятся scope и следующие ключи, хотя его SHA-256 останется <code>1916f06f…</code>. Поле <code>Credential</code> в конечном Authorization должно нести тот же scope. Последовательность шагов описана в <a href="https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_sigv-create-signed-request.html#reference_sigv-create-string-to-sign">AWS IAM: string to sign</a>.</p>
+
+<h2 id="s3-06-hmac">Четыре бинарных ключа и итоговый HMAC</h2>
+
+<p>Один SHA-256 тела не подтверждает знание секрета: его вычислит любой обладатель этих 14 байтов. <strong>HMAC</strong>, код аутентификации сообщения с секретным ключом, принимает два разных входа — ключ и сообщение. Здесь используется HMAC-SHA256, который выдаёт 32 байта. Обозначим <code>H(K, M)</code> эти 32 байта, вычисленные для ключа K и сообщения M. Обе стороны с общим секретом способны получить такой результат; сторонний наблюдатель по HMAC не установит, какая из этих сторон его создала. Устройство HMAC описывает <a href="https://www.rfc-editor.org/rfc/rfc2104.html">RFC 2104</a>.</p>
+
+<p>Сначала к 29 ASCII-байтам секрета добавляется слева текст <code>AWS4</code>. Получаются 33 байта начального ключа. Далее четыре раза вызывается HMAC. Результат каждого вызова — бинарный ключ следующего. Сообщения на этих четырёх шагах — ASCII-байты показанных строк, без кавычек, NUL и LF. NUL — нулевой байт <code>00</code>, его строковые библиотеки некоторых языков могут добавлять как терминатор; здесь его нет.</p>
+
+<table>
+<thead><tr><th>Результат</th><th>Ключ входного HMAC</th><th>Сообщение и длина</th><th>32 выходных байта в hex</th></tr></thead>
+<tbody>
+<tr><td>kDate</td><td><code>AWS4</code> + secret, 33 байта</td><td><code>20261101</code>, 8</td><td><code>99bf91ee7dd677f48ce4893c2d8fa7a3104044dfee8deb10d65d148aa94b5b63</code></td></tr>
+<tr><td>kRegion</td><td>32 байта kDate</td><td><code>us-east-1</code>, 9</td><td><code>3f31613988f31de50dc83c1fb103795e243d844ae18e8fd4a338de727b82a69e</code></td></tr>
+<tr><td>kService</td><td>32 байта kRegion</td><td><code>s3</code>, 2</td><td><code>fe64b6784e1bf0d45ab8646c8d36ad0781b08e53330017fa877659053ebe7d75</code></td></tr>
+<tr><td>kSigning</td><td>32 байта kService</td><td><code>aws4_request</code>, 12</td><td><code>2dcf2a5ae99809b17984d7f3120e7f7c70792440339410f56ce07f2a6662c0a6</code></td></tr>
+</tbody>
+</table>
+
+<p>Например, kDate начинается бинарными байтами <code>99 bf 91 ee</code>. Его напечатанное hex-представление начинается ASCII-байтами <code>39 39 62 66</code>, то есть знаками <code>99bf</code>. Если передать следующему HMAC 64 знака hex вместо 32 байтов, получится другой ключ. Выводить промежуточные ключи можно у этого публичного вектора. Для настоящих credentials они также являются секретным материалом.</p>
+
+<p>Пятый HMAC использует 32 байта kSigning как ключ, а 133 байта string to sign — как сообщение. Его 32-байтовый результат переводится в hex; это значение Signature:</p>
+
+<pre><code>a1dcb907b99c7d2f0848413d81c80960dd54f2e49d212c2ae01110fbb60afc31</code></pre>
+
+<p>При ошибочном использовании hex-записи только kSigning как 64-байтового ASCII-ключа результат уже <code>26fc90be3439623051dda012818db0db00b402496fa8960ff802a77a899d42e2</code>. В этом отрицательном варианте canonical request и string to sign сохранены. Поэтому при диагностике совпавшие строки позволяют перейти к представлению ключа. Четыре этапа получения ключа можно сравнить с функцией <code>deriveKey</code> в <a href="https://github.com/aws/aws-sdk-go-v2/blob/release-2026-10-02/aws/signer/internal/v4/cache.go">закреплённой реализации AWS Go SDK</a>. Модель отдельно проверяет HMAC на <a href="https://www.rfc-editor.org/rfc/rfc4231.html#section-4.2">тесте RFC 4231, §4.2</a>, затем проверяет собственные S3-векторы.</p>
+
+<figure id="s3-sigv4-bytes" aria-labelledby="s306-byte-question">
+<style>
+#s3-sigv4-bytes{margin:1.5rem 0;padding:1rem 0;border-block:2px solid var(--line,#8b98a5);color:var(--text,#17212b);background:var(--paper,#fff);max-width:100%;min-width:0}
+#s3-sigv4-bytes figcaption{font:inherit;margin:0 0 1rem}
+#s3-sigv4-bytes figcaption strong{display:block;font-size:1.12em;line-height:1.35}
+#s3-sigv4-bytes p{margin:.6rem 0;line-height:1.55}
+#s3-sigv4-bytes .byte-ledgers{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1.4rem}
+#s3-sigv4-bytes .byte-ledger{min-width:0;padding-inline-start:.8rem;border-inline-start:3px solid var(--line,#8b98a5)}
+#s3-sigv4-bytes .byte-ledger:last-child{border-inline-start-color:var(--accent,#075d78)}
+#s3-sigv4-bytes h3{font:700 1rem/1.4 system-ui,sans-serif;margin:0 0 .6rem}
+#s3-sigv4-bytes .byte-line{display:block;font:.9rem/1.65 ui-monospace,SFMono-Regular,Consolas,monospace;overflow-wrap:anywhere;white-space:normal}
+#s3-sigv4-bytes code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;overflow-wrap:anywhere}
+#s3-sigv4-bytes .byte-eol{font:700 .8em/1.4 ui-monospace,monospace;border-bottom:2px solid currentColor;color:var(--accent,#075d78);white-space:nowrap}
+#s3-sigv4-bytes .byte-omitted{color:var(--muted,#52606d)}
+#s3-sigv4-bytes .byte-body{border-top:2px dashed var(--line,#8b98a5);margin-top:.55rem;padding-top:.45rem}
+#s3-sigv4-bytes .byte-map{margin:1rem 0;padding:.7rem 0;background:var(--soft,rgba(127,127,127,.08))}
+#s3-sigv4-bytes svg{display:block;width:100%;max-width:24rem;height:auto;margin:.4rem auto;color:var(--text,#17212b)}
+#s3-sigv4-bytes .byte-keys{padding-top:.6rem;border-top:1px solid var(--line,#8b98a5)}
+#s3-sigv4-bytes .byte-keys ol{padding-inline-start:1.5rem;margin:.5rem 0}
+#s3-sigv4-bytes .byte-keys li{margin:.35rem 0;line-height:1.55}
+#s3-sigv4-bytes .byte-marker{padding:.6rem 0;border-top:2px solid var(--accent,#075d78)}
+@media(max-width:680px){#s3-sigv4-bytes .byte-ledgers{grid-template-columns:minmax(0,1fr);gap:1.2rem}#s3-sigv4-bytes{padding:.8rem 0}#s3-sigv4-bytes .byte-line{font-size:.9rem}}
+@media print{#s3-sigv4-bytes{color:var(--text,#000);background:var(--paper,#fff);break-inside:auto}#s3-sigv4-bytes .byte-map,#s3-sigv4-bytes .byte-keys,#s3-sigv4-bytes .byte-ledger{break-inside:avoid}#s3-sigv4-bytes .byte-line{font-size:9pt}#s3-sigv4-bytes .byte-eol{color:inherit}#s3-sigv4-bytes .byte-map{background:transparent}}
+</style>
+<figcaption id="s306-byte-question"><strong>Какие байты HTTP попадут в подпись?</strong>Сопоставьте фрагменты одного PUT. Подписи CRLF и LF обозначают окончания строк; они не являются буквами сообщения. Перенос длинной строки по ширине страницы также не добавляет байта.</figcaption>
+<div class="byte-ledgers">
+<section class="byte-ledger" aria-label="Исходный HTTP PUT">
+<h3>HTTP/1.1: полный вектор — 526 байтов</h3>
+<code class="byte-line">PUT /study-s3/…/hello%20%2B%25.txt HTTP/1.1 <b class="byte-eol">CRLF</b></code>
+<code class="byte-line">Host: 127.0.0.1:19000 <b class="byte-eol">CRLF</b></code>
+<code class="byte-line">Content-Type: text/plain <b class="byte-eol">CRLF</b></code>
+<code class="byte-line byte-omitted">Content-Length: 14 <b class="byte-eol">CRLF</b></code>
+<code class="byte-line">If-None-Match: * <b class="byte-eol">CRLF</b></code>
+<code class="byte-line">X-Amz-Content-Sha256: 874160…0897 <b class="byte-eol">CRLF</b></code>
+<code class="byte-line">X-Amz-Date: 20261101T090000Z <b class="byte-eol">CRLF</b></code>
+<code class="byte-line byte-omitted">Authorization: AWS4-HMAC-SHA256 … <b class="byte-eol">CRLF</b></code>
+<code class="byte-line"><b class="byte-eol">CRLF</b> — конец заголовков</code>
+<div class="byte-body"><code class="byte-line">object-lab v1<b class="byte-eol">LF</b></code><span>Тело: 13 печатных байтов + 0A = 14.</span></div>
+</section>
+<section class="byte-ledger" aria-label="Строки canonical request">
+<h3>Canonical request: 354 байта</h3>
+<code class="byte-line">PUT <b class="byte-eol">LF</b></code>
+<code class="byte-line">/study-s3/…/hello%20%2B%25.txt <b class="byte-eol">LF</b></code>
+<code class="byte-line"><b class="byte-eol">LF</b> — query пуста</code>
+<code class="byte-line">content-type:text/plain <b class="byte-eol">LF</b></code>
+<code class="byte-line">host:127.0.0.1:19000 <b class="byte-eol">LF</b></code>
+<code class="byte-line">if-none-match:* <b class="byte-eol">LF</b></code>
+<code class="byte-line">x-amz-content-sha256:874160…0897 <b class="byte-eol">LF</b></code>
+<code class="byte-line">x-amz-date:20261101T090000Z <b class="byte-eol">LF</b></code>
+<code class="byte-line"><b class="byte-eol">LF</b> — разделитель после блока</code>
+<code class="byte-line">content-type;host;if-none-match;x-amz-content-sha256;x-amz-date <b class="byte-eol">LF</b></code>
+<code class="byte-line">874160…0897 — SHA256 тела, hex; без конечного LF</code>
+</section>
+</div>
+<p>Имена выбранных заголовков становятся строчными и сортируются; пробел после двоеточия в HTTP не копируется. Content-Length, версия HTTP и готовый Authorization в эти подписываемые строки не входят. Тело сворачивается в SHA-256. Многоточия сокращают только рисунок: полные значения и точные 354 байта приведены выше.</p>
+<div class="byte-map">
+<p>Имя <code>hello +%.txt</code> сначала даёт байты UTF-8. Пробел, плюс и процент кодируются по-разному; знак процента не означает «уже готовый escape».</p>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 142" role="img" aria-labelledby="s306-encoding-title s306-encoding-desc">
+<title id="s306-encoding-title">Три исходных байта и их percent-encoding</title>
+<desc id="s306-encoding-desc">Пробел 20 становится строкой %20, байтами 25 32 30. Плюс 2B становится %2B, байтами 25 32 42. Процент 25 становится %25, байтами 25 32 35. Числа записаны в hex.</desc>
+<g fill="currentColor" font-family="ui-monospace,monospace" font-size="16">
+<text x="18" y="22">UTF-8</text><text x="132" y="22">путь</text><text x="198" y="22">ASCII</text>
+<text x="18" y="57">20</text><text x="132" y="57">%20</text><text x="198" y="57">25 32 30</text>
+<text x="18" y="92">2B</text><text x="132" y="92">%2B</text><text x="198" y="92">25 32 42</text>
+<text x="18" y="127">25</text><text x="132" y="127">%25</text><text x="198" y="127">25 32 35</text>
+</g>
+<path d="M65 51H111M103 45L111 51L103 57M65 86H111M103 80L111 86L103 92M65 121H111M103 115L111 121L103 127" fill="none" stroke="currentColor" stroke-width="2"/>
+</svg>
+<p>Получается <code>hello%20%2B%25.txt</code>. Три буквальных знака <code>%20</code> в исходном имени дали бы <code>%2520</code>. Косые черты пути S3 сохраняются; <code>a//b</code> не превращается в <code>a/b</code>.</p>
+</div>
+<div class="byte-keys">
+<h3>Ключи HMAC передаются отдельно от строк</h3>
+<p>Начальный ключ <code>AWS4 + secret</code> содержит 33 байта. Ниже показаны только первые четыре байта каждого 32-байтового результата; следующий HMAC получает все 32 бинарных байта.</p>
+<ol>
+<li><code>H(начальный ключ, 20261101) → kDate: 99 bf 91 ee …</code></li>
+<li><code>H(kDate, us-east-1) → kRegion: 3f 31 61 39 …</code></li>
+<li><code>H(kRegion, s3) → kService: fe 64 b6 78 …</code></li>
+<li><code>H(kService, aws4_request) → kSigning: 2d cf 2a 5a …</code></li>
+</ol>
+<p>Последний HMAC получает <code>kSigning</code> и 133 байта string to sign. Запись <code>99bf…</code> — печатный hex, а не бинарный ключ: четыре первых ASCII-байта такой записи — <code>39 39 62 66</code>.</p>
+</div>
+<p class="byte-marker"><strong>Отдельный presigned GET:</strong> HTTP-тела нет. В последней строке его canonical request находится <code>UNSIGNED-PAYLOAD</code>, 16 ASCII-байтов. Маркер не отправляется телом GET. Метод, host и query этого GET дают другой 369-байтовый canonical request.</p>
+</figure>
+
+<h2 id="s3-06-authorization">Сборка Authorization и проверка сервером</h2>
+
+<p>Теперь помещаем результат в один заголовок. Его значение занимает 229 ASCII-байтов; вместе с текстом <code>Authorization: </code> строка занимает 244 байта без CRLF. Переносы оформления в значение не входят.</p>
+
+<pre><code>Authorization: AWS4-HMAC-SHA256 Credential=AKIDEXAMPLE/20261101/us-east-1/s3/aws4_request, SignedHeaders=content-type;host;if-none-match;x-amz-content-sha256;x-amz-date, Signature=a1dcb907b99c7d2f0848413d81c80960dd54f2e49d212c2ae01110fbb60afc31</code></pre>
+
+<p><code>AWS4-HMAC-SHA256</code> обозначает алгоритм. В <code>Credential</code> сначала идёт открытый идентификатор <code>AKIDEXAMPLE</code>, затем slash и scope. <code>SignedHeaders</code> сообщает серверу, какие имена заголовков нужно взять для canonical headers. <code>Signature</code> несёт итоговый hex-HMAC. Сам Authorization не включается обратно в SignedHeaders: вычисление не подписывает ещё не полученный результат.</p>
+
+<p>Проверяющая сторона использует соответствующие идентификатору учётные данные и те же параметры алгоритма, строит свою canonical форму и сравнивает подпись. Затем остаются проверки действительности credentials, времени и разрешения PUT. Вымышленный идентификатор этого примера не позволяет пройти такую проверку у реальной службы. Совпадение локальных HMAC не сообщает, есть ли сервер, корзина или право на запись.</p>
+
+<p>SDK передаёт HTTP-клиенту уже подготовленный запрос. Изменение подписанного host или пути после этого, например обработчиком proxy, меняет вход проверки. Закреплённый <a href="https://github.com/aws/aws-sdk-go-v2/blob/release-2026-10-02/service/s3/api_client.go">S3 client AWS Go SDK</a> устанавливает <code>DisableURIPathEscaping = true</code> у своего signer: уже подготовленный путь S3 не должен получать ещё один слой общего escaping. Это не указание убрать percent-encoding исходного имени; его мы выполнили до подписи.</p>
+
+<h2 id="s3-06-presign">GET с подписью в URL</h2>
+
+<p><strong>Presigned URL</strong>, предварительно подписанная ссылка, переносит данные аутентификации в query. Получатель выполняет указанную операцию без знания секрета. Начнём с того же имени, host, времени и scope, но выберем GET и вымышленную версию <code>v+/%</code>. Дополнительный параметр <code>response-content-disposition</code> просит службу сформировать <code>Content-Disposition</code> ответа как <code>attachment; filename="hello +%.txt"</code>. Это параметр будущего ответа, но он уже входит в подпись запроса. Версия не утверждается существующей.</p>
+
+<table>
+<thead><tr><th>Исходное имя параметра</th><th>Исходное значение</th><th>Назначение</th></tr></thead>
+<tbody>
+<tr><td><code>X-Amz-Algorithm</code></td><td><code>AWS4-HMAC-SHA256</code></td><td>Алгоритм</td></tr>
+<tr><td><code>X-Amz-Credential</code></td><td><code>AKIDEXAMPLE/20261101/us-east-1/s3/aws4_request</code></td><td>Идентификатор и scope</td></tr>
+<tr><td><code>X-Amz-Date</code></td><td><code>20261101T090000Z</code></td><td>Время подписывания</td></tr>
+<tr><td><code>X-Amz-Expires</code></td><td><code>60</code></td><td>Запрошенный интервал в секундах</td></tr>
+<tr><td><code>X-Amz-SignedHeaders</code></td><td><code>host</code></td><td>Подписанный заголовок</td></tr>
+<tr><td><code>response-content-disposition</code></td><td><code>attachment; filename="hello +%.txt"</code></td><td>Параметр ответа</td></tr>
+<tr><td><code>versionId</code></td><td><code>v+/%</code></td><td>Выбор версии</td></tr>
+</tbody>
+</table>
+
+<p>Сначала кодируем и сортируем эти пары. <code>X-Amz-Signature</code> пока отсутствует: иначе значение подписи зависело бы от самой себя. В canonical headers остаётся host. Для выбранного режима presign S3 последняя строка — буквальный маркер <code>UNSIGNED-PAYLOAD</code>. Это 16 ASCII-знаков, а не SHA-256 пустого тела и не обещание о байтах будущего ответа. У GET нет нашего прежнего PUT-тела. Канонический запрос занимает 369 байтов:</p>
+
+<pre><code>GET
+/study-s3/lessons/2026-11/hello%20%2B%25.txt
+X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIDEXAMPLE%2F20261101%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261101T090000Z&X-Amz-Expires=60&X-Amz-SignedHeaders=host&response-content-disposition=attachment%3B%20filename%3D%22hello%20%2B%25.txt%22&versionId=v%2B%2F%25
+host:127.0.0.1:19000
+
+host
+UNSIGNED-PAYLOAD</code></pre>
+
+<p>Хеш canonical request и string to sign получаются такими:</p>
+
+<pre><code>canonical SHA256:
+6e50095284b663b114d9a8eabfb4aa6d3ebc66a79cbb666c68ccfb35a746376a
+
+string to sign, 133 bytes:
+AWS4-HMAC-SHA256
+20261101T090000Z
+20261101/us-east-1/s3/aws4_request
+6e50095284b663b114d9a8eabfb4aa6d3ebc66a79cbb666c68ccfb35a746376a
+
+signature:
+0f455b73dfd532fc6954d7bcdfce8b30bc806ba2ce1ca64fbed3681d47989221</code></pre>
+
+<p>Четыре производных ключа остаются прежними, потому что секрет, дата, регион и служба не изменились. Изменились canonical request и последняя строка string to sign, поэтому итоговый HMAC другой. Теперь добавляем <code>X-Amz-Signature</code> в query и получаем полный URL одной строкой:</p>
+
+<pre><code>http://127.0.0.1:19000/study-s3/lessons/2026-11/hello%20%2B%25.txt?X-Amz-Algorithm=AWS4-HMAC-SHA256&amp;X-Amz-Credential=AKIDEXAMPLE%2F20261101%2Fus-east-1%2Fs3%2Faws4_request&amp;X-Amz-Date=20261101T090000Z&amp;X-Amz-Expires=60&amp;X-Amz-SignedHeaders=host&amp;response-content-disposition=attachment%3B%20filename%3D%22hello%20%2B%25.txt%22&amp;versionId=v%2B%2F%25&amp;X-Amz-Signature=0f455b73dfd532fc6954d7bcdfce8b30bc806ba2ce1ca64fbed3681d47989221</code></pre>
+
+<p>Это публичный вымышленный HTTP-адрес для локального расчёта; не действующая ссылка. Scheme <code>http</code> сам по себе не входит в эти шесть canonical элементов. В рабочем доступе применяется принятый HTTPS endpoint, а host, порт, путь, метод и подписанные значения должны соответствовать подписи. Получатель не может заменить GET на PUT или HEAD и оставить ту же подпись. Порядок исходных query-пар может различаться, если после разбора получается та же canonical query; изменение значения версии, срока или response-параметра меняет подписанные данные. Алгоритм query-аутентификации и состав параметров определяет <a href="https://docs.aws.amazon.com/AmazonS3/latest/developerguide/sigv4-query-string-auth.html">спецификация AWS S3 presign</a>.</p>
+
+<p>Если при presign в SignedHeaders указаны дополнительные заголовки, получатель должен передать соответствующие значения: одной строки URL ему уже может быть недостаточно. В нашем векторе подписан только host; мы не объявляем все остальные возможные заголовки защищёнными. Временные credentials для S3 требуют query-параметр <code>X-Amz-Security-Token</code>, включённый до вычисления подписи. С публичным условным токеном <code>session+/= token</code> добавится пара <code>X-Amz-Security-Token=session%2B%2F%3D%20token</code>. Модель получает 415 canonical bytes, hash <code>97e2a26febac05a058dc88a4801511d0d517dbf9c442483acf54caef4efb4879</code> и signature <code>f9ec4bf7abf54ace14ae030a909eeef1c797fb38f28c430a91c78dca783b9850</code>. Это вариант представления токена, не выданный сеанс STS.</p>
+
+<h2 id="s3-06-time">Почему Expires не обещает весь срок доступа</h2>
+
+<p>Интервал <code>60</code> задаёт арифметический конец 09:01:00 UTC от отметки 09:00:00. У AWS SigV4 query значение Expires должно быть целым от 1 до 604800 секунд. Подпись охватывает и этот параметр: замена <code>60</code> на <code>61</code> требует новой подписи, в модели <code>6c4f490d607e62a7a085ae7a9762f3490cfad13763a6b4baddf39795177bbc90</code>. Правила диапазона приведены в <a href="https://docs.aws.amazon.com/AmazonS3/latest/developerguide/sigv4-query-string-auth.html">описании X-Amz-Expires</a>.</p>
+
+<p>Если временные credentials закончатся в 09:00:40, они не позволяют использовать эту ссылку до 09:01:00. Отзыв или отключение ключа, изменение разрешений, явный запрет политики или условие возраста подписи также могут прекратить доступ раньше. Ссылкой можно воспользоваться повторно, пока выполнены требования службы; механизм не делает её одноразовой. В AWS срок проверяется при поступлении запроса: начатая до истечения загрузка может продолжаться, а новый запрос после обрыва уже проверяется заново. Это свойства <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/using-presigned-url.html">AWS S3 presigned URL</a>, которые нельзя автоматически приписать каждому совместимому серверу.</p>
+
+<p>Время подписи тоже требует проверки. Ссылка с будущей отметкой или запрос с неверной датой scope может быть отклонён, даже когда локальная HMAC-формула выполнена согласованно. Модель умеет сравнить 09:00:30 и 09:00:40 с выбранным концом credentials, но не реализует серверный допуск рассинхронизации часов, авторизацию или отзыв. Ошибки даты и scope отдельно описаны в <a href="https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_sigv-troubleshooting.html">AWS: диагностика SigV4</a>.</p>
+
+<h2 id="s3-06-negative">Изменяем один вход и сравниваем нужный этап</h2>
+
+<p>Для поиска ошибки сравниваем результаты в порядке зависимостей: исходные байты → canonical элементы → canonical SHA-256 → string to sign → производные ключи → Signature. В таблице хеши сокращены до первых 12 hex-знаков для чтения; скрипт выводит их целиком. Смещение первого различия считается с нуля в canonical bytes. Отсутствие различия обозначается JSON <code>null</code>. Это результаты локальных вариантов, а не полученные ответы AWS, MinIO или RGW.</p>
+
+<table>
+<thead><tr><th>Один изменяемый вход</th><th>Что сравнить</th><th>Вычисленный результат</th></tr></thead>
+<tbody>
+<tr><td>LF тела заменён CRLF; хеш пересчитан</td><td>Тело стало 15 байтов; hash тела, заголовок и последняя строка canonical</td><td>Payload <code>17791922129d…</code>; canonical 354 байта, <code>02d4bbf04db6…</code></td></tr>
+<tr><td>Разделители canonical LF заменены CRLF</td><td>Формат canonical, первое отличие 3</td><td>364 байта, <code>2b3aeadecf71…</code></td></tr>
+<tr><td>Добавлен LF после последнего хеша</td><td>Конец canonical, отличие 354</td><td>355 байтов, <code>51199c4d0c51…</code></td></tr>
+<tr><td>В пути вместо <code>%20</code> поставлен <code>+</code></td><td>Canonical URI, отличие 35</td><td>352 байта, <code>d12de3a587ea…</code></td></tr>
+<tr><td><code>%20</code> пути ошибочно закодировано повторно как <code>%2520</code></td><td>Какой вход получает encoder, отличие 37</td><td>356 байтов, <code>96b361779f4b…</code></td></tr>
+<tr><td>Последняя цифра порта <code>19000</code> стала <code>19001</code></td><td>Canonical host, отличие 93</td><td>354 байта, <code>534164e00929…</code></td></tr>
+<tr><td>Условие <code>*</code> заменено <code>"old"</code></td><td>Значение if-none-match, отличие 109</td><td>358 байтов, <code>82f0438d54df…</code></td></tr>
+<tr><td>В canonical query ошибочно оставлено <code>x=2&amp;x=1&amp;acl=</code> без сортировки</td><td>Сравнение с <code>acl=&amp;x=1&amp;x=2</code>, отличие 49</td><td>366 байтов, <code>169a1fdcf478…</code></td></tr>
+<tr><td>Пробел query кодируется плюсом формы</td><td>Response-параметр presign, отличие 266</td><td>367 байтов, <code>05f5372a5f6f…</code></td></tr>
+<tr><td>Регион только в scope/derivation: <code>us-east-2</code></td><td>Canonical совпал; scope и kRegion уже другие</td><td>Signature <code>3f246301a073…</code></td></tr>
+<tr><td>Короткая дата только в scope/derivation: <code>20261102</code></td><td>Canonical совпал, дата не совпала с X-Amz-Date; меняется kDate</td><td>Signature <code>705117431e0f…</code></td></tr>
+<tr><td>Отметка времени на одну секунду больше</td><td>X-Amz-Date и string to sign, отличие canonical 222; короткая дата та же</td><td>Canonical <code>5b8dde6efb5a…</code>; четыре ключа прежние</td></tr>
+<tr><td>Hex kSigning передан как ASCII вместо binary</td><td>Canonical и string to sign совпали; представление ключа неверно</td><td>Signature <code>26fc90be3439…</code></td></tr>
+<tr><td>Те же bytes, проверка времени в 09:00:40 при конце credentials 09:00:40</td><td>Не HMAC, а срок credentials</td><td>Арифметический статус модели <code>at-or-after-end</code></td></tr>
+</tbody>
+</table>
+
+<p>Первая строка таблицы пересчитывает подпись для изменённого тела. Если же отправить новые 15 байтов с прежним хешем и прежней подписью, будет нарушено и соответствие тела заявленному хешу; наша модель не превращает это в выдуманный HTTP-ответ. Для варианта с неверным регионом она вычисляет другой HMAC и показывает несовпадение scope с исходным назначением, но не предсказывает конкретный код ошибки совместимого сервера.</p>
+
+<p>Модель также проверяет положительные эквивалентности: перестановка исходных заголовков, регистр их имён, внешние пробелы и сжатие нескольких обычных пробелов не меняют выбранную canonical форму. Дубли query не исчезают; удаление одной пары меняет форму. Двойной slash и два Unicode-представления сохраняют различия. Поэтому сравнение только последней подписи редко показывает место ошибки; сравнение первого отличающегося входа показывает его непосредственно.</p>
+
+<h2 id="s3-06-reproduce">Повторить вычисления без сервера</h2>
+
+<p>Скрипт <code>s3/labs/sigv4_vectors.py</code> использует только стандартные модули Python. Его функция <code>pct</code> принимает исходный Unicode-текст, <code>query</code> — список исходных пар, <code>canonical</code> — выбранные заголовки и характеристику тела, <code>derive</code> возвращает бинарные ключи, а <code>sign</code> — печатные промежуточные результаты. Код не загружает credentials, не пишет файлы и не открывает сеть. Чтобы проверить лабораторный комплект после его получения, из корня комплекта выполняют:</p>
+
+<pre><code>python3 -B s3/labs/sigv4_vectors.py</code></pre>
+
+<p>Проверка <code>assert</code> сравнивает вычисленное значение с ожидаемым. Ложное условие вызывает <code>AssertionError</code>; в этом скрипте ошибка останавливает программу до вывода успешного <code>status</code>. При запуске Python с <code>-O</code>, <code>-OO</code> или ненулевым <code>PYTHONOPTIMIZE</code> проверки assert удаляются, а встроенное значение <code>__debug__</code> становится <code>False</code>. Скрипт проверяет его до вызова <code>main()</code> и прекращает работу с сообщением <code>SigV4 checks require assertions enabled</code>, поэтому отключённые проверки не приводят к выводу PASS.</p>
+
+<p>Флаг <code>-B</code> запрещает Python создавать файлы bytecode <code>.pyc</code>; путь после него выбирает скрипт. Программа печатает JSON. В <code>inputs</code> проверьте длину тела, hex и Base64. В <code>put</code> должны получиться 354 байта, canonical hash <code>1916f06f…</code>, 133 байта string to sign и Signature <code>a1dcb907…</code>. В <code>presign</code> — 369 байтов, hash <code>6e500952…</code> и Signature <code>0f455b73…</code>. В <code>mutations</code> перечислены изменённые варианты и первое отличающееся canonical смещение. В <code>time_arithmetic</code> находятся только сравнения заданных моментов. Конечное <code>status</code> сообщает об успешных локальных assertions.</p>
+
+<p>Это канонизатор двух заданных одночастных случаев. Он не разбирает произвольный HTTP, не поддерживает повторяющиеся заголовки, внутреннюю HTAB, streaming SigV4, SigV4a, IAM или STS. Полноценный SDK может включить дополнительные заголовки, checksum, токен, иной режим тела и исправление часов, поэтому его запрос сравнивают по фактическим входам. AWS описывает свой протокол; принятие конкретного варианта совместимым endpoint проверяется отдельно. Полная строка действующего presigned URL предоставляет доступ её обладателю и не помещается в обычный журнал; напечатанный здесь URL безопасен только потому, что все его credentials публичны и вымышлены.</p>

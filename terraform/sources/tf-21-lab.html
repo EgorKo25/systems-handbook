@@ -89,7 +89,7 @@ terraform apply stale.tfplan</code></pre>
 terraform apply partial.tfplan
 terraform state show 'terraform_data.node["api"]'
 terraform state show terraform_data.gate</code></pre>
-<p>Это намеренный отказ gate с кодом скрипта 7 и общим кодом Terraform 1. Предшествующие services уже заменены; gate tainted. Исправьте только fail_gate на false, затем новый plan, review и apply. Следующий detailed plan должен стать пустым. Reset, новый каталог или удаление .terraform.tfstate здесь уничтожили бы предмет опыта.</p>
+<p>Это намеренный отказ gate с кодом скрипта 7 и общим кодом Terraform 1. Предшествующие services уже заменены; gate tainted. Исправьте только fail_gate на false, затем новый plan, review и apply. Следующий detailed plan должен стать пустым. Reset, новый каталог или удаление terraform.tfstate здесь уничтожили бы предмет опыта.</p>
 <h2>9. Проверить запрещённый короткий путь и выполнить явный возврат</h2>
 <pre><code>terraform state push "$TF_LAB_SNAPSHOT/terraform.tfstate"</code></pre>
 <p>После этих изменений старый serial меньше текущего, push должен отказать. Скопируйте сообщение в заметку, не добавляйте force. Для local-only учебного rollback остановите все команды и вызовите предусмотренный полный restore:</p>

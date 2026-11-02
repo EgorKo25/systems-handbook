@@ -1,0 +1,83 @@
+<header><h1>Наблюдение: от запроса клиента до конкретной PG</h1>
+<p>Общее предупреждение указывает направление поиска. Диагноз требует
+связать нужный интерфейс, PG, OSD и временное окно с операцией приложения.</p></header>
+<h2>Сначала сохранить контекст</h2>
+<p>В ceph1 после source reenter.bash создайте новый observe-01,
+включите noclobber и сохраняйте stdout/stderr раздельно.
+Команды ниже читают состояние; они не ремонтируют кластер.
+FSID уже проверен повторным входом. Время наблюдения UTC
+и клиентская операция записываются рядом с результатами.</p>
+<pre><code class="language-bash">set -euo pipefail
+umask 077
+set -o noclobber
+mkdir -m 0700 "$HOME/ceph-study/observe-01"
+cd "$HOME/ceph-study/observe-01"
+date --utc --iso-8601=seconds &gt; observed-at.txt
+c status --format=json &gt; status.json
+c health detail &gt; health.txt
+c quorum_status --format=json &gt; quorum.json
+c osd tree --format=json &gt; tree.json
+c osd df tree --format=json &gt; capacity.json
+c pg stat &gt; pg-stat.txt
+c orch ps --refresh --format=json &gt; daemons.json
+</code></pre>
+<p>Status объединяет сведения разной природы. MON quorum показывает
+согласующий состав управляющего состояния. OSD up/in описывают
+доступность по карте и участие в размещении. PG states показывают
+готовность групп. Ни один счётчик не заменяет другие:
+доступный MON при inactive PG не вернёт отсутствующие объекты.
+Health detail раскрывает конкретные check names и затронутые элементы,
+которые краткий HEALTH_WARN скрывает.</p>
+<h2>Привязать объект к PG</h2>
+<p>Для принятого cephstudy и имени из rados-01 запросите карту назначения:</p>
+<pre><code class="language-bash">key=$(cat "$HOME/ceph-study/rados-01/object-key.txt")
+c osd map cephstudy "$key"
+</code></pre>
+<p>Вывод содержит epoch, имя пула, PG, up/acting и primary.
+Возьмите PG из фактического ответа и выполните c pg PG_ID query,
+подставив это значение, не номер из бумажной модели.
+Query содержит состояние согласования и сведения участников.
+Снимки, сделанные до и после изменения карты, могут различаться;
+сравнивайте их epoch и время, а не ищите расхождение с учебной таблицей.</p>
+<h2>От slow ops к проверяемой гипотезе</h2>
+<p>Slow operation — запрос, дольше ожидающий предусмотренного этапа.
+Причина может находиться в очереди, ожидании карты/peering,
+локальном IO, реплике, сети или клиенте. Сначала установите,
+все ли медленные запросы связаны с одной PG/OSD, полным диском
+или отдельным интерфейсом. Увеличение timeout меняет ожидание клиента,
+но не устраняет причину.</p>
+<p>C osd perf показывает daemon-level задержки, а клиент измеряет
+другую границу. Apply/commit counters OSD не следует прямо объявлять
+p99 пользовательского PUT. Если требуются подробные counters,
+адресуйте c tell osd.OSD_ID perf dump фактически выбранному OSD
+и сопоставьте названия/единицы с описанием counters этой версии.
+Не суммируйте gauge как поток событий и не делите counter на время
+без вычитания начального значения.</p>
+<h2>Счётчик, скорость и процентиль</h2>
+<p>Counter накапливает события или байты; gauge показывает текущее значение.
+Если payload counter вырос с 100 MiB до 340 MiB за 12 s,
+средняя скорость окна равна 20 MiB/s. Сброс процесса между снимками
+ломает это вычитание; отрицательный delta не является отрицательной
+скоростью хранения. Согласуйте время и отметьте restart.</p>
+<p>Гистограмма хранит числа событий по диапазонам latency.
+P99 нельзя получить из одного среднего или среднего p99 трёх OSD.
+Для client end-to-end нужны сами наблюдения либо совместимые buckets
+и counts одного определения операции. Ошибки, retries и timeout
+показывают отдельно; удаление неуспешных операций меняет совокупность.</p>
+<h2>Экспорт метрик и доступ</h2>
+<p>MGR предоставляет модули мониторинга; современная схема также использует
+ceph-exporter для части daemon performance counters. Не предполагается,
+что включение prometheus module само разворачивает всю защищённую систему.
+До подключения Prometheus задаются адрес, сеть, доступ к endpoint,
+интервал сбора и retention. Скрейпинг частых подробных counters сам
+имеет цену. Dashboard не заменяет сохранённые исходные наблюдения.</p>
+<p>Задание: mean latency не изменилась, но p99 вырос, одновременно идёт
+backfill. Сначала разделите foreground client observations и фоновые
+disk/network counters в том же окне. Только затем меняйте один параметр
+очереди в рамках главы 08 и повторяйте тот же workload.
+Снижение recovery до нуля может улучшить один график,
+оставив данные дольше без требуемой защиты.</p>
+<p class="sources"><a href="https://github.com/ceph/ceph/blob/v20.2.4/doc/rados/operations/monitoring.rst">мониторинг</a>;
+<a href="https://github.com/ceph/ceph/blob/v20.2.4/doc/rados/operations/health-checks.rst">health checks</a>;
+<a href="https://github.com/ceph/ceph/blob/v20.2.4/doc/mgr/prometheus.rst">метрики и exporter</a>.
+Числа окна — заданный расчёт, не наблюдение серверного benchmark.</p>

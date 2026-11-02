@@ -86,4 +86,49 @@ docker --context study inspect --format \
   '{{json .HostConfig.LogConfig}}' study-hello</code></pre>
 <p>После успешного перезапуска ожидаем <code>local</code> в выводе info. Это новый драйвер по умолчанию. Inspect показывает настройку конкретного ранее созданного hello-world: она могла остаться прежней, потому что настройка сервера не переписывает существующие контейнеры. Чтобы выбрать другой драйвер уже созданному приложению, его пересоздают с сохранением нужных данных и параметров. Сейчас удалять учебный контейнер ради этого не требуется.</p>
 <p>Если служба не стартует, <code>sudo journalctl -u docker -b --no-pager</code> выводит её сообщения с момента текущей загрузки ОС. Ошибка JSON, конфликт настройки с аргументами службы и отсутствие свободного места требуют разных исправлений.</p>
+<!-- DOCKER_INSTALL_FILE_MAP_V1_BEGIN -->
+<figure id="docker-install-file-map" aria-labelledby="dif-title">
+<style>
+#docker-install-file-map{margin:1.6rem 0;color:var(--text);background:var(--paper);max-width:100%}
+#docker-install-file-map svg{display:block;width:100%;max-width:20rem;height:auto;margin:1rem auto;color:inherit}
+#docker-install-file-map code{white-space:normal;overflow-wrap:anywhere}
+#docker-install-file-map dl{border-left:2px solid var(--accent);padding-left:1rem}
+#docker-install-file-map dt{font-weight:700;margin-top:1rem}
+#docker-install-file-map dd{margin:.35rem 0 1rem;overflow-wrap:anywhere}
+#docker-install-file-map figcaption{color:var(--muted)}
+@media print{#docker-install-file-map{--text:#000;--paper:#fff;--muted:#333;--accent:#000;color:#000;background:#fff}#docker-install-file-map svg{max-width:80mm;break-inside:avoid}#docker-install-file-map dt{break-after:avoid}}
+</style>
+<h3 id="dif-title">После установки: программа, точка связи и сохранённые данные</h3>
+<p>Сопоставим команды этой главы с местами, которые они используют. Карта относится к локальному rootful Engine на учебной Ubuntu: клиент и сервер находятся на одной машине. Имена исполняемых файлов показаны для обычной пакетной установки.</p>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 380" role="img" aria-labelledby="dif-svg-title dif-svg-desc">
+<title id="dif-svg-title">Файлы установки и стандартные каталоги состояния</title>
+<desc id="dif-svg-desc">Дерево стандартных путей rootful Ubuntu. В usr/bin находятся исполняемые docker и dockerd; в etc — источник APT и daemon.json; в var/run — точка связи docker.sock; в var/lib — постоянные данные Docker и отдельно containerd при соответствующем image store. Ветви показывают вложенность путей, не передачу запросов и не родство процессов. Фактические пути могут быть настроены иначе.</desc>
+<g fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 25V353M20 44H42M20 137H42M20 230H42M20 300H42M50 50V99M50 75H65M50 98H65M50 143V191M50 168H65M50 191H65M50 236V261M50 261H65M50 306V354M50 330H65M50 354H65"/></g>
+<g fill="currentColor" font-family="sans-serif" font-size="16">
+<text x="10" y="20">/</text>
+<text x="44" y="45" font-weight="700">usr/bin/</text>
+<text x="69" y="77">docker · клиент</text><text x="69" y="101">dockerd · сервер</text>
+<text x="44" y="138" font-weight="700">etc/</text>
+<text x="69" y="170">apt/ · источник и ключ</text><text x="69" y="194">docker/daemon.json</text>
+<text x="44" y="231" font-weight="700">var/run/</text>
+<text x="69" y="264">docker.sock · Unix-сокет</text>
+<text x="44" y="301" font-weight="700">var/lib/</text>
+<text x="69" y="333">docker/ · данные Engine</text><text x="69" y="357">containerd/ · image store</text>
+</g></svg>
+<figcaption>Ветви обозначают вложенность путей. Исполняемый файл и работающий процесс различаются: <code>systemctl</code> управляет службой через systemd. Unix-сокет служит точкой обмена сообщениями с сервером; постоянные данные лежат отдельно. Условия для двух каталогов данных пояснены ниже.</figcaption>
+<dl>
+<dt>Источник пакетов: <code>/etc/apt/</code></dt>
+<dd><code>curl -o</code> записывает открытый ключ в <code>keyrings/docker.asc</code>, <code>tee</code> — описание в <code>sources.list.d/docker.sources</code>. APT читает источник и ключ, <code>apt update</code> обновляет списки пакетов, <code>apt install</code> устанавливает программы, плагины и компоненты службы. Эти файлы не являются хранилищем образов.</dd>
+<dt>Настройка сервера: <code>/etc/docker/daemon.json</code></dt>
+<dd><code>sudoedit</code> меняет файл; <code>dockerd --validate --config-file=…</code> проверяет его без запуска второго сервера. Успешная проверка ещё не применяет настройку работающему процессу. После согласованного <code>systemctl restart docker</code> новый процесс читает конфигурацию; параметры запуска службы тоже учитываются. <code>systemctl status</code> проверяет состояние службы, <code>journalctl -u docker</code> читает её сообщения.</dd>
+<dt>Клиентское имя: контекст <code>study</code></dt>
+<dd><code>docker context create</code> сохраняет адрес в настройках клиента данного пользователя. <code>--context study</code> выбирает его для одной команды. При адресе SSH обычные <code>sudoedit</code> и <code>systemctl</code> всё равно исполняются там, где запущена оболочка: серверные настройки меняют на Docker-хосте.</dd>
+<dt>Постоянные данные: место зависит от backend</dt>
+<dd>При стандартных путях классический драйвер хранит данные под <code>/var/lib/docker</code>. При containerd image store содержимое образов и файловые снимки контейнеров находятся под <code>/var/lib/containerd</code>, остальные данные Docker, включая volumes, — под <code>/var/lib/docker</code>. Значение <code>data-root</code> не переносит автоматически данные containerd. <code>pull</code> и <code>run</code> меняют серверное состояние; <code>info</code> помогает проверить выбранный сервер и backend. Перезапуск службы сам по себе не удаляет эти данные.</dd>
+</dl>
+<p>Rootless использует пользовательские службу, адрес и каталоги; Docker Desktop размещает Linux Engine в своей среде. Системные пути этой карты на них механически не переносят. Реальные настройки и версию сверяют перед действием; внутренние каталоги хранилища вручную не редактируют.</p>
+<p class="sources">Сверено с официальными разделами <a href="https://docs.docker.com/engine/install/ubuntu/">пакетной установки Ubuntu</a> и <a href="https://docs.docker.com/engine/daemon/">конфигурации и каталогов daemon</a>. Это карта состояния, не выполненный установочный сценарий.</p>
+</figure>
+<!-- DOCKER_INSTALL_FILE_MAP_V1_END -->
+
 <p class="sources">Официальные инструкции: <a href="https://docs.docker.com/engine/install/ubuntu/">пакеты Ubuntu</a>, <a href="https://docs.docker.com/engine/install/linux-postinstall/">доступ обычного пользователя</a>, <a href="https://docs.docker.com/engine/manage-resources/contexts/">контексты</a>, <a href="https://docs.docker.com/engine/logging/drivers/local/">журналы local</a>.</p>

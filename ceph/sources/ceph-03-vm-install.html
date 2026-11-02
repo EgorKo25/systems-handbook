@@ -1,0 +1,140 @@
+<header>
+<h1>Первый кластер внутри собственной Linux VM</h1>
+<p>Сначала подготовим гостевую ОС и доступ, затем создадим MON и MGR.
+Диск OSD подключается отдельно. Все изменяющие действия относятся
+к личной VM; на основной ОС bootstrap этого маршрута не выполняется.</p>
+</header>
+<h2>Ресурсы до запуска служб</h2>
+<p>Для чтения, расчётов и запуска справки кластер не требуется.
+VM с 2 GiB RAM и 2 vCPU пригодна как предложение для первой проверки CLI;
+это не профиль MON+MGR+OSD. Эксперимент с одним OSD предполагает 8 GiB RAM,
+4 vCPU, системный диск 40 GiB и отдельный диск данных 32 GiB.
+Он не подтверждён здесь запуском и не является минимальным требованием.
+На компьютере с 8 GiB RAM может не остаться ресурсов гипервизору и основной ОС.
+В этом случае не начинайте кластерную часть.</p>
+<p>OSD получает цель памяти 3 GiB. Target — best-effort цель управления,
+а не предел RSS, то есть страниц процесса в RAM. Отдельно расходуют память
+MON, MGR, Podman и гостевая ОС. Официальные рекомендации называют 2–4 GiB
+для OSD потенциально медленно работающим диапазоном и требуют запаса.
+OOM — принудительное завершение процесса при нехватке памяти — может
+превратить ресурсный эксперимент в отказ данных; уменьшать target
+до исчезновения предупреждения нельзя считать проверкой бюджета.</p>
+<p>Расширение использует четыре VM ceph1–ceph4, по одному отдельному OSD-диску
+128 GiB, и требует дополнительной памяти. Четыре VM по 8 GiB — непроверенный
+компактный вариант; четыре по 32 GiB — запасной вариант, не минимум.
+Все гости одного гипервизора имеют общий физический домен отказа.</p>
+<h2>Подготовка ceph1</h2>
+<p>Владелец создаёт новую Ubuntu Server 22.04 amd64 VM в собственном
+гипервизоре. Здесь выбран адрес 10.77.0.11/24, имя ceph1, отдельная сеть
+10.77.0.0/24 без bridge в рабочую LAN и без входящего проброса.
+При конфликте диапазона замените его согласованно до начала.
+Student создан установщиком ОС и имеет sudo. Сначала откройте именно
+консоль VM и сравните имя, сетевые адреса и диски с её настройками.</p>
+<pre><code class="language-bash">cd "$HOME"
+set -euo pipefail
+systemd-detect-virt --vm
+hostname -s
+ip -br address
+lsblk --output NAME,PATH,SIZE,TYPE,FSTYPE,MOUNTPOINTS,SERIAL,MODEL
+sudo apt-get update
+sudo apt-get install --no-install-recommends \
+ ca-certificates curl gnupg podman lvm2 chrony openssh-server python3 openssl
+sudo systemctl enable --now chrony ssh
+chronyc tracking
+timedatectl show -p NTPSynchronized --value
+</code></pre>
+<p>Virtualization detection — дополнительная проверка среды, не доказательство
+принадлежности VM. Имя должно быть ceph1, адрес — выбранным, время —
+синхронизированным. Если основной и data-диски нельзя уверенно различить
+по настройкам гипервизора, размеру и serial, остановитесь.
+Ни одна команда книги не стирает обнаруженные сигнатуры, чтобы сделать
+неизвестный диск «доступным».</p>
+<h2>Получение и полномочия cephadm</h2>
+<p>Скопируйте проверенные исходники labs книги в новый собственный
+~/ceph-book/labs. Строки ниже выполняются в этой VM от student.
+Они создают новые stages, описанные в главе о поставке.</p>
+<pre><code class="language-bash">cd "$HOME/ceph-book/labs"
+bash new-supply.sh
+bash runtime-accept-once.sh ceph1
+bash new-cephops.sh
+</code></pre>
+<p>Последний скрипт создаёт отдельного пользователя cephops без пароля входа.
+Passwordless sudo предоставляет ему управление всей гостевой ОС.
+Новый sudoers pending-файл сначала проверяется visudo; точка в имени
+не даёт sudo включить его преждевременно. Hard link создаёт включаемое имя
+без перезаписи. Затем visudo проверяет весь sudoers, а sudo -n от cephops
+должен вернуть uid 0 без запроса пароля. Если пользователь или файл уже
+существует, первоначальное создание останавливается; удалять их не следует.</p>
+<h2>SSH: закрытый ключ остаётся в ceph1</h2>
+<p>Прочтите access-setup.bash и выполняйте его нумерованные блоки в консоли
+ceph1. Он создаёт отдельную пару Ed25519 в access-01, устанавливает только
+открытый ключ cephops, получает host public key непосредственно через консоль
+этой VM и сравнивает fingerprints. Known_hosts связывает адрес с ожидаемым
+открытым ключом сервера; ssh-keyscan без проверки не создаёт это доверие.</p>
+<pre><code class="language-bash">cd "$HOME/ceph-book/labs"
+# Прочитать каждый блок, сверить fingerprints; затем в этой же Bash:
+source access-setup.bash
+</code></pre>
+<p>Ручной SSH использует StrictHostKeyChecking=yes. Однако штатный orchestrator
+v20.2.4 подключается с known_hosts=None, а bootstrap helper отключает host
+checking в своей проверке. Custom ssh-config не превращает его в strict
+trust. Поэтому выбранный маршрут ограничен закрытой принадлежащей владельцу
+сетью VM. Подмена адресата после ручной проверки остаётся риском.
+Если политика среды требует строгой проверки каждого SSH-соединения,
+нужен другой принятый способ развёртывания; здесь такого флага не выдумано.</p>
+<h2>Что создаёт initial-ceph.conf</h2>
+<p>Public_network выбирает подсеть адресов Ceph, но не создаёт интерфейс
+или firewall. Auth_cluster_required требует CephX у демонов,
+auth_service_required — у обращающегося к сервису клиента,
+auth_client_required — аутентификацию сервера перед клиентом.
+Ms_bind_ipv4=true и ms_bind_ipv6=false выбирают принимающие сетевые сокеты этого IPv4-стенда.</p>
+<p>Osd_crush_chooseleaf_type=1 задаёт исходный тип host; правило и фактическое
+дерево затем проверяются отдельно. Osd_pool_default_size=3 задаёт три копии
+нового replicated pool. Osd_pool_default_min_size=0 просит вычислить
+size−floor(size/2): при 3 получаем 2, при 1 получаем 1. Ноль здесь
+не разрешает IO с нулём копий. Mon_allow_pool_size_one=false сохраняет
+защиту от случайной одной копии. Только собственный учебный пул получит
+явное временное исключение.</p>
+<p>Auth_allow_insecure_global_id_reclaim=false требует доказательства владения
+прежним билетом при возврате authentication global ID. Это идентификатор
+сеанса аутентификации, не имя объекта. Osd_memory_target_autotune=false
+отключает изменение цели памяти со стороны cephadm;
+osd_memory_target=3221225472 задаёт 3 GiB. Автонастройка кэшей BlueStore
+этими двумя строками не отключается.</p>
+<h2>Единственное первоначальное создание</h2>
+<p>После принятых runtime и access, из ceph1 от student:</p>
+<pre><code class="language-bash">cd "$HOME/ceph-book/labs"
+bash bootstrap-once.sh
+</code></pre>
+<p>Скрипт останавливается при существующем ceph.conf или демонах.
+Новый FSID сохраняется до вызова bootstrap; передаются собственные SSH keys
+и закреплённый image. --skip-dashboard и --skip-monitoring-stack пока
+не развёртывают дополнительные службы. --no-cleanup-on-failure сохраняет
+неудачный результат для диагностики. Отсутствие ACCEPTED при наличии
+BOOTSTRAP-ATTEMPTED запрещает слепое повторение скрипта первоначального создания.
+--allow-overwrite и автоматического reset в маршруте нет.</p>
+<p>После успеха есть один MON, активный MGR и ещё нет OSD.
+Cephadm переносит применимые настройки в central config database MON
+и минимизирует локальный ceph.conf: отсутствие исходной строки в этом файле
+не доказывает её исчезновение. BOOTSTRAP-ACCEPTED принимает идентичность
+и управляющие службы; данные ещё некуда записывать.</p>
+<h2>Возвращение к тому же кластеру</h2>
+<p>В новой Bash-сессии ceph1 от того же владельца выполните:</p>
+<pre><code class="language-bash">cd "$HOME/ceph-book/labs"
+source reenter.bash
+c fsid
+c status
+c health detail
+</code></pre>
+<p>Source определяет c/r/b — функции для ceph/rados/rbd в закреплённом
+контейнере и с тем же FSID. Двойной дефис отделяет параметры cephadm shell
+от argv программы внутри. Reentry проверяет manifests, текущую package
+version и совпадение digest; он не устанавливает и не создаёт кластер.
+Код 0 команды status означает успешный запрос, а не обязательный HEALTH_OK.</p>
+<p class="sources"><a href="https://github.com/ceph/ceph/blob/v20.2.4/doc/start/hardware-recommendations.rst">Ресурсы</a>;
+<a href="https://github.com/ceph/ceph/blob/v20.2.4/doc/cephadm/install.rst">bootstrap</a>;
+<a href="https://github.com/ceph/ceph/blob/v20.2.4/src/pybind/mgr/cephadm/ssh.py">orchestrator SSH</a>;
+<a href="https://github.com/ceph/ceph/blob/v20.2.4/src/cephadm/cephadmlib/ssh.py">bootstrap SSH</a>;
+<a href="https://github.com/ceph/ceph/blob/v20.2.4/src/common/config.h">default min_size</a>.
+Рецепт подготовлен чтением исходников; исполнение в настоящей VM в этой поставке
+не выполнялось.</p>

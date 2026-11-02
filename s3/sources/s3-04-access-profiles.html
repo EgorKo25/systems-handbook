@@ -1,0 +1,61 @@
+<header><h1>Подключение: endpoint, доверие и профиль приложения</h1><p>Разделим адрес службы, подтверждение личности клиента и разрешения на операции.</p></header>
+<h2>Три независимых решения</h2>
+<p>Endpoint выбирает сервер, TLS удостоверяет сервер клиенту, а credentials позволяют службе определить вызывающего. Авторизация — решение, разрешено ли этому вызывающему выполнить выбранную операцию. Корректная подпись не выдаёт права. Backend в конфигурации только классифицирует цель; значение minio не включает автоматически все свойства Amazon S3.</p>
+<p>Для AWS используйте отдельную учебную корзину общего назначения в известном регионе. Уполномоченный владелец создаёт её через Amazon S3 Console, оставляет Block Public Access включённым и выбирает Bucket owner enforced для Object Ownership. Глобально уникальное имя придётся выбрать самостоятельно. Получите от администратора отдельную роль/доступ только к своему префиксу. Данные личного рабочего профиля в книгу не копируются.</p>
+<p>Для локальной совместимой цели сначала нужны подтверждённые адрес API, bucket, регион подписи, способ адресации, CA и отдельная учётная запись. Console MinIO и S3 API — разные порты. RGW другой VM требует её принятого HTTPS-адреса; пример localhost не создаёт маршрут к ней. Учебные имена ниже показывают форму, а не сообщают о готовом сервере.</p>
+<h2>Полный файл целей</h2>
+<p>Создайте config/targets.json в лаборатории. В публичном описании нет секретов. Endpoint без bucket/path/query; bucket указан отдельно. Для AWS замените bucket на своё имя, регион должен ему соответствовать. Адрес https://s3.us-east-1.amazonaws.com — региональный endpoint AWS, addressing=virtual помещает имя корзины в hostname.</p>
+<pre><code>{
+  "schema_version": 1,
+  "targets": {
+    "study": {
+      "backend": "aws",
+      "endpoint": "https://s3.us-east-1.amazonaws.com",
+      "region": "us-east-1",
+      "bucket": "REPLACE-WITH-YOUR-BUCKET",
+      "addressing": "virtual",
+      "profile": "study-app",
+      "credentials_file": "../secrets/profiles.json",
+      "ca_file": ""
+    }
+  }
+}</code></pre>
+<p>Для принятого MinIO возможен endpoint https://127.0.0.1:19000, backend=minio, addressing=path и свой ca_file. Для RGW используйте параметры той установки; rgw.example.invalid — только неисполняемый образец имени. Пути credentials_file и ca_file разрешаются от каталога targets.json, а не от cwd. Пустой ca_file означает системные корни доверия; непустой файл добавляет выбранный CA, сохраняя проверку имени.</p>
+<h2>Приватный профиль</h2>
+<p>Создайте новый secrets/profiles.json с mode 0600, владельцем должен быть текущий пользователь. Имя study-app в файле связывается с profile выше. Это собственный JSON object-study, не AWS shared profile. AWS chain, переменные AWS_ACCESS_KEY_ID и роль машины автоматически не выбираются.</p>
+<pre><code>{
+  "schema_version": 1,
+  "profiles": {
+    "study-app": {
+      "access_key_id": "REPLACE",
+      "secret_access_key": "REPLACE"
+    }
+  }
+}</code></pre>
+<p>Это шаблон: REPLACE не является работающим доступом. Для временных credentials добавьте session_token и expires_at в UTC, например 2026-11-02T12:00:00Z, соответствующее фактическому выданному сроку. Все четыре значения выдаёт доверенный механизм доступа; придуманная дата не продлевает токен. Клиент отвергает истёкший профиль до отправки, сервер может прекратить доступ раньше по своим правилам.</p>
+<p>Для эксклюзивного создания из Python используют open(path, "x", encoding="utf-8") после os.umask(0o077). Не перенаправляйте вывод поверх существующего секретного файла. Редактируйте собственный профиль локально, не передавайте секрет через argv, историю shell, stdout или screenshot. Loader проверяет обычный файл по открытому fd, владельца и права; именованный канал не должен блокировать загрузку конфигурации.</p>
+<h2>Как config становится вызовом</h2>
+<p>Parser принимает только известные имена и одну запись каждого флага. JSON проверяется до извлечения: duplicate keys, в том числе после JSON escape, неизвестные поля и неправильный регистр отвергаются. Затем проверяются схема, endpoint, порт 1..65535, region, bucket, addressing и профиль. TLS-корни загружаются явно. CredentialsProvider — объект SDK, который предоставляет только выбранный профиль; CredentialsCache хранит этот результат с учётом срока. Config.LoadDefaultConfig не вызывается.</p>
+<p>Endpoint допускает HTTPS. HTTP разрешён только для буквального loopback профиля, чтобы исследовать протокол в собственной среде; он не обеспечивает конфиденциальность. Redirect запрещён в HTTP-клиенте: ответ 3xx нужно разобрать, исправить адрес/регион и подписать новый запрос, а не переслать старый Authorization другому узлу.</p>
+<h2>Разбор отрицательного опыта</h2>
+<p>Сначала HEAD собственного ключа проверяет адрес, TLS, подпись и разрешение чтения. Отсутствие тела HEAD не проверяет checksum объекта. Ошибочный CA приводит к отказу TLS; неверный secret — к ошибке аутентификации; действующий ключ без нужного разрешения может дать AccessDenied. Это разные стадии. Удалять из конфигурации проверку сертификата ради последнего случая бессмысленно.</p>
+<p>В AWS для отсутствующего ключа GET может вернуть 404, если есть s3:ListBucket, и 403 без этого разрешения. Поэтому один 403 не доказывает наличие объекта. Серверные request ID полезны для диагностики, но не являются паролем или обещанием конкретной внутренней схемы хранения. Сохраните безопасную квитанцию и сопоставьте её со своей целью.</p>
+<h2>Первое сетевое действие</h2>
+<p>Файл targets.json и приватный профиль уже созданы. После успешной native-сборки из главы 03 используйте абсолютные пути из любого каталога. Каждый блок заново задаёт LAB и использует локальные set -euo pipefail: настройки и переменные дочерней оболочки главы 03 сюда не переходят. Не переходите к следующему блоку после ненулевого кода; для PUT сначала разберите outcome квитанции. --config выбирает файл целей; --target выбирает его запись, а --timeout ограничивает одну операцию вместе с чтением тела. Все три стоят перед put/get/head. --source указывает локальное тело, --create-only требует отсутствия текущего объекта. Разделитель -- завершает параметры; после него передаётся исходный ключ без URL-кодирования.</p>
+<pre><code>(
+  set -euo pipefail
+  LAB="$HOME/object-study-lab"
+  "$LAB/bin/object-study" --config "$LAB/config/targets.json"   --target study --timeout 30s put   --source "$LAB/fixtures/hello-v1.bin" --create-only --   'lessons/2026-11/hello +%.txt'
+)</code></pre>
+<p>Сохраните напечатанный JSON в receipts без данных аутентификации. Успех требует exit 0 и outcome confirmed. local_bytes=14 и local_sha256_hex описывают подготовленный source, request_id — ответ службы, ETag — её непрозрачную метку. attempts считает вызовы HTTPClient.Do со стороны SDK, а не все сетевые передачи. Потерянный ответ разобран в главе ошибок; не повторяйте зависимые изменения при unknown.</p>
+<p>Теперь HEAD проверяет сведения без тела, GET принимает новую копию. --output должен называть отсутствующий файл в вашем приватном каталоге; --max-bytes 14 задаёт верхний предел. Значение N больше тела допустимо, поэтому размер дополнительно сверяют с ожидаемыми 14.</p>
+<pre><code>(
+  set -euo pipefail
+  LAB="$HOME/object-study-lab"
+  "$LAB/bin/object-study" --config "$LAB/config/targets.json" --target study head --   'lessons/2026-11/hello +%.txt'
+  "$LAB/bin/object-study" --config "$LAB/config/targets.json" --target study get   --output "$LAB/outputs/hello-copy.bin" --max-bytes 14 --   'lessons/2026-11/hello +%.txt'
+  wc -c "$LAB/outputs/hello-copy.bin"
+  sha256sum "$LAB/outputs/hello-copy.bin"
+)</code></pre>
+<p>Ожидаются 14 и хеш 874160ebe2d9a6a82abdec1966f3be5be4e0db5d575d4d00953c66baf6e30897. Для известной сохранённой версии параметр --version-id передаётся get/head перед --. Строка "null" остаётся строкой, а не JSON null. Повтор GET в тот же output должен отказать без замены принятого файла. Повтор create-only — отрицательный опыт условия, а не повод снять условие.</p>
+<p class="sources"><a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/create-bucket-overview.html">создание bucket</a>; <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/security-best-practices.html">AWS access practices</a>; <a href="https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObject.html">GetObject permissions/status</a>; <a href="https://docs.aws.amazon.com/sdk-for-go/v2/developer-guide/configure-gosdk.html">Go SDK configuration</a>. Настройки IAM относятся к AWS; политику совместимого сервера принимают отдельно.</p>

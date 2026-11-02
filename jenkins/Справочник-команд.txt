@@ -10154,10 +10154,6 @@ argocd --config "$LAB_ROOT/private/argocd-config" app list
 Когда: После login --name handbook.
 argocd --config "$LAB_ROOT/private/argocd-config" --argocd-context handbook app get ledger-gitops
 Результат: Это не Kubernetes --context.
---server АДРЕС — Указать сервер Argo API.
-Когда: Прямое подключение без выбора сохранённого имени.
-argocd --server localhost:8443 --config "$LAB_ROOT/private/argocd-config" app list
-Результат: В admin-командах с флагами Kubernetes локальный --server затеняет это значение.
 --server-crt ФАЙЛ — Использовать доверенный сертификат сервера.
 Когда: Проверенный сертификат локального либо другого собственного адреса сервера.
 argocd --server-crt "$LAB_ROOT/private/server.crt" login localhost:8443 --name handbook
@@ -11570,10 +11566,6 @@ argocd --config "$LAB_ROOT/private/argocd-config" app list
 Когда: После login --name handbook.
 argocd --config "$LAB_ROOT/private/argocd-config" --argocd-context handbook app get ledger-gitops
 Результат: Это не Kubernetes --context.
---server АДРЕС — Указать сервер Argo API.
-Когда: Прямое подключение без выбора сохранённого имени.
-argocd --server localhost:8443 --config "$LAB_ROOT/private/argocd-config" app list
-Результат: В admin-командах с флагами Kubernetes локальный --server затеняет это значение.
 --server-crt ФАЙЛ — Использовать доверенный сертификат сервера.
 Когда: Проверенный сертификат локального либо другого собственного адреса сервера.
 argocd --server-crt "$LAB_ROOT/private/server.crt" login localhost:8443 --name handbook
@@ -11638,10 +11630,6 @@ argocd --config "$LAB_ROOT/private/argocd-config" app list
 Когда: После login --name handbook.
 argocd --config "$LAB_ROOT/private/argocd-config" --argocd-context handbook app get ledger-gitops
 Результат: Это не Kubernetes --context.
---server АДРЕС — Указать сервер Argo API.
-Когда: Прямое подключение без выбора сохранённого имени.
-argocd --server localhost:8443 --config "$LAB_ROOT/private/argocd-config" app list
-Результат: В admin-командах с флагами Kubernetes локальный --server затеняет это значение.
 --server-crt ФАЙЛ — Использовать доверенный сертификат сервера.
 Когда: Проверенный сертификат локального либо другого собственного адреса сервера.
 argocd --server-crt "$LAB_ROOT/private/server.crt" login localhost:8443 --name handbook
@@ -11702,10 +11690,6 @@ argocd --config "$LAB_ROOT/private/argocd-config" app list
 Когда: После login --name handbook.
 argocd --config "$LAB_ROOT/private/argocd-config" --argocd-context handbook app get ledger-gitops
 Результат: Это не Kubernetes --context.
---server АДРЕС — Указать сервер Argo API.
-Когда: Прямое подключение без выбора сохранённого имени.
-argocd --server localhost:8443 --config "$LAB_ROOT/private/argocd-config" app list
-Результат: В admin-командах с флагами Kubernetes локальный --server затеняет это значение.
 --server-crt ФАЙЛ — Использовать доверенный сертификат сервера.
 Когда: Проверенный сертификат локального либо другого собственного адреса сервера.
 argocd --server-crt "$LAB_ROOT/private/server.crt" login localhost:8443 --name handbook
@@ -11778,10 +11762,6 @@ argocd --config "$LAB_ROOT/private/argocd-config" app list
 Когда: После login --name handbook.
 argocd --config "$LAB_ROOT/private/argocd-config" --argocd-context handbook app get ledger-gitops
 Результат: Это не Kubernetes --context.
---server АДРЕС — Указать сервер Argo API.
-Когда: Прямое подключение без выбора сохранённого имени.
-argocd --server localhost:8443 --config "$LAB_ROOT/private/argocd-config" app list
-Результат: В admin-командах с флагами Kubernetes локальный --server затеняет это значение.
 --server-crt ФАЙЛ — Использовать доверенный сертификат сервера.
 Когда: Проверенный сертификат локального либо другого собственного адреса сервера.
 argocd --server-crt "$LAB_ROOT/private/server.crt" login localhost:8443 --name handbook
@@ -13012,3 +12992,1777 @@ flyway -q info
 Когда: В прямом CLI для проверенного CREATE INDEX CONCURRENTLY. В продолжаемом wrapper значение закреплено в CONF и этот CLI override запрещён.
 flyway -configFiles=flyway.conf migrate -postgresql.transactional.lock=false
 Результат: При true транзакционный lock может задерживать CONCURRENTLY; false меняет время жизни lock на сессию и не устраняет остальные DDL-конфликты.
+
+object-study
+Одна проверяемая операция над подготовленной целью.
+object-study --config FILE --target ID [--timeout 30s] COMMAND
+--config FILE — Выбрать targets.json.
+Когда: До команды; абсолютный путь упрощает повтор.
+--config /home/learner/object-study-lab/config/targets.json
+Результат: Загрузка только указанного собственного формата.
+--target ID — Выбрать запись targets, затем её profile.
+Когда: До команды, ровно один раз.
+--target study
+Результат: Endpoint и credentials не угадываются.
+--timeout DURATION — Конечный срок одной операции, включая Body.
+Когда: По умолчанию 30s, больше нуля, не более 15m.
+--timeout 30s
+Результат: Deadline, не команда отката сервера.
+
+object-study put
+Создать объект или заменить ожидаемое состояние.
+object-study --config FILE --target ID put --source FILE (--create-only|--if-match ETAG) -- KEY
+--source FILE — Открыть обычный локальный неизменяемый источник.
+Когда: До -- KEY; предел helper 64 MiB.
+--source /home/learner/object-study-lab/fixtures/hello-v1.bin
+Результат: Prehash, затем явный checksum SHA256.
+--create-only — Требовать отсутствия текущего тела.
+Когда: Ровно одно из двух условий.
+--create-only
+Результат: If-None-Match: *.
+--if-match ETAG — Заменять при совпадении непрозрачного ETag.
+Когда: Вместо create-only, с сохранёнными кавычками.
+--if-match '"E1"'
+Результат: If-Match; при отказе условие не снимают.
+-- KEY — Закончить параметры и передать исходный ключ.
+Когда: Последние два аргумента, без URL-кодирования.
+-- 'lessons/2026-11/hello +%.txt'
+Результат: SDK кодирует выбранные байты.
+--config FILE — Выбрать targets.json.
+Когда: До команды; абсолютный путь упрощает повтор.
+--config /home/learner/object-study-lab/config/targets.json
+Результат: Загрузка только указанного собственного формата.
+--target ID — Выбрать запись targets, затем её profile.
+Когда: До команды, ровно один раз.
+--target study
+Результат: Endpoint и credentials не угадываются.
+--timeout DURATION — Конечный срок одной операции, включая Body.
+Когда: По умолчанию 30s, больше нуля, не более 15m.
+--timeout 30s
+Результат: Deadline, не команда отката сервера.
+
+object-study get
+Принять полную копию в новое локальное имя.
+object-study --config FILE --target ID get --output NEWFILE --max-bytes N [--version-id ID] -- KEY
+--output NEWFILE — Публиковать только новое имя в приватном каталоге.
+Когда: Существующее имя не перезаписывается.
+--output /home/learner/object-study-lab/outputs/hello-copy.bin
+Результат: До принятия используется собственный .part.
+--max-bytes N — Задать верхний предел тела.
+Когда: Не заменяет ожидаемый размер и хеш.
+--max-bytes 14
+Результат: Известная длина и EOF проверяются отдельно.
+--version-id ID — Выбрать предусмотренную сохранённую версию.
+Когда: До --, не превращать строку null в отсутствие.
+--version-id v-example
+Результат: Обычная версия не равна mutable null-version.
+-- KEY — Передать исходный ключ.
+Когда: Последние два аргумента.
+-- 'lessons/2026-11/hello +%.txt'
+Результат: Полный GET без Range.
+--config FILE — Выбрать targets.json.
+Когда: До команды; абсолютный путь упрощает повтор.
+--config /home/learner/object-study-lab/config/targets.json
+Результат: Загрузка только указанного собственного формата.
+--target ID — Выбрать запись targets, затем её profile.
+Когда: До команды, ровно один раз.
+--target study
+Результат: Endpoint и credentials не угадываются.
+--timeout DURATION — Конечный срок одной операции, включая Body.
+Когда: По умолчанию 30s, больше нуля, не более 15m.
+--timeout 30s
+Результат: Deadline, не команда отката сервера.
+
+object-study head
+Получить сведения выбранного состояния без тела.
+object-study --config FILE --target ID head [--version-id ID] -- KEY
+--version-id ID — Выбрать версию.
+Когда: До -- KEY.
+--version-id v-example
+Результат: Не скачивает и не хеширует тело.
+-- KEY — Передать исходный ключ.
+Когда: Последние два аргумента.
+-- 'lessons/2026-11/hello +%.txt'
+Результат: ETag/version/checksum из ответа, не проверка всех байтов.
+--config FILE — Выбрать targets.json.
+Когда: До команды; абсолютный путь упрощает повтор.
+--config /home/learner/object-study-lab/config/targets.json
+Результат: Загрузка только указанного собственного формата.
+--target ID — Выбрать запись targets, затем её profile.
+Когда: До команды, ровно один раз.
+--target study
+Результат: Endpoint и credentials не угадываются.
+--timeout DURATION — Конечный срок одной операции, включая Body.
+Когда: По умолчанию 30s, больше нуля, не более 15m.
+--timeout 30s
+Результат: Deadline, не команда отката сервера.
+
+python3 s3/labs/storage_models.py
+Выполнить синтетические модели без сети.
+python3 -B s3/labs/storage_models.py COMMAND
+-u — Отключить обычную буферизацию stdout/stderr Python.
+Когда: Уменьшить задержку сообщений в конвейере.
+python3 -u worker.py
+Результат: Записи не ждут обычного заполнения буфера Python; буферы следующей программы остаются отдельными.
+-B — Не записывать .pyc при импортах.
+Когда: Не оставлять новые кеши байткода в автономном комплекте.
+python3 -B linux_labs.py 01
+Результат: Лаборатория выполнится без обычной записи новых .pyc её импортов.
+
+python3 s3/labs/storage_models.py state-init
+Создать JSON модели одного ключа.
+python3 -B s3/labs/storage_models.py state-init --mode MODE
+--mode MODE — Выбрать unversioned, enabled или suspended.
+Когда: Новое состояние для отдельного опыта.
+--mode enabled
+Результат: Пустая history и next_id=1.
+-u — Отключить обычную буферизацию stdout/stderr Python.
+Когда: Уменьшить задержку сообщений в конвейере.
+python3 -u worker.py
+Результат: Записи не ждут обычного заполнения буфера Python; буферы следующей программы остаются отдельными.
+-B — Не записывать .pyc при импортах.
+Когда: Не оставлять новые кеши байткода в автономном комплекте.
+python3 -B linux_labs.py 01
+Результат: Лаборатория выполнится без обычной записи новых .pyc её импортов.
+
+python3 s3/labs/storage_models.py state-step
+Прочитать предыдущее состояние из stdin и вывести новое.
+python3 -B s3/labs/storage_models.py state-step --event JSON
+--event JSON — Передать синтетическое действие put/get/delete.
+Когда: Никаких credentials; JSON в кавычках shell.
+--event '{"op":"get"}'
+Результат: Результат одного модельного запроса, не receipt SDK.
+-u — Отключить обычную буферизацию stdout/stderr Python.
+Когда: Уменьшить задержку сообщений в конвейере.
+python3 -u worker.py
+Результат: Записи не ждут обычного заполнения буфера Python; буферы следующей программы остаются отдельными.
+-B — Не записывать .pyc при импортах.
+Когда: Не оставлять новые кеши байткода в автономном комплекте.
+python3 -B linux_labs.py 01
+Результат: Лаборатория выполнится без обычной записи новых .pyc её импортов.
+
+python3 s3/labs/storage_models.py check
+Воспроизвести группу check на фиксированных входах.
+python3 -B s3/labs/storage_models.py check
+-u — Отключить обычную буферизацию stdout/stderr Python.
+Когда: Уменьшить задержку сообщений в конвейере.
+python3 -u worker.py
+Результат: Записи не ждут обычного заполнения буфера Python; буферы следующей программы остаются отдельными.
+-B — Не записывать .pyc при импортах.
+Когда: Не оставлять новые кеши байткода в автономном комплекте.
+python3 -B linux_labs.py 01
+Результат: Лаборатория выполнится без обычной записи новых .pyc её импортов.
+
+python3 s3/labs/storage_models.py checksums
+Воспроизвести группу checksums на фиксированных входах.
+python3 -B s3/labs/storage_models.py checksums
+-u — Отключить обычную буферизацию stdout/stderr Python.
+Когда: Уменьшить задержку сообщений в конвейере.
+python3 -u worker.py
+Результат: Записи не ждут обычного заполнения буфера Python; буферы следующей программы остаются отдельными.
+-B — Не записывать .pyc при импортах.
+Когда: Не оставлять новые кеши байткода в автономном комплекте.
+python3 -B linux_labs.py 01
+Результат: Лаборатория выполнится без обычной записи новых .pyc её импортов.
+
+python3 s3/labs/storage_models.py ranges
+Воспроизвести группу ranges на фиксированных входах.
+python3 -B s3/labs/storage_models.py ranges
+-u — Отключить обычную буферизацию stdout/stderr Python.
+Когда: Уменьшить задержку сообщений в конвейере.
+python3 -u worker.py
+Результат: Записи не ждут обычного заполнения буфера Python; буферы следующей программы остаются отдельными.
+-B — Не записывать .pyc при импортах.
+Когда: Не оставлять новые кеши байткода в автономном комплекте.
+python3 -B linux_labs.py 01
+Результат: Лаборатория выполнится без обычной записи новых .pyc её импортов.
+
+python3 s3/labs/storage_models.py multipart
+Воспроизвести группу multipart на фиксированных входах.
+python3 -B s3/labs/storage_models.py multipart
+-u — Отключить обычную буферизацию stdout/stderr Python.
+Когда: Уменьшить задержку сообщений в конвейере.
+python3 -u worker.py
+Результат: Записи не ждут обычного заполнения буфера Python; буферы следующей программы остаются отдельными.
+-B — Не записывать .pyc при импортах.
+Когда: Не оставлять новые кеши байткода в автономном комплекте.
+python3 -B linux_labs.py 01
+Результат: Лаборатория выполнится без обычной записи новых .pyc её импортов.
+
+python3 s3/labs/storage_models.py listing
+Воспроизвести группу listing на фиксированных входах.
+python3 -B s3/labs/storage_models.py listing
+-u — Отключить обычную буферизацию stdout/stderr Python.
+Когда: Уменьшить задержку сообщений в конвейере.
+python3 -u worker.py
+Результат: Записи не ждут обычного заполнения буфера Python; буферы следующей программы остаются отдельными.
+-B — Не записывать .pyc при импортах.
+Когда: Не оставлять новые кеши байткода в автономном комплекте.
+python3 -B linux_labs.py 01
+Результат: Лаборатория выполнится без обычной записи новых .pyc её импортов.
+
+python3 s3/labs/storage_models.py budget
+Воспроизвести группу budget на фиксированных входах.
+python3 -B s3/labs/storage_models.py budget
+-u — Отключить обычную буферизацию stdout/stderr Python.
+Когда: Уменьшить задержку сообщений в конвейере.
+python3 -u worker.py
+Результат: Записи не ждут обычного заполнения буфера Python; буферы следующей программы остаются отдельными.
+-B — Не записывать .pyc при импортах.
+Когда: Не оставлять новые кеши байткода в автономном комплекте.
+python3 -B linux_labs.py 01
+Результат: Лаборатория выполнится без обычной записи новых .pyc её импортов.
+
+python3 s3/labs/storage_models.py scenarios
+Воспроизвести группу scenarios на фиксированных входах.
+python3 -B s3/labs/storage_models.py scenarios
+-u — Отключить обычную буферизацию stdout/stderr Python.
+Когда: Уменьшить задержку сообщений в конвейере.
+python3 -u worker.py
+Результат: Записи не ждут обычного заполнения буфера Python; буферы следующей программы остаются отдельными.
+-B — Не записывать .pyc при импортах.
+Когда: Не оставлять новые кеши байткода в автономном комплекте.
+python3 -B linux_labs.py 01
+Результат: Лаборатория выполнится без обычной записи новых .pyc её импортов.
+
+python3 s3/labs/sigv4_vectors.py
+Пересчитать публичные вымышленные SigV4-векторы.
+python3 -B s3/labs/sigv4_vectors.py
+-u — Отключить обычную буферизацию stdout/stderr Python.
+Когда: Уменьшить задержку сообщений в конвейере.
+python3 -u worker.py
+Результат: Записи не ждут обычного заполнения буфера Python; буферы следующей программы остаются отдельными.
+-B — Не записывать .pyc при импортах.
+Когда: Не оставлять новые кеши байткода в автономном комплекте.
+python3 -B linux_labs.py 01
+Результат: Лаборатория выполнится без обычной записи новых .pyc её импортов.
+
+python3 s3/labs/object_operations.py
+Проверить модель версий и принятой копии главы07.
+python3 -B s3/labs/object_operations.py
+-u — Отключить обычную буферизацию stdout/stderr Python.
+Когда: Уменьшить задержку сообщений в конвейере.
+python3 -u worker.py
+Результат: Записи не ждут обычного заполнения буфера Python; буферы следующей программы остаются отдельными.
+-B — Не записывать .pyc при импортах.
+Когда: Не оставлять новые кеши байткода в автономном комплекте.
+python3 -B linux_labs.py 01
+Результат: Лаборатория выполнится без обычной записи новых .pyc её импортов.
+
+minio
+Запустить выбранную серверную программу или открыть её справку.
+minio [ГЛОБАЛЬНЫЕ ОПЦИИ] КОМАНДА
+-S КАТАЛОГ / --certs-dir КАТАЛОГ — Выбрать каталог сертификата и закрытого ключа сервера.
+Когда: До server явно указать подготовленное TLS-состояние.
+minio --certs-dir ./tls server --address 127.0.0.1:19000 ./data
+Результат: Сервер использует public.crt и private.key из ./tls; имя каталога не отключает проверку их пригодности.
+-h / --help — Показать справку выбранной команды.
+Когда: Сверить CLI собственной сборки.
+minio --help
+Результат: Печатается справка; сервер хранения не запускается.
+--version — Показать встроенную метку сборки и runtime.
+Когда: Сохранить сведения о полученной программе.
+minio --version
+Результат: Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo.
+
+minio server
+Запустить процесс хранения с заданными endpoints.
+minio [ГЛОБАЛЬНЫЕ ОПЦИИ] server [ОПЦИИ SERVER] ENDPOINT...
+--address АДРЕС:ПОРТ — Выбрать listener API.
+Когда: Ограничить личный стенд loopback.
+minio server --address 127.0.0.1:19000 ./data
+Результат: API слушает только указанный адрес; это не настройка порта браузерного интерфейса.
+--console-address АДРЕС:ПОРТ — Выбрать listener браузерного интерфейса.
+Когда: Зафиксировать отдельный адрес интерфейса.
+minio server --console-address 127.0.0.1:19001 ./data
+Результат: Интерфейс получает указанный listener; S3-клиенту нужен API endpoint.
+-h / --help — Показать справку выбранной команды.
+Когда: Сверить CLI собственной сборки.
+minio server --help
+Результат: Печатается справка; сервер хранения не запускается.
+-S КАТАЛОГ / --certs-dir КАТАЛОГ — Выбрать каталог сертификата и закрытого ключа сервера.
+Когда: До server явно указать подготовленное TLS-состояние.
+minio --certs-dir ./tls server --address 127.0.0.1:19000 ./data
+Результат: Сервер использует public.crt и private.key из ./tls; имя каталога не отключает проверку их пригодности.
+-h / --help — Показать справку выбранной команды.
+Когда: Сверить CLI собственной сборки.
+minio --help
+Результат: Печатается справка; сервер хранения не запускается.
+--version — Показать встроенную метку сборки и runtime.
+Когда: Сохранить сведения о полученной программе.
+minio --version
+Результат: Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo.
+
+mc
+Клиент выбранной объектной цели. Доступ определяют alias, credentials и серверная policy.
+mc [ГЛОБАЛЬНЫЕ ОПЦИИ] КОМАНДА
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается при root registerBefore и initMC(). Флаг зарегистрирован также у namespace/leaf, но поздний setGlobalsFromContext не повторяет эту инициализацию. В рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+--version — Показать встроенную метку сборки и runtime.
+Когда: Сохранить сведения о полученной программе.
+mc --version
+Результат: Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo.
+
+mc alias set
+Сохранить или заменить alias. Явное --api может исключить сетевую signature probe.
+mc [ГЛОБАЛЬНЫЕ ОПЦИИ] alias set [ОПЦИИ] ИМЯ ENDPOINT [ACCESS_KEY] [SECRET_KEY]
+--api ПОДПИСЬ — Задать S3v4 или S3v2.
+Когда: Закрепить S3v4.
+mc alias set --api S3v4 lab https://127.0.0.1:19000
+Результат: При отсутствии credentials в argv читается stdin; успех сохранения не равен успешному PUT.
+--path РЕЖИМ — Выбрать on, off или auto для bucket addressing.
+Когда: Работать с loopback без bucket DNS.
+mc alias set --path on lab https://127.0.0.1:19000
+Результат: В on bucket находится в URL path.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается при root registerBefore и initMC(). Флаг зарегистрирован также у namespace/leaf, но поздний setGlobalsFromContext не повторяет эту инициализацию. В рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+--version — Показать встроенную метку сборки и runtime.
+Когда: Сохранить сведения о полученной программе.
+mc --version
+Результат: Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+
+mc mb
+Создать bucket либо локальную directory-цель. Для серверного опыта указывается alias/bucket.
+mc [ГЛОБАЛЬНЫЕ ОПЦИИ] mb [ОПЦИИ] TARGET [TARGET...]
+--ignore-existing / -p — Не считать уже существующую цель ошибкой.
+Когда: Только после независимой проверки её принадлежности и настроек.
+mc mb --ignore-existing lab/handbook-minio
+Результат: Не проверяет автоматически versioning, Object Lock и прежние данные.
+--region REGION — Задать регион создаваемого bucket.
+Когда: Закрепить требуемое имя региона.
+mc mb --region us-east-1 lab/handbook-minio
+Результат: Создание должно подтвердить сервер; region не выбирает endpoint.
+--with-versioning — После создания включить versioning.
+Когда: Осознанно создать новый versioned bucket.
+mc mb --with-versioning lab/new-study
+Результат: Это последовательные действия; ошибка включения не доказывает, что bucket не был создан.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается при root registerBefore и initMC(). Флаг зарегистрирован также у namespace/leaf, но поздний setGlobalsFromContext не повторяет эту инициализацию. В рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+--version — Показать встроенную метку сборки и runtime.
+Когда: Сохранить сведения о полученной программе.
+mc --version
+Результат: Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo.
+
+mc version enable
+Включить versioning выбранного bucket. Ранее утраченные данные от этого не появляются.
+mc [ГЛОБАЛЬНЫЕ ОПЦИИ] version enable ALIAS/BUCKET
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается при root registerBefore и initMC(). Флаг зарегистрирован также у namespace/leaf, но поздний setGlobalsFromContext не повторяет эту инициализацию. В рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+--version — Показать встроенную метку сборки и runtime.
+Когда: Сохранить сведения о полученной программе.
+mc --version
+Результат: Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+
+mc version info
+Прочитать серверную конфигурацию versioning, включая возможные исключения.
+mc [ГЛОБАЛЬНЫЕ ОПЦИИ] version info ALIAS/BUCKET
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается при root registerBefore и initMC(). Флаг зарегистрирован также у namespace/leaf, но поздний setGlobalsFromContext не повторяет эту инициализацию. В рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+--version — Показать встроенную метку сборки и runtime.
+Когда: Сохранить сведения о полученной программе.
+mc --version
+Результат: Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+
+mc cp
+Передать содержимое между явно выбранными source и target. Новый PUT в versioned bucket создаёт версию.
+mc [ГЛОБАЛЬНЫЕ ОПЦИИ] cp [ОПЦИИ] SOURCE [SOURCE...] TARGET
+--version-id ID / --vid ID — Выбрать версию источника.
+Когда: Копировать известное серверное состояние.
+mc cp --version-id V1 lab/handbook-minio/project/manifest.txt ./new-copy.txt
+Результат: ID относится к source; destination version ID не сохраняется автоматически.
+--disable-multipart — Отключить multipart upload.
+Когда: Исследовать небольшой single-PUT опыт.
+mc cp --disable-multipart ./small.txt lab/handbook-minio/project/small.txt
+Результат: Меняется способ передачи; это не гарантия отсутствия retries или дубликатов версий.
+--attr СПИСОК — Передать metadata в формате key=value;key=value.
+Когда: Сопоставлять собственное намерение с сохранённой версией.
+mc cp --attr "operation-id=op-01" ./small.txt lab/handbook-minio/project/small.txt
+Результат: Metadata не является серверным ключом идемпотентности.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается при root registerBefore и initMC(). Флаг зарегистрирован также у namespace/leaf, но поздний setGlobalsFromContext не повторяет эту инициализацию. В рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+--version — Показать встроенную метку сборки и runtime.
+Когда: Сохранить сведения о полученной программе.
+mc --version
+Результат: Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo.
+
+mc stat
+Прочитать metadata объекта или сведения bucket. Наличие metadata не доказывает совпадение тела.
+mc [ГЛОБАЛЬНЫЕ ОПЦИИ] stat [ОПЦИИ] TARGET [TARGET...]
+--version-id ID / --vid ID — Выбрать конкретную версию.
+Когда: Не подменять результат текущим key.
+mc stat --version-id V1 lab/handbook-minio/project/manifest.txt
+Результат: Исследуется выбранная версия; требуется соответствующее право чтения версии.
+--no-list — Отключить LIST fallback операции stat.
+Когда: Исследовать точный object target без перечисления.
+mc stat --no-list lab/handbook-minio/project/manifest.txt
+Результат: Отказ object lookup не маскируется успешным списком похожего prefix.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается при root registerBefore и initMC(). Флаг зарегистрирован также у namespace/leaf, но поздний setGlobalsFromContext не повторяет эту инициализацию. В рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+--version — Показать встроенную метку сборки и runtime.
+Когда: Сохранить сведения о полученной программе.
+mc --version
+Результат: Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo.
+
+mc cat
+Прочитать тело в stdout. Redirect в новый файл сохраняет отдельную цель для cmp.
+mc [ГЛОБАЛЬНЫЕ ОПЦИИ] cat [ОПЦИИ] TARGET
+--version-id ID / --vid ID — Прочитать заданную версию.
+Когда: Проверить старые байты под новым current version либо marker.
+mc cat --version-id V1 lab/handbook-minio/project/manifest.txt
+Результат: GET выбирает versionId; право GetObjectVersion отличается от GetObject.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается при root registerBefore и initMC(). Флаг зарегистрирован также у namespace/leaf, но поздний setGlobalsFromContext не повторяет эту инициализацию. В рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+--version — Показать встроенную метку сборки и runtime.
+Когда: Сохранить сведения о полученной программе.
+mc --version
+Результат: Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo.
+
+mc ls
+Перечислить объекты выбранной цели; список текущих объектов и история версий решают разные задачи.
+mc [ГЛОБАЛЬНЫЕ ОПЦИИ] ls [ОПЦИИ] TARGET [TARGET...]
+--versions — Включить предыдущие версии и markers.
+Когда: Исследовать историю key после DELETE.
+mc ls --versions lab/handbook-minio/project/manifest.txt
+Результат: Старые версии могут существовать при отсутствии текущего тела.
+--recursive / -r — Перечислить вложенные prefixes.
+Когда: Адресно исследовать собственную область.
+mc ls --recursive lab/handbook-minio/project/
+Результат: Перечисление не превращает prefix в файловый каталог.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается при root registerBefore и initMC(). Флаг зарегистрирован также у namespace/leaf, но поздний setGlobalsFromContext не повторяет эту инициализацию. В рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+--version — Показать встроенную метку сборки и runtime.
+Когда: Сохранить сведения о полученной программе.
+mc --version
+Результат: Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo.
+
+mc rm
+Удалить выбранный объект либо конкретную версию. Без versionId в versioned bucket может создаваться marker.
+mc [ГЛОБАЛЬНЫЕ ОПЦИИ] rm [ОПЦИИ] TARGET [TARGET...]
+--dry-run — Показать предполагаемое удаление без его выполнения.
+Когда: Сравнить поведение на сохранённом исходном состоянии.
+mc rm --dry-run lab/handbook-minio/project/manifest.txt
+Результат: Текущий version ID должен остаться прежним; это проверяется отдельно.
+--version-id ID / --vid ID — Удалить ровно указанную версию либо marker.
+Когда: Осознанно удалить собственный marker M.
+mc rm --version-id M lab/handbook-minio/project/manifest.txt
+Результат: Удаление marker раскрывает предыдущую current version; удаление data version уничтожает её тело.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается при root registerBefore и initMC(). Флаг зарегистрирован также у namespace/leaf, но поздний setGlobalsFromContext не повторяет эту инициализацию. В рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+--version — Показать встроенную метку сборки и runtime.
+Когда: Сохранить сведения о полученной программе.
+mc --version
+Результат: Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo.
+
+mc admin user svcacct add
+Создать service account для указанного parent. Ответ содержит новый secret и сохраняется только приватно.
+mc [ГЛОБАЛЬНЫЕ ОПЦИИ] admin user svcacct add [ОПЦИИ] ALIAS ACCOUNT
+--policy ФАЙЛ — Передать embedded policy.
+Когда: Ограничить service account.
+mc admin user svcacct add --policy ./policy.json lab study-admin
+Результат: Policy должна быть валидной и непустой; её отсутствие может означать наследование широких прав.
+--access-key ID — Задать заранее сохранённый идентификатор.
+Когда: Иметь цель reconciliation после неоднозначного ответа.
+mc admin user svcacct add --access-key study-example lab study-admin
+Результат: Secret при отсутствии --secret-key генерирует клиент; его потерю info не исправляет.
+--name ТЕКСТ — Задать понятное имя account.
+Когда: Сопоставлять доступ с проектом.
+mc admin user svcacct add --name "handbook object client" lab study-admin
+Результат: Имя не заменяет access key и не задаёт полномочия.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается при root registerBefore и initMC(). Флаг зарегистрирован также у namespace/leaf, но поздний setGlobalsFromContext не повторяет эту инициализацию. В рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+--version — Показать встроенную метку сборки и runtime.
+Когда: Сохранить сведения о полученной программе.
+mc --version
+Результат: Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+
+mc admin user svcacct info
+Прочитать состояние, parent и policy service account. Secret повторно не выдаётся.
+mc [ГЛОБАЛЬНЫЕ ОПЦИИ] admin user svcacct info [ОПЦИИ] ALIAS ACCESS_ID
+--policy — Показать policy как JSON.
+Когда: Проверить фактическое ограничение созданного account.
+mc admin user svcacct info --policy lab study-example
+Результат: Вывод описывает policy; работоспособность доступа принимается отдельными запросами.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается при root registerBefore и initMC(). Флаг зарегистрирован также у namespace/leaf, но поздний setGlobalsFromContext не повторяет эту инициализацию. В рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+--version — Показать встроенную метку сборки и runtime.
+Когда: Сохранить сведения о полученной программе.
+mc --version
+Результат: Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+
+mc admin user svcacct disable
+Отключить будущую авторизацию указанного service account, сохранив его идентичность для разбора.
+mc [ГЛОБАЛЬНЫЕ ОПЦИИ] admin user svcacct disable ALIAS ACCESS_ID
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается при root registerBefore и initMC(). Флаг зарегистрирован также у namespace/leaf, но поздний setGlobalsFromContext не повторяет эту инициализацию. В рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+--version — Показать встроенную метку сборки и runtime.
+Когда: Сохранить сведения о полученной программе.
+mc --version
+Результат: Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+
+mc alias
+Группа команд для сохранённых aliases.
+mc alias [ОБЩИЕ ФЛАГИ] COMMAND ...
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается при root registerBefore и initMC(). Флаг зарегистрирован также у namespace/leaf, но поздний setGlobalsFromContext не повторяет эту инициализацию. В рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+--version — Показать встроенную метку сборки и runtime.
+Когда: Сохранить сведения о полученной программе.
+mc --version
+Результат: Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo.
+
+mc admin
+Группа административных команд сервера.
+mc admin [ОБЩИЕ ФЛАГИ] COMMAND ...
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается при root registerBefore и initMC(). Флаг зарегистрирован также у namespace/leaf, но поздний setGlobalsFromContext не повторяет эту инициализацию. В рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+--version — Показать встроенную метку сборки и runtime.
+Когда: Сохранить сведения о полученной программе.
+mc --version
+Результат: Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo.
+
+mc admin user
+Группа команд управления учётными записями.
+mc admin user [ОБЩИЕ ФЛАГИ] COMMAND ...
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается при root registerBefore и initMC(). Флаг зарегистрирован также у namespace/leaf, но поздний setGlobalsFromContext не повторяет эту инициализацию. В рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+--version — Показать встроенную метку сборки и runtime.
+Когда: Сохранить сведения о полученной программе.
+mc --version
+Результат: Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+
+mc admin user svcacct
+Группа команд управления service accounts.
+mc admin user svcacct [ОБЩИЕ ФЛАГИ] COMMAND ...
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается при root registerBefore и initMC(). Флаг зарегистрирован также у namespace/leaf, но поздний setGlobalsFromContext не повторяет эту инициализацию. В рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+--version — Показать встроенную метку сборки и runtime.
+Когда: Сохранить сведения о полученной программе.
+mc --version
+Результат: Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+
+mc version
+Группа команд настройки versioning bucket.
+mc version [ОБЩИЕ ФЛАГИ] COMMAND ...
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается при root registerBefore и initMC(). Флаг зарегистрирован также у namespace/leaf, но поздний setGlobalsFromContext не повторяет эту инициализацию. В рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+--version — Показать встроенную метку сборки и runtime.
+Когда: Сохранить сведения о полученной программе.
+mc --version
+Результат: Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo.
+
+mc admin info
+Прочитать состояние deployment; это не запуск heal.
+mc [ROOT_FLAGS] admin info ALIAS
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается при root registerBefore и initMC(). Флаг зарегистрирован также у namespace/leaf, но поздний setGlobalsFromContext не повторяет эту инициализацию. В рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+--version — Показать встроенную метку сборки и runtime.
+Когда: Сохранить сведения о полученной программе.
+mc --version
+Результат: Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+
+mc admin rebalance
+Группа управления переносом между pools.
+mc [ROOT_FLAGS] admin rebalance COMMAND ALIAS
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается при root registerBefore и initMC(). Флаг зарегистрирован также у namespace/leaf, но поздний setGlobalsFromContext не повторяет эту инициализацию. В рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+--version — Показать встроенную метку сборки и runtime.
+Когда: Сохранить сведения о полученной программе.
+mc --version
+Результат: Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+
+mc admin rebalance start
+Принять задание rebalance подходящего multi-pool deployment; ID не означает завершение.
+mc [ROOT_FLAGS] admin rebalance start ALIAS
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается при root registerBefore и initMC(). Флаг зарегистрирован также у namespace/leaf, но поздний setGlobalsFromContext не повторяет эту инициализацию. В рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+--version — Показать встроенную метку сборки и runtime.
+Когда: Сохранить сведения о полученной программе.
+mc --version
+Результат: Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+
+mc admin rebalance status
+Прочитать per-pool progress; Bytes и ETA имеют ограничения версии.
+mc [ROOT_FLAGS] admin rebalance status ALIAS
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается при root registerBefore и initMC(). Флаг зарегистрирован также у namespace/leaf, но поздний setGlobalsFromContext не повторяет эту инициализацию. В рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+--version — Показать встроенную метку сборки и runtime.
+Когда: Сохранить сведения о полученной программе.
+mc --version
+Результат: Без релизных ldflags ожидается DEVELOPMENT.GOGET; commit проверяют отдельно по Git и buildinfo.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+-h / --help — Показать справку.
+Когда: Сверить собственную сборку до серверных действий.
+mc --help
+Результат: Справка не подтверждает доступность сервера.
+-C КАТАЛОГ / --config-dir КАТАЛОГ — Выбрать клиентское состояние.
+Когда: Изолировать alias и CA учебного проекта.
+mc --config-dir "./state with spaces" stat lab/handbook-minio/project/manifest.txt
+Результат: Каталог выбирается root registerBefore/initMC. Поздняя регистрация флага не повторяет инициализацию: в рецепте --config-dir стоит сразу после executable; равнозначность позднего положения не подтверждена native.
+--disable-pager / --dp — Отключить внутренний pager.
+Когда: Сохранить help в файл.
+mc --disable-pager --help
+Результат: Вывод доступен непосредственно через stdout.
+--json — Выбрать структурированный вывод.
+Когда: Разбирать разрешённый несекретный результат либо закрытый credential workflow.
+mc --json stat lab/handbook-minio/project/manifest.txt
+Результат: Формат меняется; JSON alias/account может содержать secret и не становится публичным автоматически.
+
+cold_copy.py snapshot
+После полной остановки единственного стенда создать новую приватную копию и inventory.
+python3 -B labs/cold_copy.py snapshot SOURCE DEST
+-h / --help — Показать argparse help.
+Когда: Проверить аргументы до копирования.
+python3 -B labs/cold_copy.py --help
+Результат: Никакая копия не создаётся.
+
+cold_copy.py verify
+Сравнить bytes snapshot с сохранённым inventory; не запускать MinIO.
+python3 -B labs/cold_copy.py verify SOURCE
+-h / --help — Показать argparse help.
+Когда: Проверить аргументы до копирования.
+python3 -B labs/cold_copy.py --help
+Результат: Никакая копия не создаётся.
+
+cold_copy.py restore
+Восстановить проверенный snapshot в новый отдельный runtime, не перезаписывая оригинал.
+python3 -B labs/cold_copy.py restore SOURCE DEST
+-h / --help — Показать argparse help.
+Когда: Проверить аргументы до копирования.
+python3 -B labs/cold_copy.py --help
+Результат: Никакая копия не создаётся.
+
+cephadm
+Управлять развёртыванием в принятой личной VM.
+cephadm [ROOT FLAGS] COMMAND
+--image IMAGE — Выбрать образ до подкоманды.
+Когда: Использовать принятый digest.
+cephadm --image "$image" inspect-image
+Результат: Проверяется фактическая версия образа; имя не удостоверяет издателя.
+--verbose — Включить root diagnostic logging.
+Когда: Перед COMMAND; не JSON режима version.
+cephadm --verbose check-host
+Результат: Это другая область опции, чем version --verbose.
+
+cephadm version
+Прочитать версию установленного cephadm.
+cephadm version [--verbose]
+--verbose — Вернуть подробные сведения версии в JSON.
+Когда: После version.
+cephadm version --verbose
+Результат: В20.2.4 root --verbose перед version не заменяет эту опцию.
+--image IMAGE — Выбрать образ до подкоманды.
+Когда: Использовать принятый digest.
+cephadm --image "$image" inspect-image
+Результат: Проверяется фактическая версия образа; имя не удостоверяет издателя.
+--verbose — Включить root diagnostic logging.
+Когда: Перед COMMAND; не JSON режима version.
+cephadm --verbose check-host
+Результат: Это другая область опции, чем version --verbose.
+
+cephadm shell
+Запустить argv в выбранном Ceph-образе.
+cephadm [ROOT FLAGS] shell [FLAGS] -- PROGRAM ARGS
+--fsid FSID — Адресовать принятый кластер.
+Когда: При нескольких экземплярах/явном повторном входе.
+cephadm --image "$image" shell --fsid "$fsid" -- ceph status
+Результат: Не выбирает другой кластер по похожему имени.
+--mount SRC:DST:OPTIONS — Смонтировать выбранный каталог.
+Когда: Для входного файла ro; карточка показывает один mount.
+cephadm shell --mount "$PWD/input:/study-input:ro" -- rados -p cephstudy put report /study-input/report.txt
+Результат: В CLI nargs+; -- отделяет конец mount argv.
+-- — Завершить параметры оболочки.
+Когда: Перед PROGRAM.
+cephadm shell -- ceph -s
+Результат: -s принадлежит ceph, не cephadm.
+--image IMAGE — Выбрать образ до подкоманды.
+Когда: Использовать принятый digest.
+cephadm --image "$image" inspect-image
+Результат: Проверяется фактическая версия образа; имя не удостоверяет издателя.
+--verbose — Включить root diagnostic logging.
+Когда: Перед COMMAND; не JSON режима version.
+cephadm --verbose check-host
+Результат: Это другая область опции, чем version --verbose.
+
+cephadm bootstrap
+Создать первоначальный control plane один раз.
+cephadm --image IMAGE bootstrap [FLAGS]
+--mon-ip IP — Выбрать адрес первого MON.
+Когда: Только после проверки VM и сети.
+cephadm --image "$image" bootstrap --mon-ip 10.77.0.11
+Результат: Полный рецепт также передаёт FSID/config/SSH keys и сохраняет попытку.
+--config FILE — Прочитать выбранный initial config.
+Когда: Из нового bootstrap generation.
+cephadm bootstrap --mon-ip 10.77.0.11 --config initial-ceph.conf
+Результат: Не разрешает перезаписать существующий кластер.
+--image IMAGE — Выбрать образ до подкоманды.
+Когда: Использовать принятый digest.
+cephadm --image "$image" inspect-image
+Результат: Проверяется фактическая версия образа; имя не удостоверяет издателя.
+--verbose — Включить root diagnostic logging.
+Когда: Перед COMMAND; не JSON режима version.
+cephadm --verbose check-host
+Результат: Это другая область опции, чем version --verbose.
+
+ceph
+Запросить или изменить состояние принятого кластера.
+ceph [FLAGS] COMMAND
+--format FORMAT — Выбрать представление ответа.
+Когда: Для сохраняемых JSON observations.
+ceph status --format=json
+Результат: Код0 status не означает HEALTH_OK.
+-s — Запросить краткое состояние.
+Когда: После принятия FSID.
+ceph -s
+Результат: Читать также health detail и PG состояния.
+
+ceph osd pool create
+Создать новый pool по принятому правилу.
+ceph osd pool create POOL PG_NUM PGP_NUM replicated [FLAGS]
+--rule RULE — Выбрать существующее правило CRUSH.
+Когда: После проверки отсутствия pool.
+ceph osd pool create cephstudy 8 8 replicated --rule=cephstudy-host --autoscale-mode=off
+Результат: Правило выбирает домены; свободные байты не заменяют домены.
+--autoscale-mode MODE — Задать управление количеством PG.
+Когда: Off для фиксированного малого опыта.
+ceph osd pool create cephstudy 8 8 replicated --rule=cephstudy-host --autoscale-mode=off
+Результат: Не универсальная настройка производительности.
+--format FORMAT — Выбрать представление ответа.
+Когда: Для сохраняемых JSON observations.
+ceph status --format=json
+Результат: Код0 status не означает HEALTH_OK.
+-s — Запросить краткое состояние.
+Когда: После принятия FSID.
+ceph -s
+Результат: Читать также health detail и PG состояния.
+
+ceph osd pool set
+Изменить параметр выбранного pool.
+ceph osd pool set POOL KEY VALUE [FLAGS]
+--yes-i-really-mean-it — Подтвердить опасный size1 вместе с MON guard.
+Когда: Только для собственного одно-OSD пула.
+ceph osd pool set cephstudy size 1 --yes-i-really-mean-it
+Результат: Требуется mon_allow_pool_size_one; защита guard возвращается.
+--format FORMAT — Выбрать представление ответа.
+Когда: Для сохраняемых JSON observations.
+ceph status --format=json
+Результат: Код0 status не означает HEALTH_OK.
+-s — Запросить краткое состояние.
+Когда: После принятия FSID.
+ceph -s
+Результат: Читать также health detail и PG состояния.
+
+rados
+Операции над внутренними объектами RADOS.
+rados [FLAGS] COMMAND
+--pool POOL — Выбрать pool.
+Когда: Перед операцией.
+rados --pool cephstudy get report -
+Результат: Знак- в get выбирает stdout; обычный filename может быть усечён программой.
+
+rbd create
+Создать новый логический image.
+rbd create [FLAGS] POOL/IMAGE
+--size SIZE — Выбрать логический размер.
+Когда: Проверить отсутствие имени.
+rbd create --size 64M --object-size 4M --image-feature layering rbdstudy/report-disk
+Результат: 64M не означает немедленное выделение64MiB на каждом OSD.
+--object-size SIZE — Задать размер data object.
+Когда: Для разбора layout.
+rbd create --size 64M --object-size 4M rbdstudy/report-disk
+Результат: Для выбранного layout4MiB; сложное striping требует иных расчётов.
+
+rbd export
+Экспортировать выбранное содержимое image/snapshot.
+rbd export IMAGE[@SNAP] DEST
+
+
+rbd import
+Создать новое image из принятого входа.
+rbd import SOURCE POOL/NEWIMAGE
+
+
+ceph fs authorize
+Назначить права отдельному CephFS-клиенту.
+ceph fs authorize FS CLIENT PATH ACCESS
+--format FORMAT — Выбрать представление ответа.
+Когда: Для сохраняемых JSON observations.
+ceph status --format=json
+Результат: Код0 status не означает HEALTH_OK.
+-s — Запросить краткое состояние.
+Когда: После принятия FSID.
+ceph -s
+Результат: Читать также health detail и PG состояния.
+
+rgw-adminbucket
+Создать/проверить bucket отдельным source-only helper.
+rgw-adminbucket --config FILE --target ID [--timeout DURATION] create|head
+--config FILE — Прочитать явные targets.
+Когда: Перед командой после native build gate.
+rgw-adminbucket --config config/targets.json --target rgw-study create
+Результат: Нет ambient AWS chain; private credentials отдельно.
+--timeout DURATION — Ограничить одну операцию.
+Когда: Положительное время не более15m.
+rgw-adminbucket --config config/targets.json --target rgw-study --timeout 30s head
+Результат: Failed create может иметь unknown outcome.

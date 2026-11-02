@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from scripts import build_library, build_volume, library_catalog
+from scripts import build_library, build_volume, library_catalog, svg_theme
 
 
 class FirstBuildTests(unittest.TestCase):
@@ -76,8 +76,12 @@ class FirstBuildTests(unittest.TestCase):
                  patch.object(build_volume, 'ROOT', root), \
                  patch.object(build_volume, 'CONFIGS', configs), \
                  patch.object(build_volume, 'command_catalog', return_value=[]), \
-                 patch.object(library_catalog, 'refresh', side_effect=final_catalog):
+                 patch.object(library_catalog, 'refresh', side_effect=final_catalog), \
+                 patch.object(svg_theme, 'apply_svg_themes', return_value={}) as svg_posthook:
+                # This fixture tests first-build ordering, not the independent
+                # finite SVG asset contract (covered by test_svg_theme).
                 build_library.main()
+                svg_posthook.assert_called_once_with(root, list(slugs))
                 build_volume.home()
                 self.assertEqual((root/'index.html').read_text().count(
                     'href="operating-systems/index.html#os-cow-page"'), 1)

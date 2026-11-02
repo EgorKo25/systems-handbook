@@ -123,6 +123,24 @@ class ExportTests(unittest.TestCase):
                 self.assertFalse(name in exported, name)
                 self.assertNotIn('  ' + name + '\n', (output / 'SHA256SUMS').read_text())
 
+    def test_author_handoffs_are_not_reader_validation_reports(self):
+        handoffs = ['mongodb/READY.txt', 'flyway/READY.txt',
+                    'minio/READY.txt', 's3/VALIDATION.json']
+        reading = ['mongodb/README.txt', 'flyway/ПРОВЕРКИ.txt',
+                   's3/labs/README.txt', 's3/labs/READY.txt']
+        for name in handoffs:
+            self.write(name, 'Frozen author handoff: final review still pending\n')
+        for name in reading:
+            self.write(name, 'Reader-facing instruction or exercise fixture\n')
+        subprocess.run(['git', '-C', str(self.source), 'add', '--',
+                        *handoffs, *reading], check=True)
+        output = self.root / 'without-author-handoffs'
+        MODULE.export_site(self.source, output, 'a' * 40)
+        for name in handoffs:
+            self.assertFalse((output / name).exists(), name)
+        for name in reading:
+            self.assertTrue((output / name).is_file(), name)
+
     def test_registered_terraform_preserves_source_metadata_without_state_or_plans(self):
         public = {
             'terraform/.gitignore': '.terraform/\n*.tfstate\n*.tfstate.*\n*.tfplan\n',

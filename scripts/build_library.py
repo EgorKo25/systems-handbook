@@ -26,6 +26,8 @@ def main():
         ROOT, [row['slug'] for row in PUBLISHED], command_catalog(), parser))
     from scripts.library_catalog import refresh
     print(f'Shared dictionary: {refresh()} definitions')
+    from scripts.svg_theme import apply_svg_themes
+    print('Themed SVG assets:', apply_svg_themes(ROOT, [row['slug'] for row in PUBLISHED]))
 
 
 if __name__ == '__main__':

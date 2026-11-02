@@ -1,0 +1,198 @@
+[
+  {
+    "id": "00-route",
+    "title": "Ceph: один RADOS, три интерфейса хранения",
+    "words": 585,
+    "part": "Начало",
+    "number": "•"
+  },
+  {
+    "id": "ceph-01-model",
+    "title": "Кто хранит байты и кто согласует карту",
+    "words": 1100,
+    "part": "Книга I · Модель и собственная VM",
+    "number": "1"
+  },
+  {
+    "id": "ceph-02-supply",
+    "title": "Получение пакета и закрепление контейнера",
+    "words": 880,
+    "part": "Книга I · Модель и собственная VM",
+    "number": "2"
+  },
+  {
+    "id": "ceph-03-vm-install",
+    "title": "Первый кластер внутри собственной Linux VM",
+    "words": 930,
+    "part": "Книга I · Модель и собственная VM",
+    "number": "3"
+  },
+  {
+    "id": "ceph-04-hosts-security-health",
+    "title": "Принять первый OSD и проверить доступ",
+    "words": 401,
+    "part": "Книга I · Модель и собственная VM",
+    "number": "4"
+  },
+  {
+    "id": "ceph-05-placement-capacity",
+    "title": "От имени объекта к трём копиям",
+    "words": 2483,
+    "part": "Книга II · Размещение и устойчивость RADOS",
+    "number": "5"
+  },
+  {
+    "id": "ceph-06-peering-recovery",
+    "title": "Почему новая карта ещё не означает готовые данные",
+    "words": 4449,
+    "part": "Книга II · Размещение и устойчивость RADOS",
+    "number": "6"
+  },
+  {
+    "id": "ceph-07-bluestore",
+    "title": "BlueStore: почему одной записи на диск недостаточно",
+    "words": 2313,
+    "part": "Книга II · Размещение и устойчивость RADOS",
+    "number": "7"
+  },
+  {
+    "id": "ceph-08-pools-encoding",
+    "title": "Как правило пула выбирает места и задаёт цену восстановления",
+    "words": 6394,
+    "part": "Книга II · Размещение и устойчивость RADOS",
+    "number": "8"
+  },
+  {
+    "id": "ceph-09-rados-lab",
+    "title": "Малый RADOS: одна запись, возврат и повторное чтение",
+    "words": 1106,
+    "part": "Книга II · Размещение и устойчивость RADOS",
+    "number": "9"
+  },
+  {
+    "id": "ceph-10-rbd-path",
+    "title": "Как адрес блока становится объектом RADOS",
+    "words": 894,
+    "part": "Книга III · Блочное хранение RBD",
+    "number": "10"
+  },
+  {
+    "id": "ceph-11-rbd-snapshots-clones",
+    "title": "Снимок RBD, clone и зависимость от родителя",
+    "words": 505,
+    "part": "Книга III · Блочное хранение RBD",
+    "number": "11"
+  },
+  {
+    "id": "ceph-12-rbd-backup-restore",
+    "title": "Восстановить RBD на новое имя",
+    "words": 640,
+    "part": "Книга III · Блочное хранение RBD",
+    "number": "12"
+  },
+  {
+    "id": "ceph-13-rbd-clients-csi",
+    "title": "Клиент RBD: ключ, lock и право продолжить запись",
+    "words": 550,
+    "part": "Книга III · Блочное хранение RBD",
+    "number": "13"
+  },
+  {
+    "id": "ceph-14-cephfs-path",
+    "title": "Имя файла, разрешение кэша и путь его байтов",
+    "words": 762,
+    "part": "Книга IV · Файловая система CephFS",
+    "number": "14"
+  },
+  {
+    "id": "ceph-15-cephfs-caps-layout",
+    "title": "Разрешения CephFS и отзыв клиентского кэша",
+    "words": 491,
+    "part": "Книга IV · Файловая система CephFS",
+    "number": "15"
+  },
+  {
+    "id": "ceph-16-cephfs-recovery",
+    "title": "Создать CephFS и различить failover, replay и repair",
+    "words": 784,
+    "part": "Книга IV · Файловая система CephFS",
+    "number": "16"
+  },
+  {
+    "id": "ceph-17-rgw-path",
+    "title": "Что происходит между PUT и видимым объектом",
+    "words": 732,
+    "part": "Книга V · Объектный шлюз RGW",
+    "number": "17"
+  },
+  {
+    "id": "ceph-18-rgw-tls-users",
+    "title": "HTTPS RGW и отдельный S3-пользователь",
+    "words": 585,
+    "part": "Книга V · Объектный шлюз RGW",
+    "number": "18"
+  },
+  {
+    "id": "ceph-19-rgw-s3-project",
+    "title": "Приложение отчётов через RGW",
+    "words": 686,
+    "part": "Книга V · Объектный шлюз RGW",
+    "number": "19"
+  },
+  {
+    "id": "ceph-20-rgw-multisite",
+    "title": "Удалённая зона получает изменения позже",
+    "words": 578,
+    "part": "Книга V · Объектный шлюз RGW",
+    "number": "20"
+  },
+  {
+    "id": "ceph-21-observation",
+    "title": "Наблюдение: от запроса клиента до конкретной PG",
+    "words": 557,
+    "part": "Книга VI · Эксплуатация и восстановление",
+    "number": "21"
+  },
+  {
+    "id": "ceph-22-failures-fullness",
+    "title": "Отказ, заполнение и остановка новых записей",
+    "words": 492,
+    "part": "Книга VI · Эксплуатация и восстановление",
+    "number": "22"
+  },
+  {
+    "id": "ceph-23-backup-contract",
+    "title": "Что именно обязана восстановить резервная копия",
+    "words": 499,
+    "part": "Книга VI · Эксплуатация и восстановление",
+    "number": "23"
+  },
+  {
+    "id": "ceph-24-upgrade-removal",
+    "title": "Обновление и вывод узла без потери нужной истории",
+    "words": 517,
+    "part": "Книга VI · Эксплуатация и восстановление",
+    "number": "24"
+  },
+  {
+    "id": "ceph-25-measurement",
+    "title": "Задержка, скорость и стоимость восстановления",
+    "words": 719,
+    "part": "Книга VI · Эксплуатация и восстановление",
+    "number": "25"
+  },
+  {
+    "id": "ceph-26-continuing-lab",
+    "title": "Продолжать стенд без потери прежнего опыта",
+    "words": 461,
+    "part": "Книга VI · Эксплуатация и восстановление",
+    "number": "26"
+  },
+  {
+    "id": "99-glossary",
+    "title": "Словарь · Ceph",
+    "words": 571,
+    "part": "Справочник",
+    "number": "•"
+  }
+]

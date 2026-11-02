@@ -1,0 +1,156 @@
+[
+  {
+    "id": "00-route",
+    "title": "Prometheus: от события в Go до проверяемого вывода",
+    "words": 792,
+    "part": "Начало",
+    "number": "•"
+  },
+  {
+    "id": "prom-01-install",
+    "title": "Первый сервер: происхождение байтов, права и сохранность",
+    "words": 1320,
+    "part": "Книга I · Измерение становится данными",
+    "number": "1"
+  },
+  {
+    "id": "prom-02-model-and-time",
+    "title": "Модель: серия, метки, образец и четыре разных времени",
+    "words": 587,
+    "part": "Книга I · Измерение становится данными",
+    "number": "2"
+  },
+  {
+    "id": "prom-03-scrape-discovery",
+    "title": "Сбор: цели, обнаружение, переименование и исчезновение",
+    "words": 567,
+    "part": "Книга I · Измерение становится данными",
+    "number": "3"
+  },
+  {
+    "id": "prom-04-tsdb",
+    "title": "TSDB: путь sample в WAL, head, блоки и запрос",
+    "words": 1497,
+    "part": "Книга I · Измерение становится данными",
+    "number": "4"
+  },
+  {
+    "id": "prom-05-instrumentation",
+    "title": "Instrumentation Go: контракт метрики и цена наблюдения",
+    "words": 773,
+    "part": "Книга I · Измерение становится данными",
+    "number": "5"
+  },
+  {
+    "id": "prom-06-metric-types",
+    "title": "Counter, gauge, summary и два вида histogram",
+    "words": 548,
+    "part": "Книга I · Измерение становится данными",
+    "number": "6"
+  },
+  {
+    "id": "prom-07-promql-types-selectors",
+    "title": "PromQL I: тип каждого выражения и выбор рядов",
+    "words": 473,
+    "part": "Книга II · Язык PromQL",
+    "number": "7"
+  },
+  {
+    "id": "prom-08-time-evaluation",
+    "title": "PromQL II: T, окно, step и lookback",
+    "words": 838,
+    "part": "Книга II · Язык PromQL",
+    "number": "8"
+  },
+  {
+    "id": "prom-09-counters",
+    "title": "PromQL III: rate, increase, irate и reset с расчётом",
+    "words": 1008,
+    "part": "Книга II · Язык PromQL",
+    "number": "9"
+  },
+  {
+    "id": "prom-10-aggregation",
+    "title": "PromQL IV: агрегация и сохранение смысла",
+    "words": 369,
+    "part": "Книга II · Язык PromQL",
+    "number": "10"
+  },
+  {
+    "id": "prom-11-operators-matching",
+    "title": "PromQL V: арифметика, сравнения и сопоставление labels",
+    "words": 783,
+    "part": "Книга II · Язык PromQL",
+    "number": "11"
+  },
+  {
+    "id": "prom-12-missing-subqueries",
+    "title": "PromQL VI: отсутствие, ноль, offset, @ и subquery",
+    "words": 518,
+    "part": "Книга II · Язык PromQL",
+    "number": "12"
+  },
+  {
+    "id": "prom-13-histogram-queries",
+    "title": "PromQL VII: распределения, квантили и ограничения buckets",
+    "words": 719,
+    "part": "Книга II · Язык PromQL",
+    "number": "13"
+  },
+  {
+    "id": "prom-14-rules",
+    "title": "Правила: запись результата и жизнь алерта",
+    "words": 550,
+    "part": "Книга III · Правила и эксплуатация",
+    "number": "14"
+  },
+  {
+    "id": "prom-15-slo",
+    "title": "SLI, SLO и burn rate: сигнал, единицы и данные",
+    "words": 492,
+    "part": "Книга III · Правила и эксплуатация",
+    "number": "15"
+  },
+  {
+    "id": "prom-16-capacity-diagnostics",
+    "title": "Ёмкость и диагностика: ряды, samples и узкое место",
+    "words": 596,
+    "part": "Книга III · Правила и эксплуатация",
+    "number": "16"
+  },
+  {
+    "id": "prom-17-backup-upgrade",
+    "title": "Резерв, удаление, восстановление и обновление",
+    "words": 1025,
+    "part": "Книга III · Правила и эксплуатация",
+    "number": "17"
+  },
+  {
+    "id": "prom-18-ha-remote",
+    "title": "HA, remote write/read и границы локального сервера",
+    "words": 531,
+    "part": "Книга III · Правила и эксплуатация",
+    "number": "18"
+  },
+  {
+    "id": "prom-19-lab",
+    "title": "Сквозной практикум: один сервер, один сервис, сохранённая история",
+    "words": 1234,
+    "part": "Сохраняемый практикум",
+    "number": "19"
+  },
+  {
+    "id": "prom-20-sources",
+    "title": "Первичные источники и границы проверенной редакции",
+    "words": 453,
+    "part": "Источники и справочник",
+    "number": "20"
+  },
+  {
+    "id": "99-glossary",
+    "title": "Словарь · Prometheus",
+    "words": 1582,
+    "part": "Источники и справочник",
+    "number": "•"
+  }
+]

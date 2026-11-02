@@ -1,0 +1,136 @@
+<svg id="m07-storage-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 1260" role="img" aria-labelledby="m07-fig-title m07-fig-desc">
+<title id="m07-fig-title">GET вернул V; отдельный repair опубликовал только E4</title>
+<desc id="m07-fig-desc">На узлах A и B лежат исправные data shards V.
+Узел C содержит parity shard с плохим hash последнего chunk.
+При GET reader E3 обнаружил повреждение, E4 был недоступен.
+E1 и E2 дали клиенту все четыре MiB без записи новых parity.
+Для отдельного repair E4 снова доступен с проверенным format слота.
+Два временных parity parts записаны заново. Возвращённая ошибка Close
+исключила E3; RenameData на E4 опубликовал его part и metadata.
+E3 остаётся повреждённым. Это условная сцена, не native IO.</desc>
+<style>
+#m07-storage-svg{color:var(--text,#20252b);font-family:system-ui,sans-serif}
+#m07-storage-svg text{fill:currentColor;font-size:16px}
+#m07-storage-svg .m07-small{font-size:14px}
+#m07-storage-svg .m07-label{font-size:18px;font-weight:700}
+#m07-storage-svg .m07-paper{fill:var(--paper,#fff);stroke:currentColor;stroke-width:1.5}
+#m07-storage-svg .m07-drive{fill:var(--soft,#eef1f4);stroke:currentColor;stroke-width:2}
+#m07-storage-svg .m07-platter{fill:none;stroke:var(--muted,currentColor);stroke-width:1.5}
+#m07-storage-svg .m07-good{fill:var(--accent,#386a86);fill-opacity:.18;stroke:currentColor}
+#m07-storage-svg .m07-missing{fill:none;stroke:currentColor;stroke-dasharray:6 4}
+#m07-storage-svg .m07-path{fill:none;stroke:var(--accent,currentColor);stroke-width:2.5;marker-end:url(#m07-arrow)}
+#m07-storage-svg .m07-check{fill:none;stroke:currentColor;stroke-width:2;stroke-dasharray:4 4}
+#m07-storage-svg .m07-stop{fill:none;stroke:currentColor;stroke-width:3}
+</style>
+<defs>
+<marker id="m07-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="currentColor"/></marker>
+<pattern id="m07-bad-hatch" patternUnits="userSpaceOnUse" width="8" height="8"><path d="M0 8L8 0" stroke="currentColor" stroke-width="1" stroke-opacity=".35"/></pattern>
+</defs>
+<text x="20" y="28" class="m07-label">V: один part 4 MiB · N=4 · K=2 · P=2 · B=1 MiB</text>
+<text x="20" y="54">Distribution [1,2,3,4]: data на E1/E2, parity на E3/E4.</text>
+<text x="20" y="80">Каждый endpoint — отдельный физический диск своего узла.</text>
+<g transform="translate(20 108)">
+<path class="m07-drive" d="M0 18L18 0H192L210 18V288L192 306H18L0 288Z"/>
+<circle class="m07-platter" cx="170" cy="43" r="27"/><circle class="m07-platter" cx="170" cy="43" r="6"/><path class="m07-platter" d="M195 68L174 45"/>
+<text x="12" y="30" class="m07-label">Узел A / A1</text>
+<text x="12" y="54">E1 · shard 1</text>
+<text x="12" y="83">data</text>
+<path class="m07-paper" d="M12 98H177L196 117V150H12Z"/><path class="m07-check" d="M177 98V117H196"/>
+<text x="22" y="128">xl.meta: версия V</text>
+<path class="m07-paper" d="M12 162H177L196 181V288H12Z"/>
+<text x="22" y="185">part.1</text>
+<rect x="22" y="196" width="26" height="16" class="m07-good"/><rect x="48" y="196" width="136" height="16" class="m07-good"/><text x="27" y="208" class="m07-small">h0</text><text x="56" y="208" class="m07-small">chunk 0</text>
+<rect x="22" y="216" width="26" height="16" class="m07-good"/><rect x="48" y="216" width="136" height="16" class="m07-good"/><text x="27" y="228" class="m07-small">h1</text><text x="56" y="228" class="m07-small">chunk 1</text>
+<rect x="22" y="236" width="26" height="16" class="m07-good"/><rect x="48" y="236" width="136" height="16" class="m07-good"/><text x="27" y="248" class="m07-small">h2</text><text x="56" y="248" class="m07-small">chunk 2</text>
+<rect x="22" y="256" width="26" height="16" class="m07-good"/><rect x="48" y="256" width="136" height="16" class="m07-good"/><text x="27" y="268" class="m07-small">h3</text><text x="56" y="268" class="m07-small">chunk 3</text>
+</g>
+<g transform="translate(252 108)">
+<path class="m07-drive" d="M0 18L18 0H192L210 18V288L192 306H18L0 288Z"/>
+<circle class="m07-platter" cx="170" cy="43" r="27"/><circle class="m07-platter" cx="170" cy="43" r="6"/><path class="m07-platter" d="M195 68L174 45"/>
+<text x="12" y="30" class="m07-label">Узел B / B1</text>
+<text x="12" y="54">E2 · shard 2</text>
+<text x="12" y="83">data</text>
+<path class="m07-paper" d="M12 98H177L196 117V150H12Z"/><path class="m07-check" d="M177 98V117H196"/>
+<text x="22" y="128">xl.meta: версия V</text>
+<path class="m07-paper" d="M12 162H177L196 181V288H12Z"/>
+<text x="22" y="185">part.1</text>
+<rect x="22" y="196" width="26" height="16" class="m07-good"/><rect x="48" y="196" width="136" height="16" class="m07-good"/><text x="27" y="208" class="m07-small">h0</text><text x="56" y="208" class="m07-small">chunk 0</text>
+<rect x="22" y="216" width="26" height="16" class="m07-good"/><rect x="48" y="216" width="136" height="16" class="m07-good"/><text x="27" y="228" class="m07-small">h1</text><text x="56" y="228" class="m07-small">chunk 1</text>
+<rect x="22" y="236" width="26" height="16" class="m07-good"/><rect x="48" y="236" width="136" height="16" class="m07-good"/><text x="27" y="248" class="m07-small">h2</text><text x="56" y="248" class="m07-small">chunk 2</text>
+<rect x="22" y="256" width="26" height="16" class="m07-good"/><rect x="48" y="256" width="136" height="16" class="m07-good"/><text x="27" y="268" class="m07-small">h3</text><text x="56" y="268" class="m07-small">chunk 3</text>
+</g>
+<g transform="translate(484 108)">
+<path class="m07-drive" d="M0 18L18 0H192L210 18V288L192 306H18L0 288Z"/>
+<circle class="m07-platter" cx="170" cy="43" r="27"/><circle class="m07-platter" cx="170" cy="43" r="6"/><path class="m07-platter" d="M195 68L174 45"/>
+<text x="12" y="30" class="m07-label">Узел C / C1</text>
+<text x="12" y="54">E3 · shard 3</text>
+<text x="12" y="83">parity</text>
+<path class="m07-paper" d="M12 98H177L196 117V150H12Z"/><path class="m07-check" d="M177 98V117H196"/>
+<text x="22" y="128">xl.meta: версия V</text>
+<path class="m07-paper" d="M12 162H177L196 181V288H12Z"/>
+<text x="22" y="185">part.1</text>
+<rect x="22" y="196" width="26" height="16" class="m07-good"/><rect x="48" y="196" width="136" height="16" class="m07-good"/><text x="27" y="208" class="m07-small">h0</text><text x="56" y="208" class="m07-small">chunk 0</text>
+<rect x="22" y="216" width="26" height="16" class="m07-good"/><rect x="48" y="216" width="136" height="16" class="m07-good"/><text x="27" y="228" class="m07-small">h1</text><text x="56" y="228" class="m07-small">chunk 1</text>
+<rect x="22" y="236" width="26" height="16" class="m07-good"/><rect x="48" y="236" width="136" height="16" class="m07-good"/><text x="27" y="248" class="m07-small">h2</text><text x="56" y="248" class="m07-small">chunk 2</text>
+<rect x="22" y="256" width="26" height="16" class="m07-good"/><rect x="48" y="256" width="136" height="16" class="m07-missing"/><rect x="148" y="256" width="36" height="16" fill="url(#m07-bad-hatch)"/><text x="27" y="268" class="m07-small">h3</text><text x="56" y="268" class="m07-small">chunk 3 ×</text>
+</g>
+<g transform="translate(716 108)">
+<path class="m07-drive" d="M0 18L18 0H192L210 18V288L192 306H18L0 288Z"/>
+<circle class="m07-platter" cx="170" cy="43" r="27"/><circle class="m07-platter" cx="170" cy="43" r="6"/><path class="m07-platter" d="M195 68L174 45"/>
+<text x="12" y="30" class="m07-label">Узел D / D1</text>
+<text x="12" y="54">E4 · shard 4</text>
+<text x="12" y="83">parity · V нет</text>
+<path class="m07-missing" d="M12 98H177L196 117V288H12Z"/><text x="24" y="132">GET: offline</text><text x="24" y="168">Перед repair:</text><text x="24" y="193">доступен новый D1,</text><text x="24" y="218">format слота E4</text><text x="24" y="243">проверен; V нет.</text>
+</g>
+<text x="20" y="447" class="m07-label">GET</text>
+<path class="m07-path" d="M125 414V462H98V510"/>
+<path class="m07-path" d="M357 414V482H182V510"/>
+<path class="m07-check" d="M589 414V462H435"/>
+<path class="m07-stop" d="M428 455L442 469M428 469L442 455"/>
+<text x="484" y="490" class="m07-small">Reader E3 вызван:</text>
+<text x="484" y="512" class="m07-small">hash(chunk 3) ≠ h3.</text>
+<path class="m07-paper" d="M32 510H272L300 538V628H32Z"/>
+<path class="m07-check" d="M272 510V538H300"/>
+<text x="48" y="540" class="m07-label">Клиент получил V</text>
+<text x="48" y="568">4 MiB после проверок.</text>
+<text x="48" y="594">E1/E2 дали оба data shards.</text>
+<text x="48" y="618" class="m07-small">На E3/E4 ещё нет repair.</text>
+<text x="20" y="670" class="m07-label">Repair: выбранная версия V</text>
+<text x="20" y="698">Повторное чтение E1 и E2</text>
+<path class="m07-path" d="M125 414V425H8V805H404"/>
+<path class="m07-path" d="M357 414V435H326V775H404"/>
+<circle class="m07-drive" cx="450" cy="790" r="48"/>
+<text x="450" y="785" class="m07-label" text-anchor="middle">K=2</text>
+<text x="450" y="810" text-anchor="middle">кодер</text>
+<text x="370" y="858" class="m07-small">RAM узла D</text>
+<text x="370" y="880" class="m07-small">→ parity 3 и 4</text>
+<path class="m07-path" d="M496 775H568V706H610"/>
+<path class="m07-path" d="M496 805H568V906H610"/>
+<g transform="translate(610 650)">
+<path class="m07-paper" d="M0 0H206L230 24V110H0Z"/><path class="m07-check" d="M206 0V24H230"/>
+<text x="14" y="29">E3: tmp/U/…/part.1</text>
+<text x="14" y="57">shard 3, новые hashes</text>
+<text x="14" y="85">ещё не опубликован</text>
+</g>
+<path class="m07-stop" d="M725 760V772M711 772H739"/>
+<text x="624" y="800" class="m07-label">Close: ошибка</text>
+<text x="624" y="824">E3 остаётся Corrupt.</text>
+<g transform="translate(610 850)">
+<path class="m07-paper" d="M0 0H206L230 24V110H0Z"/><path class="m07-check" d="M206 0V24H230"/>
+<text x="14" y="29">E4: tmp/U/…/part.1</text>
+<text x="14" y="57">shard 4, новые hashes</text>
+<text x="14" y="85">ещё не опубликован</text>
+</g>
+<path class="m07-path" d="M725 960V990"/>
+<g transform="translate(610 990)">
+<path class="m07-paper" d="M0 0H206L230 24V110H0Z"/><path class="m07-check" d="M206 0V24H230"/>
+<text x="14" y="29" class="m07-label">E4: RenameData OK</text>
+<text x="14" y="57">xl.meta(V), part.1</text>
+<text x="14" y="85">After(E4) = OK</text>
+</g>
+<text x="20" y="1140" class="m07-label">Возможен nil у вызова, пока After(E3) остаётся Corrupt.</text>
+<text x="20" y="1166">Результат читают отдельно по Endpoint. Следующая попытка может исправить E3.</text>
+<text x="20" y="1192">Общая атомарная публикация всех целей этой сценой не предполагается.</text>
+<text x="20" y="1220">h: 32 B · chunk: 512 KiB · 4 chunks на shard.</text>
+<text x="20" y="1247">Один shard stream: 2 MiB payload + 128 B hashes.</text>
+</svg>

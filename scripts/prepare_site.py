@@ -33,6 +33,15 @@ FOUNDATION_AUTHORING_FILES = {
     "operating-systems/tests/memory_io_sources.py",
     "operating-systems/tests/coordination_sources.py",
 }
+# Frozen author handoffs describe an earlier review stage, not the checks of
+# the published reader. Keep them in source history, outside the reading copy.
+AUTHOR_HANDOFF_FILES = {
+    "ansible/READY.txt", "argocd/READY.txt", "artifactory/READY.txt",
+    "flyway/READY.txt", "grafana/READY.txt", "helm/READY.txt",
+    "kubernetes/READY.txt", "mongodb/READY.txt", "nexus/READY.txt",
+    "prometheus/READY.txt", "terraform/READY.txt", "vault/READY.txt",
+    "minio/READY.txt", "s3/VALIDATION.json",
+}
 REVISION = re.compile(r"[0-9a-f]{40,64}")
 
 
@@ -61,7 +70,7 @@ def is_reading_file(name: str) -> bool:
     path = PurePosixPath(name)
     if path.is_absolute() or ".." in path.parts:
         return False
-    if name in FOUNDATION_AUTHORING_FILES:
+    if name in FOUNDATION_AUTHORING_FILES or name in AUTHOR_HANDOFF_FILES:
         return False
     if name in ROOT_FILES:
         return True
