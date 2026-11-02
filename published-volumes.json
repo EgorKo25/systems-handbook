@@ -125,6 +125,11 @@
       "slug": "prometheus",
       "title": "Prometheus",
       "build": "managed"
+    },
+    {
+      "slug": "flyway",
+      "title": "Flyway",
+      "build": "managed"
     }
   ],
   "reading_order": [
@@ -137,6 +142,7 @@
     "go",
     "docker",
     "postgres",
+    "flyway",
     "cache",
     "mongodb",
     "sonarqube",

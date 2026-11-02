@@ -1,0 +1,6 @@
+.private/
+state/
+backups/
+logs/
+app/bin/
+app/vendor/

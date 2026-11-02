@@ -35082,5 +35082,907 @@
       "promtool": [],
       "promtool tsdb": []
     }
+  },
+  {
+    "name": "flyway",
+    "volume": "flyway",
+    "chapter": "flyway-08-configuration",
+    "purpose": "Запускает официальный CLI выбранного издания с явной конфигурацией проекта.",
+    "syntax": "flyway [ПАРАМЕТРЫ -key=value] КОМАНДА [ПАРАМЕТРЫ -key=value]",
+    "flags": [
+      {
+        "flag": "-configFiles=ФАЙЛЫ",
+        "action": "Выбирает перечисленные конфиги вместо неявного набора. CONF и TOML в одном списке не смешивают.",
+        "when": "Всегда в воспроизводимом выпуске; путь с пробелом должен быть одним argv.",
+        "example": "flyway \"-configFiles=/home/me/lab copy/flyway.conf\" info",
+        "result": "Читает указанный файл; ошибка пути/формата останавливает до миграции."
+      },
+      {
+        "flag": "-url=JDBC_URL",
+        "action": "Переопределяет JDBC target; выше environment/config.",
+        "when": "Только для заранее сверенной отдельной цели, например restore.",
+        "example": "flyway -url=jdbc:postgresql://127.0.0.1:15432/handbook_restore info",
+        "result": "Обзор относится к новой базе; пароль задают приватно вне argv."
+      },
+      {
+        "flag": "-user=РОЛЬ",
+        "action": "Выбирает роль PostgreSQL для JDBC.",
+        "when": "При явной передаче разрешённой migration-личности.",
+        "example": "flyway -user=flyway_owner info",
+        "result": "Не даёт прав сверх серверной роли; app_local не сможет DDL."
+      },
+      {
+        "flag": "-outputType=ФОРМАТ",
+        "action": "Просит поддерживаемый машинный JSON-результат.",
+        "when": "Для CI с проверкой версии схемы отчёта и кода процесса.",
+        "example": "flyway -outputType=json info",
+        "result": "JSON-обзор; формат разных Flyway-версий не обещан неизменным."
+      },
+      {
+        "flag": "-X",
+        "action": "Включает расширенный журнал; сведения конфигурации/SQL могут быть приватными.",
+        "when": "Для локального расследования, до публикации журнала нужен просмотр.",
+        "example": "flyway -X info",
+        "result": "Подробная диагностика; это не отдельная проверка происхождения SQL."
+      },
+      {
+        "flag": "-q",
+        "action": "Уменьшает обычный вывод, сохраняя ошибки/предупреждения.",
+        "when": "Для заранее принятой автоматизации, когда подробный stdout не нужен.",
+        "example": "flyway -q info",
+        "result": "Меньше текста; отсутствие текста не заменяет проверку return code."
+      },
+      {
+        "flag": "-postgresql.transactional.lock=ЗНАЧЕНИЕ",
+        "action": "При false выбирает сессионный advisory lock PostgreSQL вместо транзакционного; не меняет executeInTransaction самого SQL.",
+        "when": "В прямом CLI для проверенного CREATE INDEX CONCURRENTLY. В продолжаемом wrapper значение закреплено в CONF и этот CLI override запрещён.",
+        "example": "flyway -configFiles=flyway.conf migrate -postgresql.transactional.lock=false",
+        "result": "При true транзакционный lock может задерживать CONCURRENTLY; false меняет время жизни lock на сессию и не устраняет остальные DDL-конфликты."
+      }
+    ],
+    "persistentOptions": true,
+    "flagScopes": [
+      "flyway",
+      "flyway",
+      "flyway",
+      "flyway",
+      "flyway",
+      "flyway",
+      "flyway"
+    ]
+  },
+  {
+    "name": "flyway version",
+    "volume": "flyway",
+    "chapter": "flyway-02-distribution",
+    "purpose": "Показывает версию/издание установленного CLI и компоненты.",
+    "syntax": "flyway version",
+    "flags": [
+      {
+        "flag": "-configFiles=ФАЙЛЫ",
+        "action": "Выбирает перечисленные конфиги вместо неявного набора. CONF и TOML в одном списке не смешивают.",
+        "when": "Всегда в воспроизводимом выпуске; путь с пробелом должен быть одним argv.",
+        "example": "flyway \"-configFiles=/home/me/lab copy/flyway.conf\" info",
+        "result": "Читает указанный файл; ошибка пути/формата останавливает до миграции."
+      },
+      {
+        "flag": "-url=JDBC_URL",
+        "action": "Переопределяет JDBC target; выше environment/config.",
+        "when": "Только для заранее сверенной отдельной цели, например restore.",
+        "example": "flyway -url=jdbc:postgresql://127.0.0.1:15432/handbook_restore info",
+        "result": "Обзор относится к новой базе; пароль задают приватно вне argv."
+      },
+      {
+        "flag": "-user=РОЛЬ",
+        "action": "Выбирает роль PostgreSQL для JDBC.",
+        "when": "При явной передаче разрешённой migration-личности.",
+        "example": "flyway -user=flyway_owner info",
+        "result": "Не даёт прав сверх серверной роли; app_local не сможет DDL."
+      },
+      {
+        "flag": "-outputType=ФОРМАТ",
+        "action": "Просит поддерживаемый машинный JSON-результат.",
+        "when": "Для CI с проверкой версии схемы отчёта и кода процесса.",
+        "example": "flyway -outputType=json info",
+        "result": "JSON-обзор; формат разных Flyway-версий не обещан неизменным."
+      },
+      {
+        "flag": "-X",
+        "action": "Включает расширенный журнал; сведения конфигурации/SQL могут быть приватными.",
+        "when": "Для локального расследования, до публикации журнала нужен просмотр.",
+        "example": "flyway -X info",
+        "result": "Подробная диагностика; это не отдельная проверка происхождения SQL."
+      },
+      {
+        "flag": "-q",
+        "action": "Уменьшает обычный вывод, сохраняя ошибки/предупреждения.",
+        "when": "Для заранее принятой автоматизации, когда подробный stdout не нужен.",
+        "example": "flyway -q info",
+        "result": "Меньше текста; отсутствие текста не заменяет проверку return code."
+      },
+      {
+        "flag": "-postgresql.transactional.lock=ЗНАЧЕНИЕ",
+        "action": "При false выбирает сессионный advisory lock PostgreSQL вместо транзакционного; не меняет executeInTransaction самого SQL.",
+        "when": "В прямом CLI для проверенного CREATE INDEX CONCURRENTLY. В продолжаемом wrapper значение закреплено в CONF и этот CLI override запрещён.",
+        "example": "flyway -configFiles=flyway.conf migrate -postgresql.transactional.lock=false",
+        "result": "При true транзакционный lock может задерживать CONCURRENTLY; false меняет время жизни lock на сессию и не устраняет остальные DDL-конфликты."
+      }
+    ],
+    "aliases": [
+      "flyway -v",
+      "flyway --version"
+    ],
+    "flagScopes": [
+      "flyway",
+      "flyway",
+      "flyway",
+      "flyway",
+      "flyway",
+      "flyway",
+      "flyway"
+    ],
+    "persistentScopes": [
+      "flyway"
+    ],
+    "prefixFlags": {
+      "flyway": [
+        "-configFiles=ФАЙЛЫ",
+        "-url=JDBC_URL",
+        "-user=РОЛЬ",
+        "-outputType=ФОРМАТ",
+        "-X",
+        "-q",
+        "-postgresql.transactional.lock=ЗНАЧЕНИЕ"
+      ]
+    }
+  },
+  {
+    "name": "flyway help",
+    "volume": "flyway",
+    "chapter": "flyway-08-configuration",
+    "purpose": "Показывает help без исполнения SQL. Формы flyway -h, flyway --help и flyway -? — aliases этой операции; help migrate показывает целевую справку.",
+    "syntax": "flyway help [КОМАНДА] / flyway -h / flyway --help / flyway -?",
+    "flags": [
+      {
+        "flag": "migrate",
+        "action": "Выбирает справку migrate.",
+        "when": "Для проверки локальных параметров SQL-исполнителя.",
+        "example": "flyway help migrate",
+        "result": "Описание и поддерживаемые параметры выбранной версии."
+      },
+      {
+        "flag": "-configFiles=ФАЙЛЫ",
+        "action": "Выбирает перечисленные конфиги вместо неявного набора. CONF и TOML в одном списке не смешивают.",
+        "when": "Всегда в воспроизводимом выпуске; путь с пробелом должен быть одним argv.",
+        "example": "flyway \"-configFiles=/home/me/lab copy/flyway.conf\" info",
+        "result": "Читает указанный файл; ошибка пути/формата останавливает до миграции."
+      },
+      {
+        "flag": "-url=JDBC_URL",
+        "action": "Переопределяет JDBC target; выше environment/config.",
+        "when": "Только для заранее сверенной отдельной цели, например restore.",
+        "example": "flyway -url=jdbc:postgresql://127.0.0.1:15432/handbook_restore info",
+        "result": "Обзор относится к новой базе; пароль задают приватно вне argv."
+      },
+      {
+        "flag": "-user=РОЛЬ",
+        "action": "Выбирает роль PostgreSQL для JDBC.",
+        "when": "При явной передаче разрешённой migration-личности.",
+        "example": "flyway -user=flyway_owner info",
+        "result": "Не даёт прав сверх серверной роли; app_local не сможет DDL."
+      },
+      {
+        "flag": "-outputType=ФОРМАТ",
+        "action": "Просит поддерживаемый машинный JSON-результат.",
+        "when": "Для CI с проверкой версии схемы отчёта и кода процесса.",
+        "example": "flyway -outputType=json info",
+        "result": "JSON-обзор; формат разных Flyway-версий не обещан неизменным."
+      },
+      {
+        "flag": "-X",
+        "action": "Включает расширенный журнал; сведения конфигурации/SQL могут быть приватными.",
+        "when": "Для локального расследования, до публикации журнала нужен просмотр.",
+        "example": "flyway -X info",
+        "result": "Подробная диагностика; это не отдельная проверка происхождения SQL."
+      },
+      {
+        "flag": "-q",
+        "action": "Уменьшает обычный вывод, сохраняя ошибки/предупреждения.",
+        "when": "Для заранее принятой автоматизации, когда подробный stdout не нужен.",
+        "example": "flyway -q info",
+        "result": "Меньше текста; отсутствие текста не заменяет проверку return code."
+      },
+      {
+        "flag": "-postgresql.transactional.lock=ЗНАЧЕНИЕ",
+        "action": "При false выбирает сессионный advisory lock PostgreSQL вместо транзакционного; не меняет executeInTransaction самого SQL.",
+        "when": "В прямом CLI для проверенного CREATE INDEX CONCURRENTLY. В продолжаемом wrapper значение закреплено в CONF и этот CLI override запрещён.",
+        "example": "flyway -configFiles=flyway.conf migrate -postgresql.transactional.lock=false",
+        "result": "При true транзакционный lock может задерживать CONCURRENTLY; false меняет время жизни lock на сессию и не устраняет остальные DDL-конфликты."
+      }
+    ],
+    "aliases": [
+      "flyway -h",
+      "flyway --help",
+      "flyway -?"
+    ],
+    "flagScopes": [
+      "flyway help",
+      "flyway",
+      "flyway",
+      "flyway",
+      "flyway",
+      "flyway",
+      "flyway",
+      "flyway"
+    ],
+    "persistentScopes": [
+      "flyway"
+    ],
+    "prefixFlags": {
+      "flyway": [
+        "-configFiles=ФАЙЛЫ",
+        "-url=JDBC_URL",
+        "-user=РОЛЬ",
+        "-outputType=ФОРМАТ",
+        "-X",
+        "-q",
+        "-postgresql.transactional.lock=ЗНАЧЕНИЕ"
+      ]
+    }
+  },
+  {
+    "name": "flyway info",
+    "volume": "flyway",
+    "chapter": "flyway-07-history",
+    "purpose": "Сопоставляет schema history и доступные ресурсы; не исполняет Pending.",
+    "syntax": "flyway info [-target=ВЕРСИЯ]",
+    "flags": [
+      {
+        "flag": "-target=ВЕРСИЯ",
+        "action": "Показывает верхнюю границу и Above Target для новых файлов.",
+        "when": "Для предварительного обзора утверждённого шага.",
+        "example": "flyway info -target=2",
+        "result": "С V1: V2 доступна, V3–V6 Above Target; данные не меняются."
+      },
+      {
+        "flag": "-configFiles=ФАЙЛЫ",
+        "action": "Выбирает перечисленные конфиги вместо неявного набора. CONF и TOML в одном списке не смешивают.",
+        "when": "Всегда в воспроизводимом выпуске; путь с пробелом должен быть одним argv.",
+        "example": "flyway \"-configFiles=/home/me/lab copy/flyway.conf\" info",
+        "result": "Читает указанный файл; ошибка пути/формата останавливает до миграции."
+      },
+      {
+        "flag": "-url=JDBC_URL",
+        "action": "Переопределяет JDBC target; выше environment/config.",
+        "when": "Только для заранее сверенной отдельной цели, например restore.",
+        "example": "flyway -url=jdbc:postgresql://127.0.0.1:15432/handbook_restore info",
+        "result": "Обзор относится к новой базе; пароль задают приватно вне argv."
+      },
+      {
+        "flag": "-user=РОЛЬ",
+        "action": "Выбирает роль PostgreSQL для JDBC.",
+        "when": "При явной передаче разрешённой migration-личности.",
+        "example": "flyway -user=flyway_owner info",
+        "result": "Не даёт прав сверх серверной роли; app_local не сможет DDL."
+      },
+      {
+        "flag": "-outputType=ФОРМАТ",
+        "action": "Просит поддерживаемый машинный JSON-результат.",
+        "when": "Для CI с проверкой версии схемы отчёта и кода процесса.",
+        "example": "flyway -outputType=json info",
+        "result": "JSON-обзор; формат разных Flyway-версий не обещан неизменным."
+      },
+      {
+        "flag": "-X",
+        "action": "Включает расширенный журнал; сведения конфигурации/SQL могут быть приватными.",
+        "when": "Для локального расследования, до публикации журнала нужен просмотр.",
+        "example": "flyway -X info",
+        "result": "Подробная диагностика; это не отдельная проверка происхождения SQL."
+      },
+      {
+        "flag": "-q",
+        "action": "Уменьшает обычный вывод, сохраняя ошибки/предупреждения.",
+        "when": "Для заранее принятой автоматизации, когда подробный stdout не нужен.",
+        "example": "flyway -q info",
+        "result": "Меньше текста; отсутствие текста не заменяет проверку return code."
+      },
+      {
+        "flag": "-postgresql.transactional.lock=ЗНАЧЕНИЕ",
+        "action": "При false выбирает сессионный advisory lock PostgreSQL вместо транзакционного; не меняет executeInTransaction самого SQL.",
+        "when": "В прямом CLI для проверенного CREATE INDEX CONCURRENTLY. В продолжаемом wrapper значение закреплено в CONF и этот CLI override запрещён.",
+        "example": "flyway -configFiles=flyway.conf migrate -postgresql.transactional.lock=false",
+        "result": "При true транзакционный lock может задерживать CONCURRENTLY; false меняет время жизни lock на сессию и не устраняет остальные DDL-конфликты."
+      }
+    ],
+    "flagScopes": [
+      "flyway info",
+      "flyway",
+      "flyway",
+      "flyway",
+      "flyway",
+      "flyway",
+      "flyway",
+      "flyway"
+    ],
+    "persistentScopes": [
+      "flyway"
+    ],
+    "prefixFlags": {
+      "flyway": [
+        "-configFiles=ФАЙЛЫ",
+        "-url=JDBC_URL",
+        "-user=РОЛЬ",
+        "-outputType=ФОРМАТ",
+        "-X",
+        "-q",
+        "-postgresql.transactional.lock=ЗНАЧЕНИЕ"
+      ]
+    }
+  },
+  {
+    "name": "flyway validate",
+    "volume": "flyway",
+    "chapter": "flyway-09-validation",
+    "purpose": "Проверяет соответствие ресурсов истории. Самостоятельная команда13.12 отвергает Pending; внутренний validateOnMigrate допускает предназначенные к запуску Pending.",
+    "syntax": "flyway validate [-ignoreMigrationPatterns=ШАБЛОНЫ]",
+    "flags": [
+      {
+        "flag": "-ignoreMigrationPatterns=ШАБЛОНЫ",
+        "action": "Задаёт исключения тип:состояние, заменяя default *:future. Пустое значение очищает список.",
+        "when": "Перед утверждённым следующим шагом разрешают только Pending; checksum mismatch остаётся ошибкой.",
+        "example": "flyway validate \"-ignoreMigrationPatterns=*:pending\"",
+        "result": "Pending допущены, принятые checksums проверены; Future здесь уже не игнорируются."
+      },
+      {
+        "flag": "-configFiles=ФАЙЛЫ",
+        "action": "Выбирает перечисленные конфиги вместо неявного набора. CONF и TOML в одном списке не смешивают.",
+        "when": "Всегда в воспроизводимом выпуске; путь с пробелом должен быть одним argv.",
+        "example": "flyway \"-configFiles=/home/me/lab copy/flyway.conf\" info",
+        "result": "Читает указанный файл; ошибка пути/формата останавливает до миграции."
+      },
+      {
+        "flag": "-url=JDBC_URL",
+        "action": "Переопределяет JDBC target; выше environment/config.",
+        "when": "Только для заранее сверенной отдельной цели, например restore.",
+        "example": "flyway -url=jdbc:postgresql://127.0.0.1:15432/handbook_restore info",
+        "result": "Обзор относится к новой базе; пароль задают приватно вне argv."
+      },
+      {
+        "flag": "-user=РОЛЬ",
+        "action": "Выбирает роль PostgreSQL для JDBC.",
+        "when": "При явной передаче разрешённой migration-личности.",
+        "example": "flyway -user=flyway_owner info",
+        "result": "Не даёт прав сверх серверной роли; app_local не сможет DDL."
+      },
+      {
+        "flag": "-outputType=ФОРМАТ",
+        "action": "Просит поддерживаемый машинный JSON-результат.",
+        "when": "Для CI с проверкой версии схемы отчёта и кода процесса.",
+        "example": "flyway -outputType=json info",
+        "result": "JSON-обзор; формат разных Flyway-версий не обещан неизменным."
+      },
+      {
+        "flag": "-X",
+        "action": "Включает расширенный журнал; сведения конфигурации/SQL могут быть приватными.",
+        "when": "Для локального расследования, до публикации журнала нужен просмотр.",
+        "example": "flyway -X info",
+        "result": "Подробная диагностика; это не отдельная проверка происхождения SQL."
+      },
+      {
+        "flag": "-q",
+        "action": "Уменьшает обычный вывод, сохраняя ошибки/предупреждения.",
+        "when": "Для заранее принятой автоматизации, когда подробный stdout не нужен.",
+        "example": "flyway -q info",
+        "result": "Меньше текста; отсутствие текста не заменяет проверку return code."
+      },
+      {
+        "flag": "-postgresql.transactional.lock=ЗНАЧЕНИЕ",
+        "action": "При false выбирает сессионный advisory lock PostgreSQL вместо транзакционного; не меняет executeInTransaction самого SQL.",
+        "when": "В прямом CLI для проверенного CREATE INDEX CONCURRENTLY. В продолжаемом wrapper значение закреплено в CONF и этот CLI override запрещён.",
+        "example": "flyway -configFiles=flyway.conf migrate -postgresql.transactional.lock=false",
+        "result": "При true транзакционный lock может задерживать CONCURRENTLY; false меняет время жизни lock на сессию и не устраняет остальные DDL-конфликты."
+      }
+    ],
+    "flagScopes": [
+      "flyway validate",
+      "flyway",
+      "flyway",
+      "flyway",
+      "flyway",
+      "flyway",
+      "flyway",
+      "flyway"
+    ],
+    "persistentScopes": [
+      "flyway"
+    ],
+    "prefixFlags": {
+      "flyway": [
+        "-configFiles=ФАЙЛЫ",
+        "-url=JDBC_URL",
+        "-user=РОЛЬ",
+        "-outputType=ФОРМАТ",
+        "-X",
+        "-q",
+        "-postgresql.transactional.lock=ЗНАЧЕНИЕ"
+      ]
+    }
+  },
+  {
+    "name": "flyway migrate",
+    "volume": "flyway",
+    "chapter": "flyway-06-request-path",
+    "purpose": "Координирует исполнителей, выбирает и применяет допустимые миграции, записывает результат.",
+    "syntax": "flyway migrate [-target=ВЕРСИЯ] [-outOfOrder=true|false]",
+    "flags": [
+      {
+        "flag": "-target=ВЕРСИЯ",
+        "action": "Ограничивает новые versioned сверху; R всё ещё участвуют.",
+        "when": "Для поэтапного выпуска с внешними gates совместимости.",
+        "example": "flyway migrate -target=2",
+        "result": "С V1 принимает V2; с V6 не восстанавливает V1/V2-схему."
+      },
+      {
+        "flag": "-outOfOrder=ЗНАЧЕНИЕ",
+        "action": "Разрешает позднюю меньшую версию при true.",
+        "when": "Для рецензированного SQL, допустимого в обоих порядках.",
+        "example": "flyway migrate -outOfOrder=true",
+        "result": "V1.5 после V7 получает поздний installed_rank; это не пересортировка старых операций."
+      },
+      {
+        "flag": "-validateOnMigrate=ЗНАЧЕНИЕ",
+        "action": "Управляет проверкой истории до исполнения.",
+        "when": "В стенде true; выключение может скрыть неправильный набор ресурсов.",
+        "example": "flyway migrate -validateOnMigrate=true -target=2",
+        "result": "Checksum mismatch останавливает до следующего DDL."
+      },
+      {
+        "flag": "-group=ЗНАЧЕНИЕ",
+        "action": "Просит общую транзакцию подходящего pending-набора.",
+        "when": "Для отдельно проверенного целиком транзакционного набора.",
+        "example": "flyway migrate -group=true -target=2",
+        "result": "Граница/locks шире одной миграции; не подходит слепо к V5 CONCURRENTLY."
+      },
+      {
+        "flag": "-mixed=ЗНАЧЕНИЕ",
+        "action": "Управляет допустимостью смешения транзакционного/нетранзакционного SQL.",
+        "when": "Только после разбора фактической атомарности, default false.",
+        "example": "flyway migrate -mixed=false -target=2",
+        "result": "Не разрешает смесь ради исчезновения ошибки; V5 вынесена отдельно."
+      },
+      {
+        "flag": "-executeInTransaction=ЗНАЧЕНИЕ",
+        "action": "Задаёт режим SQL глобально; соседний script config точнее ограничивает изменение.",
+        "when": "Для отдельного проверенного сценария; в стенде V5.sql.conf.",
+        "example": "flyway migrate -executeInTransaction=true -target=2",
+        "result": "Транзакционные V1/V2; не делает CONCURRENTLY допустимым внутри транзакции."
+      },
+      {
+        "flag": "-configFiles=ФАЙЛЫ",
+        "action": "Выбирает перечисленные конфиги вместо неявного набора. CONF и TOML в одном списке не смешивают.",
+        "when": "Всегда в воспроизводимом выпуске; путь с пробелом должен быть одним argv.",
+        "example": "flyway \"-configFiles=/home/me/lab copy/flyway.conf\" info",
+        "result": "Читает указанный файл; ошибка пути/формата останавливает до миграции."
+      },
+      {
+        "flag": "-url=JDBC_URL",
+        "action": "Переопределяет JDBC target; выше environment/config.",
+        "when": "Только для заранее сверенной отдельной цели, например restore.",
+        "example": "flyway -url=jdbc:postgresql://127.0.0.1:15432/handbook_restore info",
+        "result": "Обзор относится к новой базе; пароль задают приватно вне argv."
+      },
+      {
+        "flag": "-user=РОЛЬ",
+        "action": "Выбирает роль PostgreSQL для JDBC.",
+        "when": "При явной передаче разрешённой migration-личности.",
+        "example": "flyway -user=flyway_owner info",
+        "result": "Не даёт прав сверх серверной роли; app_local не сможет DDL."
+      },
+      {
+        "flag": "-outputType=ФОРМАТ",
+        "action": "Просит поддерживаемый машинный JSON-результат.",
+        "when": "Для CI с проверкой версии схемы отчёта и кода процесса.",
+        "example": "flyway -outputType=json info",
+        "result": "JSON-обзор; формат разных Flyway-версий не обещан неизменным."
+      },
+      {
+        "flag": "-X",
+        "action": "Включает расширенный журнал; сведения конфигурации/SQL могут быть приватными.",
+        "when": "Для локального расследования, до публикации журнала нужен просмотр.",
+        "example": "flyway -X info",
+        "result": "Подробная диагностика; это не отдельная проверка происхождения SQL."
+      },
+      {
+        "flag": "-q",
+        "action": "Уменьшает обычный вывод, сохраняя ошибки/предупреждения.",
+        "when": "Для заранее принятой автоматизации, когда подробный stdout не нужен.",
+        "example": "flyway -q info",
+        "result": "Меньше текста; отсутствие текста не заменяет проверку return code."
+      },
+      {
+        "flag": "-postgresql.transactional.lock=ЗНАЧЕНИЕ",
+        "action": "При false выбирает сессионный advisory lock PostgreSQL вместо транзакционного; не меняет executeInTransaction самого SQL.",
+        "when": "В прямом CLI для проверенного CREATE INDEX CONCURRENTLY. В продолжаемом wrapper значение закреплено в CONF и этот CLI override запрещён.",
+        "example": "flyway -configFiles=flyway.conf migrate -postgresql.transactional.lock=false",
+        "result": "При true транзакционный lock может задерживать CONCURRENTLY; false меняет время жизни lock на сессию и не устраняет остальные DDL-конфликты."
+      }
+    ],
+    "flagScopes": [
+      "flyway migrate",
+      "flyway migrate",
+      "flyway migrate",
+      "flyway migrate",
+      "flyway migrate",
+      "flyway migrate",
+      "flyway",
+      "flyway",
+      "flyway",
+      "flyway",
+      "flyway",
+      "flyway",
+      "flyway"
+    ],
+    "persistentScopes": [
+      "flyway"
+    ],
+    "prefixFlags": {
+      "flyway": [
+        "-configFiles=ФАЙЛЫ",
+        "-url=JDBC_URL",
+        "-user=РОЛЬ",
+        "-outputType=ФОРМАТ",
+        "-X",
+        "-q",
+        "-postgresql.transactional.lock=ЗНАЧЕНИЕ"
+      ]
+    }
+  },
+  {
+    "name": "flyway baseline",
+    "volume": "flyway",
+    "chapter": "flyway-14-baseline-repair",
+    "purpose": "Записывает начальную отметку для уже доказанного состояния существующей базы.",
+    "syntax": "flyway baseline -baselineVersion=ВЕРСИЯ [-baselineDescription=ТЕКСТ]",
+    "flags": [
+      {
+        "flag": "-baselineVersion=ВЕРСИЯ",
+        "action": "Покрывает предыдущие версии отметкой без исполнения их SQL.",
+        "when": "Только после инвентаризации/backup существующей базы.",
+        "example": "flyway baseline -baselineVersion=1",
+        "result": "Создаёт BASELINE; пустая цель не получает notes из V1."
+      },
+      {
+        "flag": "-baselineDescription=ТЕКСТ",
+        "action": "Сохраняет описание решения.",
+        "when": "Чтобы последующая проверка понимала причину принятия.",
+        "example": "flyway baseline -baselineVersion=1 \"-baselineDescription=Принятая схема ноября\"",
+        "result": "Пробелы остаются одним аргументом; описание не проверяет объекты."
+      },
+      {
+        "flag": "-configFiles=ФАЙЛЫ",
+        "action": "Выбирает перечисленные конфиги вместо неявного набора. CONF и TOML в одном списке не смешивают.",
+        "when": "Всегда в воспроизводимом выпуске; путь с пробелом должен быть одним argv.",
+        "example": "flyway \"-configFiles=/home/me/lab copy/flyway.conf\" info",
+        "result": "Читает указанный файл; ошибка пути/формата останавливает до миграции."
+      },
+      {
+        "flag": "-url=JDBC_URL",
+        "action": "Переопределяет JDBC target; выше environment/config.",
+        "when": "Только для заранее сверенной отдельной цели, например restore.",
+        "example": "flyway -url=jdbc:postgresql://127.0.0.1:15432/handbook_restore info",
+        "result": "Обзор относится к новой базе; пароль задают приватно вне argv."
+      },
+      {
+        "flag": "-user=РОЛЬ",
+        "action": "Выбирает роль PostgreSQL для JDBC.",
+        "when": "При явной передаче разрешённой migration-личности.",
+        "example": "flyway -user=flyway_owner info",
+        "result": "Не даёт прав сверх серверной роли; app_local не сможет DDL."
+      },
+      {
+        "flag": "-outputType=ФОРМАТ",
+        "action": "Просит поддерживаемый машинный JSON-результат.",
+        "when": "Для CI с проверкой версии схемы отчёта и кода процесса.",
+        "example": "flyway -outputType=json info",
+        "result": "JSON-обзор; формат разных Flyway-версий не обещан неизменным."
+      },
+      {
+        "flag": "-X",
+        "action": "Включает расширенный журнал; сведения конфигурации/SQL могут быть приватными.",
+        "when": "Для локального расследования, до публикации журнала нужен просмотр.",
+        "example": "flyway -X info",
+        "result": "Подробная диагностика; это не отдельная проверка происхождения SQL."
+      },
+      {
+        "flag": "-q",
+        "action": "Уменьшает обычный вывод, сохраняя ошибки/предупреждения.",
+        "when": "Для заранее принятой автоматизации, когда подробный stdout не нужен.",
+        "example": "flyway -q info",
+        "result": "Меньше текста; отсутствие текста не заменяет проверку return code."
+      },
+      {
+        "flag": "-postgresql.transactional.lock=ЗНАЧЕНИЕ",
+        "action": "При false выбирает сессионный advisory lock PostgreSQL вместо транзакционного; не меняет executeInTransaction самого SQL.",
+        "when": "В прямом CLI для проверенного CREATE INDEX CONCURRENTLY. В продолжаемом wrapper значение закреплено в CONF и этот CLI override запрещён.",
+        "example": "flyway -configFiles=flyway.conf migrate -postgresql.transactional.lock=false",
+        "result": "При true транзакционный lock может задерживать CONCURRENTLY; false меняет время жизни lock на сессию и не устраняет остальные DDL-конфликты."
+      }
+    ],
+    "flagScopes": [
+      "flyway baseline",
+      "flyway baseline",
+      "flyway",
+      "flyway",
+      "flyway",
+      "flyway",
+      "flyway",
+      "flyway",
+      "flyway"
+    ],
+    "persistentScopes": [
+      "flyway"
+    ],
+    "prefixFlags": {
+      "flyway": [
+        "-configFiles=ФАЙЛЫ",
+        "-url=JDBC_URL",
+        "-user=РОЛЬ",
+        "-outputType=ФОРМАТ",
+        "-X",
+        "-q",
+        "-postgresql.transactional.lock=ЗНАЧЕНИЕ"
+      ]
+    }
+  },
+  {
+    "name": "flyway repair",
+    "volume": "flyway",
+    "chapter": "flyway-14-baseline-repair",
+    "purpose": "Согласует schema history с полным утверждённым набором ресурсов; не чинит SQL-данные.",
+    "syntax": "flyway repair",
+    "flags": [
+      {
+        "flag": "-configFiles=ФАЙЛЫ",
+        "action": "Выбирает перечисленные конфиги вместо неявного набора. CONF и TOML в одном списке не смешивают.",
+        "when": "Всегда в воспроизводимом выпуске; путь с пробелом должен быть одним argv.",
+        "example": "flyway \"-configFiles=/home/me/lab copy/flyway.conf\" info",
+        "result": "Читает указанный файл; ошибка пути/формата останавливает до миграции."
+      },
+      {
+        "flag": "-url=JDBC_URL",
+        "action": "Переопределяет JDBC target; выше environment/config.",
+        "when": "Только для заранее сверенной отдельной цели, например restore.",
+        "example": "flyway -url=jdbc:postgresql://127.0.0.1:15432/handbook_restore info",
+        "result": "Обзор относится к новой базе; пароль задают приватно вне argv."
+      },
+      {
+        "flag": "-user=РОЛЬ",
+        "action": "Выбирает роль PostgreSQL для JDBC.",
+        "when": "При явной передаче разрешённой migration-личности.",
+        "example": "flyway -user=flyway_owner info",
+        "result": "Не даёт прав сверх серверной роли; app_local не сможет DDL."
+      },
+      {
+        "flag": "-outputType=ФОРМАТ",
+        "action": "Просит поддерживаемый машинный JSON-результат.",
+        "when": "Для CI с проверкой версии схемы отчёта и кода процесса.",
+        "example": "flyway -outputType=json info",
+        "result": "JSON-обзор; формат разных Flyway-версий не обещан неизменным."
+      },
+      {
+        "flag": "-X",
+        "action": "Включает расширенный журнал; сведения конфигурации/SQL могут быть приватными.",
+        "when": "Для локального расследования, до публикации журнала нужен просмотр.",
+        "example": "flyway -X info",
+        "result": "Подробная диагностика; это не отдельная проверка происхождения SQL."
+      },
+      {
+        "flag": "-q",
+        "action": "Уменьшает обычный вывод, сохраняя ошибки/предупреждения.",
+        "when": "Для заранее принятой автоматизации, когда подробный stdout не нужен.",
+        "example": "flyway -q info",
+        "result": "Меньше текста; отсутствие текста не заменяет проверку return code."
+      },
+      {
+        "flag": "-postgresql.transactional.lock=ЗНАЧЕНИЕ",
+        "action": "При false выбирает сессионный advisory lock PostgreSQL вместо транзакционного; не меняет executeInTransaction самого SQL.",
+        "when": "В прямом CLI для проверенного CREATE INDEX CONCURRENTLY. В продолжаемом wrapper значение закреплено в CONF и этот CLI override запрещён.",
+        "example": "flyway -configFiles=flyway.conf migrate -postgresql.transactional.lock=false",
+        "result": "При true транзакционный lock может задерживать CONCURRENTLY; false меняет время жизни lock на сессию и не устраняет остальные DDL-конфликты."
+      }
+    ],
+    "flagScopes": [
+      "flyway",
+      "flyway",
+      "flyway",
+      "flyway",
+      "flyway",
+      "flyway",
+      "flyway"
+    ],
+    "persistentScopes": [
+      "flyway"
+    ],
+    "prefixFlags": {
+      "flyway": [
+        "-configFiles=ФАЙЛЫ",
+        "-url=JDBC_URL",
+        "-user=РОЛЬ",
+        "-outputType=ФОРМАТ",
+        "-X",
+        "-q",
+        "-postgresql.transactional.lock=ЗНАЧЕНИЕ"
+      ]
+    }
+  },
+  {
+    "name": "flyway clean",
+    "volume": "flyway",
+    "chapter": "flyway-14-baseline-repair",
+    "purpose": "Разрушительная команда удаления управляемых объектов; запрещена на продолжаемом стенде.",
+    "syntax": "flyway clean [-cleanDisabled=true]",
+    "flags": [
+      {
+        "flag": "-cleanDisabled=ЗНАЧЕНИЕ",
+        "action": "Защитный запрет clean при true.",
+        "when": "Всегда на сохраняемом читательском/рабочем экземпляре.",
+        "example": "flyway clean -cleanDisabled=true",
+        "result": "Ненулевой код и сохранённые данные; не инструкция отключать защиту."
+      },
+      {
+        "flag": "-configFiles=ФАЙЛЫ",
+        "action": "Выбирает перечисленные конфиги вместо неявного набора. CONF и TOML в одном списке не смешивают.",
+        "when": "Всегда в воспроизводимом выпуске; путь с пробелом должен быть одним argv.",
+        "example": "flyway \"-configFiles=/home/me/lab copy/flyway.conf\" info",
+        "result": "Читает указанный файл; ошибка пути/формата останавливает до миграции."
+      },
+      {
+        "flag": "-url=JDBC_URL",
+        "action": "Переопределяет JDBC target; выше environment/config.",
+        "when": "Только для заранее сверенной отдельной цели, например restore.",
+        "example": "flyway -url=jdbc:postgresql://127.0.0.1:15432/handbook_restore info",
+        "result": "Обзор относится к новой базе; пароль задают приватно вне argv."
+      },
+      {
+        "flag": "-user=РОЛЬ",
+        "action": "Выбирает роль PostgreSQL для JDBC.",
+        "when": "При явной передаче разрешённой migration-личности.",
+        "example": "flyway -user=flyway_owner info",
+        "result": "Не даёт прав сверх серверной роли; app_local не сможет DDL."
+      },
+      {
+        "flag": "-outputType=ФОРМАТ",
+        "action": "Просит поддерживаемый машинный JSON-результат.",
+        "when": "Для CI с проверкой версии схемы отчёта и кода процесса.",
+        "example": "flyway -outputType=json info",
+        "result": "JSON-обзор; формат разных Flyway-версий не обещан неизменным."
+      },
+      {
+        "flag": "-X",
+        "action": "Включает расширенный журнал; сведения конфигурации/SQL могут быть приватными.",
+        "when": "Для локального расследования, до публикации журнала нужен просмотр.",
+        "example": "flyway -X info",
+        "result": "Подробная диагностика; это не отдельная проверка происхождения SQL."
+      },
+      {
+        "flag": "-q",
+        "action": "Уменьшает обычный вывод, сохраняя ошибки/предупреждения.",
+        "when": "Для заранее принятой автоматизации, когда подробный stdout не нужен.",
+        "example": "flyway -q info",
+        "result": "Меньше текста; отсутствие текста не заменяет проверку return code."
+      },
+      {
+        "flag": "-postgresql.transactional.lock=ЗНАЧЕНИЕ",
+        "action": "При false выбирает сессионный advisory lock PostgreSQL вместо транзакционного; не меняет executeInTransaction самого SQL.",
+        "when": "В прямом CLI для проверенного CREATE INDEX CONCURRENTLY. В продолжаемом wrapper значение закреплено в CONF и этот CLI override запрещён.",
+        "example": "flyway -configFiles=flyway.conf migrate -postgresql.transactional.lock=false",
+        "result": "При true транзакционный lock может задерживать CONCURRENTLY; false меняет время жизни lock на сессию и не устраняет остальные DDL-конфликты."
+      }
+    ],
+    "flagScopes": [
+      "flyway clean",
+      "flyway",
+      "flyway",
+      "flyway",
+      "flyway",
+      "flyway",
+      "flyway",
+      "flyway"
+    ],
+    "persistentScopes": [
+      "flyway"
+    ],
+    "prefixFlags": {
+      "flyway": [
+        "-configFiles=ФАЙЛЫ",
+        "-url=JDBC_URL",
+        "-user=РОЛЬ",
+        "-outputType=ФОРМАТ",
+        "-X",
+        "-q",
+        "-postgresql.transactional.lock=ЗНАЧЕНИЕ"
+      ]
+    }
+  },
+  {
+    "name": "flyway undo",
+    "volume": "flyway",
+    "chapter": "flyway-14-baseline-repair",
+    "purpose": "Коммерческая Teams-команда авторских U-миграций; отсутствует в выбранном OSS CLI.",
+    "syntax": "flyway undo  # только подходящая Teams-поставка и лицензия",
+    "flags": [
+      {
+        "flag": "-configFiles=ФАЙЛЫ",
+        "action": "Выбирает перечисленные конфиги вместо неявного набора. CONF и TOML в одном списке не смешивают.",
+        "when": "Всегда в воспроизводимом выпуске; путь с пробелом должен быть одним argv.",
+        "example": "flyway \"-configFiles=/home/me/lab copy/flyway.conf\" info",
+        "result": "Читает указанный файл; ошибка пути/формата останавливает до миграции."
+      },
+      {
+        "flag": "-url=JDBC_URL",
+        "action": "Переопределяет JDBC target; выше environment/config.",
+        "when": "Только для заранее сверенной отдельной цели, например restore.",
+        "example": "flyway -url=jdbc:postgresql://127.0.0.1:15432/handbook_restore info",
+        "result": "Обзор относится к новой базе; пароль задают приватно вне argv."
+      },
+      {
+        "flag": "-user=РОЛЬ",
+        "action": "Выбирает роль PostgreSQL для JDBC.",
+        "when": "При явной передаче разрешённой migration-личности.",
+        "example": "flyway -user=flyway_owner info",
+        "result": "Не даёт прав сверх серверной роли; app_local не сможет DDL."
+      },
+      {
+        "flag": "-outputType=ФОРМАТ",
+        "action": "Просит поддерживаемый машинный JSON-результат.",
+        "when": "Для CI с проверкой версии схемы отчёта и кода процесса.",
+        "example": "flyway -outputType=json info",
+        "result": "JSON-обзор; формат разных Flyway-версий не обещан неизменным."
+      },
+      {
+        "flag": "-X",
+        "action": "Включает расширенный журнал; сведения конфигурации/SQL могут быть приватными.",
+        "when": "Для локального расследования, до публикации журнала нужен просмотр.",
+        "example": "flyway -X info",
+        "result": "Подробная диагностика; это не отдельная проверка происхождения SQL."
+      },
+      {
+        "flag": "-q",
+        "action": "Уменьшает обычный вывод, сохраняя ошибки/предупреждения.",
+        "when": "Для заранее принятой автоматизации, когда подробный stdout не нужен.",
+        "example": "flyway -q info",
+        "result": "Меньше текста; отсутствие текста не заменяет проверку return code."
+      },
+      {
+        "flag": "-postgresql.transactional.lock=ЗНАЧЕНИЕ",
+        "action": "При false выбирает сессионный advisory lock PostgreSQL вместо транзакционного; не меняет executeInTransaction самого SQL.",
+        "when": "В прямом CLI для проверенного CREATE INDEX CONCURRENTLY. В продолжаемом wrapper значение закреплено в CONF и этот CLI override запрещён.",
+        "example": "flyway -configFiles=flyway.conf migrate -postgresql.transactional.lock=false",
+        "result": "При true транзакционный lock может задерживать CONCURRENTLY; false меняет время жизни lock на сессию и не устраняет остальные DDL-конфликты."
+      }
+    ],
+    "flagScopes": [
+      "flyway",
+      "flyway",
+      "flyway",
+      "flyway",
+      "flyway",
+      "flyway",
+      "flyway"
+    ],
+    "persistentScopes": [
+      "flyway"
+    ],
+    "prefixFlags": {
+      "flyway": [
+        "-configFiles=ФАЙЛЫ",
+        "-url=JDBC_URL",
+        "-user=РОЛЬ",
+        "-outputType=ФОРМАТ",
+        "-X",
+        "-q",
+        "-postgresql.transactional.lock=ЗНАЧЕНИЕ"
+      ]
+    }
   }
 ]

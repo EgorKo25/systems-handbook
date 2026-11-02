@@ -1,0 +1,249 @@
+ПРОВЕРКИ FLYWAY — исходная приёмка 1 ноября и адресное завершение 2 ноября 2026
+
+Это журнал фактических испытаний, а не доказательство установки у читателя.
+Пути авторской машины и полный диагностический вывод хранятся приватно.
+
+Фактически выполнено
+
+Основной авторский native-3: 66/66 успешных проверок настоящих Flyway OSS
+13.12.0, PostgreSQL 18.6 с OpenSSL/TLS verify-full/SCRAM, Go 1.27.3 и pgx
+5.11.0. Координатор независимо повторил исправленный snapshot: 66/66 PASS,
+новый собственный кластер, подготовленный offline module cache. Это не mock.
+
+Первый дополнительный edges-native-1: 41/41 успешных команд/утверждений, включая
+подготовку fixture и SQL-наблюдения. Авторский итоговый edges-native-final: 59/59 PASS
+после добавления SQL parser и B-migration сценариев. Здесь нет HTTP или повторения жизненного
+цикла приложения. Подтверждены baseline без исполнения V1, CLI prefix/suffix,
+путь config с пробелами, отказы -- и раздельного значения, запрет опасных
+переопределений wrapper, V/R placeholder semantics, BOM/CRLF и комментарий.
+
+Source-only static: 20 глав вместе с маршрутом/словарём, 18 предметных глав,
+74 термина, 10 карточек, 6 моделей/30 шагов, 13 исполняемых блоков на финальном
+срезе. Это проверка входов, а не общий render или установка runtime.
+Production parser исходного input9c97: 13 содержательных запросов и 3 дополнительных assertions
+границы/scope. Dotted-настройки усекались на точке; reader route задаёт их
+в CONF. Количество форм не объявляется полным покрытием всех help aliases.
+
+Приватные basenames отчётов для координатора
+
+native-results-1.json — отказ первоначального standalone validate на Pending;
+native-results-2.json — ошибка проверки имени в закрытой schema, исправлена;
+native-results-3.json — успешные 66 cases и реальные измерения;
+next-trio-1-flyway-independent-check.json — независимое повторение координатора;
+edges-native-1.json — первые успешные дополнительные 41 команды/утверждения;
+edges-native-final.json — итоговые 59/59, в том числе parser/B-сценарии;
+reader-gates-replay.json — авторские 34 записи продолженного reader-пути без reset:
+33 дочерних процесса с кодом 0 и одна проверка состояния,
+после stop/start исходник 1004 строки, restore 1002;
+parser-baseline-continued.json — отдельное продолжение расследования JDBC 08P01.
+Полные журналы могут содержать SQL/пути; они не входят в публикацию.
+
+Воспроизведение
+
+Bash, обычный владелец личного Linux-стенда, cwd — корень клона книги.
+Предпосылки: Python 3.12+, Node.js, уже полученные личные PostgreSQL 18.6
+с OpenSSL, Flyway OSS 13.12.0, Go 1.27.3 и подготовленный Go module cache.
+Это не блок установки этих программ. Все переменные ниже — свои пути.
+HTTP 18080 и тестовый PostgreSQL-порт должны быть свободны. Чужие процессы
+не останавливают. Новый тестовый корень должен отсутствовать.
+
+set -euo pipefail
+python3 -B flyway/tests/static.py
+node flyway/tests/parser.js
+
+PG_BIN="$HOME/opt/postgresql-18.6/bin"
+FLYWAY_BIN="$HOME/opt/flyway-13.12.0/flyway"
+GO_BIN_DIR="$HOME/opt/go/bin"
+NEW_TEST_ROOT="$HOME/handbook-tests/flyway-native-new"
+REPORT="$HOME/handbook-tests/flyway-native-new.json"
+test ! -e "$NEW_TEST_ROOT"
+python3 -B flyway/tests/native.py \
+ --pg-bin "$PG_BIN" --flyway "$FLYWAY_BIN" --go-bin "$GO_BIN_DIR" \
+ --root "$NEW_TEST_ROOT" --port 18544 --keep --report "$REPORT"
+
+Для отдельной edges-проверки выберите ещё один отсутствующий корень:
+
+NEW_TEST_ROOT="$HOME/handbook-tests/flyway-edges-new"
+REPORT="$HOME/handbook-tests/flyway-edges-new.json"
+test ! -e "$NEW_TEST_ROOT"
+python3 -B flyway/tests/edges.py \
+ --pg-bin "$PG_BIN" --flyway "$FLYWAY_BIN" \
+ --root "$NEW_TEST_ROOT" --port 18545 --keep --report "$REPORT"
+
+Ожидаются код 0, successful=true и passed=cases. При отказе не запускают
+зависимую проверку/изменение; сохраняют новый собственный root и отчёт.
+Harness останавливает только свой PGDATA. --keep сохраняет свидетельства;
+без него успешный запуск удаляет только свой новый тестовый корень.
+Постоянный читательский проект/PGDATA не используются и не сбрасываются.
+
+Измеренная выборка native-3, одна локальная малая нагрузка
+
+Backfill: 1001 обновлённая строка, remaining NULL=0. Сам job 0.219 s;
+весь helper 0.2625 s. WAL в окне 314632 B, полный размер relation с индексами
+147456 → 245760 B. Счётчик WAL относится ко всему кластеру в этом окне.
+Это не production throughput и не распределение p99.
+
+DDL за открытой app-транзакцией: SQLSTATE 55P03, полное elapsed 3.1071 s
+вместе со стартом JVM. На копии одинаковой V4 concurrent index с
+транзакционным advisory lock отказал за 3.0909 s. С сессионным lock на
+основной цели — успех за 1.1238 s, indisready/indisvalid=t/t.
+
+Snapshot elapsed 0.0867 s, restore другой БД 0.1621 s. Проверены count,
+history, fingerprint всех значений строк и ACL; запись после снимка
+отсутствует в восстановленной цели. Это не полное RTO пользователя.
+
+Содержательные результаты
+
+V1+R приняты; история в flyway_meta; приложение не имеет CREATE app и
+SELECT metadata. Изменённый комментарий V1 дал checksum mismatch;
+возврат точных байтов вернул успешный validate без repair.
+V3 запретила записи v1; v3 работает после V6, возврат v2 даёт HTTP 503.
+Target=2 после V6 не вернул body. Транзакционный V7 не оставил probe/history;
+нетранзакционный оставил таблицу, первую строку и Failed. После repair
+Failed исчезла, а строка/таблица сохранились. Два CLI сериализовали V7:
+оба exit 0, одна запись успеха. Поздняя V1.5 была Ignored, outOfOrder=true
+принял её после V7. Clean отказал, данные сохранились.
+
+SQL parser: DO с dollar quotes и semicolon исполнился, ${word} заменился
+внутри тела, SQL-function $1 вернула заданный аргумент. \set был отвергнут
+с 42601; непереданный $1 — с 08P01 в выбранном JDBC 42.7.14, без вставки
+строки. Последний код зависит от режима драйвера, wire bytes не снимались.
+B2 выполнил кумулятивный SQL на новой цели и затем V3; history содержит B2/V3.
+
+Подготовленный Go cache позволил сборку с GOPROXY=off; Flyway info прошёл
+на имеющемся runtime. Сеть не блокировалась firewall, новая offline VM
+не имитировалась. Веб-модели не выдаются за настоящую СУБД.
+
+Границы
+
+Не выполнялись: установка на чистую VM/рабочий Windows, коммерческие
+Teams/Enterprise команды/лицензии, SIGKILL точно на commit, multi-host HA,
+сетевая partition, большая production нагрузка, физический PITR.
+Полный temp-render, все 8 тем, мобильная ширина, экспорт и публикация —
+отдельная редакторская приёмка координатора. Managed build.py в canonical
+не запускался, общие файлы/регистрация/commit/push не изменялись.
+
+Адресное завершение 2 ноября 2026
+
+Первоначальные 66/66 автора и независимые 66/66 координатора, 59 edges и
+34 записи reader replay остаются историческими результатами точного входа
+1 ноября. Новый Go Shutdown и restore-check в них не проверялись. Приватный
+before-manifest связывает прежние результаты с исходными кодами/рецептами;
+новые изменения подтверждены отдельным конечным прогоном, а не старым PASS.
+
+Новый native-focused.json: 58/58 команд и утверждений, включая три версии,
+setup, SQL-наблюдения и остановку своего PG. Это не 58 разных миграционных
+механизмов. Новая собственная база: три исходные строки, loopback-порт, TLS.
+Точный V1/R/V2 history: ranks 1/2/3, versions 1/NULL/2, checksums
+1528097600 / -1073421979 / -143682903, success=true.
+
+Backfill при удерживаемой id1: updated=2, remaining_nulls=1, 0.058 s, exit 1.
+check-backfill.sql отказал. После release: updated=1, remaining_nulls=0,
+0.062 s; равенство body/title принято, id2,3 не переписаны. WAL окна 608 B.
+Одна малая выборка; не оценка production throughput.
+
+Go A/B с реальным ожидающим relation lock POST: прежний main завершился
+с exit 0 до освобождения, клиент получил RemoteDisconnected, строки не было.
+Исправленный main через 250 ms оставался жив, после release вернул 201 и
+завершился 0. В базе сохранились три исходные строки и новая четвёртая.
+Старый HTTP helper отказал с заданным частным недоступным proxy, новый
+request дошёл напрямую к своему loopback-сервису. Host proxy не менялся.
+
+Restore-check отказал без своей новой DB; после restore V5 разрешил Pending
+V6 только с --allow-pending; без флага дал ненулевой код. Изменение комментария
+V1 осталось checksum mismatch; возврат точных байтов восстановил успех.
+После V6 на исходнике restore-check продолжил читать V5 другой цели.
+Stop/start того же собственного PGDATA сохранил четыре строки; сервер
+затем остановлен. Частный стенд и журналы сохранены, читательский старый
+PGDATA не запускался и не сбрасывался.
+
+Launcher-and-components.json: JAVA_HOME на заведомо отсутствующий личный
+путь не заменил bundled JRE. Прямой java -version: Temurin 25.0.5+8;
+JAR Manifest подтвердил PostgreSQL 42.7.14. Состав архива совпал с прежним SHA.
+
+Новый source-only PASS: 20 глав, 80 терминов, 10 карточек, 6 моделей / 30 шагов,
+16 исполняемых блоков; дополнительно 2 предметных SVG и точные CRC-проверки.
+Production parser исходного редакторского input9c97: 13 запросов + 3 assertions PASS.
+Параметр среды HANDBOOK_COMMAND_PARSER позволяет выбрать read-only путь
+к production parser при проверке из отдельного candidate.
+
+Native SVG/Pango:66 PNG (2 рисунка × 8 палитр × 2 края теплоты × 2 ширины + 2 моно),
+43 текстовых bounds внутри viewBox. Фактически осмотрены paper300 обоих,
+night100/390 history и mono300 backfill. Это resolved native raster,
+не browser inheritance, Safari, полная страница или pagination. Chrome
+не перезапускался после прежних SIGTRAP. Whole reader/build/export здесь
+не выполнялись; их конечный срез принимает координатор.
+
+Последняя адресная дельта POST decoder
+
+После native 58 координатор обнаружил принятие второй JSON-ценности/хвоста.
+Теперь сервис до QueryRowContext требует второй Decode с io.EOF; полный
+body-budget 8192 включает пробелы после первого объекта. Отдельный offline
+Go 1.27.3 httptest дал 10/10 успешных subtests: valid, whitespace, second object,
+second scalar, garbage, empty text, null, exact8192, object overflow,
+whitespace overflow. Настоящая БД и HTTP listener не запускались.
+decoder-check.json сохраняет SHA main из native 58 и SHA новой версии;
+58 не объявлены повторёнными после этой правки.
+
+Повтор decoder: Bash того же владельца, cwd корень клона, локальный Go 1.27.3
+и ранее подготовленные зависимости app в module cache. Команда не устанавливает
+Go и не запускает main/сервер. -C выбирает cwd app, -mod=readonly сохраняет
+go.mod/go.sum, -count=1 отключает использование готового test-result cache,
+-run выбирает только названный TestDecodeNoteBody. Ожидается код 0 и PASS.
+При отказе сборки/утверждения дальнейшие действия не выполняют.
+
+GOTOOLCHAIN=local GOWORK=off GOPROXY=off GOSUMDB=off \
+ go -C flyway/labs/app test -mod=readonly -count=1 -run '^TestDecodeNoteBody$'
+
+Корректировка F1/F2 после независимой приёмки, 2 ноября 2026
+
+F1. Прежний lab.py app-run запускал Go через subprocess.run. При обычном
+SIGINT группе Python получал KeyboardInterrupt и убивал ещё работающий Go,
+поэтому ожидание Shutdown внутри main не обеспечивало завершение запроса.
+Теперь app-run выполняет os.chdir(ROOT) и os.execve того же app/bin/notes
+с тем же набором APP_RELEASE/DATABASE_URL. Go наследует PID и группу.
+
+Новая узкая реальная проверка (launcher-native-results.json):
+- Go1.27.3, PostgreSQL18.6, одна новая собственная loopback база, TLSv1.3,
+  SCRAM, обычный владелец. Создана только таблица формы V2 body/title
+  с правами app_runtime; Flyway migrations в этой проверке не запускались.
+- Собраны точные main.go/go.mod/go.sum из финальной редакции. Один и тот
+  же реальный binary вызывают точные копии старого и нового lab.py app-run.
+- POST /notes действительно дошёл до INSERT и ждал ACCESS EXCLUSIVE lock;
+  это подтверждено pg_stat_activity/pg_locks, соединение имело TLSv1.3.
+- Старой группе послан SIGINT: через375ms Python уже завершился-2, клиент
+  получил RemoteDisconnected. После освобождения lock строка отсутствует.
+- Новая группа получила такой же SIGINT. Через375ms процесс оставался
+  живым, запрос ожидал lock; PID launcher указывал уже на executable Go.
+  После COMMIT удерживающей транзакции клиент получилHTTP201/release=v2,
+  одна строка body=title сохранена, процесс завершился с кодом0.
+- Это отправка сигнала собственной группе, как при Ctrl-C, без проверки
+  клавиши физического терминала или PTY. Не проверяется истечение5s budget.
+- Первый запуск после old-control остановился на bind-пробе нового случая:
+  собственный TIME_WAIT был ошибочно принят за занятый listener. Первый
+  отчёт/harness сохранены. Проба получила SO_REUSEADDR; ровно одно
+  продолжение new-case использовало тот же новый PG/binary без reset,
+  повторного bootstrap, сборки или старой58-case серии.
+- После каждого запуска PostgreSQL остановлен штатно; postmaster.pid
+  отсутствует, собственные дочерние процессы завершены. Приватные данные,
+  пароли, ключи и кэши не входят в поставку исходников.
+
+F2. Production parser R2 сохраняет полные dotted names. Исправлено устаревшее
+ожидание '-postgresql', добавлены true/false запросы в prefix/suffix
+позициях и карточка полного параметра. На точной read-only копии текущего
+production-parser проверены15 запросов+3 scope/boundary assertions: PASS.
+Исходник parser, тест, карточки, stdout и результат имеют отдельные SHA.
+Результат13+3 прежнего input9c97 сохранён как исторический, не как R2 PASS.
+
+Проверка transport native harness: response() и readiness start_app() теперь
+используют explicit build_opener(ProxyHandler({})) для своего127.0.0.1.
+Это не результат повторного полного native.py; отдельное peer-доказательство
+проверило точные AST call-sites без DNS/сокетов:3 старых control-варианта
+выбрали proxy.invalid;3 новых варианта(GET/POST/readiness) пошли напрямую
+к127.0.0.1:18080, сохранив исходныеtimeout. Ни пути установки/загрузки,
+ни миграционные SQL/прочие проверки native harness не менялись.
+
+Source-only static повторена после всех корректировок: PASS. Старые58
+native и10 decoder tests не повторялись и остаются привязаны к прежним
+точным входам. F3(export labs/.gitignore) исправляет основной интегратор;
+общий exporter/reader/registry/canonical/Pages здесь не менялись.

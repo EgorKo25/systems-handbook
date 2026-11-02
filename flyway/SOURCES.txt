@@ -1,0 +1,73 @@
+ПЕРВИЧНЫЕ ИСТОЧНИКИ / срез 1 ноября 2026
+Все объяснения/задачи свои; ссылки позволяют повторить проверку, не заменяют native.
+
+Версия/происхождение:
+https://github.com/flyway/flyway/releases/tag/flyway-13.12.0
+https://api.github.com/repos/flyway/flyway/releases/latest (на срез:13.12.0, published2026-10-30T10:25:36Z)
+https://documentation.red-gate.com/flyway/reference/usage/flyway-open-source
+https://documentation.red-gate.com/flyway/release-notes-and-older-versions/release-notes-for-flyway-engine
+Asset linux-x64:384624596байт; sha256 e332704f4bbb16baba4ac565a822ccb24354003a284deaa11668c1be77013c34.
+Наблюдённый JRE Temurin25.0.5+8, JDBC postgresql42.7.14; отдельные лицензии сохранены runtime.
+
+CLI/config/операции:
+https://documentation.red-gate.com/flyway/reference/usage/command-line
+https://documentation.red-gate.com/flyway/reference/configuration-precedence
+https://documentation.red-gate.com/flyway/reference/commands/info
+https://documentation.red-gate.com/flyway/reference/commands/validate
+https://documentation.red-gate.com/flyway/reference/commands/migrate
+https://documentation.red-gate.com/flyway/reference/commands/baseline
+https://documentation.red-gate.com/flyway/reference/commands/repair
+https://documentation.red-gate.com/flyway/reference/commands/clean
+https://documentation.red-gate.com/flyway/reference/commands/undo (Teams)
+https://documentation.red-gate.com/flyway/flyway-concepts/migrations/undo-migrations (U/Teams, не OSS)
+https://documentation.red-gate.com/flyway/reference/database-driver-reference/postgresql-database
+https://documentation.red-gate.com/flyway/reference/configuration/flyway-namespace/flyway-postgresql-namespace/flyway-postgresql-transactional-lock-setting
+https://documentation.red-gate.com/fd/migration-transaction-handling-273973399.html
+
+Зафиксированный исходник (tag13.12.0; объяснение checksum/lock не из памяти):
+https://github.com/flyway/flyway/blob/flyway-13.12.0/flyway-core/src/main/java/org/flywaydb/core/internal/resolver/ChecksumCalculator.java
+https://github.com/flyway/flyway/blob/flyway-13.12.0/flyway-core/src/main/java/org/flywaydb/core/internal/resolver/sql/SqlMigrationResolver.java
+https://github.com/flyway/flyway/blob/flyway-13.12.0/flyway-core/src/main/java/org/flywaydb/core/internal/command/DbMigrate.java
+https://github.com/flyway/flyway/blob/flyway-13.12.0/flyway-core/src/main/java/org/flywaydb/core/internal/command/DbValidate.java
+https://github.com/flyway/flyway/blob/flyway-13.12.0/flyway-database/flyway-database-postgresql/src/main/java/org/flywaydb/database/postgresql/PostgreSQLAdvisoryLockTemplate.java
+https://github.com/flyway/flyway/blob/flyway-13.12.0/flyway-database/flyway-database-postgresql/src/main/java/org/flywaydb/database/postgresql/PostgreSQLParser.java
+https://github.com/flyway/flyway/blob/flyway-13.12.0/flyway-core/src/main/java/org/flywaydb/core/internal/parser/Parser.java
+https://github.com/flyway/flyway/blob/flyway-13.12.0/flyway-core/src/main/java/org/flywaydb/core/internal/sqlscript/ParserSqlScript.java
+https://documentation.red-gate.com/flyway/flyway-concepts/migrations/baseline-migrations
+https://github.com/flyway/flyway/blob/flyway-13.12.0/LICENSE.txt
+
+PostgreSQL18 (профиль18.6, не заявлениеlatest):
+https://ftp.postgresql.org/pub/source/v18.6/
+https://www.postgresql.org/docs/18/sql-createindex.html
+https://www.postgresql.org/docs/18/sql-altertable.html
+https://www.postgresql.org/docs/18/explicit-locking.html
+https://www.postgresql.org/docs/18/app-pgdump.html
+https://www.postgresql.org/docs/18/app-pgrestore.html
+https://www.postgresql.org/docs/18/monitoring-stats.html
+https://www.postgresql.org/docs/18/libpq-ssl.html
+https://www.postgresql.org/docs/18/sql-syntax-lexical.html
+https://www.postgresql.org/docs/18/sql-do.html
+https://www.postgresql.org/docs/18/xfunc-sql.html
+
+Go:
+https://github.com/jackc/pgx/releases/tag/v5.11.0
+https://pkg.go.dev/github.com/jackc/pgx/v5/stdlib
+https://go.dev/ref/mod (go.mod/go.sum; helper использует module cache)
+
+Внешние документы могут обновиться. Для выбранной поставки help и native
+результаты сохранены приватно, конкретная дата и пределы — в ПРОВЕРКИ.txt.
+
+Адресные сверки 2 ноября 2026:
+- launcher внутри того же официального asset: FLYWAY_JAVA_CMD → bundled jre → JAVA_HOME/PATH.
+- Go 1.27.3 src/net/http/server.go, Shutdown: закрытие listener возвращает Serve раньше окончания drain; main обязан ждать Shutdown.
+https://cs.opensource.google/go/go/+/refs/tags/go1.27.3:src/net/http/server.go
+- PostgreSQL 18 SELECT, раздел The Locking Clause: SKIP LOCKED пропускает
+  занятые строки и не доказывает глобальное завершение очереди.
+https://www.postgresql.org/docs/18/sql-select.html#SQL-FOR-UPDATE-SHARE
+- Configuration Precedence и Undo/Teams прочитаны на обновлении 30 октября 2026.
+  Новая native-сверка касается изменённых helpers/Go и точных строк history.
+
+JSON decoder: Go 1.27.3 src/encoding/json/stream.go 27–79 и
+src/net/http/request.go 1197–1258, плюс реальные 10 httptest subtests.
+Decode читает следующую JSON-ценность, MaxBytesReader ограничивает чтение;
+требование одного объекта до EOF задаётся самим HTTP-сервисом.

@@ -34,7 +34,7 @@
   {
     "slug": "cache",
     "title": "Кэш и базы данных в памяти: от ускорения чтения до Redis и Memcached",
-    "volume": "X",
+    "volume": "XI",
     "words": 79106,
     "chapters": 40,
     "terms": 226
@@ -58,7 +58,7 @@
   {
     "slug": "jenkins",
     "title": "Jenkins: от установки и плагинов до устройства и эксплуатации Pipeline",
-    "volume": "XV",
+    "volume": "XVI",
     "words": 30240,
     "chapters": 16,
     "terms": 88
@@ -66,7 +66,7 @@
   {
     "slug": "gitlab",
     "title": "GitLab: платформа, исполнение CI и эксплуатация",
-    "volume": "XVI",
+    "volume": "XVII",
     "words": 24553,
     "chapters": 18,
     "terms": 167
@@ -74,7 +74,7 @@
   {
     "slug": "practicum",
     "title": "Практикум: от своей сети до эксплуатации продукта",
-    "volume": "XXV",
+    "volume": "XXVI",
     "words": 39953,
     "chapters": 26,
     "terms": 38
@@ -90,7 +90,7 @@
   {
     "slug": "sonarqube",
     "title": "SonarQube: от установки до доказуемой проверки изменений",
-    "volume": "XII",
+    "volume": "XIII",
     "words": 21114,
     "chapters": 15,
     "terms": 183
@@ -114,7 +114,7 @@
   {
     "slug": "nexus",
     "title": "Nexus Repository: артефакты, Go-модули и сохранение состояния",
-    "volume": "XIII",
+    "volume": "XIV",
     "words": 21858,
     "chapters": 19,
     "terms": 94
@@ -122,7 +122,7 @@
   {
     "slug": "kubernetes",
     "title": "Kubernetes: от API до процесса, пакета и восстановления",
-    "volume": "XXII",
+    "volume": "XXIII",
     "words": 26298,
     "chapters": 26,
     "terms": 130
@@ -130,7 +130,7 @@
   {
     "slug": "helm",
     "title": "Helm: типы, шаблоны, пакеты и жизненный цикл релиза",
-    "volume": "XXIII",
+    "volume": "XXIV",
     "words": 18365,
     "chapters": 21,
     "terms": 97
@@ -138,7 +138,7 @@
   {
     "slug": "mongodb",
     "title": "MongoDB: документ, путь запроса и границы сохранности",
-    "volume": "XI",
+    "volume": "XII",
     "words": 15752,
     "chapters": 19,
     "terms": 76
@@ -146,7 +146,7 @@
   {
     "slug": "vault",
     "title": "HashiCorp Vault: от доверенной поставки до отзыва и восстановления",
-    "volume": "XIX",
+    "volume": "XX",
     "words": 15982,
     "chapters": 19,
     "terms": 56
@@ -154,7 +154,7 @@
   {
     "slug": "grafana",
     "title": "Grafana: от вопроса к данным, графику и проверяемому сигналу",
-    "volume": "XXI",
+    "volume": "XXII",
     "words": 16848,
     "chapters": 22,
     "terms": 85
@@ -162,7 +162,7 @@
   {
     "slug": "artifactory",
     "title": "Artifactory: от поставки до прослеживаемого выпуска Go",
-    "volume": "XIV",
+    "volume": "XV",
     "words": 20146,
     "chapters": 20,
     "terms": 82
@@ -170,7 +170,7 @@
   {
     "slug": "argocd",
     "title": "Argo CD: GitOps, согласование состояния и эксплуатация",
-    "volume": "XXIV",
+    "volume": "XXV",
     "words": 18956,
     "chapters": 21,
     "terms": 97
@@ -178,7 +178,7 @@
   {
     "slug": "terraform",
     "title": "Terraform: язык, граф исполнения и сохранённое состояние",
-    "volume": "XVII",
+    "volume": "XVIII",
     "words": 20434,
     "chapters": 24,
     "terms": 89
@@ -186,7 +186,7 @@
   {
     "slug": "ansible",
     "title": "Ansible: от SSH и одной задачи до управляемого выпуска Go",
-    "volume": "XVIII",
+    "volume": "XIX",
     "words": 20633,
     "chapters": 24,
     "terms": 96
@@ -194,9 +194,17 @@
   {
     "slug": "prometheus",
     "title": "Prometheus и PromQL: измерение, вычисление и хранение",
-    "volume": "XX",
+    "volume": "XXI",
     "words": 17255,
     "chapters": 22,
     "terms": 93
+  },
+  {
+    "slug": "flyway",
+    "title": "Flyway: управляемое изменение живой базы данных",
+    "volume": "X",
+    "words": 14336,
+    "chapters": 20,
+    "terms": 80
   }
 ]

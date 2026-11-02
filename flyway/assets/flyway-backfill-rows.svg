@@ -1,0 +1,15 @@
+<svg id="flyway-backfill-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 630" role="img" aria-labelledby="flyway-backfill-title flyway-backfill-desc" style="display:block;width:100%;max-width:420px;height:auto;margin:1em auto">
+<title id="flyway-backfill-title">Три строки и занятый id1</title><desc id="flyway-backfill-desc">Отдельная транзакция держит строку 1. Backfill переносит 2 и 3, затем получает 0, но проверка видит 1 NULL. После освобождения повтор переносит оставшуюся строку 1.</desc>
+<style>#flyway-backfill-drawing .paper{fill:var(--reader-paper,#fffdf7)}#flyway-backfill-drawing text{fill:var(--reader-text,#18252b);font:17px sans-serif}#flyway-backfill-drawing .small{font-size:15px}#flyway-backfill-drawing .mono{font-family:monospace;font-size:16px}#flyway-backfill-drawing .box{fill:var(--reader-bg,#f1f4f3);stroke:var(--reader-line,#68767c);stroke-width:1.5}#flyway-backfill-drawing .line{fill:none;stroke:var(--reader-text,#18252b);stroke-width:2}#flyway-backfill-drawing .bold{font-weight:bold}@media print{#flyway-backfill-svg{max-width:85mm!important}#flyway-backfill-drawing text{fill:#000}#flyway-backfill-drawing .box,#flyway-backfill-drawing .paper{fill:#fff;stroke:#000}#flyway-backfill-drawing .line{stroke:#000}}</style>
+<g id="flyway-backfill-drawing"><rect class="paper" width="400" height="630"/>
+<text x="20" y="30" class="bold">app.notes после V2</text>
+<text x="22" y="65">id</text><text x="85" y="65">body</text><text x="256" y="65">title</text>
+<rect class="box" x="16" y="80" width="368" height="46" rx="4"/><text x="28" y="110">1</text><text x="85" y="110">Записка 1</text><text x="256" y="110">NULL *</text>
+<rect class="box" x="16" y="134" width="368" height="46" rx="4"/><text x="28" y="164">2</text><text x="85" y="164">Записка 2</text><text x="256" y="164">NULL</text>
+<rect class="box" x="16" y="188" width="368" height="46" rx="4"/><text x="28" y="218">3</text><text x="85" y="218">Записка 3</text><text x="256" y="218">NULL</text>
+<text x="20" y="264" class="small">Транзакция A держит row lock id=1.</text>
+<path class="line" d="M32 284 V586"/>
+<circle class="box" cx="32" cy="302" r="7"/><text x="52" y="306" class="bold">Пакет 1 · batch=2</text><text x="52" y="334">Выбраны id 2,3 → commit.</text><text x="52" y="359" class="small">title = body; updated суммарно 2.</text>
+<circle class="box" cx="32" cy="391" r="7"/><text x="52" y="395" class="bold">Пакет 2 · picked=0</text><text x="52" y="423">id1 всё ещё занят: SKIP.</text><text x="52" y="448" class="small">Проверка NULL=1 → helper exit 1.</text>
+<circle class="box" cx="32" cy="480" r="7"/><text x="52" y="484" class="bold">A завершает транзакцию</text><text x="52" y="512">id1 снова доступен worker.</text>
+<circle class="box" cx="32" cy="544" r="7"/><text x="52" y="548" class="bold">Повтор backfill</text><text x="52" y="576">id1 → commit; NULL=0.</text><text x="52" y="601" class="small">id2,3 не обновлены второй раз.</text></g></svg>
