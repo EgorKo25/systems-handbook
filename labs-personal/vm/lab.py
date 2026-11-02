@@ -160,7 +160,10 @@ class Transport:
  def owns(self,s):
   d,rev=self.backend.get();require(d is not None and d['lease']is not None and d['lease']['owner']==s['token']and d['current']==s['base'],'Exclusive lease/current mismatch; no automatic takeover')
   return d,rev
- def phase(self,s,phase,**fields):s.update(phase=phase,**fields);self.save(s)
+ def phase(self,s,phase,**fields):
+  s.update(phase=phase,**fields)
+  if phase=='synced'and'last_error'not in fields:s.pop('last_error',None)
+  self.save(s)
  def check_manifest(self,m,current):
   require(type(m)is dict and type(m.get('format'))is int and m['format']==1 and m.get('generation')==current['tag'],'Invalid generation manifest')
   world.valid_config(m['config']);require(m.get('cold')in('qmp-guest-shutdown','operator-asserted-initial-only'),'No named cold provenance')
