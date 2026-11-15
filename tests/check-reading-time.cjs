@@ -31,17 +31,17 @@ function sample(key,wpm=180,at=1){return {key,words:600,activeMs:600*60000/wpm,c
 function plain(value){return JSON.parse(JSON.stringify(value));}
 eq(model.DEFAULT_WPM,180,'documented initial pace');
 eq(model.rate([]),180,'no personal observation yet');
-eq(model.rate([sample('a',300),sample('b',300)]),180,'two chapters cannot change prior');
+eq(model.rate([sample('a',300),sample('b',300)]),222,'two chapters adjust the initial pace conservatively');
 eq(model.rate([sample('a',200),sample('b',210),sample('c',220)]),210,'three independent eligible chapters adapt');
 eq(model.rate([sample('a',180),sample('b',180),sample('c',190),sample('d',420)]),180,'MAD excludes a fast outlier');
 eq(model.rate([sample('a',80),sample('b',180),sample('c',190),sample('d',200),sample('e',420)]),190,'median resists both tails');
-eq(model.rate([sample('a',200),sample('a',300,2),sample('a',400,3)]),180,'one reread chapter cannot supply three observations');
+eq(model.rate([sample('a',200),sample('a',300,2),sample('a',400,3)]),212,'rereads retain only one observation');
 const many=Array.from({length:40},(_,i)=>sample('chapter-'+i,180,i));
 eq(model.clean(many).length,15,'storage bounded to fifteen distinct chapters');
 eq(model.clean(many)[0].key,'chapter-25','oldest observations removed');
 eq(model.clean([sample('a',180,9),sample('a',210,3)])[0].at,9,'newest duplicate survives');
 eq(model.clean([sample('a',180,1),sample('a',210,2)])[0].activeMs,600*60000/210,'reread updates rather than duplicates');
-for(const invalid of [null,{},sample('',180),sample('a',79),sample('a',421),{...sample('a'),words:349},{...sample('a'),activeMs:Infinity},{...sample('a'),steps:4},{...sample('a'),steps:5.5},{...sample('a'),chapterWords:500},{...sample('a'),words:700,chapterWords:600},{...sample('a'),at:-1},{...sample('a'),chapterWords:10000}])eq(model.clean([invalid]).length,0,'bad/insufficient observations rejected');
+for(const invalid of [null,{},sample('',180),sample('a',79),sample('a',421),{...sample('a'),words:149},{...sample('a'),activeMs:Infinity},{...sample('a'),steps:2},{...sample('a'),steps:5.5},{...sample('a'),chapterWords:249},{...sample('a'),words:700,chapterWords:600},{...sample('a'),at:-1}])eq(model.clean([invalid]).length,0,'bad/insufficient observations rejected');
 for(const text of ['',null,'oops','[]','{"version":2,"samples":[]}',JSON.stringify({version:1,samples:new Array(257).fill(null)}),' '.repeat(65537)])eq(model.decode(text),null,'corrupt/oversize/version-mismatched storage ignored');
 eq(plain(model.decode(model.encode(many))),plain(model.clean(many)),'versioned history round trip');
 eq(Object.keys(model.clean([{...sample('a'),privateNote:'never store'}])[0]).sort(),['activeMs','at','chapterWords','key','steps','words'].sort(),'do not retain unrelated source properties');
@@ -147,8 +147,8 @@ function browserFixture({storageBlocked=false}={}){
  }
  const data=new Element('script','book-data');data.textContent=JSON.stringify([{id:'c1',words:2400}]);
  const drawer=body.appendChild(new Element('aside','dictionary','drawer'));drawer.hidden=true;
- const doc={body,hidden:false,activeElement:body,getElementById:id=>registry.get(id)||null,createElement:tag=>new Element(tag),querySelector:s=>body.querySelector(s),hasFocus:()=>doc.focused,focused:true,createTreeWalker:element=>{let i=0;return {nextNode:()=>element._texts[i++]||null};},addEventListener:(name,fn)=>{if(!docEvents.has(name))docEvents.set(name,[]);docEvents.get(name).push(fn);}};
- rootWindow={document:doc,location:{hash:'#c1'},innerHeight:800,NodeFilter:{SHOW_TEXT:4},performance:{now:()=>clock},localStorage:{getItem(){if(storageBlocked)throw Error('blocked');return null;},setItem(k,v){if(storageBlocked)throw Error('blocked');writes.push([k,v]);}},requestAnimationFrame:fn=>raf.push(fn),addEventListener:(name,fn)=>{if(!events.has(name))events.set(name,[]);events.get(name).push(fn);},setInterval:fn=>{rootWindow.tick=fn;},MutationObserver:class{constructor(fn){this.fn=fn;}observe(){}}};
+ const doc={body,hidden:false,activeElement:body,getElementById:id=>registry.get(id)||null,createElement:tag=>new Element(tag),querySelector:s=>body.querySelector(s),querySelectorAll:s=>body.querySelectorAll(s),hasFocus:()=>doc.focused,focused:true,createTreeWalker:element=>{let i=0;return {nextNode:()=>element._texts[i++]||null};},addEventListener:(name,fn)=>{if(!docEvents.has(name))docEvents.set(name,[]);docEvents.get(name).push(fn);}};
+ rootWindow={document:doc,location:{hash:'#c1'},innerHeight:800,NodeFilter:{SHOW_TEXT:4},performance:{now:()=>clock},localStorage:{getItem(){if(storageBlocked)throw Error('blocked');return null;},setItem(k,v){if(storageBlocked)throw Error('blocked');writes.push([k,v]);}},requestAnimationFrame:fn=>raf.push(fn),addEventListener:(name,fn)=>{if(!events.has(name))events.set(name,[]);events.get(name).push(fn);},setInterval:(fn,ms)=>{if(ms===1000)rootWindow.tick=fn;else rootWindow.save=fn;},MutationObserver:class{constructor(fn){this.fn=fn;}observe(){}}};
  vm.runInNewContext(bundle.script,{window:rootWindow,module:{exports:{}}},{timeout:1000});
  const flush=()=>{while(raf.length)raf.shift()();};
  const emit=(name,event={},documentEvent=false)=>{for(const fn of (documentEvent?docEvents:events).get(name)||[])fn({type:name,target:body,isTrusted:true,...event});flush();};
@@ -175,13 +175,15 @@ ok(noStorage.writes.length===0,'no preferences or notes are written on load');
 function readFixture(fixture,eventTarget){
  fixture.setScroll(220);fixture.emit('wheel',eventTarget?{target:eventTarget}:{},true);
  for(let t=1;t<=125;t++){
-  fixture.setClock(t*1000);fixture.setScroll(220+3*t);
+  fixture.setClock(t*1000);fixture.setScroll(220+4*t);
   if(t%20===0)fixture.emit('wheel',eventTarget?{target:eventTarget}:{},true);else fixture.advance();
  }
+ fixture.window.save();
  fixture.emit('pagehide');
 }
 const normalBrowser=browserFixture();readFixture(normalBrowser);
-eq(normalBrowser.writes.length,1,'actual adapter saves sufficient sustained normal traversal');
+eq(normalBrowser.writes.length,1,'live checkpoint and pagehide write one sufficient observation');
+ok(normalBrowser.window.LibraryReadingTime.rate()!==180,'reading adjusts pace during the chapter');
 eq(normalBrowser.writes[0][0],model.KEY,'actual adapter writes only its own history key');
 const openDrawer=browserFixture();openDrawer.drawer.hidden=false;readFixture(openDrawer);
 eq(openDrawer.writes.length,0,'open drawer with no .open class cannot train text pace');

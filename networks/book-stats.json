@@ -1,21 +1,21 @@
 {
   "date": "2026-11-01",
-  "words": 96907,
+  "words": 94106,
   "chapters": [
     {
       "id": "01-foundations",
-      "title": "Сначала понять язык сети",
-      "words": 2505
+      "title": "От запроса к ответу: что видит каждый участник",
+      "words": 605
     },
     {
       "id": "02-host-send",
       "title": "Как отправляет компьютер",
-      "words": 3435
+      "words": 2853
     },
     {
       "id": "03-wire-ethernet",
       "title": "Что происходит на линии",
-      "words": 3315
+      "words": 2954
     },
     {
       "id": "20-physical-channel",
@@ -120,10 +120,10 @@
     {
       "id": "12-glossary",
       "title": "Словарь сетевых терминов",
-      "words": 10081
+      "words": 10123
     }
   ],
-  "terms": 374,
+  "terms": 375,
   "external_assets": 0,
   "edition": "physical-link-wireless-depth"
 }

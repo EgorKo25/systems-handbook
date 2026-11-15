@@ -29,7 +29,7 @@ SCRIPT = r'''
     if(!s||typeof s.key!=='string'||!s.key.length||s.key.length>200)return false;
     if(![s.words,s.activeMs,s.chapterWords,s.steps,s.at].every(finite))return false;
     const rate=s.words*60000/s.activeMs;
-    return s.chapterWords>=600&&s.chapterWords<=500000&&s.words>=Math.max(350,s.chapterWords*.25)&&s.words<=s.chapterWords&&s.activeMs>=90000&&s.activeMs<=28800000&&s.steps>=5&&Number.isInteger(s.steps)&&s.at>=0&&rate>=MIN_RATE&&rate<=MAX_RATE;
+    return s.chapterWords>=250&&s.chapterWords<=500000&&s.words>=Math.max(150,Math.min(350,s.chapterWords*.25))&&s.words<=s.chapterWords&&s.activeMs>=45000&&s.activeMs<=28800000&&s.steps>=3&&Number.isInteger(s.steps)&&s.at>=0&&rate>=MIN_RATE&&rate<=MAX_RATE;
   }
   function clean(samples){
     const byKey=new Map();
@@ -46,7 +46,12 @@ SCRIPT = r'''
   function encode(samples){return JSON.stringify({version:VERSION,samples:clean(samples)});}
   function rate(samples){
     const values=clean(samples).map(s=>s.words*60000/s.activeMs);
-    if(values.length<MIN_HISTORY)return DEFAULT_WPM;
+    if(!values.length)return DEFAULT_WPM;
+    if(values.length<MIN_HISTORY){
+      const weight=values.length/(values.length+1);
+      const observed=clamp(median(values),DEFAULT_WPM*.65,DEFAULT_WPM*1.35);
+      return Math.round(DEFAULT_WPM+(observed-DEFAULT_WPM)*weight);
+    }
     const middle=median(values),mad=median(values.map(v=>Math.abs(v-middle)));
     const accepted=values.filter(v=>Math.abs(v-middle)<=Math.max(30,3*mad));
     return Math.round(clamp(median(accepted.length>=MIN_HISTORY?accepted:values),MIN_RATE,MAX_RATE));
@@ -110,9 +115,10 @@ SCRIPT = r'''
   let current=null,session=null,units=[],unitWords=0,activeWords=0,lastPosition=0,lastRemaining='',lastIntent=-Infinity,holdUntil=0,scheduled=false,positionFrozen=false,readingOutsideInteractive=false;
   const now=()=>root.performance.now();
   const volume=doc.body.dataset.volume||'book';
+  let lastSavedWords=0;
   function explanation(){
     const n=clean(history).length,wpm=rate(history);
-    return 'Приблизительное время текста, без выполнения упражнений. Оглавление оценивает весь текст главы; остаток — текущий развёрнутый текст, без закрытых подсказок. '+(n>=MIN_HISTORY?'Ориентир '+wpm+' слов/мин: медиана пригодных наблюдений прошлых глав.':'Начальный ориентир 180 слов/мин; адаптация после трёх подходящих глав.')+' Остаток считается по месту в тексте, а не по доказанному прочтению. Подробный разбор кода может занять больше времени. Это не распознавание чтения глазами. Скрытая вкладка, потеря фокуса, долгий покой, формы и скачки не обучают оценку.';
+    return 'Ориентир: '+wpm+' слов/мин. '+(n>=MIN_HISTORY?'Учтено глав: '+n+'.':n?'Предварительная оценка по '+n+' гл.':'Пока данных о вашем темпе нет.')+' Остаток зависит от позиции в развёрнутом тексте. Время на упражнения оценивайте отдельно.';
   }
   function paintAll(){
     const wpm=rate(history),tip=explanation();
@@ -132,6 +138,7 @@ SCRIPT = r'''
       }
       status.title=tip;status.querySelector('[data-reading-remaining]').textContent='≈ '+minutes(row.words,wpm)+' мин текста';
     }
+    if(current)lastRemaining=remaining(activeWords,lastPosition,wpm);
     paintCurrent();
   }
   function paintCurrent(){
@@ -143,7 +150,9 @@ SCRIPT = r'''
     if(label.textContent!==text)label.textContent=text;label.title=explanation();
   }
   function saveSample(){
-    const candidate=session?.sample(Date.now());if(!candidate)return;
+    const candidate=session?.sample(Date.now());
+    if(!candidate||candidate.words<=lastSavedWords)return;
+    lastSavedWords=candidate.words;
     try{const stored=decode(root.localStorage.getItem(KEY));if(stored)history=clean([...history,...stored]);}catch(_){}
     history=clean([...history,candidate]);
     try{root.localStorage.setItem(KEY,encode(history));}catch(_){}
@@ -151,7 +160,7 @@ SCRIPT = r'''
   }
   function blocked(){
     if(doc.body.classList.contains('phone-volume-open')||root.location.hash==='#volume')return true;
-    if(doc.querySelector('dialog[open],.drawer:not([hidden]),.sidebar.open,.phone-view:not([hidden])'))return true;
+    if([...doc.querySelectorAll('dialog[open],.drawer:not([hidden]),.sidebar.open,.phone-view:not([hidden])')].some(panel=>panel.getClientRects().length))return true;
     const active=doc.activeElement;
     if(active?.closest('input,textarea,select,[contenteditable="true"],[data-learning-terminal],.learning-terminal'))return true;
     return !readingOutsideInteractive&&!!active?.closest('.deep-sketch,.command-ref');
@@ -196,7 +205,7 @@ SCRIPT = r'''
   }
   function sync(){
     scheduled=false;const next=selected();
-    if(next!==current){saveSample();current=next;buildUnits();session=next?new Session(volume+':'+next.id,activeWords):null;lastPosition=0;lastRemaining='';positionFrozen=false;if(session&&now()-lastIntent<IDLE_MS)session.activity(lastIntent);}
+    if(next!==current){saveSample();current=next;buildUnits();session=next?new Session(volume+':'+next.id,activeWords):null;lastSavedWords=0;lastPosition=0;lastRemaining='';positionFrozen=false;if(session&&now()-lastIntent<IDLE_MS)session.activity(lastIntent);}
     if(!current){paintCurrent();return;}
     const p=position();
     if(!positionFrozen&&now()>=holdUntil){lastPosition=p.position;lastRemaining=remaining(activeWords,lastPosition,rate(history));}
@@ -209,6 +218,7 @@ SCRIPT = r'''
     positionFrozen=true;interrupt(1000);buildUnits();
     // The visible word coordinate system changed. Discard this unfinished
     // observation rather than transfer intervals to different words.
+    saveSample();lastSavedWords=0;
     session=current?new Session(volume+':'+current.id,activeWords):null;
     schedule();
   }
@@ -235,6 +245,7 @@ SCRIPT = r'''
   observer.observe(doc.body,{attributes:true,attributeFilter:['class']});
   for(const row of chapters)observer.observe(row.element,{attributes:true,attributeFilter:['hidden']});
   root.setInterval(sync,1000);
+  root.setInterval(saveSample,30000);
   root.LibraryReadingTime=Object.freeze({version:VERSION,rate:()=>rate(history),sampleCount:()=>history.length,explanation});
 })(typeof window==='undefined'?globalThis:window);
 '''

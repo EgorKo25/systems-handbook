@@ -95,7 +95,7 @@ def main():
         article = re.sub(r'<div class="footer-nav">.*?</div>', footer, article, count=1, flags=re.S)
         body = article.split('</header>',1)[1].split('<footer class="chapter-footer">',1)[0]
         body = re.sub(r'<details class="local-toc">.*?</details>', '', body, count=1, flags=re.S)
-        words = base[identifier]['words'] if identifier in base and identifier != '12-glossary' else len(re.findall(r'\S+',plain(body)))
+        words = base[identifier]['words'] if identifier in base and identifier not in {'01-foundations', '02-host-send', '03-wire-ethernet', '12-glossary'} else len(re.findall(r'\S+',plain(body)))
         stats.append(dict(id=identifier,title=title,words=words))
         articles.append(article)
     page = (SRC / 'reader-shell.html').read_text()
