@@ -1,6 +1,6 @@
 {
   "date": "2026-11-01",
-  "words": 93872,
+  "words": 94080,
   "chapters": [
     {
       "id": "01-foundations",
@@ -20,7 +20,7 @@
     {
       "id": "20-physical-channel",
       "title": "Физический канал: из измерения получается бит",
-      "words": 2423
+      "words": 2489
     },
     {
       "id": "21-link-reliability",
@@ -80,7 +80,7 @@
     {
       "id": "22-wireless-medium",
       "title": "Общий эфир: как участники договариваются о времени",
-      "words": 2554
+      "words": 2696
     },
     {
       "id": "18-routing-control",
