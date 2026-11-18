@@ -3,9 +3,9 @@
     "slug": "networks",
     "title": "Сети: от сигнала до приложения",
     "volume": "V",
-    "words": 94106,
+    "words": 93843,
     "chapters": 24,
-    "terms": 375
+    "terms": 377
   },
   {
     "slug": "linux",
@@ -83,9 +83,9 @@
     "slug": "docker",
     "title": "Docker: от образа до работающей и восстанавливаемой системы",
     "volume": "VIII",
-    "words": 59496,
+    "words": 59402,
     "chapters": 18,
-    "terms": 142
+    "terms": 145
   },
   {
     "slug": "sonarqube",
@@ -107,9 +107,9 @@
     "slug": "operating-systems",
     "title": "Операционные системы: от аппаратных механизмов до управляемой программы",
     "volume": "II",
-    "words": 85526,
+    "words": 84882,
     "chapters": 38,
-    "terms": 269
+    "terms": 270
   },
   {
     "slug": "nexus",

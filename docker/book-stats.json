@@ -9,28 +9,28 @@
   {
     "id": "01-install-and-state",
     "title": "Установка Docker Engine на учебной Ubuntu",
-    "words": 2173,
+    "words": 2129,
     "part": "Получить и понять инструмент",
     "number": "1"
   },
   {
     "id": "02-client-daemon-runtime",
     "title": "Как команда Docker превращается в процесс Linux",
-    "words": 1973,
+    "words": 1883,
     "part": "Получить и понять инструмент",
     "number": "2"
   },
   {
     "id": "03-image-oci-layers",
     "title": "Что находится внутри образа Docker",
-    "words": 2572,
+    "words": 2560,
     "part": "Книга I · Из чего получается контейнер",
     "number": "3"
   },
   {
     "id": "04-buildkit-cache",
     "title": "Сборка образа: Dockerfile, BuildKit и повторное использование результатов",
-    "words": 2795,
+    "words": 2749,
     "part": "Книга I · Из чего получается контейнер",
     "number": "4"
   },
@@ -121,7 +121,7 @@
   {
     "id": "99-glossary",
     "title": "Словарь · Docker",
-    "words": 2715,
+    "words": 2813,
     "part": "Справочник",
     "number": "•"
   }
