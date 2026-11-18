@@ -414,9 +414,14 @@ def experiments(lab):
             f.write("recovery_target_name='book_target'\nrecovery_target_action='promote'\nrecovery_target_timeline='latest'\n")
         (restore/'recovery.signal').touch()
         lab.start(restore,lab.root/'restore-server.log')
+        # A hot standby can accept queries before promotion completes.
+        deadline = time.monotonic() + 10
+        while lab.sql('SELECT pg_is_in_recovery();', socket=sock, port=55433) == 't':
+            if time.monotonic() >= deadline:
+                raise TimeoutError('Recovered server did not promote at book_target')
+            time.sleep(.05)
         actual=lab.sql('SELECT value FROM book.recovery_mark ORDER BY value;',socket=sock,port=55433)
         assert actual=='before\nkeep',actual
-        assert lab.sql('SELECT pg_is_in_recovery();',socket=sock,port=55433)=='f'
         lab.stop(restore)
         # Process crash recovery, not a simulated disk power-loss experiment.
         lab.stop(lab.data,mode='immediate')
