@@ -31,7 +31,7 @@ for(const scenario of ['cached','blocked','fault','bad-buffer']){
 }
 const scheduler=containers[1],selectors=all(scheduler,'select');eq(selectors.length,3);
 const [policy,workload,quantum]=selectors;eq(policy.value,'rr');eq(quantum.value,'2');
-quantum.value='1';quantum.fire('change');ok(text(scheduler).includes('первый запуск 0'));
+quantum.value='1';quantum.fire('change');ok(text(scheduler).includes('задержка первого запуска 0'));
 policy.value='fcfs';policy.fire('change');eq(quantum.disabled,true);ok(text(scheduler).includes('очередь 7'));
 workload.value='io';workload.fire('change');ok(text(scheduler).includes('внешнее ожидание 3'));
 policy.value='rr';policy.fire('change');eq(quantum.disabled,false);

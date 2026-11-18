@@ -144,7 +144,7 @@ function mount(container){
   if(kind==='boundary'){rows=boundaryTrace(selector.value);summary='Учебные 32-разрядные регистры/адреса. Общие защищённые отображения ядра, отдельные стеки. Не реальная ISA и не полная модель Linux.';}
   if(kind==='lifecycle'){rows=lifecycleTrace(selector.value);summary='Модель публикации ребёнка и владения частичными объектами. Unix-подобное ожидание; не Windows API.';}
   if(kind==='service'){rows=serviceTrace(selector.value);summary='Готовность процесса, услуги и сохранность различаются. Никаких служб компьютера модель не запускает.';}
-  if(kind==='scheduler'){quantum.disabled=selector.value==='fcfs';const r=schedule(WORKLOADS[extra.value],{policy:selector.value,quantum:Number(quantum.value)});rows=r.timeline;summary=r.assumptions+' Исполнение CPU='+r.cpu+'мс; прошло='+r.wall+'мс. '+r.jobs.map(j=>j.id+': первый запуск '+j.response+', очередь '+j.readyWait+', внешнее ожидание '+j.blocked+', полное '+j.turnaround+'мс').join('; ');}
+  if(kind==='scheduler'){quantum.disabled=selector.value==='fcfs';const r=schedule(WORKLOADS[extra.value],{policy:selector.value,quantum:Number(quantum.value)});rows=r.timeline;summary=r.assumptions+' Исполнение CPU='+r.cpu+'мс; прошло='+r.wall+'мс. '+r.jobs.map(j=>j.id+': задержка первого запуска '+j.response+', очередь '+j.readyWait+', внешнее ожидание '+j.blocked+', полное '+j.turnaround+'мс').join('; ');}
   if(kind==='smp'){const r=smp(selector.value);rows=r.timeline;summary=r.assumptions+' прошло='+r.wall+'мс, Исполнение CPU='+r.cpu+'мс, агрегированная занятость '+Math.round(r.utilization*100)+'%.';}
   draw();
  }
