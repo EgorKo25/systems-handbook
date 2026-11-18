@@ -2,7 +2,8 @@
 <h2>Какой результат нам нужен</h2>
 <p>В книге есть небольшой HTTP-сервер: <a href="labs/echo/cmd/echo/main.go">его исходник</a> принимает запросы и, при настроенном каталоге данных, сохраняет счётчик. Сейчас нам нужен образ с исполняемым файлом <code>/echo</code>. Для компиляции потребуются Go и исходники; при обычном запуске готового сервера компилятор уже не нужен. Поэтому используем две <strong>стадии сборки</strong>: сначала среду с Go, затем отдельную файловую систему с полученным бинарником.</p>
 <p>BuildKit сначала получает из Dockerfile цепочку операций. В нашем случае <code>RUN go build</code> ждёт исходники от <code>COPY</code>, а последняя стадия ждёт готовый <code>/out/echo</code>. Другие ветви графа, если у них уже есть входы, могут выполняться параллельно. <a href="https://docs.docker.com/build/buildkit/">Устройство BuildKit</a>.</p>
-<p><strong>Buildx</strong> — расширение клиента Docker, через которое мы обращаемся к BuildKit. <strong>Builder</strong>, экземпляр сборщика, имеет собственное место исполнения и кэш. В основном примере выберем <code>default</code>: он связан с Engine указанного контекста <code>study</code>. Его драйвер <code>docker</code> использует BuildKit внутри Engine. Драйвер <code>docker-container</code> создаёт отдельный контейнер BuildKit; <code>remote</code> обращается к отдельно запущенному серверу. Поэтому перед сборкой нужно знать не только адрес Engine, но и выбранный builder. Явный <code>--builder default</code> в нашем примере исключает случайный выбор другого сборщика из прежних опытов или переменной <code>BUILDX_BUILDER</code>. <a href="https://docs.docker.com/build/builders/">Выбор сборщика</a>.</p>
+<p><strong>Buildx</strong> — расширение клиента Docker, через которое мы обращаемся к BuildKit. <strong>Builder</strong>, экземпляр сборщика, имеет собственное место исполнения и кэш. Для контекста <code>study</code> выберем его автоматически созданный сборщик с тем же именем <code>study</code>. Его драйвер <code>docker</code> использует BuildKit внутри Engine. Драйвер <code>docker-container</code> создаёт отдельный контейнер BuildKit; <code>remote</code> обращается к отдельно запущенному серверу. Поэтому перед сборкой нужно знать не только адрес Engine, но и выбранный builder. Явный <code>--builder study</code> в нашем примере исключает случайный выбор другого сборщика из прежних опытов или переменной <code>BUILDX_BUILDER</code>. <a href="https://docs.docker.com/build/builders/">Выбор сборщика</a>.</p>
+<p>Имя <code>default</code> относится к сборщику контекста с именем <code>default</code>, а не означает «сборщик любого указанного контекста». Поэтому сочетание <code>--context study --builder default</code> может остановиться ещё до сборки. В командах ниже явно совпадают оба имени. Перед продолжением в <code>buildx ls</code> и <code>buildx inspect study</code> проверьте драйвер <code>docker</code> и точку Engine вашего стенда. <a href="https://github.com/docker/buildx/blob/v0.30.1/builder/builder.go#L115-L129">Проверка соответствия контекста в Buildx v0.30.1</a>.</p>
 <h2>Какие файлы получит сборщик</h2>
 <p>Откройте каталог тома <code>docker</code> в терминале. Здесь должен существовать подкаталог <code>labs/echo</code>. Далее пути в командах заданы именно относительно каталога тома; браузер сам в него терминал не переводит. Для сборки нужны эти файлы:</p>
 <pre><code>labs/echo/
@@ -27,13 +28,13 @@ export GO_IMAGE</code></pre>
   test -f labs/echo/go.mod
   docker --context study version
   docker --context study buildx ls
-  docker --context study buildx inspect default
+  docker --context study buildx inspect study
   TARGET_PLATFORM="$(docker --context study version --format '{{.Server.Os}}/{{.Server.Arch}}')"
   case "$TARGET_PLATFORM" in
     linux/amd64|linux/arm64) ;;
     *) echo 'Для этого примера нужен Engine linux/amd64 или linux/arm64' >&amp;2; exit 1 ;;
   esac
-  docker --context study buildx build --builder default \
+  docker --context study buildx build --builder study \
     --progress=plain --build-arg GO_IMAGE="$GO_IMAGE" \
     --platform "$TARGET_PLATFORM" --load \
     --tag study/echo:lesson1 labs/echo

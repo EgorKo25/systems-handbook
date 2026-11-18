@@ -83,9 +83,9 @@
     "slug": "docker",
     "title": "Docker: от образа до работающей и восстанавливаемой системы",
     "volume": "VIII",
-    "words": 59402,
+    "words": 59745,
     "chapters": 18,
-    "terms": 145
+    "terms": 153
   },
   {
     "slug": "sonarqube",
