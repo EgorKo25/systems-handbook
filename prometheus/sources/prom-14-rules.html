@@ -5,6 +5,27 @@
 <h2>Pending и firing на временной шкале</h2>
 <p>Alerting rule получает vector; каждый элемент с полным набором labels — отдельный alert instance. Сначала он inactive, затем pending, ожидающий достаточной длительности условия, затем firing, активный для дальнейшей доставки. Для <code>for: 2m</code> при evaluation interval 1m первое истинное условие в t1 даёт pending; t2 ещё pending; t3 firing, если условие присутствовало непрерывно на проверках. Это не три неуспешных HTTP-опроса по определению: данные и evaluation имеют разные сетки.</p>
 <p>Fixture <code>up</code>=1,0,0,0,1,1,1,1,1 с шагом 1m подтверждает этот переход в настоящем promtool 3.13.5. <code>keep_firing_for: 3m</code> начинает удержание firing при первом evaluation без условия, здесь t4. На t6 алерт ещё firing; t7 деактивируется. Если условие возвращается раньше, удержание предотвращает короткое ложное разрешение. Эта опция не удерживает pending до первого firing и не восстанавливает пропущенные данные. Настройка есть в <a href="https://prometheus.io/docs/prometheus/3.13/configuration/alerting_rules/">alerting rules 3.13</a>.</p>
+<style>
+#prom-alert-evaluation-timeline { margin: 1.2rem 0; }
+#prom-alert-evaluation-timeline table { min-width: 0; width: 100%; }
+#prom-alert-evaluation-timeline :is(th, td) { overflow-wrap: anywhere; }
+@media (max-width: 550px) {
+  #prom-alert-evaluation-timeline :is(th, td) { min-width: 0; padding-inline: .4rem; }
+}
+</style>
+<figure id="prom-alert-evaluation-timeline" aria-labelledby="prom-alert-evaluation-caption">
+<table><thead><tr><th scope="col">От начала опыта</th><th scope="col"><code>up</code></th><th scope="col"><code>up == 0</code></th><th scope="col">Состояние после проверки</th></tr></thead><tbody>
+<tr><th scope="row">0 мин</th><td><code>1</code></td><td>пусто</td><td>неактивен</td></tr>
+<tr><th scope="row">1 мин</th><td><code>0</code></td><td>есть ряд</td><td>pending<br>Отсюда считаем 2 мин</td></tr>
+<tr><th scope="row">2 мин</th><td><code>0</code></td><td>есть ряд</td><td>pending<br>Прошла 1 мин</td></tr>
+<tr><th scope="row">3 мин</th><td><code>0</code></td><td>есть ряд</td><td>firing<br>Прошло 2 мин</td></tr>
+<tr><th scope="row">4 мин</th><td><code>1</code></td><td>пусто</td><td>firing<br>Отсюда считаем 3 мин удержания</td></tr>
+<tr><th scope="row">5 мин</th><td><code>1</code></td><td>пусто</td><td>firing<br>Прошла 1 мин удержания</td></tr>
+<tr><th scope="row">6 мин</th><td><code>1</code></td><td>пусто</td><td>firing<br>Прошло 2 мин удержания</td></tr>
+<tr><th scope="row">7 мин</th><td><code>1</code></td><td>пусто</td><td>неактивен<br>Прошло 3 мин удержания</td></tr>
+</tbody></table>
+<figcaption id="prom-alert-evaluation-caption">Без модификатора <code>bool</code> сравнение оставляет только подходящие ряды. Здесь оно возвращает ряд со значением 0, когда экземпляр недоступен. После восстановления ряд исчезает из результата, а активный алерт ещё три минуты удерживает <code>keep_firing_for</code>.</figcaption>
+</figure>
 <p>Если labels алерта содержат текущее значение как строку, каждое изменение создаёт новую идентичность и может бесконечно сбрасывать for. Динамическое описание помещают в annotations; labels оставляют стабильными для маршрутизации. Метрика <code>ALERTS</code> показывает состояния, а endpoint <code>/api/v1/rules</code> — здоровье и last evaluation. Наличие firing ещё не доказывает получение человеком уведомления.</p>
 <h2>Ошибки и проверка</h2>
 <p>Команды выполняются из прежнего prom-lab, где лежат bin/promtool, config/ и скопированный целиком fixtures/. Они проверяют отдельный образец, а не подменяют историю основного сервера. YAML fixtures/promql.yml использует соседний alert-rules.yml, поэтому одного файла недостаточно.</p>
