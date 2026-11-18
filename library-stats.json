@@ -75,9 +75,9 @@
     "slug": "practicum",
     "title": "Практикум: от своей сети до эксплуатации продукта",
     "volume": "XXIX",
-    "words": 40035,
+    "words": 40007,
     "chapters": 26,
-    "terms": 39
+    "terms": 41
   },
   {
     "slug": "docker",
