@@ -1,6 +1,6 @@
 {
   "date": "2026-11-01",
-  "words": 93843,
+  "words": 93872,
   "chapters": [
     {
       "id": "01-foundations",
@@ -120,10 +120,10 @@
     {
       "id": "12-glossary",
       "title": "Словарь сетевых терминов",
-      "words": 10181
+      "words": 10210
     }
   ],
-  "terms": 377,
+  "terms": 378,
   "external_assets": 0,
   "edition": "physical-link-wireless-depth"
 }

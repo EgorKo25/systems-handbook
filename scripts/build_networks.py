@@ -78,7 +78,7 @@ def main():
         title = plain(re.search(r'<h1>(.*?)</h1>', article, re.S)[1])
         if identifier == '12-glossary' and extra:
             definitions = ''.join('<dt id="glossary-term-'+str(i)+'">'+escape(t)+'</dt><dd>'+escape(d)+'</dd>' for i,(t,d) in enumerate(extra, len(glossary)-len(extra)))
-            article = article.replace('<footer class="chapter-footer">','<h2 id="network-depth-terms">Физический канал, надёжность и радиоэфир</h2><dl class="glossary">'+definitions+'</dl><footer class="chapter-footer">',1)
+            article = article.replace('<footer class="chapter-footer">','<h2 id="network-depth-terms">Физический канал, надёжность и маршрутизация</h2><dl class="glossary">'+definitions+'</dl><footer class="chapter-footer">',1)
         # Old chapter and heading IDs remain exactly the same: notes and external links survive.
         headings = re.findall(r'<h2 id="([^"]+)"[^>]*>(.*?)</h2>', article, re.S)
         for anchor, _ in headings:
