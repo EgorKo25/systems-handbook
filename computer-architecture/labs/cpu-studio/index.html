@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Конструктор процессора · Архитектура компьютера</title>
+  <script src="../m32/appearance.js"></script>
+  <link rel="stylesheet" href="studio.css">
+  <script src="engine.js" defer></script>
+  <script src="studio.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#workspace">К рабочей области</a>
+  <header class="site-bar">
+    <nav aria-label="Навигация">
+      <a href="../../index.html">← Архитектура компьютера</a>
+      <a href="assembly-course.html">Ассемблер и устройство процессора</a>
+    </nav>
+    <div class="appearance">
+      <label>Тема <select id="studio-theme" aria-label="Тема оформления"></select></label>
+      <label>Теплота <input id="warmth" type="range" aria-label="Теплота оформления"></label>
+    </div>
+  </header>
+
+  <main>
+    <header class="intro">
+      <div>
+        <h1>Конструктор процессора</h1>
+        <p>Соберите программу для учебного процессора и проследите, как команды меняют регистры, память и порты. Затем измените разрядность или добавьте собственную команду.</p>
+      </div>
+      <div class="files">
+        <button id="save" type="button">Скачать проект</button>
+        <button id="load" type="button">Открыть проект</button>
+        <input id="project-file" type="file" accept=".json,application/json" hidden>
+      </div>
+    </header>
+
+    <section id="workspace" class="workbench" aria-label="Рабочая область">
+      <div class="execution">
+        <div class="actions">
+          <button id="assemble" class="primary" type="button" title="Ctrl+Enter">Собрать</button>
+          <button id="step" type="button">Шаг</button>
+          <button id="run" type="button">Запустить</button>
+          <button id="pause" type="button">Пауза</button>
+          <button id="reset" type="button">Сбросить</button>
+        </div>
+        <p id="status" role="status">Подготовка лаборатории…</p>
+        <p id="draft-state" class="note" hidden></p>
+      </div>
+
+      <div class="desk">
+        <section class="panel code-panel" aria-labelledby="source-title">
+          <header class="panel-header">
+            <h2 id="source-title">Исходный код</h2>
+            <div class="inline">
+              <label><span class="sr-only">Выбрать пример</span>
+                <select id="examples">
+                  <option value="counter">42 → 43</option>
+                  <option value="loop">Цикл с подпрограммой</option>
+                  <option value="echo">Ввод и вывод</option>
+                </select>
+              </label>
+              <button id="use-example" type="button">Открыть пример</button>
+            </div>
+          </header>
+          <div class="editor-frame" id="editor-frame">
+            <div class="gutter" aria-label="Номера строк и точки останова"><div id="line-numbers"></div></div>
+            <div class="editor-code">
+              <pre id="highlight" aria-hidden="true"></pre>
+              <textarea id="source" aria-labelledby="source-title" aria-describedby="source-tip" wrap="off" spellcheck="false" autocomplete="off" autocapitalize="off"></textarea>
+            </div>
+          </div>
+          <p class="note panel-note" id="source-tip">Щелчок по номеру строки ставит точку останова. <kbd>Ctrl</kbd>+щелчок по метке открывает её объявление, <kbd>Ctrl</kbd>+<kbd>Enter</kbd> собирает программу.</p>
+          <p class="note panel-note" id="example-tip"></p>
+        </section>
+
+        <section class="panel listing-panel" aria-labelledby="listing-title">
+          <header class="panel-header">
+            <h2 id="listing-title">Листинг сборки</h2>
+            <label class="inline">Метка <select id="label-jump" aria-label="Перейти к метке"><option value="">Выбрать…</option></select></label>
+          </header>
+          <div class="listing-scroll" id="listing-scroll" tabindex="0" aria-label="Адреса и байты программы">
+            <table class="listing">
+              <thead><tr><th scope="col">Строка</th><th scope="col">Адрес</th><th scope="col">Байты</th><th scope="col">Команда</th></tr></thead>
+              <tbody id="listing"></tbody>
+            </table>
+          </div>
+          <p class="note panel-note" id="instruction-note">Стрелка <samp>▶</samp> указывает следующую команду по адресу <code>PC</code>.</p>
+        </section>
+
+        <section class="panel registers-panel" aria-labelledby="register-title">
+          <header class="panel-header">
+            <h2 id="register-title">Регистры</h2>
+            <output id="steps">0 команд</output>
+          </header>
+          <dl class="registers" id="registers"></dl>
+          <dl class="flags" id="flags" aria-label="Флаги"></dl>
+          <p class="note panel-note">В рамке показаны значения, изменившиеся на последней команде.</p>
+        </section>
+
+        <section class="panel memory-panel" aria-labelledby="memory-title">
+          <header class="panel-header">
+            <h2 id="memory-title">Память</h2>
+            <form id="memory-form" class="inline">
+              <label>Адрес <input id="memory-address" class="address-input" value="0x0000" spellcheck="false"></label>
+              <button type="submit">Перейти</button>
+            </form>
+          </header>
+          <div class="memory-body">
+            <div class="memory-controls inline">
+              <button id="memory-prev" type="button" aria-label="Предыдущие 64 байта">←</button>
+              <output id="memory-range"></output>
+              <button id="memory-next" type="button" aria-label="Следующие 64 байта">→</button>
+            </div>
+            <div id="memory-grid"></div>
+          </div>
+          <p class="note panel-note">Байты показаны в шестнадцатеричном виде. Рамка выделяет байты, записанные последней командой. Для ручной записи измените ячейку и нажмите <kbd>Enter</kbd>.</p>
+        </section>
+
+        <section class="panel ports-panel" aria-labelledby="ports-title">
+          <header class="panel-header"><h2 id="ports-title">Порты ввода и вывода</h2></header>
+          <div class="ports-body">
+            <form id="port-form" class="inline">
+              <label>Порт <input id="input-port" class="address-input" value="1" required></label>
+              <label class="port-values">Значения <input id="input-values" placeholder="65, 66, 67" required></label>
+              <button id="feed" type="submit">Добавить во вход</button>
+            </form>
+            <p id="input-queue" class="note">Очередь пуста.</p>
+            <h3>Выход</h3>
+            <p class="note" id="output-count"></p>
+            <pre id="port-output" class="port-output" tabindex="0" aria-label="Выходные значения">Пока пусто.</pre>
+          </div>
+        </section>
+
+        <section class="panel architecture-panel" aria-labelledby="architecture-title">
+          <header class="panel-header">
+            <h2 id="architecture-title">Архитектура</h2>
+            <output id="architecture-name"></output>
+          </header>
+          <div class="architecture-body">
+            <div class="architecture-flow">
+              <div class="flow-row" aria-label="Выборка и декодирование команды">
+                <div><strong>PC</strong><span>Адрес команды</span></div>
+                <span class="flow-arrow" aria-hidden="true">→</span>
+                <div><strong>Память</strong><span id="diagram-memory"></span></div>
+                <span class="flow-arrow" aria-hidden="true">→</span>
+                <div><strong>Декодер</strong><span id="diagram-decoder"></span></div>
+              </div>
+              <div class="flow-row" aria-label="Обмен данными между памятью, портами, регистрами и АЛУ">
+                <div><strong>Память и порты</strong><span>Порты 0–65535</span></div>
+                <span class="flow-arrow" aria-hidden="true">↔</span>
+                <div><strong>Регистры</strong><span id="diagram-registers"></span></div>
+                <span class="flow-arrow" aria-hidden="true">↔</span>
+                <div><strong>АЛУ</strong><span id="diagram-alu"></span></div>
+              </div>
+            </div>
+            <p class="note">По адресу PC машина читает команду из памяти. Декодер по коду команды выбирает микрооперации. Например, ADD складывает значения регистров в АЛУ, а ST записывает значение регистра в память.</p>
+            <details id="architecture-settings">
+              <summary>Изменить устройство процессора</summary>
+              <form id="architecture-form">
+                <div class="config-fields">
+                  <label>Название <input id="cpu-name" required maxlength="100"></label>
+                  <label>Разрядность
+                    <select id="cpu-bits"><option>8</option><option>16</option><option>32</option></select>
+                  </label>
+                  <label>Регистры
+                    <select id="cpu-registers"><option>4</option><option>8</option><option>16</option></select>
+                  </label>
+                  <label>Память, байт <input id="cpu-memory" type="number" min="256" max="65536" step="1" required></label>
+                </div>
+                <label class="instruction-label">Таблица команд, JSON
+                  <textarea id="instruction-json" rows="14" wrap="off" spellcheck="false" autocapitalize="off"></textarea>
+                </label>
+                <div class="inline">
+                  <button id="add-instruction" type="button">Добавить INC4 в таблицу</button>
+                  <button id="apply-architecture" class="primary" type="submit">Применить и собрать</button>
+                </div>
+                <p class="note"><code>INC4 R0</code> прибавляет к <code>R0</code> число 4. При применении настроек программа заново собирается и загружается с новым набором команд.</p>
+              </form>
+            </details>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <footer class="scope">
+      <h2>Проверьте запись в память</h2>
+      <p>В примере «42 → 43» дойдите до <code>ST</code>. В <code>R0</code> уже 43, а по адресу <code>0x0080</code> ещё 00. Выполните <code>ST</code> и посмотрите, когда там появится <code>2B</code>.</p>
+      <p>Ассемблер лаборатории кодирует команды виртуальной машины по её таблице команд. NASM и FASM собирают программы для других наборов команд. <a href="README.txt">Файлы лаборатории</a></p>
+    </footer>
+  </main>
+</body>
+</html>

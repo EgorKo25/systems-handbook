@@ -81,6 +81,7 @@ jobs:
         run: |
           node computer-architecture/tests/m32-contract.cjs
           node computer-architecture/tests/logic-model.js
+          node --test computer-architecture/labs/cpu-studio/engine.test.cjs
           node computer-architecture/tests/logic-scenes.js
           node computer-architecture/tests/memory-model.js
           node computer-architecture/tests/memory-view.js
