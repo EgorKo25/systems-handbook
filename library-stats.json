@@ -75,9 +75,9 @@
     "slug": "practicum",
     "title": "Практикум: от своей сети до эксплуатации продукта",
     "volume": "XXIX",
-    "words": 39953,
+    "words": 40035,
     "chapters": 26,
-    "terms": 38
+    "terms": 39
   },
   {
     "slug": "docker",
@@ -99,9 +99,9 @@
     "slug": "computer-architecture",
     "title": "Архитектура компьютера: от сигнала до исполняемой машины",
     "volume": "I",
-    "words": 59310,
+    "words": 59271,
     "chapters": 36,
-    "terms": 210
+    "terms": 218
   },
   {
     "slug": "operating-systems",
@@ -155,9 +155,9 @@
     "slug": "grafana",
     "title": "Grafana: от вопроса к данным, графику и проверяемому сигналу",
     "volume": "XXV",
-    "words": 16848,
+    "words": 16719,
     "chapters": 22,
-    "terms": 85
+    "terms": 86
   },
   {
     "slug": "artifactory",

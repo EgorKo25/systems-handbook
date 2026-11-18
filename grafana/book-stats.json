@@ -2,35 +2,35 @@
   {
     "id": "00-route",
     "title": "Grafana: сначала вопрос, затем данные и график",
-    "words": 599,
+    "words": 525,
     "part": "Начало",
     "number": "•"
   },
   {
     "id": "grafana-01-model",
     "title": "От вопроса к наблюдаемому утверждению",
-    "words": 523,
+    "words": 459,
     "part": "Книга I · Собственный экземпляр",
     "number": "1"
   },
   {
     "id": "grafana-02-install",
     "title": "Получить, проверить и впервые запустить Grafana",
-    "words": 818,
+    "words": 839,
     "part": "Книга I · Собственный экземпляр",
     "number": "2"
   },
   {
     "id": "grafana-03-state",
     "title": "Каталоги, ini, SQLite и секреты при повторном запуске",
-    "words": 667,
+    "words": 657,
     "part": "Книга I · Собственный экземпляр",
     "number": "3"
   },
   {
     "id": "grafana-04-access-tls",
     "title": "Пользователь, адрес, TLS и первая доверенная связь",
-    "words": 569,
+    "words": 544,
     "part": "Книга I · Собственный экземпляр",
     "number": "4"
   },
@@ -149,7 +149,7 @@
   {
     "id": "99-glossary",
     "title": "Словарь · Grafana",
-    "words": 1435,
+    "words": 1458,
     "part": "Справочник",
     "number": "•"
   }
