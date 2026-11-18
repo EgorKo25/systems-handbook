@@ -4,10 +4,12 @@ import argparse
 import hashlib
 import json
 import shutil
+import tempfile
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 MARKER = '.terraform-handbook-lab'
+MANIFEST = 'snapshot-manifest.json'
 
 
 def owned(path):
@@ -27,6 +29,16 @@ def prepare(path):
     print('Prepared new isolated lab; continue in the same directory')
 
 
+def file_checksums(directory):
+    checksums = {}
+    for path in sorted(directory.rglob('*')):
+        if path.is_symlink():
+            raise SystemExit('Lab snapshots do not support symbolic links')
+        if path.is_file() and path != directory / MANIFEST:
+            checksums[str(path.relative_to(directory))] = hashlib.sha256(path.read_bytes()).hexdigest()
+    return checksums
+
+
 def snapshot(root, target):
     root = owned(root)
     target = Path(target).resolve()
@@ -36,10 +48,17 @@ def snapshot(root, target):
         raise SystemExit('Snapshot already exists; choose a new name')
     if (root / '.terraform.tfstate.lock.info').exists():
         raise SystemExit('Stop Terraform operations before snapshot')
-    shutil.copytree(root, target, ignore=shutil.ignore_patterns('.terraform', '*.tfplan'))
-    manifest = {str(p.relative_to(target)): hashlib.sha256(p.read_bytes()).hexdigest()
-                for p in sorted(target.rglob('*')) if p.is_file()}
-    (target / 'snapshot-manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
+    target.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix='.lab-snapshot-', dir=target.parent) as tmp:
+        staged = Path(tmp) / 'snapshot'
+        shutil.copytree(
+            root, staged, symlinks=True,
+            ignore=shutil.ignore_patterns('.terraform', '*.tfplan'),
+        )
+        (staged / MANIFEST).write_text(json.dumps(file_checksums(staged), indent=2) + '\n')
+        if target.exists():
+            raise SystemExit('Snapshot already exists; choose a new name')
+        staged.rename(target)
     print('Snapshot saved: source, local state, lab files; dependency cache excluded')
 
 
@@ -50,17 +69,27 @@ def restore(root, source):
         raise SystemExit('Snapshot and work directory must be separate')
     if (root / '.terraform.tfstate.lock.info').exists():
         raise SystemExit('Stop Terraform operations before restore')
-    manifest = json.loads((source / 'snapshot-manifest.json').read_text())
-    for name, digest in manifest.items():
-        p = (source / name).resolve()
-        if source not in p.parents or hashlib.sha256(p.read_bytes()).hexdigest() != digest:
-            raise SystemExit('Snapshot verification failed')
-    # Preserve current data as a sibling: restoration is never a silent reset.
     previous = root.with_name(root.name + '.before-restore')
     if previous.exists():
         raise SystemExit('Previous restore backup exists; inspect it before another restore')
-    root.rename(previous)
-    shutil.copytree(source, root, ignore=shutil.ignore_patterns('snapshot-manifest.json'))
+    with tempfile.TemporaryDirectory(prefix='.lab-restore-', dir=root.parent) as tmp:
+        staged = Path(tmp) / 'restored'
+        shutil.copytree(source, staged, symlinks=True)
+        actual = file_checksums(staged)
+        manifest_file = staged / MANIFEST
+        try:
+            expected = json.loads(manifest_file.read_text(encoding='utf-8'))
+        except (OSError, ValueError) as exc:
+            raise SystemExit('Snapshot verification failed: unreadable manifest') from exc
+        if actual != expected:
+            raise SystemExit('Snapshot verification failed: file list or checksums differ')
+        manifest_file.unlink()
+        root.rename(previous)
+        try:
+            staged.rename(root)
+        except OSError:
+            previous.rename(root)
+            raise
     print('Restored stopped local-only lab. Previous directory preserved as *.before-restore')
 
 

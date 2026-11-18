@@ -67,6 +67,12 @@ def query(base, expression, timestamp=None):
     return result['data']['result']
 
 
+def observation(base, selector, evaluation_time):
+    sample, = query(base, selector, evaluation_time)
+    source_time, = query(base, f'timestamp({selector})', evaluation_time)
+    return sample, float(source_time['value'][1])
+
+
 def stop(process):
     if process and process.poll() is None:
         process.send_signal(signal.SIGTERM)
@@ -135,15 +141,21 @@ def live(prometheus, promtool, go, module_cache):
             except urllib.error.HTTPError as exc: assert exc.code == 500
             expression = 'lab_requests_total{code="500"}'
             samples = wait_for(lambda: (q if q and float(q[0]['value'][1]) == 1 else None) if (q := query(base, expression)) is not None else None)
-            stamp = float(samples[0]['value'][0])
+            first_evaluation = float(samples[0]['value'][0])
+            _, sample_time = observation(base, expression, first_evaluation)
+            evaluation_time = round(sample_time + .125, 3)
+            expected = observation(base, expression, evaluation_time)
+            assert expected[0]['metric'] == samples[0]['metric'], expected
+            assert expected[0]['value'] == [evaluation_time, '1'], expected
+            assert expected[1] == sample_time < evaluation_time, expected
+            print('TIME PASS: query result time differs from the stored timestamp')
             metrics = request(f'http://127.0.0.1:{gp}/metrics')
             result = subprocess.run([str(promtool), 'check', 'metrics'], input=metrics, text=True, capture_output=True)
             assert result.returncode == 0, result.stdout + result.stderr
             stop(p)
             assert (data / 'wal').is_dir()
             p = start(admin=True)
-            old = query(base, expression, stamp)
-            assert old and float(old[0]['value'][1]) == 1, old
+            assert observation(base, expression, evaluation_time) == expected, expected
             snapshot = json.loads(request(base + '/api/v1/admin/tsdb/snapshot', method='POST'))
             assert snapshot['status'] == 'success', snapshot
             snap = data / 'snapshots' / snapshot['data']['name']
@@ -151,8 +163,7 @@ def live(prometheus, promtool, go, module_cache):
             shutil.copytree(snap, restored)
             rp = free_port()
             r = start(db=restored, port=rp, cfg=empty)
-            old = query(f'http://127.0.0.1:{rp}', expression, stamp)
-            assert old and float(old[0]['value'][1]) == 1, old
+            assert observation(f'http://127.0.0.1:{rp}', expression, evaluation_time) == expected, expected
             print('LIVE PASS: Go200/500 → exposition lint → scrape/up → sample → WAL restart → snapshot → independent restore query')
         finally:
             for proc in reversed(processes): stop(proc)

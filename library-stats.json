@@ -179,7 +179,7 @@
     "slug": "terraform",
     "title": "Terraform: язык, граф исполнения и сохранённое состояние",
     "volume": "XXI",
-    "words": 20438,
+    "words": 20516,
     "chapters": 24,
     "terms": 89
   },
@@ -187,7 +187,7 @@
     "slug": "ansible",
     "title": "Ansible: от SSH и одной задачи до управляемого выпуска Go",
     "volume": "XXII",
-    "words": 20744,
+    "words": 20795,
     "chapters": 24,
     "terms": 96
   },
@@ -195,7 +195,7 @@
     "slug": "prometheus",
     "title": "Prometheus и PromQL: измерение, вычисление и хранение",
     "volume": "XXIV",
-    "words": 17396,
+    "words": 17516,
     "chapters": 22,
     "terms": 93
   },

@@ -107,9 +107,20 @@ def main():
         refusal=tf('state','push',str(snap/'terraform.tfstate'),expected=1)
         assert 'serial' in refusal.stderr+refusal.stdout
         record('state push refuses lower serial; no force bypass')
+        extra_input = snap / 'unlisted.auto.tfvars.json'
+        extra_input.write_text('{"services": {}}\n')
+        try:
+            restore(root, snap)
+        except SystemExit as exc:
+            assert 'file list or checksums differ' in str(exc), str(exc)
+        else:
+            raise AssertionError('Restore accepted an unlisted Terraform input')
+        assert contract()['api']['build'] == 'b2'
+        assert not root.with_name(root.name + '.before-restore').exists()
+        extra_input.unlink()
         restore(root,snap); tf('init','-input=false'); tf('plan','-detailed-exitcode')
         assert contract()['api']['build']=='b1'
-        record('explicit full stopped-lab snapshot restore; previous data preserved')
+        record('restore rejects unlisted inputs; verified snapshot restores with previous data preserved')
         tf('plan','-replace=terraform_data.node["api"]','-out=destroy-first.tfplan')
         plan=json.loads(tf('show','-json','destroy-first.tfplan').stdout)
         change=next(c for c in plan['resource_changes'] if c['address']=='terraform_data.node["api"]')
