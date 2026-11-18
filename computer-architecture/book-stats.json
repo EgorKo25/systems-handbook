@@ -170,7 +170,7 @@
   {
     "id": "ca-24-dma-rings-iommu",
     "title": "DMA, кольца и IOMMU: кто владеет байтами",
-    "words": 2069,
+    "words": 1791,
     "part": "Книга III · Устройства и целая машина",
     "number": "24"
   },
