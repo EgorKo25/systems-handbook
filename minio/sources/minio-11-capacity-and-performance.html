@@ -40,7 +40,7 @@
 <pre><code>python3 -B labs/capacity_model.py
 python3 -B labs/healing_scanner_model.py
 </code></pre>
-<p>Первый script проверяет округление +1 B, hash overhead, интервальный выбор 20/60 и синтетические quantiles. Второй сохраняет принятый пример healing с отдельными source/target IO. Ожидается PASS assertions; это не Reed–Solomon, HighwayHash, scanner или benchmark настоящего сервера. Измените S и K в собственной копии модели и предскажите, где появится новый chunk. Для N=8,K=4,B=1 MiB ответ +1 B разобран выше; у другого K ступень изменится.</p>
+<p>Первый script проверяет округление +1 B, hash overhead, интервальный выбор 20/60 и синтетические quantiles. Второй сохраняет принятый пример healing с отдельными source/target IO. Обе программы должны завершиться с кодом 0. Вторая печатает, в частности, 14 680 960 прочитанных байтов и 6 291 840 байтов по сети для своего заданного примера. За пределами фиксированных проверок меняйте параметры вызова <code>encoded()</code>, не сами ожидаемые значения. Например, сравните <code>encoded(1048576, 1048576, 8, 4)</code> и <code>encoded(1048577, 1048576, 8, 4)</code>: второй результат содержит два блока вместо одного. Функция считает объём; она не измеряет сервер.</p>
 <p class="sources">Источники выбранного поколения:
 <a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/erasure-coding.go">округление shards</a>,
 <a href="https://github.com/minio/minio/blob/9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a/cmd/bitrot-streaming.go">stream checksums</a>,

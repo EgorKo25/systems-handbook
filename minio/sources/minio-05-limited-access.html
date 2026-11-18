@@ -33,8 +33,7 @@ s3:GetObject. Закреплённый mc cat сначала получает me
 
 <h2>Создаём закрытый этап до серверной операции</h2>
 <p>Сервер работает в первом терминале. Во втором терминале той же VM
-загружаем прежний enter.sh, проверяем HTTPS health как в предыдущей
-главе и только после успеха продолжаем. Все следующие файлы принадлежат
+загружаем прежний <code>enter.sh</code> и продолжаем после успешной <a href="#minio-04-first-object-section-1">проверки готовности по HTTPS</a>. Все следующие файлы принадлежат
 обычному пользователю и создаются с umask 077.</p>
 <pre><code>source "$HOME/minio-study/enter.sh"
 cd "$LAB_ROOT"
@@ -192,18 +191,18 @@ finish_stage
 </code></pre>
 <h2>Тот же объект через общий Go-клиент</h2>
 <p>Теперь сменим клиент, сохранив сервер, bucket, ограниченный аккаунт и проверяемые байты. В этом упражнении читается <code>project/client-note.txt</code>. Следующая глава изменит manifest, поэтому её прохождение не сделает этот пример зависимым от прежнего latest manifest.</p>
-<p>Блок доступен только после получения и приёмки <code>object-study</code> по маршруту S3-тома. Сейчас согласован SPEC v1; реализация транспорта и native-проверка остаются pending. Наличие спецификации не означает наличие установленной программы.</p>
+<p>Сначала <a href="../s3/index.html#s3-03-delivery-acceptance">соберите клиент object-study</a>. Программа появится в <code>$HOME/object-study-lab/bin</code>; в <code>PATH</code> этот каталог не добавляется. Здесь вызываем её по полному пути. Сборка подтверждена отдельно от обращения к MinIO: ответ и сравнение ниже проверяете на своём сервере.</p>
 <p>Используется уже созданный <code>$LAB_ROOT/object-study/targets.json</code>. Относительные пути в нём отсчитываются от каталога этого файла: credentials находятся в <code>$LAB_ROOT/secrets/object-credentials.json</code>, CA — в <code>$LAB_ROOT/tls/ca.crt</code>. Это отдельный формат профилей helper, а не JSON-вывод создания service account и не стандартный AWS credentials file.</p>
-<pre><code>object-study --config "$LAB_ROOT/object-study/targets.json" \
+<pre><code>"$HOME/object-study-lab/bin/object-study" --config "$LAB_ROOT/object-study/targets.json" \
   --target minio-study --timeout 30s \
   get --output "$LAB_ROOT/downloads/object-study-client-note.txt" \
   --max-bytes 1048576 -- project/client-note.txt
 
 cmp -- "$LAB_ROOT/exercises/access-v1/client-note-v1.txt" \
   "$LAB_ROOT/downloads/object-study-client-note.txt"</code></pre>
-<p>Сравнение выполняется только после exit 0 клиента. По SPEC v1 конечное имя GET появляется после EOF, проверки целостности и закрытия временного файла; Linux commit использует hard link на том же filesystem и не заменяет существующее имя. Ошибка транспорта или локальной фиксации не становится успешным чтением из-за одного полученного HTTP-заголовка.</p>
+<p>Сравнение выполняется только после exit 0 клиента. Клиент публикует конечный файл после полного чтения потока, проверки целостности и закрытия временного файла; Linux commit использует hard link на том же filesystem и не заменяет существующее имя. Ошибка транспорта или локальной фиксации не становится успешным чтением из-за одного полученного HTTP-заголовка.</p>
 
-<p>Client-note содержит 31 байт первой строки с LF и 10 второй: всего 41 байт. Эталон access-v1/client-note-v1.txt сохраняется после изменения manifest в следующей главе. SPEC v1 ограничен put/get/head; здесь нет list/delete, multipart, presign и условного GET. Без полученного и принятого helper этот раздел пропускают.</p>
+<p>Client-note содержит 31 байт первой строки с LF и 10 второй: всего 41 байт. Эталон access-v1/client-note-v1.txt сохраняется после изменения manifest в следующей главе. В клиенте есть только put/get/head; здесь нет list/delete, multipart, presign и условного GET. Без полученного и принятого helper этот раздел пропускают.</p>
 <h2>Неоднозначное создание account и утечка</h2>
 <p>Если add завершился timeout либо закрытый ответ неполон, не
 генерируем новый account автоматически. Сохранённый access-id

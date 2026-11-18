@@ -23,7 +23,7 @@ DIAGRAMS = [
 "volume":"ceph",
 "chapter":"ceph-07-bluestore",
 "anchor":"ceph-07-bluestore",
-"insert_before":"<h2>Путь новой записи</h2>",
+"insert_before":"<h2>Сколько байтов породили четыре MiB</h2>",
 "title":"Байты уже записаны, но объект ещё нельзя подтвердить",
 "intro":"Новая несжатая запись: данные, описание и подтверждения реплик.",
 "assumptions":"Авторская причинная модель Tentacle 20.2.4: новый объект, прямой путь в новый blob, без compression, recovery и ошибок. Один локальный BlueStore раскрыт подробно; два других работают параллельно. Replicated pool size=3, min_size=2, все три OSD acting доступны. Устройства и вся VM-цепочка правильно исполняют flush. Это не трасса и не единственный путь BlueStore.",

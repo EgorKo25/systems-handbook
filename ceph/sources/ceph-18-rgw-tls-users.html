@@ -53,17 +53,29 @@ c orch ps --daemon-type rgw
 Orchestrator запускает daemon со своими CephX правами.
 Готовность процесса ещё не означает, что client доверяет сертификату
 или имеет S3 credentials.</p>
-<pre><code class="language-bash">curl --fail-with-body --show-error \
- --cacert "$HOME/ceph-study/tls-01/ca.crt" \
- --resolve rgw-ceph.study:8443:10.77.0.11 \
- https://rgw-ceph.study:8443/
+<pre><code class="language-bash">(
+  set -euo pipefail
+  response=$(curl --silent --show-error --connect-timeout 5 --max-time 15 \
+    --cacert "$HOME/ceph-study/tls-01/ca.crt" \
+    --resolve rgw-ceph.study:8443:10.77.0.11 \
+    --write-out '\n%{http_code}' \
+    https://rgw-ceph.study:8443/)
+  printf '%s' "$response" | python3 -B -c '
+import sys
+from xml.etree import ElementTree
+raw, status = sys.stdin.buffer.read().rsplit(b"\n", 1)
+if status != b"403" or ElementTree.fromstring(raw).findtext("Code") != "AccessDenied":
+    raise SystemExit("Expected HTTP 403 with S3 AccessDenied")
+print("HTTPS verified; anonymous request denied")
+'
+)
 </code></pre>
-<p>У анонимного запроса допустим S3 AccessDenied: это не успешный
-прикладной доступ, но после проверки сертификата ответ указывает,
-что HTTPS listener доступен. --fail-with-body возвращает ненулевой код
-при таком HTTP-отказе; его нельзя объявить успешным bootstrap.
-Ошибка имени, недоверенный CA, истёкший сертификат или connection refusal
-имеют другую причину. Флаги -k/--insecure не используются.</p>
+<p><code>curl</code> проверяет цепочку и имя по заданному CA.
+<code>--resolve</code> направляет запрос к учебному IP без изменения
+имени сервера в HTTPS. Ошибка соединения или TLS останавливает блок;
+код ответа проверяется отдельно. Для закрытого стенда нужны HTTP 403
+и XML-код <code>AccessDenied</code>. Права будущей учётной записи
+проверяются следующим опытом. Продолжайте только после кода 0 у блока.</p>
 <h2>Создание S3 identity</h2>
 <p>Из reentered Bash ceph1 администратор сначала проверяет отсутствие
 user rgw-study через radosgw-admin user info. Только явное отсутствие

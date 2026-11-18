@@ -85,8 +85,8 @@ version ID и выбранный endpoint.</p>
 <h2>Новый процесс, прежние данные</h2>
 <p>В первом терминале останавливаем MinIO обычным Ctrl-C и ждём
 возврата оболочки. Каталоги остаются на диске. Затем запускаем
-тот же run-server.sh повторно с тем же data. Во втором терминале
-снова выполняем HTTPS health check и только после успеха читаем
+тот же <a href="#minio-03-workbench-section-3">run-server.sh</a> с прежним каталогом данных. Во втором терминале
+повторяем <a href="#minio-04-first-object-section-1">проверку готовности</a> и только после успеха читаем
 объект, не делая перед чтением нового cp.</p>
 <pre><code>"${MC[@]}" cat lab/handbook-minio/project/manifest.txt \
   &gt; "$LAB_ROOT/downloads/manifest-after-restart.txt"

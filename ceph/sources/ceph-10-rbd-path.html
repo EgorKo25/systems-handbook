@@ -98,18 +98,22 @@ librbd → OSD → BlueStore → устройство.</p>
 B — функция запуска rbd, c — ceph того же FSID. Новый пул rbdstudy
 создаётся по host-правилу с size=3/min_size=2, его восемь PG должны
 достичь active+clean. Одноузловой пул cephstudy не переиспользуется.</p>
+<p>Сначала запросите <code>c osd pool ls</code> и убедитесь, что <code>rbdstudy</code> отсутствует. При повторном входе используйте прежний пул после проверки его параметров.</p>
 <pre><code class="language-bash">c config set client.admin rbd_cache false
 c osd pool create rbdstudy 8 8 replicated --rule=cephstudy-host --autoscale-mode=off
 c osd pool application enable rbdstudy rbd
 c osd pool get rbdstudy all
 c pg ls-by-pool rbdstudy
-b pool init rbdstudy
-b create --size 64M --object-size 4M --image-feature layering rbdstudy/report-disk
+</code></pre>
+<p>Остановитесь здесь, пока все восемь PG не станут <code>active+clean</code>. Сверьте <code>size=3</code> и <code>min_size=2</code>. Затем инициализируйте метаданные RBD и запросите список образов:</p>
+<pre><code class="language-bash">b pool init rbdstudy
+b ls rbdstudy
+</code></pre>
+<p>Продолжайте только если список получен успешно и в нём нет <code>report-disk</code>.</p>
+<pre><code class="language-bash">b create --size 64M --object-size 4M --image-feature layering rbdstudy/report-disk
 b info rbdstudy/report-disk --format json
 </code></pre>
-<p>Перед первой командой проверьте отсутствие rbdstudy через c osd pool ls,
-а перед create — отсутствие image через b ls rbdstudy. Существующий объект
-означает повторный вход, а не разрешение пересоздать. 64M здесь — размер
+<p>64M здесь — размер
 image 64 MiB, а не резервирование такой физической ёмкости.
 Info должен показать размер 67108864 байта, object_size=4194304,
 format=2 и выбранные features. Init создаёт метаданные использования пула

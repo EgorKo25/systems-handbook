@@ -312,7 +312,9 @@ Multi-Step Retry: правила другого типа могут возвра
 
 <pre><code>PG и seed размещения + запись пула
     ↓ crush_rule, size, CRUSH map, коэффициенты OSDMap
-raw placement
+необработанный результат CRUSH
+    ↓ исключение несуществующих OSD
+raw placement в OSDMap
     ↓ явные pg_upmap / pg_upmap_items / pg_upmap_primaries
 поправленное назначение
     ↓ существование OSD, up/down, primary_affinity

@@ -67,8 +67,7 @@ source read-probe-01.bash
 Для компактного опыта предлагаются 8 GiB RAM,4 vCPU,
 системный диск40 GiB и отдельный data disk32 GiB каждой.
 Это непроверенный бюджет; большой запасной профиль32 GiB RAM/VM
-не является минимумом. Бумажная модель четырёх устройств128 GiB
-в главах05/08 — другой заданный расчёт, не описание этих дисков.</p>
+не является минимумом. Глава 05 рассчитывает размещение для четырёх устройств по 128 GiB. В главе 08 число 128 GiB относится к размеру копии PG; устройства там имеют другую ёмкость. Диски этого стенда остаются по 32 GiB.</p>
 <p>В консоли каждого нового гостя повторите только подготовку ОС
 из главы03 с его именем/адресом. Bootstrap на нём не выполняется.
 Скопируйте исходники labs в ~/ceph-book/labs.
@@ -93,30 +92,21 @@ Fingerprint сверяется с консолью ceph1. Затем устан�
 cephops таким же блоком mkdir .ssh + noclobber authorized_keys,
 как в access-setup.bash; private key на новый host не переносится.
 Получите hostname,ip и полный host_ed25519 public key через его консоль.</p>
-<p>На ceph1 создайте новый expand-access-01. В нём сохраняются
-ceph2.host-ed25519.pub,ceph3.host-ed25519.pub,ceph4.host-ed25519.pub,
-полученные через эти консоли. После сравнения fingerprints создайте
-known_hosts для трёх адресов, как в access-setup.bash,
-но используйте identity из прежнего access-01.
-Прежние known_hosts и SHA256SUMS.access не меняются.</p>
-<p>Из expand-access-01 определите функцию ручного SSH
-с StrictHostKeyChecking=yes, UserKnownHostsFile=$PWD/known_hosts,
-GlobalKnownHostsFile=/dev/null, BatchMode=yes, IdentitiesOnly=yes
-и ключом ~/ceph-study/access-01/orchestrator_ed25519.
-Для каждого адреса до orch host add должны совпасть hostname -s,
-sudo -n id -u=0 и успешный sudo -n cephadm check-host --expect-hostname.
-Сверьте runtime manifests и digest на каждой VM. Сохраните новый manifest
-проверенных public inputs. Внутренний SSH cephadm всё равно имеет
-оговорённое в главе03 ослабление host checking.</p>
-<p>Полный проверочный блок — labs/expand-access-check.bash.
-До него новый expand-access-01 содержит три public key и
-console-fingerprints.txt: ровно по строке ceph2 SHA256:ФАКТИЧЕСКИЙ_ОТПЕЧАТОК
-для ceph2/3/4. Значения берутся только из VM-консолей и сверяются человеком.
-Скрипт строит новый known_hosts, проверяет fingerprints и runtime
-через защищённый ручной SSH. В этом маршруте student имеет home
-/home/student на всех гостях; иной home требует явной замены до запуска.
-После подготовки файлов выполните source ~/ceph-book/labs/expand-access-check.bash
-из уже принятой Bash.</p>
+<p>На <code>ceph1</code> создайте каталог <code>$HOME/ceph-study/expand-access-01</code>
+с правами <code>0700</code>. Поместите туда три полученных через консоли ключа
+<code>ceph2.host-ed25519.pub</code>, <code>ceph3.host-ed25519.pub</code>
+и <code>ceph4.host-ed25519.pub</code>, а также <code>console-fingerprints.txt</code>.
+В последнем — по строке вида <code>ceph2 SHA256:ФАКТИЧЕСКИЙ_ОТПЕЧАТОК</code>
+на каждый из трёх узлов. Отпечаток перепишите из консоли соответствующей машины.</p>
+<p>В Bash, в которой уже выполнен вход через <code>reenter.bash</code>,
+выполните <code>source ~/ceph-book/labs/expand-access-check.bash</code>.
+Скрипт сам создаёт новый <code>known_hosts</code>: заранее писать его не нужно.
+Он сверяет отпечатки, затем через SSH проверяет имя гостя, права <code>sudo</code>
+и сохранённые сведения об образе и пакете. Предполагается домашний каталог
+<code>/home/student</code> на каждом госте. Перед добавлением машин дождитесь
+успешного завершения и нового <code>ACCESS-ACCEPTED.txt</code>.
+Файлы первого входа в <code>access-01</code> не меняются. Ограничение проверки
+узла во внутреннем SSH cephadm остаётся прежним.</p>
 <h2>Адресное добавление</h2>
 <p>В уже reentered Bash ceph1, только после трёх отдельных проверок:</p>
 <pre><code class="language-bash">c orch host add ceph2 10.77.0.12

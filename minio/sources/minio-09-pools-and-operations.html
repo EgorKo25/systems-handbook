@@ -24,8 +24,36 @@
 <p>Обычный путь открывает reader конкретной version ID в исходном set. Этот reader выполняет проверки и реконструкцию из <a href="#minio-08-object-io">object IO</a>. rebalanceObject передаёт поток PutObject с DataMovement=true и SrcPoolIdx, сохраняя version ID, MTime, пользовательскую metadata и ETag. Это не обычный клиентский PUT, который произвольно создаёт новую версию. Для multipart сохраняется структура частей: NewMultipartUpload, PutObjectPart для каждой части и CompleteMultipartUpload; неудачная незавершённая загрузка имеет собственную очистку.</p>
 <p>Получатель проходит свой путь временных parts, checksums, metadata и публикации по endpoints. Он может получить ошибку чтения источника, недостаток места, write quorum или отмену. Следовательно, факт прочитанного исходника или вызова PutObject не даёт основания сразу удалить исходные bytes. Код повторяет отдельные попытки и различает disappeared version, конфликт data movement и настоящий отказ.</p>
 <p>В rebalanceBucket счётчик rebalanced увеличивается после принятого пути версии. Исходный key со всем стеком удаляется оптимизированным DeletePrefixObject лишь при rebalanced == числу обнаруженных версий. При ошибке до этого условия исходная история не удаляется этой финальной ветвью. Это объяснение условия конкретного кода, не обещание общей атомарности между pools или отсутствия частичного размещения при падении процесса. Ошибка source cleanup после успешного переноса тоже возможна: обе копии требуют дальнейшего согласования сервером.</p>
-<p>Delete marker передаётся как marker с прежними version ID/временем и data-movement опциями. Marker не имеет обычного тела для Reed–Solomon. Единственный оставшийся marker может обрабатываться без переноса payload. Поэтому число объектов, число версий и число перенесённых байтов нельзя считать одной величиной.</p>
+<p>Delete marker передаётся как marker с прежними version ID/временем и data-movement опциями. Marker не имеет обычного тела для Reed–Solomon. В этой версии есть отдельная ветвь для ключа, у которого остался только один маркер удаления: она увеличивает счётчик перенесённых версий без записи маркера в B. Общая ветвь очистки затем может убрать исходную запись. Поэтому число объектов, число версий и число перенесённых байтов нельзя считать одной величиной.</p>
+
+<figure id="minio-rebalance-version-copies" style="margin:1.2rem auto;max-width:36rem">
+<svg viewBox="0 0 354 202" role="img" aria-labelledby="minio-rebalance-version-copies-title minio-rebalance-version-copies-desc" style="display:block;width:100%;height:auto;max-width:31rem;margin-inline:auto;color:var(--text)">
+<title id="minio-rebalance-version-copies-title">Что остаётся при неполном переносе версий</title>
+<desc id="minio-rebalance-version-copies-desc">В A есть версии V1, V2 и V3. B принял первые две; перенос третьей закончился ошибкой. Счётчик 2 меньше числа исходных версий 3, поэтому финальное удаление стека A не запускается.</desc>
+<text x="15" y="24" fill="currentColor" font-family="system-ui,sans-serif" font-size="16" font-weight="700">Источник A</text>
+<text x="205" y="24" fill="currentColor" font-family="system-ui,sans-serif" font-size="16" font-weight="700">Приёмник B</text>
+<rect x="15" y="42" width="128" height="31" rx="6" fill="var(--soft)" stroke="currentColor"></rect>
+<text x="25" y="63" fill="currentColor" font-family="system-ui,sans-serif" font-size="15" font-weight="400">V1 сохранена</text>
+<path d="M148 57H195 M190 52L195 57L190 62" stroke="currentColor" fill="none" stroke-width="1.5"></path>
+<rect x="205" y="42" width="134" height="31" rx="6" fill="var(--soft)" stroke="currentColor"></rect>
+<text x="215" y="63" fill="currentColor" font-family="system-ui,sans-serif" font-size="15" font-weight="400">V1 принята</text>
+<rect x="15" y="83" width="128" height="31" rx="6" fill="var(--soft)" stroke="currentColor"></rect>
+<text x="25" y="104" fill="currentColor" font-family="system-ui,sans-serif" font-size="15" font-weight="400">V2 сохранена</text>
+<path d="M148 98H195 M190 93L195 98L190 103" stroke="currentColor" fill="none" stroke-width="1.5"></path>
+<rect x="205" y="83" width="134" height="31" rx="6" fill="var(--soft)" stroke="currentColor"></rect>
+<text x="215" y="104" fill="currentColor" font-family="system-ui,sans-serif" font-size="15" font-weight="400">V2 принята</text>
+<rect x="15" y="124" width="128" height="31" rx="6" fill="var(--soft)" stroke="currentColor"></rect>
+<text x="25" y="145" fill="currentColor" font-family="system-ui,sans-serif" font-size="15" font-weight="400">V3 сохранена</text>
+<path d="M148 139H195 M190 134L195 139L190 144" stroke="currentColor" fill="none" stroke-width="1.5"></path>
+<rect x="205" y="124" width="134" height="31" rx="6" fill="none" stroke="currentColor" stroke-dasharray="4 3"></rect>
+<text x="215" y="145" fill="currentColor" font-family="system-ui,sans-serif" font-size="15" font-weight="400">V3 — отказ</text>
+<text x="15" y="189" fill="currentColor" font-family="system-ui,sans-serif" font-size="15" font-weight="700">Принято 2 из 3: исходный стек остаётся</text>
+
+</svg>
+<figcaption>Пример с тремя версиями одного ключа. После отказа при переносе V3 в B уже есть две версии, но ветвь очистки в A не срабатывает: <code>rebalanced = 2</code> при трёх исходных версиях. Здесь показан счётчик, а не порядок, в котором сервер обязан обходить версии.</figcaption>
+</figure>
 <h2>Как читать progress без ложной точности</h2>
+<p><code>Completed</code> означает завершение этого обхода или достижение цели по свободному месту. Отказ обработки отдельной версии или очистки источника может остаться в журнале. Для приёмки посмотрите ошибки и прочитайте выбранные идентификаторы версий из ожидаемого состояния.</p>
 <p>В этом поколении rebalanceStats.update добавляет оценку on-disk size как fi.Size × (K+P) / K для обычной версии. Это арифметическая оценка кодированного размера; в ней нет точного округления каждого блока, hash headers, файловой metadata и device write amplification. Поле Bytes в rebalance status не обязано совпасть с S3 Content-Length и не является измерением реальных записей block device.</p>
 <p>checkIfRebalanceDone сравнивает оценку (InitFreeSpace + Bytes) / InitCapacity с PercentFreeGoal и использует допуск 0.05. Это пять процентных пунктов доли, а не гарантия свободного резерва на всех дисках и не точный процент завершённых objects. CLI summary берёт максимальное elapsed/ETA среди pools; ETA остаётся оценкой. Нельзя из 0s to completion вывести отсутствие незавершённых IO или проверить пригодность всех старых версий.</p>
 <h2>Наблюдение на продолжаемом стенде</h2>

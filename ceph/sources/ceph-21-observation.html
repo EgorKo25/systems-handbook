@@ -6,20 +6,20 @@
 включите noclobber и сохраняйте stdout/stderr раздельно.
 Команды ниже читают состояние; они не ремонтируют кластер.
 FSID уже проверен повторным входом. Время наблюдения UTC
-и клиентская операция записываются рядом с результатами.</p>
+записывается рядом с результатами. После сборки добавьте в этот каталог имя операции и идентификатор из журнала клиента; эти команды не могут получить его из кластера.</p>
 <pre><code class="language-bash">set -euo pipefail
 umask 077
 set -o noclobber
 mkdir -m 0700 "$HOME/ceph-study/observe-01"
 cd "$HOME/ceph-study/observe-01"
 date --utc --iso-8601=seconds &gt; observed-at.txt
-c status --format=json &gt; status.json
-c health detail &gt; health.txt
-c quorum_status --format=json &gt; quorum.json
-c osd tree --format=json &gt; tree.json
-c osd df tree --format=json &gt; capacity.json
-c pg stat &gt; pg-stat.txt
-c orch ps --refresh --format=json &gt; daemons.json
+c status --format=json &gt; status.json 2&gt; status.json.err
+c health detail &gt; health.txt 2&gt; health.txt.err
+c quorum_status --format=json &gt; quorum.json 2&gt; quorum.json.err
+c osd tree --format=json &gt; tree.json 2&gt; tree.json.err
+c osd df tree --format=json &gt; capacity.json 2&gt; capacity.json.err
+c pg stat &gt; pg-stat.txt 2&gt; pg-stat.txt.err
+c orch ps --refresh --format=json &gt; daemons.json 2&gt; daemons.json.err
 </code></pre>
 <p>Status объединяет сведения разной природы. MON quorum показывает
 согласующий состав управляющего состояния. OSD up/in описывают

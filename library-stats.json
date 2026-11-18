@@ -99,7 +99,7 @@
     "slug": "computer-architecture",
     "title": "Архитектура компьютера: от сигнала до исполняемой машины",
     "volume": "I",
-    "words": 59706,
+    "words": 59310,
     "chapters": 36,
     "terms": 210
   },
@@ -107,9 +107,9 @@
     "slug": "operating-systems",
     "title": "Операционные системы: от аппаратных механизмов до управляемой программы",
     "volume": "II",
-    "words": 86008,
+    "words": 85526,
     "chapters": 38,
-    "terms": 268
+    "terms": 269
   },
   {
     "slug": "nexus",
@@ -139,7 +139,7 @@
     "slug": "mongodb",
     "title": "MongoDB: документ, путь запроса и границы сохранности",
     "volume": "XII",
-    "words": 15752,
+    "words": 15766,
     "chapters": 19,
     "terms": 76
   },
@@ -147,9 +147,9 @@
     "slug": "vault",
     "title": "HashiCorp Vault: от доверенной поставки до отзыва и восстановления",
     "volume": "XXIII",
-    "words": 15982,
+    "words": 16031,
     "chapters": 19,
-    "terms": 56
+    "terms": 59
   },
   {
     "slug": "grafana",
@@ -203,7 +203,7 @@
     "slug": "flyway",
     "title": "Flyway: управляемое изменение живой базы данных",
     "volume": "X",
-    "words": 14336,
+    "words": 14284,
     "chapters": 20,
     "terms": 80
   },
@@ -211,15 +211,15 @@
     "slug": "s3",
     "title": "S3: именованные байты, запросы и история объектов",
     "volume": "XIII",
-    "words": 23162,
+    "words": 23314,
     "chapters": 18,
-    "terms": 52
+    "terms": 58
   },
   {
     "slug": "minio",
     "title": "MinIO: объект, кодированные части и восстановление",
     "volume": "XIV",
-    "words": 22125,
+    "words": 22309,
     "chapters": 13,
     "terms": 46
   },
@@ -227,7 +227,7 @@
     "slug": "ceph",
     "title": "Ceph: от объекта и карты до восстановления",
     "volume": "XV",
-    "words": 31664,
+    "words": 32013,
     "chapters": 28,
     "terms": 46
   }

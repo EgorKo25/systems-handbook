@@ -1,4 +1,4 @@
-# Run numbered blocks in the console of your own ceph1 as student.
+# Run blocks A–D individually in the console of your own ceph1 as student.
 # Prerequisites: accepted runtime, cephops + visudo + local sudo -n.
 # A. Create once; stop if access-01 exists.
 set -euo pipefail
@@ -25,7 +25,8 @@ ip -br address
 sudo ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub -E sha256
 sudo cat /etc/ssh/ssh_host_ed25519_key.pub > ceph1.host-ed25519.pub
 ssh-keygen -lf ceph1.host-ed25519.pub -E sha256
-# Compare the two full fingerprints before continuing.
+# Stop after C. Compare the two full fingerprints before continuing.
+# D. Only if the fingerprints match; continue in the same Bash session.
 read -r kind encoded comment < ceph1.host-ed25519.pub
 test "$kind" = ssh-ed25519
 test -n "$encoded"
