@@ -211,9 +211,9 @@
     "slug": "s3",
     "title": "S3: именованные байты, запросы и история объектов",
     "volume": "XIII",
-    "words": 23314,
+    "words": 23555,
     "chapters": 18,
-    "terms": 58
+    "terms": 62
   },
   {
     "slug": "minio",
