@@ -10,32 +10,32 @@
     {
       "id": "01-cluster",
       "title": "Сервер, кластер и работающий сеанс",
-      "words": 4190
+      "words": 4263
     },
     {
       "id": "02-relational",
       "title": "Данные, типы и трёхзначная логика",
-      "words": 2541
+      "words": 2630
     },
     {
       "id": "03-sql",
       "title": "Как читать и строить SQL-запрос",
-      "words": 2218
+      "words": 2290
     },
     {
       "id": "04-transactions",
       "title": "Изменения, ограничения и миграции",
-      "words": 1914
+      "words": 2123
     },
     {
       "id": "05-protocol",
       "title": "Клиентский протокол и жизнь соединения",
-      "words": 4250
+      "words": 4351
     },
     {
       "id": "06-query-path",
       "title": "Путь SELECT и UPDATE внутри сервера",
-      "words": 3372
+      "words": 3520
     },
     {
       "id": "07-catalog-objects",
@@ -133,7 +133,7 @@
       "words": 8937
     }
   ],
-  "words": 77434,
+  "words": 78126,
   "terms": 441,
   "external_assets": 0
 }
