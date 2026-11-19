@@ -7,7 +7,7 @@
   <script src="../m32/appearance.js"></script>
   <link rel="stylesheet" href="studio.css">
   <script src="engine.js?v=1" defer></script>
-  <script src="studio.js?v=1" defer></script>
+  <script src="studio.js?v=2" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#workspace">К рабочей области</a>
@@ -96,6 +96,16 @@
             <p id="pc-word-decoded"></p>
             <button id="pc-word-open-memory" type="button">Показать в памяти</button>
           </div>
+          <section class="panel-note" id="register-add-step" aria-labelledby="register-add-title" hidden>
+            <h3 id="register-add-title">Сложение за один шаг модели</h3>
+            <div class="flow-row">
+              <div><strong>Декодер</strong><span id="register-add-decode"></span></div>
+              <span class="flow-arrow" aria-hidden="true">→</span>
+              <div><strong>АЛУ</strong><span id="register-add-alu"></span></div>
+              <span class="flow-arrow" aria-hidden="true">→</span>
+              <div><strong>Запись в конце шага</strong><span id="register-add-write"></span></div>
+            </div>
+          </section>
           <p class="note panel-note" id="instruction-note">Стрелка <samp>▶</samp> отмечает строку листинга с адресом <code>PC</code>.</p>
         </section>
 

@@ -65,7 +65,7 @@
     {
       "id": "12-text-and-bytes",
       "title": "Текст и байты",
-      "words": 2430
+      "words": 2477
     },
     {
       "id": "13-jobs-signals",
@@ -75,12 +75,12 @@
     {
       "id": "14-scripts-and-portability",
       "title": "Сценарий как программа",
-      "words": 2064
+      "words": 2113
     },
     {
       "id": "15-reliable-files-concurrency",
       "title": "Надёжность и параллелизм",
-      "words": 3075
+      "words": 3153
     },
     {
       "id": "16-debugging-and-tests",
@@ -90,12 +90,12 @@
     {
       "id": "17-language-boundaries",
       "title": "Границы языков",
-      "words": 2259
+      "words": 2315
     },
     {
       "id": "18-practice-and-reference",
       "title": "Автономная практика",
-      "words": 2243
+      "words": 2365
     },
     {
       "id": "99-glossary",
@@ -103,7 +103,7 @@
       "words": 6093
     }
   ],
-  "words": 53986,
+  "words": 54338,
   "terms": 273,
   "external_assets": 0
 }

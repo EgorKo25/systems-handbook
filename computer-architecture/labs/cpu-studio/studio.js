@@ -30,6 +30,7 @@
   let breakpoints = new Set();
   let lastValues = null;
   let lastWrites = new Set();
+  let lastRegisterAdd = null;
   let memoryStart = 0;
   let hasResidentByte = new Set();
   let running = false;
@@ -334,6 +335,19 @@
     $('pc-word-open-memory').disabled = bytes.length === 0;
   }
 
+  function renderRegisterAdd() {
+    $('register-add-step').hidden = lastRegisterAdd === null;
+    if (!lastRegisterAdd) return;
+    const { instruction, pcBefore, pcAfter, bytes, register, before, constant, after } = lastRegisterAdd;
+    const name = 'R' + register;
+    $('register-add-decode').textContent =
+      address(pcBefore) + ' · ' + bytes.map(byte => hex(byte, 2)).join(' ') + ' · ' + instruction + ' ' + name;
+    $('register-add-alu').textContent =
+      name + ' = ' + before + ' · константа ' + constant + ' · результат ' + after;
+    $('register-add-write').textContent =
+      name + ' ← ' + after + ' · PC ← ' + address(pcAfter);
+  }
+
   function renderRegisters() {
     const regs = Array.from(machine.registers, (value, index) => ['R' + index, value, config.bits / 4]);
     regs.push(['PC', machine.pc, 4], ['SP', machine.sp, 4]);
@@ -445,6 +459,7 @@
   function renderMachine(follow = false) {
     renderPC(follow);
     renderPCWord();
+    renderRegisterAdd();
     renderRegisters();
     renderMemory(false);
     renderPorts();
@@ -460,6 +475,7 @@
     breakpoints = nextBreakpoints;
     lastValues = null;
     lastWrites = new Set();
+    lastRegisterAdd = null;
     stoppedAt = null;
     displayedOutputLength = -1;
     if (changedConfig) renderConfig();
@@ -506,6 +522,25 @@
     return result;
   }
 
+  function stepOnce() {
+    const { instruction, operands, bytes } = machine.inspectInstruction();
+    const result = execute();
+    lastRegisterAdd = null;
+    if (result.kind !== 'step' || instruction?.format !== 'R' || instruction.microcode.length !== 1) return result;
+
+    const [micro] = instruction.microcode;
+    if (micro.op === 'add' && micro.a === 'd' && micro.dst === 'd' &&
+        typeof micro.b === 'number' && micro.when === undefined) {
+      const register = operands.d;
+      lastRegisterAdd = {
+        instruction: result.instruction, pcBefore: result.address, pcAfter: result.pc,
+        bytes, register, before: lastValues.registers[register],
+        constant: micro.b, after: machine.registers[register],
+      };
+    }
+    return result;
+  }
+
   function reportStep(result) {
     if (result.kind !== 'step') {
       message(result.message || 'Выполнение остановлено.', result.kind === 'fault' ? 'error' : '');
@@ -519,6 +554,8 @@
     const startSteps = machine.steps;
     stoppedAt = null;
     running = true;
+    lastRegisterAdd = null;
+    renderRegisterAdd();
     const token = ++runToken;
     renderControls();
     renderMemory(false);
@@ -624,7 +661,7 @@
     $('assemble').addEventListener('click', buildSource);
     $('step').addEventListener('click', () => {
       stoppedAt = null;
-      const result = execute();
+      const result = stepOnce();
       renderMachine(true);
       reportStep(result);
     });
