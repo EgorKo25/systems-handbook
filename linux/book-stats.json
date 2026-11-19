@@ -9,13 +9,13 @@
   "chapters": [
     {
       "id": "01-machine",
-      "title": "Из чего исполняется программа",
-      "words": 1995
+      "title": "Как процессор читает команды и данные",
+      "words": 1917
     },
     {
       "id": "02-kernel-boundary",
       "title": "Как программа обращается к ядру",
-      "words": 2951
+      "words": 2824
     },
     {
       "id": "03-process",
@@ -103,7 +103,7 @@
       "words": 8642
     }
   ],
-  "words": 56264,
+  "words": 56059,
   "terms": 348,
   "external_assets": 0
 }
