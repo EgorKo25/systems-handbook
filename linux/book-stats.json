@@ -40,12 +40,12 @@
     {
       "id": "07-storage",
       "title": "Как запись достигает накопителя",
-      "words": 4623
+      "words": 4599
     },
     {
       "id": "08-rights",
-      "title": "Откуда берётся право выполнить действие",
-      "words": 1930
+      "title": "Как Linux проверяет доступ к файлу",
+      "words": 2021
     },
     {
       "id": "09-signals-terminal",
@@ -103,7 +103,7 @@
       "words": 8642
     }
   ],
-  "words": 55908,
+  "words": 55975,
   "terms": 348,
   "external_assets": 0
 }

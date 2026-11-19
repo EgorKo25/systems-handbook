@@ -16,21 +16,21 @@
   {
     "id": "P00-rescue-bootstrap",
     "title": "Первый вход без рабочей сети",
-    "words": 1498,
+    "words": 1499,
     "part": "Получить управление",
     "number": "2"
   },
   {
     "id": "P01-management-ssh",
     "title": "Управление по SSH и доверие к узлу",
-    "words": 1227,
+    "words": 1228,
     "part": "Получить управление",
     "number": "3"
   },
   {
     "id": "P02-bastion-access",
     "title": "Внутренний узел через bastion",
-    "words": 1781,
+    "words": 1782,
     "part": "Получить управление",
     "number": "4"
   },
