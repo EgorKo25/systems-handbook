@@ -6,7 +6,8 @@
   const editor = $('rv32-source');
   const initial = cpu.SOURCE;
   let assembled = initial;
-  let machine = cpu.create(assembled);
+  let machine;
+  let lastStore;
 
   const address = value => '0x' + cpu.hex(value, 4);
   const bytes = (memory, start) =>
@@ -19,6 +20,9 @@
     $('x6').textContent = address(machine.regs[6]);
     $('input-word').textContent = bytes(machine.memory, 0x2000);
     $('output-word').textContent = bytes(machine.memory, 0x2200);
+    $('last-store').textContent = lastStore
+      ? address(lastStore.address) + ' · ' + lastStore.after.map(value => cpu.hex(value, 2)).join(' ')
+      : 'Записей ещё нет';
     const canContinue = machine.status === 'ready' && editor.value === assembled;
     $('step').disabled = !canContinue;
     $('run').disabled = !canContinue;
@@ -29,6 +33,7 @@
     const listing = cpu.assemble(source).map(row =>
       [address(row.address), bytes(next.memory, row.address), row.text.trim()].join('  '));
     machine = next;
+    lastStore = null;
     assembled = source;
     $('rv32-listing').textContent = listing.join('\n');
     render();
@@ -62,11 +67,14 @@
     }
   });
   $('step').addEventListener('click', () => {
-    report(cpu.step(machine));
+    const event = cpu.step(machine);
+    lastStore = event.memory.at(-1) ?? lastStore;
+    report(event);
     render();
   });
   $('run').addEventListener('click', () => {
     const events = cpu.run(machine, 1000);
+    for (const event of events) lastStore = event.memory.at(-1) ?? lastStore;
     report(events.at(-1));
     if (machine.status === 'ready') status('Выполнено 1000 команд. Можно продолжить с текущего адреса.');
     render();
