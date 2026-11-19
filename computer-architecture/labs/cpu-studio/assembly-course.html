@@ -167,6 +167,38 @@ equal:
 </ul>
 <p>В обоих случаях <code>JZ</code> стоит по адресу <code>0x100C</code>. Замена числа в <code>LDI</code> меняет результат сравнения, а адреса команд сохраняются.</p>
 </details>
+<h3 id="jnz-exercise">JNZ возвращается к началу цикла</h3>
+<p>Сколько раз выполнится тело цикла, если в <code>R1</code> записать 3? А если записать 1? Регистр <code>R0</code> считает выполненные повторы, <code>R1</code> хранит оставшиеся, а в <code>R2</code> лежит ноль для сравнения. За один проход программа увеличивает <code>R0</code>, уменьшает <code>R1</code> и выполняет <code>CMP R1, R2</code>. При <code>Z = 0</code> команда <code>JNZ again</code> возвращает <code>PC</code> к метке <code>again</code>. При <code>Z = 1</code> следующей выполняется <code>HALT</code>.</p>
+<pre><code id="jnz-exercise-source">.org 0x1000
+    LDI R0, 0
+    LDI R1, 3
+    LDI R2, 0
+again:
+    ADDI R0, 1
+    ADDI R1, -1
+    CMP R1, R2
+    JNZ again
+    HALT</code></pre>
+<ol>
+<li><a id="jnz-exercise-ide" href="index.html">Откройте конструктор для опыта с JNZ</a>, вставьте программу в редактор и нажмите «Собрать». Нажмите «Шаг» шесть раз, чтобы выполнить три загрузки и дойти до <code>JNZ</code> по адресу <code>0x1018</code>.</li>
+<li>Перед выполнением <code>JNZ</code> по текущему <code>R1</code> предскажите <code>Z</code> и следующий <code>PC</code>. Сверьте <code>Z</code> в списке флагов, нажмите «Шаг» и проверьте <code>PC</code> в списке регистров. Если <code>PC</code> вернулся к <code>again</code>, сделайте ещё три шага до <code>JNZ</code> и повторите проверку. Когда <code>PC</code> укажет на <code>HALT</code>, выполните её и запишите <code>R0</code> и <code>R1</code>.</li>
+<li>Замените <code>LDI R1, 3</code> на <code>LDI R1, 1</code>, нажмите «Собрать» и повторите опыт. Сверьте прогнозы обоих запусков по таблице.</li>
+</ol>
+<details>
+<summary>Сверить прогнозы для JNZ</summary>
+<div class="table-wrap">
+<table id="jnz-exercise-trace">
+<thead><tr><th scope="col">Стартовый R1</th><th scope="col">R1 перед JNZ</th><th scope="col">Z</th><th scope="col">Следующий PC</th></tr></thead>
+<tbody>
+<tr><td>3</td><td>2</td><td>0</td><td><code>0x100C</code></td></tr>
+<tr><td>3</td><td>1</td><td>0</td><td><code>0x100C</code></td></tr>
+<tr><td>3</td><td>0</td><td>1</td><td><code>0x101C</code></td></tr>
+<tr><td>1</td><td>0</td><td>1</td><td><code>0x101C</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>Адрес <code>again</code> равен <code>0x100C</code> в обеих сборках. При старте с 3 тело выполняется трижды и <code>R0 = 3</code>. При старте с 1 тело успевает выполниться один раз до первого <code>JNZ</code>, поэтому <code>R0 = 1</code>. К моменту остановки <code>R1 = 0</code> в обоих случаях.</p>
+</details>
 </section>
 <section id="subroutine"><h2>CALL, стек и возврат</h2>
 <p>Ниже программа получает значение из порта, передаёт управление подпрограмме и выводит увеличенный результат.</p>
