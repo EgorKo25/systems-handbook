@@ -1,31 +1,41 @@
-<header><h1>Пакет, registry, подпись и offline-доставка</h1><p>Передаём проверенный результат, а не случайный повторный render с похожим именем.</p></header>
+<header><h1>Как передать готовый чарт</h1><p>Упакуем ledger-api в архив и проверим, что из него и из исходного каталога получаются одинаковые манифесты.</p></header>
 
-<h2>Package не является сборкой Go</h2>
-<pre><code>helm package ./chart --destination ./dist
-helm show chart ./dist/ledger-api-0.1.0.tgz
-helm show values ./dist/ledger-api-0.1.0.tgz
-helm template ledger ./dist/ledger-api-0.1.0.tgz \
-  --namespace helm-lab --kube-version 1.36.6</code></pre>
-<p>Package создаёт архив чарта, не компилирует приложение и не загружает контейнерные образы. Имя архива содержит name/version метаданных. --version меняет версию пакета, --app-version — информативное поле, но ни один не меняет автоматически тег образа шаблона. Каталог назначения вне чарта исключает самовложение архивов. Show читает пакет, template исполняет его. Тесты сравнивают разобранные объекты каталога и tgz, отдельно точные байты включённого файла.</p>
+<h2>Как проверить архив ledger-api</h2>
+<p>Оставайтесь в корне <a href="#helm-lab-working-copy">рабочей копии из главы 01</a>, где <code>chart/</code> — вложенный каталог. Команды выполняйте в одном Bash, где доступен <code>helm</code>. Отдельная копия с библиотекой из предыдущей главы остаётся в своём временном каталоге. Новый каталог пакета нужен, чтобы сохранить уже подготовленные архивы.</p>
+<pre><code>helm_dist=$(mktemp -d) &amp;&amp;
+  helm package ./chart --destination "$helm_dist"</code></pre>
+<p>После успешной упаковки в том же терминале выполните команды с архивом <code>ledger-api-0.1.0.tgz</code>.</p>
+<pre><code>helm show chart "$helm_dist/ledger-api-0.1.0.tgz"
+helm show values "$helm_dist/ledger-api-0.1.0.tgz"
+(set -C
+helm template ledger ./chart \
+  --namespace helm-lab --kube-version 1.36.6 &gt; "$helm_dist/from-directory.yaml" &amp;&amp;
+helm template ledger "$helm_dist/ledger-api-0.1.0.tgz" \
+  --namespace helm-lab --kube-version 1.36.6 &gt; "$helm_dist/from-archive.yaml" &amp;&amp;
+cmp "$helm_dist/from-directory.yaml" "$helm_dist/from-archive.yaml"
+)</code></pre>
+<p><code>set -C</code> сохраняет прежние YAML при повторе блока; для нового сравнения повторите упаковку в новый каталог. Для исходного чарта <code>cmp</code> завершится с кодом 0 без вывода. При различиях откройте оба файла и проверьте, какие параметры или шаблоны изменились.</p>
+<p><code>helm package</code> упаковывает описание релиза. Сборка Go-приложения и получение образа идут отдельными шагами. Имя архива содержит name/version метаданных. --version меняет версию пакета, --app-version — информативное поле, но ни один не меняет автоматически тег образа шаблона. Каталог назначения вне чарта исключает самовложение архивов. Show читает пакет, template исполняет его. Тесты сравнивают разобранные объекты каталога и tgz, отдельно точные байты включённого файла.</p>
 <h2>HTTP chart repository</h2>
 <p>HTTP-репозиторий чартов — каталог HTTP(S) с index.yaml и архивами по URL. Repo add сохраняет имя и адрес у клиента, repo update скачивает индекс, search repo ищет в локальном индексе. Старый индекс способен показывать устаревшую версию; обновление индекса не доказывает неизменность архива по URL. Такой сервер не является API Kubernetes или хранилищем истории релиза.</p>
 <pre><code>helm repo add handbook https://charts.example.invalid
 helm repo update handbook
 helm search repo handbook/ledger-api --versions
-helm pull handbook/ledger-api --version 0.1.0 --destination ./dist</code></pre>
-<p>Example.invalid — намеренный заполнитель адреса своего сервера, а не рабочее публичное хранилище. --version фиксирует пакет вместо выбора последней подходящей версии. Pull без --untar сохраняет архив, с --untar распаковывает, но доверия не добавляет. Для публикации своего HTTP-репозитория <code>helm repo index ./dist --url https://charts.example.invalid</code> создаёт индекс в личной промежуточной папке; его публикуют согласованно с архивами. --merge существующего индекса не восстанавливает неизвестные версии сервера.</p>
+mkdir -p "$helm_dist/from-repo"
+helm pull handbook/ledger-api --version 0.1.0 --destination "$helm_dist/from-repo"</code></pre>
+<p>Example.invalid — намеренный заполнитель адреса своего сервера, а не рабочее публичное хранилище. --version фиксирует пакет вместо выбора последней подходящей версии. Pull без --untar сохраняет архив, с --untar распаковывает, но доверия не добавляет. Для публикации своего HTTP-репозитория <code>helm repo index "$helm_dist" --url https://charts.example.invalid</code> создаёт индекс в личной промежуточной папке; его публикуют согласованно с архивами. --merge существующего индекса не восстанавливает неизвестные версии сервера.</p>
 <h2>OCI registry</h2>
-<p>OCI, Open Container Initiative, — семейство форматов и протоколов артефактов с адресацией по содержимому. Чарт в OCI-реестре хранится артефактом, но не становится запускаемым образом. Дайджест чарта и дайджест образа определяют разные манифесты. Тег удобен как версия, дайджест связывает запрос с содержимым; доверие к издателю остаётся отдельной задачей.</p>
+<p>В OCI-реестр можно отправить архив чарта и затем получить его командой <code>helm pull</code>. Для запуска приложения узлам по-прежнему нужен контейнерный образ. Дайджест чарта и дайджест образа определяют разные манифесты. Тег удобен как версия, дайджест связывает запрос с содержимым; доверие к издателю остаётся отдельной задачей.</p>
 <pre><code>printf &#x27;%s&#x27; &quot;$REGISTRY_PASSWORD&quot; | \
   helm registry login registry.example.invalid \
   --username &quot;$REGISTRY_USER&quot; --password-stdin
-helm push ./dist/ledger-api-0.1.0.tgz \
+helm push "$helm_dist/ledger-api-0.1.0.tgz" \
   oci://registry.example.invalid/handbook
 helm pull oci://registry.example.invalid/handbook/ledger-api \
   --version 0.1.0 --destination ./downloaded</code></pre>
 <p>В Helm 4 registry login принимает domain[:port], а не полный URL со схемой и путём. --password-stdin уменьшает утечку в argv, но файл учётных данных надо защищать. Push получает созданный tgz; конечные имя и версия берутся из метаданных, поэтому к адресу назначения не дописывают произвольный тег как у docker push. В 4.x чарт можно установить по OCI-дайджесту: его берут из ответа своего реестра или доверенного описания, а не из учебного фиктивного хеша. --plain-http и --insecure-skip-tls-verify ослабляют транспортную проверку и не исправляют неизвестную причину ошибки TLS.</p>
 <h2>Provenance и доверие</h2>
-<p>Provenance — сведения о происхождении и проверяемая связь подписи с содержимым. Классический .prov — подписанный OpenPGP-документ с метаданными и хешем архива. Проверка связывает подпись с выбранным ключом и байтами; право ключа выпускать боевой пакет задаёт политика доверия. Подпись не анализирует шаблоны, обработчики, полномочия и уязвимости образа.</p>
+<p>Рядом с архивом можно передать файл <code>.prov</code>: подписанный OpenPGP-документ с метаданными чарта и хешем архива. Проверка связывает подпись с выбранным ключом и байтами; право ключа выпускать боевой пакет задаёт политика доверия. Подпись не анализирует шаблоны, обработчики, полномочия и уязвимости образа.</p>
 <pre><code>helm package ./chart --destination ./signed \
   --sign --key &#x27;HANDBOOK SIGNER&#x27; --keyring ./private-signing-keyring.gpg
 helm verify ./signed/ledger-api-0.1.0.tgz --keyring ./trusted-public.gpg

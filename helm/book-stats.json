@@ -2,7 +2,7 @@
   {
     "id": "00-route",
     "title": "Helm: чарт и установка приложения",
-    "words": 590,
+    "words": 591,
     "part": "Начало",
     "number": "•"
   },
@@ -64,15 +64,15 @@
   },
   {
     "id": "09-helm-dependencies",
-    "title": "Зависимости и границы subchart",
-    "words": 610,
+    "title": "Как Helm добавляет зависимость к чарту",
+    "words": 790,
     "part": "Книга II · Состав и доставка пакета",
     "number": "9"
   },
   {
     "id": "10-helm-distribution",
-    "title": "Пакет, registry, подпись и offline-доставка",
-    "words": 973,
+    "title": "Как передать готовый чарт",
+    "words": 1083,
     "part": "Книга II · Состав и доставка пакета",
     "number": "10"
   },
