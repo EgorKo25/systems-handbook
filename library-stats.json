@@ -35,9 +35,9 @@
     "slug": "cache",
     "title": "Кэш и базы данных в памяти: от ускорения чтения до Redis и Memcached",
     "volume": "XI",
-    "words": 78961,
+    "words": 79117,
     "chapters": 40,
-    "terms": 228
+    "terms": 231
   },
   {
     "slug": "git",
