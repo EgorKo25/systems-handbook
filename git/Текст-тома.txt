@@ -2175,7 +2175,7 @@ sys.exit(int(state))
 git bisect start known-bad known-good
 git bisect run python3 ../check-state.py
 git bisect log
-git show --stat HEAD
+git show --stat refs/bisect/bad
 git bisect reset
 
 Порядок аргументов start: сначала известная плохая позиция, затем хорошая. Git выбирает проверяемые состояния, меняет рабочее дерево и запускает заданную программу. Код ноль помечает хороший результат, значения от одного до 127, кроме 125, — плохой. Код 125 пропускает состояние. Другие коды прерывают автоматическое исследование.

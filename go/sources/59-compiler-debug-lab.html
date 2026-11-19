@@ -11,13 +11,16 @@ cd "$LABROOT/projects/compilerlab" || exit 1
 <p>Ожидается 0; TestValues проверяет арифметику, closure, перестановку, безопасные границы, намеренную panic у Unchecked и ABI0 AddAsm. Программа выводит значения 42,9,4,22,55,49,5,9,2,8,9,3, нулевой байт, массив 42/0/0/0 и dev. Полная строка помогает обнаружить запуск другого файла. При отказе не переходите к диагностике как с проверенными входами.</p>
 <p>В projects/compilerlab есть go.mod, main.go, lab/lab.go, lab/lab_test.go, lab/add_amd64.s и cmd/gc/main.go. Модуль не имеет внешних зависимостей. Кэши, tmp, out и reports находятся внутри LABROOT; настройки GOENV/GOTOOLCHAIN/GOWORK/GOPROXY и telemetry ограничены средой текущей оболочки. Выходы опыта сохраняются после завершения.</p>
 <h2>Холодная компиляция в отдельном кэше и сохранённый WORK</h2>
-<p>Драйвер go build выбирает файлы, строит зависимости и вызывает compile/asm/pack/link. Флаг -x печатает команды, -work сохраняет рабочий каталог и печатает WORK=… в stderr. При тёплом кэше отдельной команды compile может не быть; для наблюдения выбираем ещё не существующий кэш work-observation01. Если он уже есть, строка проверки возвращает 1: прочитайте старый отчёт либо выберите новое имя 02, сохранив прежний опыт. Глобальный go clean не нужен.</p>
+<p>Флаг <code>-x</code> печатает команды сборки. Флаг <code>-work</code> сохраняет рабочий каталог и печатает строку <code>WORK=…</code> в stderr. При тёплом кэше команды <code>compile</code> может не быть. Для холодной сборки задайте номер <code>run</code>. При повторе смените его, например на <code>02</code>, чтобы получить отдельные кэш, журнал и исполняемый файл.</p>
 <pre><code>cd "$LABROOT/projects/compilerlab" || exit 1
-test ! -e "$LABROOT/cache/work-observation01" || exit 1
-GOCACHE="$LABROOT/cache/work-observation01" "$GO" build -work -x \
-  -o "$LABROOT/out/compiler-work" . 2&gt;"$LABROOT/reports/work01.log" || exit 1
-"$LABROOT/out/compiler-work" || exit 1</code></pre>
-<p>Ожидается 0. При ошибке полный stderr остаётся в work01.log; на его первой строке ищут WORK. В этом каталоге importcfg описывает packagefile-архивы, importcfg.link — входы linker, _pkg_.a — архив пакета, symabis — соглашения символов .s, go_asm.h — подготовленные константы/смещения для ассемблера. Для нашего AddAsm драйвер сначала делает asm -gensymabis, передаёт результат compile -symabis и -asmhdr, затем обычный asm создаёт объект, который попадает в пакет. Это связь производителей и потребителей файлов, а не список файлов, обязательных у любого пакета.</p>
+run=01
+cache="$LABROOT/cache/work-observation$run"
+log="$LABROOT/reports/work$run.log"
+bin="$LABROOT/out/compiler-work$run"
+test ! -e "$cache" &amp;&amp; test ! -e "$log" &amp;&amp; test ! -e "$bin" || exit 1
+GOCACHE="$cache" "$GO" build -work -x -o "$bin" . 2&gt;"$log" || exit 1
+"$bin" || exit 1</code></pre>
+<p>Сборка и запуск должны дать код 0. При ошибке сборки прочитайте журнал. Строка <code>WORK=…</code> указывает сохранённый каталог, если сборка успела его создать. Найдите команду <code>compile</code> с <code>-p example.org/compilerlab/lab</code>. Путь после <code>-o</code> ведёт к архиву <code>_pkg_.a</code> этого пакета. <code>compile -symabis</code> читает таблицу ABI символов, которую создал <code>asm -gensymabis</code>, а <code>compile -asmhdr</code> записывает <code>go_asm.h</code>. Обычный <code>asm</code> создаёт объектный файл, который <code>pack</code> добавляет в архив. В команде <code>link</code> путь после <code>-importcfg</code> ведёт к <code>importcfg.link</code>. Найдите там <code>packagefile example.org/compilerlab/lab=…</code> и сверьте путь к архиву.</p>
 <h2>Встраивание: сообщение, код, затем выделения</h2>
 <p>Ptr(v) возвращает &amp;v. Use(v), помеченная noinline, возвращает *Ptr(v). Самостоятельная Ptr должна сохранить v после возврата; после встраивания её тела в Use наружу выходит только число. Поэтому moved to heap для Ptr и RET в Use совместимы. NoInline у Use запрещает встроить саму Use, но не запрещает ей получить встроенное тело Ptr.</p>
 <pre><code>cd "$LABROOT/projects/compilerlab" || exit 1

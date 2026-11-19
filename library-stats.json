@@ -35,7 +35,7 @@
     "slug": "cache",
     "title": "Кэш и базы данных в памяти: от ускорения чтения до Redis и Memcached",
     "volume": "XI",
-    "words": 79117,
+    "words": 79130,
     "chapters": 40,
     "terms": 231
   },
@@ -51,7 +51,7 @@
     "slug": "go",
     "title": "Go: сборка, компилятор и исполняемая программа",
     "volume": "VII",
-    "words": 65206,
+    "words": 65203,
     "chapters": 24,
     "terms": 173
   },
@@ -59,7 +59,7 @@
     "slug": "jenkins",
     "title": "Jenkins: от установки и плагинов до устройства и эксплуатации Pipeline",
     "volume": "XIX",
-    "words": 30240,
+    "words": 30262,
     "chapters": 16,
     "terms": 88
   },
@@ -67,7 +67,7 @@
     "slug": "gitlab",
     "title": "GitLab: платформа, исполнение CI и эксплуатация",
     "volume": "XX",
-    "words": 24591,
+    "words": 24634,
     "chapters": 18,
     "terms": 167
   },
@@ -91,7 +91,7 @@
     "slug": "sonarqube",
     "title": "SonarQube: от установки до доказуемой проверки изменений",
     "volume": "XVI",
-    "words": 21114,
+    "words": 21194,
     "chapters": 15,
     "terms": 183
   },
@@ -187,7 +187,7 @@
     "slug": "ansible",
     "title": "Ansible: от SSH и одной задачи до управляемого выпуска Go",
     "volume": "XXII",
-    "words": 21043,
+    "words": 21112,
     "chapters": 24,
     "terms": 96
   },

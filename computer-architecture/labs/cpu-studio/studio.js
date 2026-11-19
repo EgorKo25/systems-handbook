@@ -31,6 +31,7 @@
   let lastValues = null;
   let lastWrites = new Set();
   let lastRegisterAdd = null;
+  let lastZeroBranch = null;
   let memoryStart = 0;
   let hasResidentByte = new Set();
   let running = false;
@@ -351,6 +352,16 @@
       name + ' ← ' + after + ' · PC ← ' + address(pcAfter);
   }
 
+  function renderZeroBranch() {
+    $('zero-branch-step').hidden = lastZeroBranch === null;
+    if (!lastZeroBranch) return;
+    const { pcBefore, target, zero, pcAfter } = lastZeroBranch;
+    $('zero-branch-command').textContent = 'PC = ' + address(pcBefore) + ' · JZ ' + address(target);
+    $('zero-branch-flag').textContent = 'Z = ' + Number(zero);
+    $('zero-branch-next').textContent =
+      address(pcAfter) + ' · ' + (zero ? 'переход взят' : 'переход не взят');
+  }
+
   function renderRegisters() {
     const regs = Array.from(machine.registers, (value, index) => ['R' + index, value, config.bits / 4]);
     regs.push(['PC', machine.pc, 4], ['SP', machine.sp, 4]);
@@ -463,6 +474,7 @@
     renderPC(follow);
     renderPCWord();
     renderRegisterAdd();
+    renderZeroBranch();
     renderRegisters();
     renderMemory(false);
     renderPorts();
@@ -479,6 +491,7 @@
     lastValues = null;
     lastWrites = new Set();
     lastRegisterAdd = null;
+    lastZeroBranch = null;
     stoppedAt = null;
     displayedOutputLength = -1;
     if (changedConfig) renderConfig();
@@ -529,9 +542,17 @@
     const { instruction, operands, bytes } = machine.inspectInstruction();
     const result = execute();
     lastRegisterAdd = null;
+    lastZeroBranch = null;
     if (result.kind !== 'step' || instruction?.microcode.length !== 1) return result;
 
     const [micro] = instruction.microcode;
+    if (instruction.name === 'JZ' && instruction.format === 'A' &&
+        micro.op === 'jump' && micro.addr === 'imm' && micro.when === 'z') {
+      lastZeroBranch = {
+        pcBefore: result.address, target: operands.imm, zero: lastValues.flags.z, pcAfter: result.pc,
+      };
+      return result;
+    }
     if (micro.op !== 'add' || micro.dst !== 'd' || micro.when !== undefined) return result;
 
     let sources;
@@ -567,7 +588,9 @@
     stoppedAt = null;
     running = true;
     lastRegisterAdd = null;
+    lastZeroBranch = null;
     renderRegisterAdd();
+    renderZeroBranch();
     const token = ++runToken;
     renderControls();
     renderMemory(false);

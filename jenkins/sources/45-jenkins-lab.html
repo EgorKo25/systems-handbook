@@ -38,9 +38,10 @@ git commit -m "Start the Go build laboratory"</code></pre>
 python3 tools/build.py --version 1.0.0
 ./dist/handbook-service -version
 go version -m dist/handbook-service
-go tool buildid dist/handbook-service</code></pre>
+sha256sum dist/handbook-service
+python3 -m json.tool dist/manifest.json</code></pre>
 <p><code>./...</code> — шаблон пакетов Go внутри текущего дерева, а не подстановка Bash. <code>-count=1</code> требует выполнить тесты вместо использования сохранённого успешного результата; кэш компиляции при этом остаётся допустимым. Тесты обработчиков используют <code>httptest</code> без общего слушающего порта. <code>--version</code> у Python-сценария задаёт метку выпуска, а <code>-version</code> у готовой службы печатает её и выходит. Порт приложения этим запуском не открывается.</p>
-<p><code>go version -m</code> показывает доступные сведения сборки внутри бинарного файла; <code>go tool buildid</code> печатает внутренний build ID. Они полезны для исследования, но не заменяют внешний SHA-256 и описание происхождения. Сборщик создаёт бинарный файл и <code>dist/manifest.json</code>, фиксируя цель, параметры, инструмент, коммит и признак изменённого рабочего дерева. В проекте нет внешних модулей, а сборщик запрещает сетевой прокси и автоматическую загрузку другого Go.</p>
+<p>Сверьте вывод <code>-version</code> с полем <code>version</code>, а первый столбец вывода <code>sha256sum</code> — с полем <code>sha256</code> в <code>dist/manifest.json</code>. <code>go version -m</code> показывает сведения сборки внутри бинарного файла. Если установлен <code>readelf</code>, команда <code>readelf -p .note.go.buildid dist/handbook-service</code> показывает внутренний Go build ID при наличии этой заметки в ELF. Манифест его не хранит. Сборщик создаёт бинарный файл и <code>dist/manifest.json</code>, фиксируя цель, параметры, инструмент, коммит и признак изменённого рабочего дерева. В проекте нет внешних модулей, а сборщик запрещает сетевой прокси и автоматическую загрузку другого Go.</p>
 
 <h2>Запуск контроллера и настройка владельца</h2>
 <pre><code>bash "$HANDBOOK_BOOK_ROOT/jenkins/labs/start-controller.sh" \

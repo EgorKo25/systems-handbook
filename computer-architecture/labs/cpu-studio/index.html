@@ -7,7 +7,7 @@
   <script src="../m32/appearance.js"></script>
   <link rel="stylesheet" href="studio.css">
   <script src="engine.js?v=1" defer></script>
-  <script src="studio.js?v=3" defer></script>
+  <script src="studio.js?v=4" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#workspace">К рабочей области</a>
@@ -104,6 +104,16 @@
               <div><strong>АЛУ</strong><span id="register-add-alu"></span></div>
               <span class="flow-arrow" aria-hidden="true">→</span>
               <div><strong>Запись в конце шага</strong><span id="register-add-write"></span></div>
+            </div>
+          </section>
+          <section class="panel-note" id="zero-branch-step" aria-labelledby="zero-branch-title" hidden>
+            <h3 id="zero-branch-title">Переход JZ за один шаг модели</h3>
+            <div class="flow-row">
+              <div><strong>Команда</strong><span id="zero-branch-command"></span></div>
+              <span class="flow-arrow" aria-hidden="true">→</span>
+              <div><strong>Флаг до шага</strong><span id="zero-branch-flag"></span></div>
+              <span class="flow-arrow" aria-hidden="true">→</span>
+              <div><strong>Следующий PC</strong><span id="zero-branch-next"></span></div>
             </div>
           </section>
           <p class="note panel-note" id="instruction-note">Стрелка <samp>▶</samp> отмечает строку листинга с адресом <code>PC</code>.</p>
