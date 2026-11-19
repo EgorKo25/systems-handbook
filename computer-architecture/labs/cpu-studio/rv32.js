@@ -82,12 +82,16 @@
     if (!canContinue || word === undefined || cpu.read32(machine.memory, machine.pc) !== word) return;
     const decoded = cpu.decode(word);
     const arithmetic = decoded.op === 'ADDI';
-    const snapshot = new URLSearchParams({
-      pc: cpu.hex(machine.pc), word: cpu.hex(word), x6: cpu.hex(machine.regs[6]),
-    });
+    const snapshot = new URLSearchParams({ pc: cpu.hex(machine.pc), word: cpu.hex(word) });
+    if (decoded.op === 'BNE') {
+      if (decoded.rs1 !== 7 || decoded.rs2 !== 0) return;
+      snapshot.set('x7', cpu.hex(machine.regs[7]));
+    } else {
+      snapshot.set('x6', cpu.hex(machine.regs[6]));
+    }
     if (arithmetic) {
       if (decoded.rs1 !== 6 || decoded.rd !== 6) return;
-    } else {
+    } else if (decoded.op !== 'BNE') {
       if (decoded.rs1 !== 5 || !(
         (decoded.op === 'LW' && decoded.rd === 6) || (decoded.op === 'SW' && decoded.rs2 === 6)
       )) return;

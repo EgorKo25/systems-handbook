@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Тракт данных ADDI, LW и SW · Конструктор процессора</title>
+  <title>Тракт данных ADDI, LW, SW и BNE · Конструктор процессора</title>
   <link rel="stylesheet" href="studio.css">
   <script src="../m32/appearance.js" defer></script>
   <script src="../logic/model.js?v=2" defer></script>
-  <script src="datapath.js?v=6" defer></script>
+  <script src="datapath.js?v=7" defer></script>
   <style>
     #datapath-settings { display:flex; flex-wrap:wrap; gap:12px; align-items:end }
     #datapath-settings label { display:grid; gap:4px }
@@ -30,18 +30,20 @@
   </header>
   <main>
     <header class="intro"><div>
-      <h1>Тракт данных ADDI, LW и SW</h1>
+      <h1>Тракт данных ADDI, LW, SW и BNE</h1>
       <p>В этой учебной схеме одна команда занимает четыре такта. АЛУ на третьем такте вычисляет сумму для <code>ADDI</code> либо адрес для <code>LW</code> и <code>SW</code>. На четвёртом такте <code>LW</code> читает слово из RAM в x6, а <code>SW</code> записывает в RAM четыре байта из x6.</p>
     </div></header>
+    <p>У <code>BNE x7,x0</code> третий такт сравнивает регистры и показывает два адреса. На четвёртом такте меняется PC. Значение x7 задаёт предшествующая команда программы или исходное поле опыта.</p>
     <section class="workbench" aria-label="Модель четырёх тактов">
       <p id="snapshot-addi-note" hidden>Снимок IDE перед ADDI содержит PC, машинное слово и исходное значение x6.</p>
       <p id="snapshot-note" hidden>Снимок IDE перед LW или SW содержит PC, x5, x6 и четыре байта по адресу обращения. Остальная память модели изначально заполнена нулями, кроме слова с инструкцией.</p>
+      <p id="snapshot-bne-note" hidden>Снимок IDE содержит адрес BNE, машинное слово и x7. Такты меняют состояние этого отдельного опыта.</p>
       <form id="datapath-settings">
-        <label>Команда <select id="operation"><option>ADDI</option><option>LW</option><option>SW</option></select></label>
-        <label>Начальное x6 <input id="initial" inputmode="numeric" value="42" required></label>
+        <label>Команда <select id="operation"><option>ADDI</option><option>LW</option><option>SW</option><option>BNE</option></select></label>
+        <label><span id="initial-label">Начальное x6</span> <input id="initial" inputmode="numeric" value="42" required></label>
         <label><span id="increment-label">Константа ADDI</span> <input id="increment" inputmode="text" value="1" required></label>
         <label id="memory-settings" hidden>Начальное слово в RAM <input id="memory-initial" inputmode="text" value="0x11223344"></label>
-        <fieldset>
+        <fieldset id="wiring-settings">
           <legend>Управление трактом</legend>
           <p>Без переключателей схема выполняет команду RV32I. После декодирования видно, что поступает на правый вход АЛУ и разрешена ли запись в регистр или память.</p>
           <label><input type="checkbox" id="alu-zero"> Подать x0 на правый вход АЛУ вместо константы</label>
@@ -55,12 +57,12 @@
         <p id="status" role="status"></p>
       </div>
       <p><code id="instruction-source"></code></p>
-      <p>PC <code id="pc"></code> · x6 <code id="register"></code> <span id="base-line" hidden>· x5 <code id="base-value"></code></span></p>
+      <p>PC <code id="pc"></code> · <span id="register-name">x6</span> <code id="register"></code> <span id="base-line" hidden>· x5 <code id="base-value"></code></span></p>
       <p id="memory-line" hidden>RAM по адресу <code id="memory-address"></code> · байты по возрастанию адресов <code id="memory-bytes"></code></p>
       <ol class="datapath-stages" aria-label="Тракт данных по порядку">
         <li id="stage-0"><strong>1. Память → регистр инструкции</strong><span>Слово по адресу <code id="instruction-address"></code> <code id="word"></code></span><span>Регистр инструкции <code id="ir"></code></span></li>
         <li id="stage-1"><strong>2. Декодер → входы АЛУ</strong><span><span id="operand-label">x6 и константа</span> <code id="operand"></code></span><span id="store-line" hidden>Данные из x6 <code id="store-word"></code></span><span>Правый вход <code id="alu-source"></code></span><span><code>RegWrite</code> <code id="register-enable"></code> · <code>MemWrite</code> <code id="memory-enable"></code></span></li>
-        <li id="stage-2"><strong>3. АЛУ → результат</strong><span><span id="alu-label">Младшие 32 бита суммы</span> <code id="alu"></code></span></li>
+        <li id="stage-2"><strong>3. АЛУ → результат</strong><span><span id="alu-label">Младшие 32 бита суммы</span> <code id="alu"></code></span><span id="branch-addresses" hidden>При неравенстве <code id="branch-target"></code><br>При равенстве <code id="branch-next"></code></span></li>
         <li id="stage-3"><strong id="commit-heading">4. Запись x6 и смена PC</strong><span id="effect">—</span></li>
       </ol>
       <details><summary>Упражнение с памятью</summary><p>Снимите все флажки управления. Выберите <code>SW</code>, задайте смещение 4 и x6 равным <code>0xA1B2C3D4</code>. Нажмите «Применить и начать заново». На третьем такте видны адрес <code>0x2004</code> и исходные байты <code>44 33 22 11</code>. На четвёртом байты станут <code>D4 C3 B2 A1</code>, начиная с младшего. Задайте смещение 2 и повторите. На четвёртом такте схема сообщит об исключении при обращении к невыравненному слову.</p></details>
