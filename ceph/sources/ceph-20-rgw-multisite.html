@@ -53,6 +53,23 @@ Cephadm разворачивает демоны с указанными realm/zo
 Headers, retransmission, мелкие объекты, конфликтующие записи,
 index work и доступный disk IO могут увеличить время.
 Это арифметика очереди, не benchmark multisite.</p>
+<figure id="ceph20-sync-queue" style="margin:1.25rem 0">
+<svg viewBox="0 0 360 225" role="img" aria-labelledby="ceph20-queue-title ceph20-queue-desc" style="display:block;width:100%;height:auto;max-width:36rem;color:var(--text)">
+<title id="ceph20-queue-title">Очередь растёт до 120 MiB и затем опустошается</title>
+<desc id="ceph20-queue-desc">Ось X — время в секундах, ось Y — объём очереди в MiB. От 0 до 60 секунд график поднимается от 0 до 120 MiB. После остановки новых записей он опускается до нуля к 75 секунде. Поступление до остановки 10 MiB/s, после неё 0; скорость переноса всё время 8 MiB/s.</desc>
+<g fill="none" stroke="currentColor" stroke-width="1.5">
+<path d="M50 27V170H340"/><path d="M50 42H340" opacity=".22" stroke-dasharray="4 4"/><path d="M270 42V170" opacity=".45" stroke-dasharray="4 4"/>
+</g>
+<path d="M50 170 L270 42 L325 170" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linejoin="round"/>
+<circle cx="270" cy="42" r="5" fill="var(--accent)"/><circle cx="325" cy="170" r="4" fill="var(--accent)"/>
+<g fill="currentColor" font-family="system-ui,sans-serif" font-size="14">
+<text x="5" y="18">Очередь, MiB</text><text x="7" y="46">120</text><text x="33" y="174">0</text>
+<text x="47" y="190">0</text><text x="262" y="190">60</text><text x="317" y="190">75</text><text x="275" y="215">Время, s</text>
+<text x="72" y="92">+2 MiB/s</text><text x="145" y="28">Остановка на 60 s</text><text x="275" y="105">−8</text><text x="275" y="121">MiB/s</text>
+</g>
+</svg>
+<figcaption>Начинаем с пустой очереди. До 60 s поступает 10 MiB/s и переносится 8 MiB/s: прирост 2 MiB/s. Затем поступление равно нулю, перенос продолжается с полезной скоростью 8 MiB/s: <code>120 / 8 = 15 s</code>. При таких постоянных скоростях очередь обнуляется на 75-й секунде. Дополнительные расходы и колебания делают реальное время другим; график не является измерением RGW.</figcaption>
+</figure>
 <h2>Переключить сайт — значит выбрать полномочия и историю</h2>
 <p>Перед promotion запасной стороны нужно установить, что старый master
 не продолжает конфликтующие изменения, какие period и metadata приняты

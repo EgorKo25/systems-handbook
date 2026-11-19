@@ -13,8 +13,106 @@
 <p>В графе нужно проверять отсутствие циклического ожидания. Если C ждёт готовности S, а S не готов до C, простое увеличение тайм-аута не создаст допустимого начала. Следует изменить договор, разделить стадии либо предоставить исходные данные другим способом. Это тот же принцип зависимостей, который появляется у замков и конвейеров, хотя объекты здесь другие.</p>
 <h2 id="os-boot-critical-path">Посчитать готовность по графу</h2>
 <p>Зададим длительности после передачи управления нашей пользовательской среде: F занимает 2 с; затем C — 1 с, D — 4 с; после обеих S — 3 с; W после S — 0,5 с. Если ресурсов достаточно для независимой подготовки C/D, F готова в 2, C в 3, D в 6, S в 9, W в 9,5 с. Критический путь F→D→S→W занимает 2+4+3+0,5=9,5 с. Сумма всех длительностей 10,5 с описывает последовательное исполнение без перекрытия; она не равна времени нашего параллельного запуска.</p>
+<p>Отсчёт начинается при передаче управления пользовательской среде. В точке соединения ветвей менеджер ждёт оба результата. Начало S приходится на более позднюю отметку готовности: max(3 с, 6 с) = 6 с. Если D отказывает на пятой секунде, у неё вообще нет отметки готовности. К тому моменту C уже готова, но S остаётся без данных. Запуска S и открытия W в этой попытке не будет.</p>
+<figure id="os-boot-ready-graph" data-plain-skip="true" style="margin:24px 0;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--paper);font:16px/1.45 var(--sans)">
+  <figcaption style="font-size:17px;font-weight:700;text-align:start">Когда внешний вход W откроется для запросов</figcaption>
+  <fieldset hidden style="margin:10px 0;padding:0;border:0;min-inline-size:0;text-align:start">
+    <legend style="font-weight:600">Исход подготовки D</legend>
+    <label style="display:flex;align-items:center;gap:8px;min-height:44px"><input type="radio" name="os29-boot-case" value="success" checked> D готовится успешно</label>
+    <label style="display:flex;align-items:center;gap:8px;min-height:44px"><input type="radio" name="os29-boot-case" value="failure"> D отказывает в 5 с</label>
+  </fieldset>
+  <svg viewBox="0 0 300 340" role="img" aria-labelledby="os29-graph-title os29-graph-description">
+    <style>
+      #os-boot-ready-graph svg {display:block;width:100%;max-width:370px;margin:6px auto;color:var(--text)}
+      #os-boot-ready-graph .os29-box {fill:var(--soft);stroke:var(--line)}
+      #os-boot-ready-graph text {fill:currentColor;font-size:15px;text-anchor:middle}
+      #os-boot-ready-graph .os29-edge {fill:none;stroke:var(--accent);stroke-width:2;marker-end:url(#os29-ready-arrow)}
+      #os-boot-ready-graph[data-failed="true"] .os29-stopped {stroke:currentColor;stroke-dasharray:4 4;marker-end:none}
+      #os-boot-ready-graph[data-failed="true"] .os29-blocked .os29-box {fill:var(--paper);stroke:currentColor;stroke-dasharray:4 4}
+    </style>
+    <title id="os29-graph-title">Зависимости запуска F, C, D, S и W</title>
+    <desc id="os29-graph-description">F даёт начало C и D. Для запуска S нужны оба результата. W открывается после готовности S.</desc>
+    <defs>
+      <marker id="os29-ready-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+        <path d="M 0 0 L 10 5 L 0 10 Z" fill="var(--accent)"/>
+      </marker>
+    </defs>
+    <path class="os29-edge" d="M150 54 V70 H76 V92"/>
+    <path class="os29-edge" d="M150 54 V70 H224 V92"/>
+    <path class="os29-edge" d="M76 140 V158 H106"/>
+    <path class="os29-edge os29-stopped" d="M224 140 V158 H194"/>
+    <path class="os29-edge os29-stopped" d="M150 177 V207"/>
+    <path class="os29-edge os29-stopped" d="M150 255 V283"/>
+    <g>
+      <rect class="os29-box" x="90" y="6" width="120" height="48" rx="8"/>
+      <text x="150" y="26" font-weight="700">F · файлы</text>
+      <text x="150" y="45" data-ready="F">Готова в 2 с</text>
+    </g>
+    <g>
+      <rect class="os29-box" x="8" y="92" width="136" height="48" rx="8"/>
+      <text x="76" y="112" font-weight="700">C · настройки</text>
+      <text x="76" y="131" data-ready="C">Готовы в 3 с</text>
+    </g>
+    <g class="os29-blocked">
+      <rect class="os29-box" x="156" y="92" width="136" height="48" rx="8"/>
+      <text x="224" y="112" font-weight="700">D · данные</text>
+      <text x="224" y="131" data-ready="D">Готовы в 6 с</text>
+    </g>
+    <g class="os29-blocked">
+      <rect class="os29-box" x="106" y="145" width="88" height="32" rx="8"/>
+      <text x="150" y="166" font-weight="700">C и D</text>
+    </g>
+    <g class="os29-blocked">
+      <rect class="os29-box" x="77" y="207" width="146" height="48" rx="8"/>
+      <text x="150" y="227" font-weight="700">S · сервис</text>
+      <text x="150" y="246" data-ready="S">Готов в 9 с</text>
+    </g>
+    <g class="os29-blocked">
+      <rect class="os29-box" x="77" y="283" width="146" height="48" rx="8"/>
+      <text x="150" y="303" font-weight="700">W · вход</text>
+      <text x="150" y="322" data-ready="W">Открыт в 9,5 с</text>
+    </g>
+  </svg>
+  <p role="status" style="margin:8px 0 0;font:inherit;text-align:start">Оба результата есть в 6 с. Тогда запускается S, а W открывается в 9,5 с.</p>
+</figure>
+<script>
+(() => {
+    const figure = document.getElementById('os-boot-ready-graph');
+    const controls = figure.querySelector('fieldset');
+    const time = value => value.toLocaleString('ru-RU') + ' с';
+
+    function render() {
+        const failed = controls.querySelector(':checked').value === 'failure';
+        const readyF = 2;
+        const readyC = readyF + 1;
+        const readyD = failed ? null : readyF + 4;
+        const startS = readyD === null ? null : Math.max(readyC, readyD);
+        const readyS = startS === null ? null : startS + 3;
+        const readyW = readyS === null ? null : readyS + 0.5;
+        const states = {
+            F: 'Готова в ' + time(readyF),
+            C: 'Готовы в ' + time(readyC),
+            D: failed ? 'Отказ в ' + time(5) : 'Готовы в ' + time(readyD),
+            S: failed ? 'Запуска нет' : 'Готов в ' + time(readyS),
+            W: failed ? 'Закрыт' : 'Открыт в ' + time(readyW)
+        };
+
+        figure.dataset.failed = String(failed);
+        for (const node of figure.querySelectorAll('[data-ready]')) {
+            node.textContent = states[node.dataset.ready];
+        }
+        figure.querySelector('[role="status"]').textContent = failed
+            ? 'В ' + time(5) + ' D сообщает об отказе. Результат C получен, но одного входа мало для S. W остаётся закрытым.'
+            : 'Оба результата есть в ' + time(startS) + '. Тогда запускается S, а W открывается в ' + time(readyW) + '.';
+    }
+
+    controls.addEventListener('change', render);
+    render();
+    controls.hidden = false;
+})();
+</script>
 <p>Ускорение C с 1 до 0,1 с не изменит момент W: всё ещё ждём D. Ускорение D с 4 до 1 с уменьшит готовность W до 6,5 с, если не появились другие ограничения. Если C и D одновременно читают один насыщенный накопитель, их прежние длительности при совместном запуске могут вырасти. Значит, граф зависимостей даёт порядок, а числа надо измерять при фактической конкуренции. Количество одновременно запущенных процессов не является само по себе мерой ускорения.</p>
-<p>При отказе D в 5 с S не имеет предусмотренного входа, даже если C успешно закончилась. Менеджер должен зарегистрировать отказ зависимости и удержать W от приёма нагрузки. Простое правило «запустить S после создания процесса D» проверило бы другое событие и допустило раннюю работу. В конкретном менеджере читают, что именно означает окончание запуска каждого типа службы: создание процесса, успешный exec, завершение подготовительного действия или специальное уведомление о готовности.</p>
+<p>Менеджер должен зарегистрировать отказ D и удержать W от приёма нагрузки. Простое правило «запустить S после создания процесса D» проверило бы другое событие и допустило раннюю работу. В конкретном менеджере читают, что именно означает окончание запуска каждого типа службы: создание процесса, успешный exec, завершение подготовительного действия или специальное уведомление о готовности.</p>
 <h2 id="os-boot-service-states">Состояния службы поверх состояний процесса</h2>
 <p>Удобная модель службы: <strong>остановлена</strong> → <strong>создаётся</strong> → <strong>инициализируется</strong> → <strong>готова</strong> → <strong>прекращает приём</strong> → <strong>завершает работу</strong> → <strong>остановлена</strong>. Ошибка возможна на каждом переходе. Состояние процесса «готов к CPU» не совпадает с состоянием службы «готова к запросам»: во втором названа прикладная функция, в первом — лишь возможность исполнять команды.</p>
 <p><strong>Тайм-аут</strong> — ограничение допустимого ожидания выбранного события. Нужно назвать событие начала и условие успеха. Если данных нет из-за неверного пути, увеличение времени инициализации не исправит путь. Если данные корректны, но их подготовка на данной нагрузке действительно требует больше времени, следует сопоставить границу ожидания с наблюдаемым временем и требованиями к запуску.</p>

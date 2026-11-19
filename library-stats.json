@@ -107,7 +107,7 @@
     "slug": "operating-systems",
     "title": "Операционные системы: от аппаратных механизмов до управляемой программы",
     "volume": "II",
-    "words": 82638,
+    "words": 82685,
     "chapters": 38,
     "terms": 270
   },
@@ -227,7 +227,7 @@
     "slug": "ceph",
     "title": "Ceph: от объекта и карты до восстановления",
     "volume": "XV",
-    "words": 32171,
+    "words": 32294,
     "chapters": 28,
     "terms": 46
   }
