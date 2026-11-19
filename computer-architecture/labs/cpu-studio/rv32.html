@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Первые пять команд RV32I · IDE</title>
+  <title>Примеры RV32I · IDE</title>
   <link rel="stylesheet" href="studio.css">
   <script src="../m32/appearance.js" defer></script>
   <script src="../logic/model.js" defer></script>
@@ -21,9 +21,11 @@
   </header>
   <main>
     <header class="intro"><div>
-      <h1>Первые пять команд RV32I</h1>
-      <p>Код начинается по адресу 0x1000. На входе по адресу 0x2000 лежит число 42. После ADDI посмотрите на x6, затем после SW сравните его с байтами по адресу 0x2200.</p>
-      <p>В этом режиме доступны LUI, LW, ADDI, SW и EBREAK. EBREAK останавливает учебный запуск.</p>
+      <h1>Примеры RV32I</h1>
+      <p id="store-note">Код начинается по адресу 0x1000. На входе по адресу 0x2000 лежит число 42. После ADDI посмотрите на x6, затем после SW сравните его с байтами по адресу 0x2200.</p>
+      <p>В этом режиме доступны LUI, LW, ADDI, SW, BNE и EBREAK. EBREAK останавливает учебный запуск.</p>
+      <nav aria-label="Примеры"><a href="rv32.html">Сложение и запись</a> · <a href="rv32.html#loop">Цикл BNE</a></nav>
+      <p id="loop" hidden>Цикл уменьшает x7 с 3 до 0. На BNE сравните x7 с нулём и посмотрите, куда переместится PC.</p>
     </div></header>
     <section class="workbench" aria-label="Редактор и выполнение">
       <div class="execution">
@@ -45,6 +47,8 @@
           <dt>PC</dt><dd id="pc"></dd>
           <dt>x5</dt><dd id="x5"></dd>
           <dt>x6</dt><dd id="x6"></dd>
+          <dt>x7</dt><dd id="x7"></dd>
+          <dt>Последняя команда BNE</dt><dd id="last-branch"></dd>
           <dt>Вход по адресу 0x2000</dt><dd id="input-word"></dd>
           <dt>Выход по адресу 0x2200</dt><dd id="output-word"></dd>
           <dt>Последняя запись в память</dt><dd id="last-store"></dd>

@@ -52,4 +52,35 @@ check('edited assembly produces different output and reports source errors', () 
   assert.throws(() => M.assemble('jal x0,0'), /вне учебного профиля/);
   assert.throws(() => M.assemble('addi x6,x 6,1'), /регистр/);
 });
+check('RV32I backward BNE loop and forward label', () => {
+  const source = ['addi x7,x0,3', 'loop: addi x7,x7,-1', 'bne x7,x0,loop', 'ebreak'].join('\n');
+  assert.equal(M.assemble(source)[2].word, 0xfe039ee3);
+  const state = M.create(source);
+  const branches = M.run(state).filter(event => event.branch);
+  assert.deepEqual(branches.map(event => [event.branch.taken, event.pcAfter]), [
+    [true, 0x1004], [true, 0x1004], [false, 0x100c],
+  ]);
+  assert.equal(state.regs[7], 0);
+  assert.equal(state.status, 'breakpoint');
+  assert.equal(state.retired, 7);
+  const forward = M.create('addi x7,x0,1\nbne x7,x0,end\naddi x7,x7,1\nend: ebreak');
+  M.run(forward);
+  assert.equal(forward.regs[7], 1);
+  assert.equal(forward.pc, 0x100c);
+  assert.throws(() => M.assemble('bne x0,x1,missing'), /Метка не найдена/);
+  assert.throws(() => M.assemble('loop: ebreak\nloop: ebreak'), /Метка уже задана/);
+  assert.throws(() => M.assemble('bne x0,x1,3'), /чётным/);
+});
+check('BNE only traps on a misaligned target when taken', () => {
+  const taken = M.create('addi x1,x0,1\nbne x1,x0,2\nebreak');
+  M.run(taken);
+  assert.equal(taken.trap.cause, 'instruction-address-misaligned');
+  assert.equal(taken.pc, 0x1004);
+  assert.equal(taken.retired, 1);
+  const untaken = M.create('bne x0,x0,2\nebreak');
+  M.run(untaken);
+  assert.equal(untaken.status, 'breakpoint');
+  assert.equal(untaken.pc, 0x1004);
+  assert.equal(untaken.retired, 1);
+});
 console.log(JSON.stringify({kind:'executed-pure-browser-engine-in-Node',passed:true,checks,randomCounterInputs:1000,adderPairs:256,not:'native CPU, cycle timing, UI or full RV32I validation'}));

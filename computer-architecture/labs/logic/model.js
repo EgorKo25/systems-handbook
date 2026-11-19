@@ -8,7 +8,7 @@
 }(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
   const SIZE=65536, ENTRY=0x1000, TRACE_LIMIT=1000;
-  const encoding = Object.freeze({ lui: 0x37, addi: 0x13, lw: 0x03, sw: 0x23, ebreak: 0x00100073 });
+  const encoding = Object.freeze({ lui: 0x37, addi: 0x13, lw: 0x03, sw: 0x23, branch: 0x63, bne: 1, ebreak: 0x00100073 });
   const wordAccess = 2;
   const SOURCE = [
     'lui x5, 0x2',
@@ -35,7 +35,7 @@
     return value;
   }
 
-  function assembleLine(line) {
+  function assembleLine(line, pc, labels) {
     const source = line.replace(/#.*/, '').trim();
     if (!source) return null;
     const [name, operands = ''] = /^([^\s]+)(?:\s+(.*))?$/.exec(source).slice(1);
@@ -50,6 +50,20 @@
       const imm = immediate(args[2], -2048, 2047) & 0xfff;
       return ((imm << 20) | (register(args[1]) << 15) | (register(args[0]) << 7) | encoding.addi) >>> 0;
     }
+    if (op === 'bne' && args.length === 3) {
+      const target = args[2];
+      if (/^[a-z_][a-z0-9_]*$/i.test(target) && !labels.has(target)) {
+        throw new Error('Метка не найдена: ' + target);
+      }
+      const offset = labels.has(target) ? labels.get(target) - pc : immediate(target, -4096, 4094);
+      if (offset < -4096 || offset > 4094 || offset % 2 !== 0) {
+        throw new Error('Смещение BNE должно быть чётным числом от −4096 до 4094');
+      }
+      const imm = offset & 0x1fff;
+      return (((imm >>> 12) << 31) | (((imm >>> 5) & 63) << 25) | (register(args[1]) << 20)
+        | (register(args[0]) << 15) | (encoding.bne << 12) | (((imm >>> 1) & 15) << 8)
+        | (((imm >>> 11) & 1) << 7) | encoding.branch) >>> 0;
+    }
     if ((op === 'lw' || op === 'sw') && args.length === 2) {
       const address = /^([^()]+)\(\s*(x[0-9]+)\s*\)$/i.exec(args[1]);
       if (!address) throw new Error('Ожидается смещение(регистр)');
@@ -63,19 +77,29 @@
   }
 
   function assemble(source) {
-    const listing = [];
-    for (const [index, text] of source.split(/\r?\n/).entries()) {
-      try {
-        const word = assembleLine(text);
-        if (word === null) continue;
-        const address = ENTRY + 4 * listing.length;
-        // Leave the input and output words intact.
-        if (address >= 0x2000) throw new Error('Код не помещается до входных данных');
-        listing.push({ address, word, text, line: index + 1 });
-      } catch (error) {
-        throw new Error('Строка ' + (index + 1) + '. ' + error.message);
+    const labels = new Map();
+    const instructions = [];
+    for (const [index, original] of source.split(/\r?\n/).entries()) {
+      let text = original.replace(/#.*/, '').trim();
+      const line = index + 1;
+      const address = ENTRY + 4 * instructions.length;
+      const label = /^([a-z_][a-z0-9_]*):/i.exec(text);
+      if (label) {
+        if (labels.has(label[1])) throw new Error('Строка ' + line + '. Метка уже задана');
+        labels.set(label[1], address);
+        text = text.slice(label[0].length).trim();
       }
+      if (!text) continue;
+      if (address >= 0x2000) throw new Error('Строка ' + line + '. Код не помещается до входных данных');
+      instructions.push({ address, text, line });
     }
+    const listing = instructions.map(row => {
+      try {
+        return { ...row, word: assembleLine(row.text, row.address, labels) };
+      } catch (error) {
+        throw new Error('Строка ' + row.line + '. ' + error.message);
+      }
+    });
     if (!listing.length) throw new Error('Введите хотя бы одну команду');
     return listing;
   }
@@ -104,6 +128,11 @@
     if(opcode===encoding.addi&&funct3===0)return {...result,op:'ADDI',format:'I',immediate:signed(word>>>20,12)};
     if(opcode===encoding.lw&&funct3===wordAccess)return {...result,op:'LW',format:'I',immediate:signed(word>>>20,12)};
     if(opcode===encoding.sw&&funct3===wordAccess){const imm=(word>>>25)*32+(word>>>7&31);return {...result,op:'SW',format:'S',immediate:signed(imm,12)};}
+    if (opcode === encoding.branch && funct3 === encoding.bne) {
+      const imm = ((word >>> 31) << 12) | (((word >>> 7) & 1) << 11)
+        | (((word >>> 25) & 63) << 5) | (((word >>> 8) & 15) << 1);
+      return { word, opcode, funct3, rs1, rs2, op: 'BNE', format: 'B', immediate: signed(imm, 13) };
+    }
     throw new Error('unsupported-instruction');
   }
   function record(s,event){s.trace.push(event);if(s.trace.length>TRACE_LIMIT){const count=s.trace.length-TRACE_LIMIT;s.trace.splice(0,count);s.traceDropped+=count;}}
@@ -118,18 +147,27 @@
     if(d.op==='EBREAK'){s.status='breakpoint';s.trap={cause:'breakpoint',pc:s.pc};event.kind='trap';event.cause='breakpoint';event.retiredAfter=s.retired;record(s,event);return event;}
     const source=s.regs[d.rs1],second=s.regs[d.rs2];event.operands={rs1:source,rs2:second};
     let value,address;
+    let nextPC = u32(s.pc + 4);
     try{
       if(d.op==='LUI')value=d.immediate;
       if(d.op==='ADDI')value=u32(source+d.immediate);
       if(d.op==='LW'){address=u32(source+d.immediate);value=read32(s.memory,address);event.read={address,bytes:Array.from(s.memory.slice(address,address+4)),value};}
-      if(d.op==='SW'){
+      if (d.op === 'BNE') {
+        const taken = source !== second;
+        const target = u32(s.pc + d.immediate);
+        event.branch = { taken, target };
+        if (taken) {
+          if (target % 4 !== 0) return stop(s, 'instruction-address-misaligned', event);
+          nextPC = target;
+        }
+      } else if(d.op==='SW'){
         address=u32(source+d.immediate);checkWord(address);
         const before=Array.from(s.memory.slice(address,address+4));write32(s.memory,address,second);
         event.memory.push({address,before,after:Array.from(s.memory.slice(address,address+4)),value:second});
       }else if(d.rd!==0){event.registers.push({register:d.rd,before:s.regs[d.rd],after:u32(value)});s.regs[d.rd]=u32(value);}
       else event.discardedX0=true;
     }catch(error){return stop(s,'data:'+error.message,event);}
-    s.regs[0]=0;s.pc=u32(s.pc+4);s.retired++;s.status='ready';event.pcAfter=s.pc;event.retiredAfter=s.retired;record(s,event);return event;
+    s.regs[0]=0;s.pc=nextPC;s.retired++;s.status='ready';event.pcAfter=s.pc;event.retiredAfter=s.retired;record(s,event);return event;
   }
   function run(s,limit=16){if(!Number.isInteger(limit)||limit<1||limit>1000)throw new Error('invalid-step-limit');const events=[];for(let i=0;i<limit&&s.status==='ready';i++)events.push(step(s));return events;}
   function snapshot(s){return {version:s.version,profile:s.profile,pc:s.pc,regs:Array.from(s.regs),memory:Array.from(s.memory),status:s.status,retired:s.retired,attempts:s.attempts,trap:s.trap,trace:s.trace,traceDropped:s.traceDropped};}

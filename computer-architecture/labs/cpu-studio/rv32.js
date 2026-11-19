@@ -4,10 +4,16 @@
   const cpu = window.M32Logic;
   const $ = id => document.getElementById(id);
   const editor = $('rv32-source');
-  const initial = cpu.SOURCE;
-  let assembled = initial;
+  const loopSource = [
+    'addi x7, x0, 3',
+    'loop: addi x7, x7, -1',
+    'bne x7, x0, loop',
+    'ebreak',
+  ].join('\n');
+  let assembled;
   let machine;
   let lastStore;
+  let lastBranch;
 
   const address = value => '0x' + cpu.hex(value, 4);
   const bytes = (memory, start) =>
@@ -18,6 +24,10 @@
     $('pc').textContent = address(machine.pc);
     $('x5').textContent = address(machine.regs[5]);
     $('x6').textContent = address(machine.regs[6]);
+    $('x7').textContent = address(machine.regs[7]);
+    $('last-branch').textContent = lastBranch
+      ? (lastBranch.branch.taken ? 'Переход' : 'Следующая команда') + ' · ' + address(lastBranch.pcAfter)
+      : 'BNE ещё не выполнена';
     $('input-word').textContent = bytes(machine.memory, 0x2000);
     $('output-word').textContent = bytes(machine.memory, 0x2200);
     $('last-store').textContent = lastStore
@@ -34,9 +44,15 @@
       [address(row.address), bytes(next.memory, row.address), row.text.trim()].join('  '));
     machine = next;
     lastStore = null;
+    lastBranch = null;
     assembled = source;
     $('rv32-listing').textContent = listing.join('\n');
     render();
+  }
+
+  function remember(event) {
+    lastStore = event.memory.at(-1) ?? lastStore;
+    if (event.branch && event.kind === 'instruction') lastBranch = event;
   }
 
   function report(event) {
@@ -49,10 +65,18 @@
     }
   }
 
-  editor.value = initial;
+  function loadExample() {
+    const loop = window.location.hash === '#loop';
+    editor.value = loop ? loopSource : cpu.SOURCE;
+    $('loop').hidden = !loop;
+    $('store-note').hidden = loop;
+    load(editor.value);
+    status('Пример из главы собран.');
+  }
+
   window.M32Appearance?.mount($('studio-theme'), $('warmth'));
-  load(initial);
-  status('Пример из главы собран.');
+  loadExample();
+  window.addEventListener('hashchange', loadExample);
 
   editor.addEventListener('input', () => {
     render();
@@ -68,13 +92,13 @@
   });
   $('step').addEventListener('click', () => {
     const event = cpu.step(machine);
-    lastStore = event.memory.at(-1) ?? lastStore;
+    remember(event);
     report(event);
     render();
   });
   $('run').addEventListener('click', () => {
     const events = cpu.run(machine, 1000);
-    for (const event of events) lastStore = event.memory.at(-1) ?? lastStore;
+    for (const event of events) remember(event);
     report(events.at(-1));
     if (machine.status === 'ready') status('Выполнено 1000 команд. Можно продолжить с текущего адреса.');
     render();
