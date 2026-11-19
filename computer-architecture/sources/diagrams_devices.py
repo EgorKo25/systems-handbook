@@ -204,7 +204,7 @@ DIAGRAMS = [{'id': 'ca-devices-trap',
   'volume': 'computer-architecture',
   'chapter': 'ca-23-interrupt-delivery',
   'anchor': 'ca-23-interrupt-delivery',
-  'insert_before': '<h2>Наблюдаемый опыт</h2>',
+  'insert_before': '<h2>От готового ответа к обработчику</h2>',
   'title': 'Готовый результат при маскированном IRQ',
   'intro': 'М32-I/O1: DMA, запись результата, pending IRQ, вход обработчика и возврат происходят отдельными событиями.',
   'assumptions': 'Учебная последовательность событий с параметрами из главы. Переходы не измеряют аппаратные такты. '
