@@ -65,6 +65,47 @@ start:
 <p><code>LDB</code> в обоих опытах читает только что записанный <code>FF</code>, поэтому в <code>R3</code> получается <code>0x000000FF</code>, то есть 255. В слове из <code>LD</code> байт <code>FF</code> занимает место, заданное адресом записи. По адресу <code>0x81</code> он заменяет <code>56</code>, а по адресу <code>0x80</code> заменяет <code>78</code>.</p>
 </details>
 </section>
+<section id="mov-swap-exercise">
+<h2>Как обменять значения регистров через MOV</h2>
+<p>В <code>R0</code> лежит 42, в <code>R1</code> — 7. Нужно получить 7 в <code>R0</code> и 42 в <code>R1</code>. Команда <code>MOV R0, R1</code> читает текущее значение <code>R1</code> и заменяет им содержимое <code>R0</code>. Что прочитает следующая команда, если её источником будет <code>R0</code>?</p>
+<h3>Два копирования подряд</h3>
+<pre><code id="mov-swap-direct-source">.org 0x1000
+    LDI R0, 42
+    LDI R1, 7
+    MOV R0, R1
+    MOV R1, R0
+    HALT</code></pre>
+<h3>Копирование с сохранением 42 в R2</h3>
+<pre><code id="mov-swap-temporary-source">.org 0x1000
+    LDI R0, 42
+    LDI R1, 7
+    MOV R2, R0
+    MOV R0, R1
+    MOV R1, R2
+    HALT</code></pre>
+<ol>
+<li><a id="mov-swap-ide" href="index.html">Откройте конструктор для опыта с MOV</a>. В штатной конфигурации установлены <strong>32 бита</strong>, <strong>16 регистров</strong> и <strong>65 536 байт</strong> памяти. Вставьте первый листинг в редактор и нажмите «Собрать».</li>
+<li>Перед каждым нажатием «Шаг» запишите команду и прогноз для <code>R0</code>, <code>R1</code> и <code>R2</code> после неё. Затем выполните шаг и сверьте одну строку со списком регистров. В списке 42 показано как <code>0000002A</code>, а 7 как <code>00000007</code>. После какого шага в регистрах уже нет 42?</li>
+<li>Вставьте второй листинг и снова нажмите «Собрать». Повторите прогнозы и шаги. Перед последним <code>MOV</code> найдите регистр, в котором осталось исходное 42.</li>
+</ol>
+<details>
+<summary>Сверить состояния регистров</summary>
+<p>После двух <code>LDI</code> в обоих запусках <code>R0 = 42</code>, <code>R1 = 7</code> и <code>R2 = 0</code>. В таблице значения записаны в десятичной форме.</p>
+<div class="table-wrap">
+<table id="mov-swap-results">
+<thead><tr><th scope="col">Листинг</th><th scope="col">После команды</th><th scope="col">R0</th><th scope="col">R1</th><th scope="col">R2</th></tr></thead>
+<tbody>
+<tr><td>Первый</td><th scope="row"><code>MOV R0, R1</code></th><td>7</td><td>7</td><td>0</td></tr>
+<tr><td>Первый</td><th scope="row"><code>MOV R1, R0</code></th><td>7</td><td>7</td><td>0</td></tr>
+<tr><td>Второй</td><th scope="row"><code>MOV R2, R0</code></th><td>42</td><td>7</td><td>42</td></tr>
+<tr><td>Второй</td><th scope="row"><code>MOV R0, R1</code></th><td>7</td><td>7</td><td>42</td></tr>
+<tr><td>Второй</td><th scope="row"><code>MOV R1, R2</code></th><td>7</td><td>42</td><td>42</td></tr>
+</tbody>
+</table>
+</div>
+<p>В первом листинге 42 исчезает из регистров при первом <code>MOV</code>. Второй <code>MOV</code> копирует уже записанную семёрку. Во втором листинге копия 42 остаётся в <code>R2</code>, пока <code>R0</code> получает 7. Последний <code>MOV</code> копирует сохранённое значение в <code>R1</code>. После <code>HALT</code> значения этих трёх регистров остаются прежними.</p>
+</details>
+</section>
 <section id="and-xor-exercise">
 <h2>Как проверить и переключить бит маской</h2>
 <p>Байты <code>0xA4</code> (<code>10100100</code>) и <code>0xAC</code> (<code>10101100</code>) различаются одним битом. Маска <code>0x08</code> (<code>00001000</code>) выделяет бит 3, если считать с нуля от младшего бита. <code>AND</code> обнуляет позиции, на которых в маске стоят нули, и оставляет выбранный бит на его месте. <code>XOR</code> переключает бит в позиции единицы маски и сохраняет остальные биты.</p>

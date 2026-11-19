@@ -6,6 +6,21 @@
 <p>HTML читатель, главы, схемы и справочник не требуют CDN, онлайн-шрифтов или fetch. Но чтение без сети не означает установленный Flyway. Для автономной лаборатории заранее сохраняют официальный полный каталог CLI и лицензии, PostgreSQL/OpenSSL runtime, Python, Go toolchain, module cache либо vendor-зависимости, файлы стенда и отдельно принятый backup. Архив с launcher без JRE/JDBC не принят реальным offline migrate.</p>
 <p>Секретные .private/, PGDATA, TLS keys, dumps и binaries исключены из public/экспорта. <code>labs/.gitignore</code> — подсказка Git, а не криптографическая защита и не универсальная политика exporter. Экспортёр должен явно сохранять публичные helper dotfiles и исключать частные каталоги. Проверяют actual file list, а не наличие слова offline в имени ZIP.</p>
 <p>Для Go перед отключением сети можно из cwd app выполнить <code>go mod vendor</code> после принятой загрузки, сохранить vendor приватно и собирать <code>go build -mod=vendor</code>. Текущий app-build использует <code>-mod=readonly</code> с module cache; это другой путь. Указанный GOPROXY=off опыт имеет смысл только с уже подготовленными зависимостями и локальным toolchain. Он не доказывает доступность DNS/сети: он специально их не использует.</p>
+<figure id="flyway-offline-go" style="margin:1em 0">
+<figcaption><strong>Две офлайн-сборки одного Go-проекта</strong></figcaption>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,15rem),1fr));gap:0.8rem">
+<section style="border:1px solid var(--line);border-radius:0.5rem;padding:0.75rem">
+<strong>Заполненный кэш модулей</strong>
+<p>Сохраните исходники, <code>go.mod</code>, <code>go.sum</code> и подготовленный <code>GOMODCACHE</code>. Команда <code>app-build</code> запускает <code>go build -mod=readonly</code>.</p>
+</section>
+<section style="border:1px solid var(--line);border-radius:0.5rem;padding:0.75rem">
+<strong>Подготовленный каталог vendor</strong>
+<p>Заранее выполните <code>go mod vendor</code>. Сохраните каталог <code>vendor/</code> вместе с исходниками и файлами модуля. Сборка запускается через <code>go build -mod=vendor</code>.</p>
+</section>
+</div>
+<p><strong>↓ Общий вход.</strong> Обе сборки используют заранее установленный Go с <code>GOTOOLCHAIN=local</code>.</p>
+<p><strong>↓ Проверка.</strong> Соберите выбранным способом с <code>GOPROXY=off</code> и проверьте результат. В режиме <code>-mod=readonly</code> при пустом кэше сборка с внешней зависимостью завершится ошибкой: <code>GOPROXY=off</code> запрещает её загрузку.</p>
+</figure>
 <h2>Обновить инструмент без подмены состояния</h2>
 <p>Новый Flyway распаковывают рядом, проверяют release notes, лицензии, help/поддержку PostgreSQL/JRE и исходный набор на восстановленной копии. После обновления history может получить новый формат/типы; возврат старой CLI не гарантируется. Изменение JDBC способно изменить TLS/SQL-разбор. Версия Go-приложения независима от версии инструмента миграций.</p>
 <p>Постоянный сервер продолжают <code>lab.py start</code> с существующей конфигурацией/маркером. Скрипт не создаёт заново schema и не re-seed данные при каждом старте. Останавливают только своё PGDATA через <code>lab.py stop</code>; исходные SQL и backup сохраняются. Если маркер/пароль потерян, не создают автоматически новую историю поверх старых таблиц: сначала восстанавливают управление по собственному плану.</p>

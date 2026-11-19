@@ -59,6 +59,30 @@ p99 пользовательского PUT. Если требуются подр
 средняя скорость окна равна 20 MiB/s. Сброс процесса между снимками
 ломает это вычитание; отрицательный delta не является отрицательной
 скоростью хранения. Согласуйте время и отметьте restart.</p>
+<figure style="margin:1.5em 0; padding:1em; border:1px solid var(--line, #999); border-radius:.5em">
+<figcaption><strong>Два окна счётчика.</strong> Точки во втором случае условные.</figcaption>
+<div style="margin-top:1em">
+<strong>Без перезапуска</strong>
+<svg viewBox="0 0 320 170" style="display:block; width:100%; height:auto; color:inherit" role="img" aria-label="Счётчик вырос от 100 до 340 MiB за 12 секунд. Средняя скорость 20 MiB в секунду.">
+<path d="M40 15 V130 H305" fill="none" stroke="currentColor" stroke-width="1.5"/>
+<path d="M65 109 L270 38" fill="none" stroke="var(--accent, currentColor)" stroke-width="3"/>
+<circle cx="65" cy="109" r="4" fill="currentColor"/><circle cx="270" cy="38" r="4" fill="currentColor"/>
+<g fill="currentColor" font-family="sans-serif" font-size="14"><text x="4" y="14">MiB</text><text x="46" y="99">100</text><text x="245" y="28">340</text><text x="57" y="150">0</text><text x="257" y="150">12 s</text><text x="115" y="167">время →</text></g>
+</svg>
+<p style="margin:.3em 0">(340 − 100) MiB / 12 s = <strong>20 MiB/s</strong>.</p>
+</div>
+<div style="margin-top:1.2em">
+<strong>Перезапуск между снимками</strong>
+<svg viewBox="0 0 320 170" style="display:block; width:100%; height:auto; color:inherit" role="img" aria-label="Условные точки до и после перезапуска относятся к разным поколениям счётчика. Линия между ними прервана.">
+<path d="M40 15 V130 H305" fill="none" stroke="currentColor" stroke-width="1.5"/>
+<path d="M65 80 L120 60 M198 116 L270 90" fill="none" stroke="var(--accent, currentColor)" stroke-width="3"/>
+<circle cx="65" cy="80" r="4" fill="currentColor"/><circle cx="270" cy="90" r="4" fill="currentColor"/>
+<path d="M160 24 V130" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 4"/>
+<g fill="currentColor" font-family="sans-serif" font-size="14"><text x="4" y="14">MiB</text><text x="45" y="68">до</text><text x="252" y="78">после</text><text x="113" y="17">перезапуск</text><text x="50" y="150">поколение 1</text><text x="185" y="150">поколение 2</text><text x="115" y="167">время →</text></g>
+</svg>
+<p style="margin:.3em 0">После перезапуска счётчик начинает новое накопление. Значения разных поколений нельзя вычитать для скорости всего окна.</p>
+</div>
+</figure>
 <p>Гистограмма хранит числа событий по диапазонам latency.
 P99 нельзя получить из одного среднего или среднего p99 трёх OSD.
 Для client end-to-end нужны сами наблюдения либо совместимые buckets
