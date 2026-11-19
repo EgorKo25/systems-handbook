@@ -8,7 +8,7 @@
 }(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
   const SIZE=65536, ENTRY=0x1000, TRACE_LIMIT=1000;
-  const encoding = Object.freeze({ lui: 0x37, addi: 0x13, lw: 0x03, sw: 0x23, branch: 0x63, bne: 1, ebreak: 0x00100073 });
+  const encoding = Object.freeze({ lui: 0x37, addi: 0x13, lw: 0x03, sw: 0x23, branch: 0x63, bne: 1, jal: 0x6f, jalr: 0x67, ebreak: 0x00100073 });
   const wordAccess = 2;
   const SOURCE = [
     'lui x5, 0x2',
@@ -35,6 +35,17 @@
     return value;
   }
 
+  function relativeOffset(operand, pc, labels, min, max) {
+    if (/^[a-z_][a-z0-9_]*$/i.test(operand) && !labels.has(operand)) {
+      throw new Error('Метка не найдена: ' + operand);
+    }
+    const offset = labels.has(operand) ? labels.get(operand) - pc : immediate(operand, min, max);
+    if (offset < min || offset > max || offset % 2 !== 0) {
+      throw new Error('Смещение должно быть чётным числом от ' + min + ' до ' + max);
+    }
+    return offset;
+  }
+
   function assembleLine(line, pc, labels) {
     const source = line.replace(/#.*/, '').trim();
     if (!source) return null;
@@ -51,25 +62,23 @@
       return ((imm << 20) | (register(args[1]) << 15) | (register(args[0]) << 7) | encoding.addi) >>> 0;
     }
     if (op === 'bne' && args.length === 3) {
-      const target = args[2];
-      if (/^[a-z_][a-z0-9_]*$/i.test(target) && !labels.has(target)) {
-        throw new Error('Метка не найдена: ' + target);
-      }
-      const offset = labels.has(target) ? labels.get(target) - pc : immediate(target, -4096, 4094);
-      if (offset < -4096 || offset > 4094 || offset % 2 !== 0) {
-        throw new Error('Смещение BNE должно быть чётным числом от −4096 до 4094');
-      }
-      const imm = offset & 0x1fff;
+      const imm = relativeOffset(args[2], pc, labels, -4096, 4094) & 0x1fff;
       return (((imm >>> 12) << 31) | (((imm >>> 5) & 63) << 25) | (register(args[1]) << 20)
         | (register(args[0]) << 15) | (encoding.bne << 12) | (((imm >>> 1) & 15) << 8)
         | (((imm >>> 11) & 1) << 7) | encoding.branch) >>> 0;
     }
-    if ((op === 'lw' || op === 'sw') && args.length === 2) {
+    if (op === 'jal' && args.length === 2) {
+      const imm = relativeOffset(args[1], pc, labels, -1048576, 1048574) & 0x1fffff;
+      return (((imm >>> 20) << 31) | (((imm >>> 1) & 1023) << 21) | (((imm >>> 11) & 1) << 20)
+        | (((imm >>> 12) & 255) << 12) | (register(args[0]) << 7) | encoding.jal) >>> 0;
+    }
+    if ((op === 'lw' || op === 'sw' || op === 'jalr') && args.length === 2) {
       const address = /^([^()]+)\(\s*(x[0-9]+)\s*\)$/i.exec(args[1]);
       if (!address) throw new Error('Ожидается смещение(регистр)');
       const imm = immediate(address[1].trim(), -2048, 2047) & 0xfff;
       const base = register(address[2]) << 15;
       const reg = register(args[0]);
+      if (op === 'jalr') return ((imm << 20) | base | (reg << 7) | encoding.jalr) >>> 0;
       if (op === 'lw') return ((imm << 20) | base | (wordAccess << 12) | (reg << 7) | encoding.lw) >>> 0;
       return (((imm >>> 5) << 25) | (reg << 20) | base | (wordAccess << 12) | ((imm & 31) << 7) | encoding.sw) >>> 0;
     }
@@ -128,6 +137,14 @@
     if(opcode===encoding.addi&&funct3===0)return {...result,op:'ADDI',format:'I',immediate:signed(word>>>20,12)};
     if(opcode===encoding.lw&&funct3===wordAccess)return {...result,op:'LW',format:'I',immediate:signed(word>>>20,12)};
     if(opcode===encoding.sw&&funct3===wordAccess){const imm=(word>>>25)*32+(word>>>7&31);return {...result,op:'SW',format:'S',immediate:signed(imm,12)};}
+    if (opcode === encoding.jal) {
+      const imm = ((word >>> 31) << 20) | (((word >>> 12) & 255) << 12)
+        | (((word >>> 20) & 1) << 11) | (((word >>> 21) & 1023) << 1);
+      return { word, opcode, rd, op: 'JAL', format: 'J', immediate: signed(imm, 21) };
+    }
+    if (opcode === encoding.jalr && funct3 === 0) {
+      return { ...result, op: 'JALR', format: 'I', immediate: signed(word >>> 20, 12) };
+    }
     if (opcode === encoding.branch && funct3 === encoding.bne) {
       const imm = ((word >>> 31) << 12) | (((word >>> 7) & 1) << 11)
         | (((word >>> 25) & 63) << 5) | (((word >>> 8) & 15) << 1);
@@ -152,6 +169,13 @@
       if(d.op==='LUI')value=d.immediate;
       if(d.op==='ADDI')value=u32(source+d.immediate);
       if(d.op==='LW'){address=u32(source+d.immediate);value=read32(s.memory,address);event.read={address,bytes:Array.from(s.memory.slice(address,address+4)),value};}
+      if (d.op === 'JAL' || d.op === 'JALR') {
+        const target = d.op === 'JAL' ? u32(s.pc + d.immediate) : u32((source + d.immediate) & ~1);
+        if (target % 4 !== 0) return stop(s, 'instruction-address-misaligned', event);
+        value = nextPC;
+        nextPC = target;
+        event.jump = { target, link: value, register: d.rd };
+      }
       if (d.op === 'BNE') {
         const taken = source !== second;
         const target = u32(s.pc + d.immediate);

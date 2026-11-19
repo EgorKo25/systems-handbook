@@ -49,7 +49,7 @@ check('edited assembly produces different output and reports source errors', () 
   assert.equal(M.read32(machine.memory, 0x2200), 44);
   assert.equal(machine.status, 'breakpoint');
   assert.throws(() => M.assemble('# comment\naddi x6,x6,2048'), /Строка 2/);
-  assert.throws(() => M.assemble('jal x0,0'), /вне учебного профиля/);
+  assert.throws(() => M.assemble('beq x0,x0,0'), /вне учебного профиля/);
   assert.throws(() => M.assemble('addi x6,x 6,1'), /регистр/);
 });
 check('RV32I backward BNE loop and forward label', () => {
@@ -82,5 +82,37 @@ check('BNE only traps on a misaligned target when taken', () => {
   assert.equal(untaken.status, 'breakpoint');
   assert.equal(untaken.pc, 0x1004);
   assert.equal(untaken.retired, 1);
+});
+check('nested JAL saves and restores outer return address', () => {
+  const source = [
+    'lui x2,0x4', 'jal x1,outer', 'ebreak',
+    'outer: addi x2,x2,-16', 'sw x1,12(x2)', 'jal x1,inner',
+    'lw x1,12(x2)', 'addi x2,x2,16', 'jalr x0,0(x1)',
+    'inner: addi x6,x6,1', 'jalr x0,0(x1)',
+  ].join('\n');
+  const state = M.create(source);
+  const jumps = M.run(state).filter(event => event.jump);
+  assert.deepEqual(jumps.map(event => [event.pcBefore, event.pcAfter]), [
+    [0x1004, 0x100c], [0x1014, 0x1024], [0x1028, 0x1018], [0x1020, 0x1008],
+  ]);
+  assert.equal(state.status, 'breakpoint');
+  assert.equal(state.regs[1], 0x1008);
+  assert.equal(state.regs[2], 0x4000);
+  assert.equal(state.regs[6], 1);
+  assert.equal(M.read32(state.memory, 0x3ffc), 0x1008);
+  assert.equal(M.assemble('jal x1,256')[0].word, 0x100000ef);
+  assert.equal(M.assemble('jalr x0,0(x1)')[0].word, 0x00008067);
+});
+check('JALR masks bit zero and reads the old base before writing the link', () => {
+  const state = M.create('lui x1,0x1\naddi x1,x1,13\njalr x1,0(x1)\nebreak');
+  M.run(state);
+  assert.equal(state.pc, 0x100c);
+  assert.equal(state.regs[1], 0x100c);
+  assert.equal(state.status, 'breakpoint');
+  const fault = M.create('jal x1,2');
+  M.step(fault);
+  assert.equal(fault.trap.cause, 'instruction-address-misaligned');
+  assert.equal(fault.regs[1], 0);
+  assert.equal(fault.retired, 0);
 });
 console.log(JSON.stringify({kind:'executed-pure-browser-engine-in-Node',passed:true,checks,randomCounterInputs:1000,adderPairs:256,not:'native CPU, cycle timing, UI or full RV32I validation'}));

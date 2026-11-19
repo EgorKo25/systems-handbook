@@ -10,10 +10,24 @@
     'bne x7, x0, loop',
     'ebreak',
   ].join('\n');
+  const callsSource = [
+    'lui x2, 0x4',
+    'jal x1, outer',
+    'ebreak',
+    'outer: addi x2, x2, -16',
+    'sw x1, 12(x2)',
+    'jal x1, inner',
+    'lw x1, 12(x2)',
+    'addi x2, x2, 16',
+    'jalr x0, 0(x1)',
+    'inner: addi x6, x6, 1',
+    'jalr x0, 0(x1)',
+  ].join('\n');
   let assembled;
   let machine;
   let lastStore;
   let lastBranch;
+  let lastJump;
 
   const address = value => '0x' + cpu.hex(value, 4);
   const bytes = (memory, start) =>
@@ -22,6 +36,11 @@
 
   function render() {
     $('pc').textContent = address(machine.pc);
+    $('x1').textContent = address(machine.regs[1]);
+    $('x2').textContent = address(machine.regs[2]);
+    $('last-jump').textContent = lastJump
+      ? lastJump.decoded.op + ' · ' + address(lastJump.pcBefore) + ' → ' + address(lastJump.pcAfter)
+      : 'Переходов с JAL или JALR ещё нет';
     $('x5').textContent = address(machine.regs[5]);
     $('x6').textContent = address(machine.regs[6]);
     $('x7').textContent = address(machine.regs[7]);
@@ -45,6 +64,7 @@
     machine = next;
     lastStore = null;
     lastBranch = null;
+    lastJump = null;
     assembled = source;
     $('rv32-listing').textContent = listing.join('\n');
     render();
@@ -53,6 +73,7 @@
   function remember(event) {
     lastStore = event.memory.at(-1) ?? lastStore;
     if (event.branch && event.kind === 'instruction') lastBranch = event;
+    if (event.jump && event.kind === 'instruction') lastJump = event;
   }
 
   function report(event) {
@@ -66,10 +87,12 @@
   }
 
   function loadExample() {
-    const loop = window.location.hash === '#loop';
-    editor.value = loop ? loopSource : cpu.SOURCE;
-    $('loop').hidden = !loop;
-    $('store-note').hidden = loop;
+    const example = window.location.hash;
+    const examples = { '#loop': loopSource, '#calls': callsSource };
+    editor.value = examples[example] ?? cpu.SOURCE;
+    $('loop').hidden = example !== '#loop';
+    $('calls').hidden = example !== '#calls';
+    $('store-note').hidden = Object.hasOwn(examples, example);
     load(editor.value);
     status('Пример из главы собран.');
   }

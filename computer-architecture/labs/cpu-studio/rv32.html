@@ -6,8 +6,8 @@
   <title>Примеры RV32I · IDE</title>
   <link rel="stylesheet" href="studio.css">
   <script src="../m32/appearance.js" defer></script>
-  <script src="../logic/model.js" defer></script>
-  <script src="rv32.js" defer></script>
+  <script src="../logic/model.js?v=2" defer></script>
+  <script src="rv32.js?v=2" defer></script>
 </head>
 <body>
   <header class="site-bar">
@@ -23,8 +23,9 @@
     <header class="intro"><div>
       <h1>Примеры RV32I</h1>
       <p id="store-note">Код начинается по адресу 0x1000. На входе по адресу 0x2000 лежит число 42. После ADDI посмотрите на x6, затем после SW сравните его с байтами по адресу 0x2200.</p>
-      <p>В этом режиме доступны LUI, LW, ADDI, SW, BNE и EBREAK. EBREAK останавливает учебный запуск.</p>
-      <nav aria-label="Примеры"><a href="rv32.html">Сложение и запись</a> · <a href="rv32.html#loop">Цикл BNE</a></nav>
+      <p>В этом режиме доступны LUI, LW, ADDI, SW, BNE, JAL, JALR и EBREAK. EBREAK останавливает учебный запуск.</p>
+      <nav aria-label="Примеры"><a href="rv32.html">Сложение и запись</a> · <a href="rv32.html#loop">Цикл BNE</a> · <a href="rv32.html#calls">Вложенный вызов</a></nav>
+      <p id="calls" hidden>Сравните x1 до и после вложенного JAL. Сохранённый адрес внешнего возврата лежит на стеке и загружается обратно перед последним JALR.</p>
       <p id="loop" hidden>Цикл уменьшает x7 с 3 до 0. На BNE сравните x7 с нулём и посмотрите, куда переместится PC.</p>
     </div></header>
     <section class="workbench" aria-label="Редактор и выполнение">
@@ -45,6 +46,9 @@
         <header class="panel-header"><h2>Состояние машины</h2></header>
         <dl>
           <dt>PC</dt><dd id="pc"></dd>
+          <dt>x1 · адрес возврата</dt><dd id="x1"></dd>
+          <dt>x2 · указатель стека</dt><dd id="x2"></dd>
+          <dt>Последний JAL или JALR</dt><dd id="last-jump"></dd>
           <dt>x5</dt><dd id="x5"></dd>
           <dt>x6</dt><dd id="x6"></dd>
           <dt>x7</dt><dd id="x7"></dd>
