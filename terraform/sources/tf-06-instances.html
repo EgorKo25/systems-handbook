@@ -38,6 +38,18 @@
   }
 }</code></pre>
 <p><code>iterator</code> переименовывает локальное имя для читаемости вложенных циклов. Нельзя сгенерировать через dynamic произвольный resource, module или мета-блок lifecycle: Terraform должен понимать некоторые части до вычисления обычных expressions. Если аргумент схемы ожидает list(object), передайте for-выражение как значение, а не придумывайте nested block. Разница argument/block определяется provider schema.</p>
+<figure id="tf-06-for-each-boundary">
+<figcaption>Два входных ключа, <code>api</code> и <code>worker</code>. Где появится второй адрес?</figcaption>
+<p><strong><code>for_each</code> на уровне ресурса</strong> — Terraform планирует два экземпляра. Каждый имеет свой адрес:</p>
+<pre><code>terraform_data.keyed["api"]
+terraform_data.keyed["worker"]</code></pre>
+<p><strong><code>for_each</code> внутри <code>dynamic "rule"</code></strong> — Terraform раскрывает два вложенных блока. Единственный адрес ресурса в этом примере — <code>example_firewall.lab</code>:</p>
+<pre><code>resource "example_firewall" "lab" {
+  rule { … } # из api
+  rule { … } # из worker
+}</code></pre>
+<p>Во второй ветке <code>example_firewall</code> — условный тип. Такая запись возможна, когда схема типа разрешает повторяющиеся блоки <code>rule</code>. Если убрать <code>worker</code>, сколько адресов и сколько вложенных блоков останется в каждой ветке? В первой останется один адрес и ни одного блока <code>rule</code>, во второй — тот же адрес и один блок <code>rule</code>.</p>
+</figure>
 <h2>Проверяем цену формы графа</h2>
 <p>Сначала выпишите ожидаемые адреса двух вариантов на бумаге, затем посмотрите <code>terraform state list</code> и JSON-план после удаления первого элемента. Измеряйте не только строку «N to change», но какие action адреса получили. Для реального облака каждый лишний replacement имеет длительность, квоты и потенциальную недоступность. В terraform_data это дешёвый опыт, в VM — изменение рабочего объекта. Миграцию count → for_each проводят через явные moved с известным соответствием старого индекса новому ключу, а не через надежду, что Terraform распознает одинаковое имя.</p>
 <p>Источники 01.11.2026: <a href="https://developer.hashicorp.com/terraform/language/meta-arguments/count">count</a>, <a href="https://developer.hashicorp.com/terraform/language/meta-arguments/for_each">for_each</a>, <a href="https://developer.hashicorp.com/terraform/language/expressions/dynamic-blocks">dynamic</a>. Схема firewall здесь не объявляется настоящим provider.</p>

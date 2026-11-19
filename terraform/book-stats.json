@@ -44,7 +44,7 @@
   {
     "id": "tf-06-instances",
     "title": "Count, for_each и dynamic: число объектов и форма блока",
-    "words": 645,
+    "words": 757,
     "part": "Книга I · Язык HCL",
     "number": "6"
   },

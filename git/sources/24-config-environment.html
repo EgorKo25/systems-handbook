@@ -28,9 +28,22 @@ git -c demo.value=command config --show-origin --show-scope --get demo.value</co
   git config --show-origin --show-scope --get-all demo.value</code></pre>
 <p>Команду выполняют из корня учебного репозитория. Теперь видны глобальное и локальное значения, а обычное чтение даёт <code>local</code>. Префикс окружения перед командой в Bash задаёт значения только этому запуску. Смена каталога меняет смысл относительного имени конфигурационного файла, поэтому в повторяемом автоматическом опыте лучше заранее вычислить абсолютный путь к учебному файлу.</p>
 <p>Следующая ступень — конфигурация через окружение. Пара <code>GIT_CONFIG_KEY_0</code> и <code>GIT_CONFIG_VALUE_0</code> описывает запись номер ноль, а <code>GIT_CONFIG_COUNT</code> задаёт количество таких пар. Нумерация должна быть непрерывной; пропущенная часть вызывает ошибку. В нашем опыте это значение перекрыло файлы, но явный <code>git -c demo.value=command</code> перекрыл уже его.</p>
-<pre><code>GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=demo.value \
+<pre><code>GIT_CONFIG_GLOBAL=../demo-global.cfg GIT_CONFIG_NOSYSTEM=1 \
+GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=demo.value \
 GIT_CONFIG_VALUE_0=environment git config --get demo.value</code></pre>
 <p>Предсказание результата — строка <code>environment</code>. Если вы увидели другое, проверьте оставшиеся переменные и дополнительные параметры оболочки. В книге этот порядок проверен реальным запуском. Он относится к передаваемым конфигурационным парам; из него нельзя вывести универсальное правило для всех переменных окружения, встречающихся в Git.</p>
+<figure id="git24-config-inputs" style="margin:1.2rem 0;padding:1rem;border:1px solid var(--line);border-radius:.75rem;background:var(--soft)">
+<div style="display:grid;gap:.55rem;grid-template-columns:repeat(auto-fit,minmax(min(100%,13rem),1fr))">
+<div><strong>Глобальный файл</strong><br><code>demo-global.cfg</code> → <code>global</code><br>Оба запуска</div>
+<div><strong>Локальный файл</strong><br><code>.git/config</code> → <code>local</code><br>Оба запуска</div>
+<div><strong>Окружение процесса</strong><br><code>GIT_CONFIG_VALUE_0</code> → <code>environment</code><br>Только второй запуск</div>
+</div>
+<div style="margin-block:.65rem;border-top:1px solid var(--line);padding-top:.55rem;display:grid;gap:.55rem;grid-template-columns:repeat(auto-fit,minmax(min(100%,13rem),1fr))">
+<div>↓ Первый запуск: <code>--get-all</code><br><samp>global, затем local</samp></div>
+<div>↓ Второй запуск: <code>--get</code><br><samp>environment</samp></div>
+</div>
+<figcaption>Git читает те же два файла в обоих запусках. Во втором он получает ещё одно значение с окружением процесса. Ни один запрос не записывает файл. Если повторить чтение без этой пары, одиночный запрос снова вернёт <code>local</code>.</figcaption>
+</figure>
 <h2>Почему имя из config может отличаться от автора коммита</h2>
 <p>Создание коммита имеет собственные входы: имя и адрес автора, имя и адрес создающего коммит, временные отметки. Переменные <code>GIT_AUTHOR_NAME</code> и родственные им напрямую участвуют в формировании этих полей. Они не обязаны менять результат запроса <code>git config --get user.name</code>. Поэтому исправление конфигурации может оставить неожиданную личность в новом объекте, если в окружении сохранилось явное значение.</p>
 <p>Проверяйте фактический объект через <code>git show --no-patch --format=fuller HEAD</code>. Формат <code>fuller</code> выводит обе роли и обе даты. Имя в этих полях является утверждением создавшего объект процесса. Установление личности через подпись и доверенный ключ разобрано отдельно. Согласованная учебная личность с адресом <code>example.invalid</code> позволяет проводить опыты без использования личной подписи.</p>

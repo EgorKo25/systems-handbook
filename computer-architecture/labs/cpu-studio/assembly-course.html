@@ -32,6 +32,38 @@ start:
 </figure>
 <p><a href="index.html">Открыть пример 42 → 43 в IDE</a>. Страница открывается с этой программой и памятью на адресе 0x80. Выполните «Шаг» три раза и сравните R0 с памятью. Четвёртым шагом сделайте запись, пятым остановите программу. Здесь используется учебный набор команд конструктора.</p>
 <details><summary>Проверка. Как изменится память, если заменить начальные 42 на 255?</summary><p>После новой сборки ADDI оставит в R0 число 256, то есть 0x00000100. После ST четыре байта по адресам 0x80–0x83 будут <code>00 01 00 00</code>.</p></details>
+<h3 id="byte-word-exercise">Один байт внутри слова</h3>
+<p>В первой программе <code>ST</code> записала четыре байта. Теперь изменим один байт и прочитаем изменённое слово целиком. В 32-битной конфигурации директива <code>.word 0x12345678</code> размещает байты <code>78 56 34 12</code> по адресам от <code>0x80</code> до <code>0x83</code>. Младший байт слова находится по адресу <code>0x80</code>.</p>
+<pre><code id="byte-word-exercise-source">.org 0x80
+data: .word 0x12345678
+.org 0x1000
+.entry start
+start:
+    LDI R1, data
+    LDI R2, -1
+    STB R2, [R1 + 1]
+    LDB R3, [R1 + 1]
+    LD R4, [R1]
+    HALT</code></pre>
+<p>После двух загрузок <code>R1 = 0x80</code>, а <code>R2 = 0xFFFFFFFF</code>. Команда <code>STB</code> берёт из <code>R2</code> младший байт <code>FF</code> и пишет его по адресу <code>R1 + 1</code>. Затем <code>LDB</code> читает один байт по тому же адресу и заполняет старшие 24 бита <code>R3</code> нулями. Команда <code>LD</code> читает все четыре байта с адреса <code>R1</code> и записывает слово в <code>R4</code>.</p>
+<ol>
+<li><a id="byte-word-exercise-ide" href="index.html">Откройте конструктор для опыта с байтом</a>. В исходной 32-битной конфигурации вставьте программу в редактор и нажмите «Собрать». В панели «Память» введите адрес <code>0x80</code>, нажмите «Перейти» и найдите начальные четыре байта.</li>
+<li>Предскажите, какие четыре байта будут лежать с <code>0x80</code> после <code>STB</code> и что покажут <code>R3</code> и <code>R4</code>. Нажмите «Шаг» трижды и проверьте память после <code>STB</code>. На четвёртом шаге проверьте <code>R3</code> после <code>LDB</code>, на пятом — <code>R4</code> после <code>LD</code>.</li>
+<li>Замените <code>[R1 + 1]</code> на <code>[R1 + 0]</code> в обеих байтовых командах. Снова нажмите «Собрать», чтобы восстановить исходное слово. Повторите прогноз и проверку с новым смещением.</li>
+</ol>
+<details>
+<summary>Сверить байты и регистры</summary>
+<div class="table-wrap">
+<table id="byte-word-exercise-results">
+<thead><tr><th scope="col">Смещение</th><th scope="col">Байты с 0x80 после STB</th><th scope="col">R3 после LDB</th><th scope="col">R4 после LD</th></tr></thead>
+<tbody>
+<tr><th scope="row"><code>+1</code></th><td><code>78 FF 34 12</code></td><td>255</td><td><code>0x1234FF78</code></td></tr>
+<tr><th scope="row"><code>+0</code></th><td><code>FF 56 34 12</code></td><td>255</td><td><code>0x123456FF</code></td></tr>
+</tbody>
+</table>
+</div>
+<p><code>LDB</code> в обоих опытах читает только что записанный <code>FF</code>, поэтому в <code>R3</code> получается <code>0x000000FF</code>, то есть 255. В слове из <code>LD</code> байт <code>FF</code> занимает место, заданное адресом записи. По адресу <code>0x81</code> он заменяет <code>56</code>, а по адресу <code>0x80</code> заменяет <code>78</code>.</p>
+</details>
 </section>
 <section id="rv32-control">
 <h2>Цикл, вызов и возврат в RV32I</h2>

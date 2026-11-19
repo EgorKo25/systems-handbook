@@ -43,7 +43,7 @@
     "slug": "git",
     "title": "Git: от байтов объектов до совместной работы и восстановления",
     "volume": "VI",
-    "words": 49330,
+    "words": 49395,
     "chapters": 27,
     "terms": 178
   },
@@ -179,7 +179,7 @@
     "slug": "terraform",
     "title": "Terraform: язык, граф исполнения и сохранённое состояние",
     "volume": "XXI",
-    "words": 20516,
+    "words": 20628,
     "chapters": 24,
     "terms": 89
   },
