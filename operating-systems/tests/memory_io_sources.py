@@ -29,6 +29,8 @@ def parse(path):
 
 def main():
  chapter_ids={p.stem for p in (ROOT/'sources').glob('*.html')};pages={};links=0;pending=[]
+ diagrams=runpy.run_path(str(ROOT/'sources/diagrams_memory_io.py'))['DIAGRAMS']
+ chapter_ids.update(item['id'] for item in diagrams)
  for name in CHAPTERS:
   d=parse(ROOT/'sources'/f'{name}.html');assert d.h1==1,name;pages[name]=d
   for href in d.links:
@@ -43,7 +45,7 @@ def main():
     assert target.is_file()or planned,(name,href)
     if u.fragment and target.is_file():assert u.fragment in parse(target).ids,(name,href)
    links+=1
- diagrams=runpy.run_path(str(ROOT/'sources/diagrams_memory_io.py'))['DIAGRAMS'];ids=set()
+ ids=set()
  for item in diagrams:
   assert item['id']not in ids;ids.add(item['id']);assert item['chapter']in CHAPTERS
   assert(ROOT/'sources'/f"{item['chapter']}.html").read_text().count(item['insert_before'])==1,item['id']

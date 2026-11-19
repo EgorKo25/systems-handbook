@@ -72,6 +72,7 @@ class SourceChecks(unittest.TestCase):
             def handle_endtag(self,tag):
                 if not self.stack or self.stack.pop()!=tag:raise AssertionError('Unbalanced closing tag '+tag)
         known={p.stem for p in (ROOT/'sources').glob('*.html')}
+        known.update(diagram['id'] for diagram in load('diagrams_execution').DIAGRAMS)
         for p in (ROOT/'sources').glob('*.html'):
             known.update(re.findall(r'\bid="([^\"]+)"',p.read_text()))
         for name in IDS:
