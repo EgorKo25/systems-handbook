@@ -435,14 +435,14 @@ a·d XOR b·c с умножением в этом поле. У любой пар
 для x и y. Слово «независимых» здесь имеет вычислимый смысл:
 обратная матрица пары существует.</p>
 <table>
-<thead><tr><th>Stripe</th><th>Входные байты</th><th>Shard 1</th><th>Shard 2</th><th>Shard 3</th><th>Shard 4</th></tr></thead>
+<thead><tr><th>Stripe</th><th>Входные байты</th><th>Shard 1: данные</th><th>Shard 2: данные</th><th>Shard 3: parity</th><th>Shard 4: parity</th></tr></thead>
 <tbody>
 <tr><td>0</td><td>4d 69 6e 49 4f</td><td>4d 69 6e</td><td>49 4f 00</td><td>04 26 6e</td><td>df f7 6e</td></tr>
 <tr><td>1</td><td>21 0a</td><td>21</td><td>0a</td><td>2b</td><td>35</td></tr>
 </tbody>
 </table>
 <p>В первой stripe ceil(5/2)=3 байта на shard: добавлен один
-нулевой байт. Во второй ceil(2/2)=1, padding нет.
+нулевой байт <code>00</code> в конце shard 2. Во второй ceil(2/2)=1, padding нет: <code>21</code> и <code>0a</code> — оба исходные байты, а <code>2b</code> и <code>35</code> — вычисленные.
 Потоки payload по номерам shards получаются такими:</p>
 <pre><code>shard 1: 4d 69 6e | 21
 shard 2: 49 4f 00 | 0a

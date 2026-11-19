@@ -338,12 +338,15 @@
   function renderRegisterAdd() {
     $('register-add-step').hidden = lastRegisterAdd === null;
     if (!lastRegisterAdd) return;
-    const { instruction, pcBefore, pcAfter, bytes, register, before, constant, after } = lastRegisterAdd;
+    const { instruction, pcBefore, pcAfter, bytes, register, inputs, constant, after } = lastRegisterAdd;
     const name = 'R' + register;
+    const registers = [name];
+    if (inputs.length === 2) registers.push(...inputs.map(input => 'R' + input.register));
     $('register-add-decode').textContent =
-      address(pcBefore) + ' · ' + bytes.map(byte => hex(byte, 2)).join(' ') + ' · ' + instruction + ' ' + name;
-    $('register-add-alu').textContent =
-      name + ' = ' + before + ' · константа ' + constant + ' · результат ' + after;
+      address(pcBefore) + ' · ' + bytes.map(byte => hex(byte, 2)).join(' ') + ' · ' + instruction + ' ' + registers.join(', ');
+    const inputValues = inputs.map(input => 'R' + input.register + ' = ' + input.value);
+    if (constant !== undefined) inputValues.push('константа ' + constant);
+    $('register-add-alu').textContent = inputValues.join(' · ') + ' · результат ' + after;
     $('register-add-write').textContent =
       name + ' ← ' + after + ' · PC ← ' + address(pcAfter);
   }
@@ -526,18 +529,27 @@
     const { instruction, operands, bytes } = machine.inspectInstruction();
     const result = execute();
     lastRegisterAdd = null;
-    if (result.kind !== 'step' || instruction?.format !== 'R' || instruction.microcode.length !== 1) return result;
+    if (result.kind !== 'step' || instruction?.microcode.length !== 1) return result;
 
     const [micro] = instruction.microcode;
-    if (micro.op === 'add' && micro.a === 'd' && micro.dst === 'd' &&
-        typeof micro.b === 'number' && micro.when === undefined) {
-      const register = operands.d;
-      lastRegisterAdd = {
-        instruction: result.instruction, pcBefore: result.address, pcAfter: result.pc,
-        bytes, register, before: lastValues.registers[register],
-        constant: micro.b, after: machine.registers[register],
-      };
+    if (micro.op !== 'add' || micro.dst !== 'd' || micro.when !== undefined) return result;
+
+    let sources;
+    let constant;
+    if (instruction.format === 'RRR' && micro.a === 's' && micro.b === 't') {
+      sources = [operands.s, operands.t];
+    } else if (instruction.format === 'R' && micro.a === 'd' && typeof micro.b === 'number') {
+      sources = [operands.d];
+      constant = micro.b;
+    } else {
+      return result;
     }
+    const register = operands.d;
+    const inputs = sources.map(source => ({ register: source, value: lastValues.registers[source] }));
+    lastRegisterAdd = {
+      instruction: result.instruction, pcBefore: result.address, pcAfter: result.pc,
+      bytes, register, inputs, constant, after: machine.registers[register],
+    };
     return result;
   }
 

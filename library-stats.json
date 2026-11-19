@@ -147,7 +147,7 @@
     "slug": "vault",
     "title": "HashiCorp Vault: от доверенной поставки до отзыва и восстановления",
     "volume": "XXIII",
-    "words": 16031,
+    "words": 16317,
     "chapters": 19,
     "terms": 59
   },
@@ -211,7 +211,7 @@
     "slug": "s3",
     "title": "S3: именованные байты, запросы и история объектов",
     "volume": "XIII",
-    "words": 23555,
+    "words": 23611,
     "chapters": 18,
     "terms": 62
   },
@@ -219,7 +219,7 @@
     "slug": "minio",
     "title": "MinIO: объект, кодированные части и восстановление",
     "volume": "XIV",
-    "words": 22309,
+    "words": 22331,
     "chapters": 13,
     "terms": 46
   },
@@ -227,7 +227,7 @@
     "slug": "ceph",
     "title": "Ceph: от объекта и карты до восстановления",
     "volume": "XV",
-    "words": 32013,
+    "words": 32060,
     "chapters": 28,
     "terms": 46
   }

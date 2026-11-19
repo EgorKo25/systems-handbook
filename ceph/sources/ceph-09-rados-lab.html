@@ -56,7 +56,7 @@ Stderr сохраняется отдельно. Cmp сравнивает вхо�
 source read-probe-01.bash
 </code></pre>
 <p>Probe сверяет manifests rados-01 и FSID, читает сохранённое имя,
-создаёт новый read-probe-01 и сравнивает байты.
+создаёт каталог <code>read-probe-01</code> и сравнивает <code>readback.bin</code> с исходным <code>rados-01/input/report.txt</code>. В исходнике упражнения это одна строка длиной 49 байтов с завершающим LF. Успешная сверка оставляет <code>READ-ACCEPTED.txt</code> с FSID и ключом, а <code>SHA256SUMS.read</code> можно проверить командой <code>sha256sum -c SHA256SUMS.read</code> из каталога <code>read-probe-01</code>. Если каталог уже существует, этот запуск остановится до чтения и сохранит предыдущие результаты.
 Он не повторяет create/put. Если первоначальный PUT завершился timeout,
 сначала нужно исследовать сохранённый объект и attempted receipt;
 автоматический повтор записи не является частью recovery.</p>
