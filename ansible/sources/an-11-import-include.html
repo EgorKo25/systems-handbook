@@ -9,6 +9,20 @@
   ansible.builtin.include_tasks: 'release_{{ counter_method }}.yml'
   when: counter_release_enabled</code></pre>
 <p>Условия import наследуются каждой вложенной задаче и вычисляются перед её исполнением. Условие include проверяет сам include в момент входа, а не автоматически каждую вложенную задачу. Это особенно видно, если внутри меняется переменная условия. Пусть перед import <code>ready</code> отсутствует, а первая подставленная задача делает <code>set_fact: ready=true</code>. С <code>when: ready is not defined</code> первая исполнится, а следующая импортированная задача уже будет пропущена. Для include тот же gate проверится один раз до входа; обе внутренние задачи смогут пройти. После import последовательность состоит уже из двух задач с одинаковым условием; после include сначала принимается решение о входе, затем исполняется тело. Замена одного keyword другим меняет наблюдаемый путь.</p>
+<figure style="margin:1.5em 0;padding:1em;border:1px solid currentColor;border-radius:.5em">
+<figcaption><strong>Одно условие, два момента проверки</strong></figcaption>
+<p>Для каждого маршрута начнём отдельно: <code>ready</code> отсутствует, условие <code>ready is not defined</code> истинно. У внутренних задач нет других условий.</p>
+<div style="display:flex;flex-wrap:wrap;gap:1em;align-items:stretch">
+<section aria-label="Маршрут import_tasks" style="flex:1 1 16em;min-width:0;border:1px solid currentColor;border-radius:.4em;padding:.8em">
+<strong>import_tasks</strong>
+<ol><li>Перед задачей 1 проверка истинна → задача выполняет <code>set_fact: ready=true</code>.</li><li>Перед задачей 2 условие проверяется снова. <code>ready</code> уже определён → задача пропущена.</li></ol>
+</section>
+<section aria-label="Маршрут include_tasks" style="flex:1 1 16em;min-width:0;border:1px solid currentColor;border-radius:.4em;padding:.8em">
+<strong>include_tasks</strong>
+<ol><li>Проверка входа истинна → включаем файл.</li><li>Задача 1 выполняет <code>set_fact: ready=true</code>.</li><li>Задача 2 выполняется: условие входа не проверяется повторно для неё.</li></ol>
+</section>
+</div>
+</figure>
 <h2>Повтор использования и циклы</h2>
 <p>На dynamic include можно повесить loop и вызвать один task-file для каждого элемента. На static import loop не поддерживается таким же образом: после раскрытия нет единичного runtime-вызова всего файла. Вложенные loops получают отдельные loop_var. Импорт playbook — <code>import_playbook</code> — связывает целые plays на верхнем уровне; <code>include_playbook</code> как общего динамического аналога нет. Роли также имеют <code>import_role</code> и <code>include_role</code> с разными моментами загрузки и видимостью параметров.</p>
 <h2>Tags — фильтр исполнения, не система зависимостей</h2>

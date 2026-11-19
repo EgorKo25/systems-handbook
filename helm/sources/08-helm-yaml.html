@@ -20,6 +20,17 @@ next: yes
     first line
     second line</code></pre>
 <p>Вертикальная черта сохраняет LF, сворачиваемый скаляр &gt; складывает многие переводы строк в пробелы. Суффикс - удаляет конечный LF, + сохраняет дополнительные LF, отсутствие суффикса оставляет один завершающий перевод. Токен из --set-file содержит исходный LF, пока вы явно его не удалили. Нельзя автоматически обрезать все секретные байты. Наш тест сравнивает декодированный Secret с read_bytes, поэтому ловит невидимое изменение окончания.</p>
+<figure id="helm-yaml-lf" style="margin:1em 0;text-align:start">
+<figcaption><strong>Две строки note после разбора YAML</strong></figcaption>
+<p>Оба документа содержат строки <code>first line</code> и <code>second line</code>. Обозначение <code>␊</code> показывает один байт LF (<code>0A</code>).</p>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,15rem),1fr));gap:0.8rem">
+<div style="border:1px solid var(--line);border-radius:0.5rem;padding:0.8rem"><strong>note: |</strong><pre><code>first line␊
+second line␊</code></pre><p>Между строками и в конце по одному LF. Всего 23 байта.</p></div>
+<div style="border:1px solid var(--line);border-radius:0.5rem;padding:0.8rem"><strong>note: |-</strong><pre><code>first line␊
+second line</code></pre><p>LF между строками сохранён. Конечного LF нет. Всего 22 байта.</p></div>
+</div>
+<p>Разница результатов — один завершающий байт <code>0A</code>.</p>
+</figure>
 <h2>Документы и дубликаты</h2>
 <p>Разделитель --- начинает документ. Вывод Helm содержит комментарии Source, возможные пустые документы и обработчики. Тесты выбирают объект по kind/name и пропускают null, а не полагаются на порядковый номер. Дубликаты ключей опасны: ряд анализаторов оставляет последний без ошибки. Для серьёзного конвейера используйте анализатор с отказом на дубликатах; затем проверяйте уникальность group/version/kind/namespace/name. Постобработчик способен изменить уже проверенный вывод — проверки утверждений должны применяться и к окончательным байтам.</p>
 <h2>Байтовое и структурное равенство</h2>
