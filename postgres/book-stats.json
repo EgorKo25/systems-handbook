@@ -55,7 +55,7 @@
     {
       "id": "10-buffers",
       "title": "Память, запись и контрольные точки",
-      "words": 3562
+      "words": 3655
     },
     {
       "id": "11-wal",
@@ -100,17 +100,17 @@
     {
       "id": "19-operations",
       "title": "Конфигурация и эксплуатация приложения",
-      "words": 2450
+      "words": 2531
     },
     {
       "id": "20-laboratory",
       "title": "Автономная лаборатория PostgreSQL",
-      "words": 1364
+      "words": 1434
     },
     {
       "id": "21-replication",
       "title": "Репликация и ветви истории",
-      "words": 1444
+      "words": 1565
     },
     {
       "id": "22-index-internals",
@@ -133,7 +133,7 @@
       "words": 8937
     }
   ],
-  "words": 78462,
+  "words": 78827,
   "terms": 441,
   "external_assets": 0
 }

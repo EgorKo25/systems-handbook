@@ -98,15 +98,22 @@ export DATA_IMAGE TOOLS_IMAGE
 <p>Ожидаем rootful endpoint и UID приложения 10001:10001. Если файлы с ID отсутствуют, сначала закончите подготовку 06; пустая переменная не выбирает автоматически «подходящий образ». Наличие rootless в SecurityOptions означает, что выбран другой сервер. Основной рецепт не требует выключать rootless или переносить его data-root; исправляется выбор context. Поле Driver описывает хранилище изменяемых файлов, а local у volume ниже — другой драйвер, обслуживающий том.</p>
 <p>Для новых записей текущей попытки создадим уникальный каталог в домашней учебной папке VM. Это не data-root Docker и не папка на рабочей флэшке. Повтор создаёт новый журнал рядом со старым:</p>
 <pre data-shell="bash"><code>DATA_ROOT="$HOME/handbook-labs/docker-storage"
-install -d -m 0700 "$DATA_ROOT"
-DATA_RECORD="$(mktemp -d "$DATA_ROOT/session.XXXXXX")"
-DATA_TOKEN="$(basename "$DATA_RECORD")"
-export DATA_RECORD DATA_TOKEN
-printf '%s\n' "$DATA_IMAGE" &gt; "$DATA_RECORD/image.id"
-printf '%s\n' "$TOOLS_IMAGE" &gt; "$DATA_RECORD/tools.id"
-printf '%s\n' "$DATA_TOKEN" &gt; "$DATA_RECORD/setup-token.txt"
-printf '%s\n' "$DATA_RECORD"</code></pre>
-<p>Сохраните напечатанный путь. В новом терминале присвойте DATA_RECORD этот <em>уже существующий</em> путь, затем восстановите остальные переменные. Не создавайте новый журнал, чтобы обойти ошибку принадлежности прежнего тома:</p>
+if [ -n "${DATA_IMAGE:-}" ] &amp;&amp; [ -n "${TOOLS_IMAGE:-}" ] &amp;&amp;
+   install -d -m 0700 "$DATA_ROOT" &amp;&amp;
+   DATA_RECORD="$(mktemp -d "$DATA_ROOT/session.XXXXXX")" &amp;&amp;
+   [ -n "$DATA_RECORD" ] &amp;&amp;
+   DATA_TOKEN="${DATA_RECORD##*/}" &amp;&amp;
+   printf '%s\n' "$DATA_IMAGE" &gt; "$DATA_RECORD/image.id" &amp;&amp;
+   printf '%s\n' "$TOOLS_IMAGE" &gt; "$DATA_RECORD/tools.id" &amp;&amp;
+   printf '%s\n' "$DATA_TOKEN" &gt; "$DATA_RECORD/setup-token.txt"; then
+  export DATA_RECORD DATA_TOKEN
+  printf '%s\n' "$DATA_RECORD"
+else
+  unset DATA_RECORD DATA_TOKEN
+  printf '%s\n' 'Журнал не подготовлен; остановитесь и выясните причину.' &gt;&amp;2
+  false
+fi</code></pre>
+<p>При ошибке подготовки переменные журнала сбрасываются, а частично созданный каталог остаётся для проверки. Остановитесь: последующие блоки требуют полного журнала. При успехе переменные доступны в этой же оболочке. Сохраните напечатанный путь. В новом терминале присвойте DATA_RECORD этот <em>уже существующий</em> путь, затем восстановите остальные переменные. Не создавайте новый журнал, чтобы обойти ошибку принадлежности прежнего тома:</p>
 <pre data-shell="bash"><code>DATA_IMAGE="$(cat "$DATA_RECORD/image.id")"
 TOOLS_IMAGE="$(cat "$DATA_RECORD/tools.id")"
 DATA_TOKEN="$(cat "$DATA_RECORD/setup-token.txt")"

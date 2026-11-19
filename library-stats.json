@@ -27,7 +27,7 @@
     "slug": "postgres",
     "title": "PostgreSQL: от SQL до эксплуатации и высокой доступности",
     "volume": "IX",
-    "words": 78462,
+    "words": 78827,
     "chapters": 25,
     "terms": 441
   },
@@ -83,7 +83,7 @@
     "slug": "docker",
     "title": "Docker: от образа до работающей и восстанавливаемой системы",
     "volume": "VIII",
-    "words": 60000,
+    "words": 60180,
     "chapters": 18,
     "terms": 153
   },
