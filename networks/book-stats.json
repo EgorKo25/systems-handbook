@@ -1,6 +1,6 @@
 {
   "date": "2026-11-01",
-  "words": 94080,
+  "words": 94148,
   "chapters": [
     {
       "id": "01-foundations",
@@ -49,8 +49,8 @@
     },
     {
       "id": "08-beyond-lan",
-      "title": "Карта взаимодействия протоколов",
-      "words": 2110
+      "title": "Как меняется пакет между клиентом и сервером",
+      "words": 2064
     },
     {
       "id": "12-icmp-ipv6",
@@ -70,7 +70,7 @@
     {
       "id": "15-tls",
       "title": "TLS: установить защищённый канал",
-      "words": 3329
+      "words": 3399
     },
     {
       "id": "17-switching",
@@ -120,10 +120,10 @@
     {
       "id": "12-glossary",
       "title": "Словарь сетевых терминов",
-      "words": 10210
+      "words": 10254
     }
   ],
-  "terms": 378,
+  "terms": 379,
   "external_assets": 0,
   "edition": "physical-link-wireless-depth"
 }
