@@ -7,12 +7,15 @@
   <link rel="stylesheet" href="studio.css">
   <script src="../m32/appearance.js" defer></script>
   <script src="../logic/model.js?v=2" defer></script>
-  <script src="datapath.js?v=2" defer></script>
+  <script src="datapath.js?v=3" defer></script>
   <style>
     #datapath-settings { display:flex; flex-wrap:wrap; gap:12px; align-items:end }
     #datapath-settings label { display:grid; gap:4px }
     #datapath-settings label[hidden], .datapath-stages [hidden] { display:none }
     #datapath-settings input { max-width:100%; width:11rem }
+    #datapath-settings fieldset { flex-basis:100%; min-width:0; margin:0; border:1px solid var(--line); border-radius:8px }
+    #datapath-settings fieldset label { display:flex; align-items:baseline; gap:8px }
+    #datapath-settings fieldset input { width:auto }
     .datapath-stages { display:grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,14rem),1fr)); padding:0; gap:10px; list-style:none }
     .datapath-stages li { padding:12px; border:1px solid var(--line); border-radius:8px; overflow-wrap:anywhere }
     .datapath-stages li[aria-current] { outline:2px solid currentColor; outline-offset:-2px }
@@ -36,6 +39,13 @@
         <label>Начальное x6 <input id="initial" inputmode="numeric" value="42" required></label>
         <label><span id="increment-label">Константа ADDI</span> <input id="increment" inputmode="text" value="1" required></label>
         <label id="memory-settings" hidden>Начальное слово в RAM <input id="memory-initial" inputmode="text" value="0x11223344"></label>
+        <fieldset>
+          <legend>Управление трактом</legend>
+          <p>Без переключателей схема выполняет команду RV32I. После декодирования видно, что поступает на правый вход АЛУ и разрешена ли запись в регистр или память.</p>
+          <label><input type="checkbox" id="alu-zero"> Подать x0 на правый вход АЛУ вместо константы</label>
+          <label><input type="checkbox" id="stop-reg-write"> Отключить запись в x6 (RegWrite)</label>
+          <label><input type="checkbox" id="stop-mem-write"> Отключить запись в RAM (MemWrite)</label>
+        </fieldset>
         <button type="submit">Применить и начать заново</button>
       </form>
       <div class="execution">
@@ -47,12 +57,16 @@
       <p id="memory-line" hidden>RAM по адресу <code id="memory-address"></code> · байты по возрастанию адресов <code id="memory-bytes"></code></p>
       <ol class="datapath-stages" aria-label="Тракт данных по порядку">
         <li id="stage-0"><strong>1. Память → регистр инструкции</strong><span>Слово по 0x1000 <code id="word"></code></span><span>Регистр инструкции <code id="ir"></code></span></li>
-        <li id="stage-1"><strong>2. Декодер → входы АЛУ</strong><span><span id="operand-label">x6 и константа</span> <code id="operand"></code></span><span id="store-line" hidden>Данные из x6 <code id="store-word"></code></span></li>
+        <li id="stage-1"><strong>2. Декодер → входы АЛУ</strong><span><span id="operand-label">x6 и константа</span> <code id="operand"></code></span><span id="store-line" hidden>Данные из x6 <code id="store-word"></code></span><span>Правый вход <code id="alu-source"></code></span><span><code>RegWrite</code> <code id="register-enable"></code> · <code>MemWrite</code> <code id="memory-enable"></code></span></li>
         <li id="stage-2"><strong>3. АЛУ → результат</strong><span><span id="alu-label">Младшие 32 бита суммы</span> <code id="alu"></code></span></li>
         <li id="stage-3"><strong id="commit-heading">4. Запись x6 и смена PC</strong><span id="effect">—</span></li>
       </ol>
-      <details><summary>Упражнение с памятью</summary><p>Выберите <code>SW</code>, задайте смещение 4 и x6 равным <code>0xA1B2C3D4</code>. Нажмите «Применить и начать заново». На третьем такте видны адрес <code>0x2004</code> и исходные байты <code>44 33 22 11</code>. На четвёртом байты станут <code>D4 C3 B2 A1</code>, начиная с младшего. Задайте смещение 2 и повторите. На четвёртом такте схема сообщит об исключении при обращении к невыравненному слову.</p></details>
-      <details><summary>Упражнение с переполнением</summary><p>Выберите <code>ADDI</code>. Задайте x6 равным 4294967295, константу 1, примените настройки и выполните три такта. АЛУ уже выдаёт ноль, а x6 ещё хранит <code>0xFFFFFFFF</code>. На четвёртом такте x6 получит ноль.</p></details>
+      <details><summary>Упражнение с памятью</summary><p>Снимите все флажки управления. Выберите <code>SW</code>, задайте смещение 4 и x6 равным <code>0xA1B2C3D4</code>. Нажмите «Применить и начать заново». На третьем такте видны адрес <code>0x2004</code> и исходные байты <code>44 33 22 11</code>. На четвёртом байты станут <code>D4 C3 B2 A1</code>, начиная с младшего. Задайте смещение 2 и повторите. На четвёртом такте схема сообщит об исключении при обращении к невыравненному слову.</p></details>
+      <details><summary>Упражнение с управляющими сигналами</summary>
+        <p>Снимите все флажки управления. Выполните <code>ADDI</code> с <code>x6 = 42</code> и константой 1. Затем подайте x0 на правый вход АЛУ, примените настройки и повторите. Поле инструкции по-прежнему задаёт 1, но на входе АЛУ теперь 0, поэтому сумма равна 42.</p>
+        <p>Верните правый вход к полю команды. Для <code>SW</code> из упражнения с памятью отключите <code>MemWrite</code> и начните заново. На третьем такте адрес останется <code>0x2004</code>. На четвёртом <code>PC</code> перейдёт к <code>0x1004</code>, а в RAM останутся <code>44 33 22 11</code>. Верните <code>MemWrite</code> и проверьте, что байты меняются.</p>
+      </details>
+      <details><summary>Упражнение с переполнением</summary><p>Снимите все флажки управления. Выберите <code>ADDI</code>. Задайте x6 равным 4294967295, константу 1, примените настройки и выполните три такта. АЛУ уже выдаёт ноль, а x6 ещё хранит <code>0xFFFFFFFF</code>. На четвёртом такте x6 получит ноль.</p></details>
     </section>
   </main>
 </body>

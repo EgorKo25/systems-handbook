@@ -9,7 +9,11 @@
     SW: immediate => `sw x6, ${immediate}(x5)`,
   };
 
-  function create(value = 42, immediate = 1, operation = 'ADDI', memoryWord = 0x11223344) {
+  function create(value = 42, immediate = 1, operation = 'ADDI', memoryWord = 0x11223344, wiring = {}) {
+    const { useZero = false, inhibitRegister = false, inhibitStore = false } = wiring;
+    if ([useZero, inhibitRegister, inhibitStore].some(flag => typeof flag !== 'boolean')) {
+      throw new Error('Параметры управляющих сигналов должны принимать значение 0 или 1.');
+    }
     if (!Object.hasOwn(instructions, operation)) throw new Error('Выберите ADDI, LW или SW.');
     if (!Number.isInteger(value) || value < 0 || value > 0xffffffff) {
       throw new Error('Начальное x6 должно быть целым числом от 0 до 4294967295.');
@@ -34,6 +38,7 @@
     return {
       operation, source, memory, instruction, cycle: 0, pc: cpu.ENTRY, x6: value,
       ir: null, decoded: null, operand: null, result: null, access: null, fault: null,
+      wiring: { useZero, inhibitRegister, inhibitStore }, signals: null,
     };
   }
 
@@ -41,13 +46,20 @@
     switch (state.cycle) {
       case 0:
         return { ...state, cycle: 1, ir: cpu.read32(state.memory, state.pc) };
-      case 1:
+      case 1: {
+        const decoded = cpu.decode(state.ir);
+        const store = decoded.op === 'SW';
         return {
-          ...state, cycle: 2, decoded: cpu.decode(state.ir),
-          operand: state.operation === 'ADDI' ? state.x6 : base,
+          ...state, cycle: 2, decoded, operand: decoded.op === 'ADDI' ? state.x6 : base,
+          signals: {
+            right: state.wiring.useZero ? 0 : decoded.immediate,
+            registerWrite: !store && !state.wiring.inhibitRegister,
+            memoryWrite: store && !state.wiring.inhibitStore,
+          },
         };
+      }
       case 2:
-        return { ...state, cycle: 3, result: cpu.u32(state.operand + state.decoded.immediate) };
+        return { ...state, cycle: 3, result: cpu.u32(state.operand + state.signals.right) };
       case 3:
         return finish(state);
       default:
@@ -57,13 +69,17 @@
 
   function finish(state) {
     const completed = { ...state, cycle: 4, pc: cpu.u32(state.pc + 4) };
-    if (state.decoded.op === 'ADDI') return { ...completed, x6: state.result };
+    const { registerWrite, memoryWrite } = state.signals;
+    if (state.decoded.op === 'ADDI') {
+      return { ...completed, x6: registerWrite ? state.result : state.x6 };
+    }
+    if (state.decoded.op === 'SW' && !memoryWrite) return completed;
 
     const address = state.result;
     try {
       const before = cpu.read32(state.memory, address);
       if (state.decoded.op === 'LW') {
-        return { ...completed, x6: before, access: { address, before, after: before } };
+        return { ...completed, x6: registerWrite ? before : state.x6, access: { address, before, after: before } };
       }
       const memory = state.memory.slice();
       cpu.write32(memory, address, state.x6);
@@ -93,7 +109,11 @@
     $('word').textContent = hex(state.instruction);
     $('ir').textContent = hex(state.ir);
     $('operand-label').textContent = arithmetic ? 'x6 и константа' : 'x5 и смещение';
-    $('operand').textContent = state.operand === null ? '—' : hex(state.operand) + ' + (' + state.decoded.immediate + ')';
+    $('operand').textContent = state.operand === null ? '—' : hex(state.operand) + ' + (' + state.signals.right + ')';
+    $('alu-source').textContent = !state.signals ? '—' : state.wiring.useZero
+      ? 'x0 → 0' : 'поле команды → ' + state.decoded.immediate;
+    $('register-enable').textContent = state.signals ? Number(state.signals.registerWrite) : '—';
+    $('memory-enable').textContent = state.signals ? Number(state.signals.memoryWrite) : '—';
     $('alu-label').textContent = arithmetic ? 'Младшие 32 бита суммы' : 'Адрес в памяти';
     $('alu').textContent = hex(address);
     $('register').textContent = hex(state.x6);
@@ -108,13 +128,7 @@
       : '—';
     $('commit-heading').textContent = arithmetic ? '4. Запись x6 и смена PC' : store
       ? '4. Запись четырёх байтов и смена PC' : '4. Чтение слова, запись x6 и смена PC';
-    $('effect').textContent = state.fault
-      ? 'Исключение: адрес слова должен делиться на 4. PC, x6 и память сохраняют прежние значения.'
-      : state.access
-        ? store
-          ? hex(state.access.before) + ' → ' + hex(state.access.after) + ' в RAM'
-          : hex(state.access.before) + ' → x6'
-        : state.cycle === 4 ? 'Результат записан в x6.' : '—';
+    $('effect').textContent = effectText(state);
     $('clock').disabled = state.cycle === stages.length;
     stages.forEach((label, index) => {
       const item = $('stage-' + index);
@@ -126,6 +140,24 @@
       : 'Исходное состояние. Инструкция ещё в памяти.';
   }
 
+  function effectText(state) {
+    if (state.cycle < 4) return '—';
+    if (state.fault) {
+      return 'Исключение: адрес слова должен делиться на 4. PC, x6 и память сохраняют прежние значения.';
+    }
+    if (state.operation === 'SW') {
+      return state.signals.memoryWrite
+        ? hex(state.access.before) + ' → ' + hex(state.access.after) + ' в RAM'
+        : 'MemWrite = 0. Записи в RAM нет.';
+    }
+    if (!state.signals.registerWrite) {
+      return state.access
+        ? 'Прочитано ' + hex(state.access.before) + '. RegWrite = 0, x6 прежний.'
+        : 'RegWrite = 0. Сумма в x6 не записана.';
+    }
+    return state.access ? hex(state.access.before) + ' → x6' : 'Результат записан в x6.';
+  }
+
   function reset() {
     try {
       const value = $('initial').value.trim();
@@ -135,7 +167,11 @@
       if (!value || !immediate || (operation !== 'ADDI' && !memoryWord)) {
         throw new Error('Заполните поля выбранной команды.');
       }
-      state = create(Number(value), Number(immediate), operation, Number(memoryWord));
+      state = create(Number(value), Number(immediate), operation, Number(memoryWord), {
+        useZero: $('alu-zero').checked,
+        inhibitRegister: $('stop-reg-write').checked,
+        inhibitStore: $('stop-mem-write').checked,
+      });
       render();
     } catch (error) {
       $('status').textContent = error.message;
