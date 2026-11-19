@@ -11,7 +11,7 @@
     "slug": "linux",
     "title": "Linux: от команды процессора до работающей службы",
     "volume": "III",
-    "words": 56296,
+    "words": 56392,
     "chapters": 19,
     "terms": 348
   },
@@ -43,7 +43,7 @@
     "slug": "git",
     "title": "Git: от байтов объектов до совместной работы и восстановления",
     "volume": "VI",
-    "words": 49195,
+    "words": 49225,
     "chapters": 27,
     "terms": 178
   },
