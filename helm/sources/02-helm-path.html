@@ -1,6 +1,6 @@
-<header><h1>От команды до состояния: путь install</h1><p>Раскладываем операцию по границам загрузки, вычисления, API, хранения и ожидания.</p></header>
+<header><h1>Установка релиза: render, API и ожидание</h1><p>На примере ledger-api различаем полученный YAML, принятый объект Kubernetes и ответ работающего приложения.</p></header>
 
-<h2>Четыре разных доказательства</h2>
+<h2>Где проверяются YAML, объекты API и приложение</h2>
 <p>Render — получение текста из templates и значений. До сохранения объекта Kubernetes API отдельно устанавливает личность клиента, проверяет его право выполнить действие, структуру объекта и политики. Admission controllers — участники этой обработки, способные изменить допустимые части объекта или отклонить запрос; они не заменяют аутентификацию и RBAC. Readiness — состояние рабочей нагрузки, из которого Kubernetes решает, готов ли экземпляр обслуживать трафик. Прикладной успех — правильный результат требуемой операции сервиса. У этих проверок разные входы и участники. YAML-parser может принять строку nonsense в поле CPU, но API отвергнет неправильную quantity. Принятый Deployment может создать Pod, который не запланируется из-за requests или не скачает image.</p>
 <h2>Подготовка и внешние входы</h2>
 <p>CLI разбирает имя, ссылку chart и флаги; выбирает environment и Kubernetes client. Загрузчик получает каталог/архив/HTTP/OCI package, читает metadata, defaults и dependencies. Файлы -f и семейства --set образуют user config; Helm coalescing объединяет его с defaults и subcharts. Schema проверяет полученные values. Capabilities предоставляет версию Kubernetes и доступные API: локально это модель, на сервере — discovery. Go templates выдают байты, Helm выделяет обычные manifests, hooks и NOTES.</p>
@@ -13,21 +13,32 @@
 <p>Для Secrets-драйвера у объекта <code>sh.helm.release.v1.ledger.v2</code> есть метки <code>owner=helm</code>, <code>name=ledger</code>, <code>version=2</code> и <code>status=pending-upgrade</code>; поле <code>data.release</code> содержит закодированное представление записи. Namespace объекта остаётся helm-lab. Пока команда ещё выполняется, эта запись уже может существовать. Поэтому наблюдаемый pending означает сохранённую стадию операции, а не подтверждение, что все нужные объекты созданы или что старые Pod остановлены.</p>
 <p>Номер новой ревизии, сохранение её записи и применение ресурсов — отдельные действия. До создания записи могут отказать загрузка, schema, render, проверка имён и доступа. После её создания могут отказать hook, один из API-запросов или ожидание. Если финальное обновление записи не удалось либо процесс оборвался, данные истории могут отставать от уже изменённых объектов. При расследовании сравнивают release record, живые ресурсы и результат HTTP, сохраняя эту разницу.</p>
 <h2>Dry-run: где заканчивается проверка</h2>
-<pre><code>helm install ledger ./chart --namespace helm-lab \
-  --kubeconfig &quot;$LAB_KUBECONFIG&quot; --kube-context &quot;$LAB_CONTEXT&quot; \
-  --dry-run=client
-helm install ledger ./chart --namespace helm-lab \
-  --kubeconfig &quot;$LAB_KUBECONFIG&quot; --kube-context &quot;$LAB_CONTEXT&quot; \
-  --dry-run=client --debug --hide-secret</code></pre>
-<p>Оба запуска подготавливают release без установки. Во втором больше диагностики и скрыты Secret-документы dry-run. Пароль всё равно может находиться в NOTES, ConfigMap, annotation, ошибке или выводе plugin; --hide-secret не очищает произвольную чувствительную строку. Даже без --debug dry-run способен вывести Secret. Храните output в защищённом каталоге и не публикуйте raw CI log.</p>
+<p>Начните в <a href="#helm-lab-working-copy">рабочей копии</a>, где есть <code>./chart/Chart.yaml</code>. Эти два запуска с <code>--dry-run=client</code> выполняются без кластера. В выводе найдите имя <code>ledger</code> и описание Deployment для <code>ledger-ledger-api</code>. Здесь <code>pending-install</code> относится к симуляции в памяти: команда не создаёт ревизию в Kubernetes.</p>
+<pre><code>helm install ledger ./chart --namespace helm-lab --dry-run=client
+helm install ledger ./chart --namespace helm-lab --dry-run=client --debug --hide-secret \
+  --set-string 'config.message=Hello from lab'</code></pre>
+<p>Оба запуска подготавливают release без установки. Во втором больше диагностики, скрыты Secret-документы dry-run и изменён <code>config.message</code>. В его ConfigMap найдите <code>MESSAGE: "Hello from lab"</code>; в первом остаётся <code>Hello from Helm</code>. Изменение полученного YAML завершает локальный опыт: ответа HTTP ещё нет. Пароль всё равно может находиться в NOTES, ConfigMap, annotation, ошибке или выводе plugin; --hide-secret не очищает произвольную чувствительную строку. Даже без --debug dry-run способен вывести Secret. Храните output в защищённом каталоге и не публикуйте raw CI log.</p>
 <p>В 4.3.1 <code>--dry-run=server</code> требует API, discovery, разрешает lookup и проверку существующих ресурсов. Но install.go возвращает release из ветки isDryRun до performInstall и KubeClient.Create обычных объектов. Общая строка help о server simulation поэтому не доказывает принятие каждого будущего объекта admission webhook. Для этой границы выполните <code>kubectl --kubeconfig &quot;$LAB_KUBECONFIG&quot; --context &quot;$LAB_CONTEXT&quot; --namespace helm-lab apply --server-side --dry-run=server -f rendered.yaml</code> в своём context. Даже этот результат относится к текущему состоянию; CRD, hooks и конкурентные изменения добавляют различия между проверкой и применением.</p>
+<p>Команде <code>kubectl</code> нужен файл <code>rendered.yaml</code>. Получите его в рабочей копии ниже. Блок откажется перезаписывать существующий файл и не обратится к API после неудачного render. При отказе файл может остаться неполным: сначала прочитайте ошибку и сохраните результат для разбора. Для профиля kind замените версию <code>1.36.6</code> на <code>1.36.4</code>.</p>
+<pre><code>(
+  set -o noclobber
+  helm template ledger ./chart --namespace helm-lab --kube-version 1.36.6 \
+    --set-string 'config.message=Hello from lab' &gt; rendered.yaml
+) &amp;&amp;
+kubectl --kubeconfig "$LAB_KUBECONFIG" --context "$LAB_CONTEXT" --namespace helm-lab \
+  apply --server-side --dry-run=server -f rendered.yaml</code></pre>
 <h2>Wait и timeout</h2>
+<p>Следующие команды — варианты кластерного шага <a href="#11-helm-first-release">первой установки</a>. Для них нужны подготовленный кластер, namespace и доступ из главы 01. В обоих вариантах оставлено сообщение <code>Hello from lab</code>, которое только что проверено в локальном YAML.</p>
 <pre><code>helm install ledger ./chart --namespace helm-lab \
+  --set-string 'config.message=Hello from lab' \
   --kubeconfig &quot;$LAB_KUBECONFIG&quot; --kube-context &quot;$LAB_CONTEXT&quot; \
-  --wait=watcher --timeout 180s
-helm install ledger ./chart --namespace helm-lab \
+  --wait=watcher --timeout 180s</code></pre>
+<details><summary>Альтернатива: ждать только hooks</summary>
+<p>Это другая команда первого install. Выбирайте один вариант: повторный install в занятое имя <code>ledger</code> завершится отказом.</p>
+<pre><code>helm install ledger ./chart --namespace helm-lab \
+  --set-string 'config.message=Hello from lab' \
   --kubeconfig &quot;$LAB_KUBECONFIG&quot; --kube-context &quot;$LAB_CONTEXT&quot; \
-  --wait=hookOnly --timeout 180s</code></pre>
+  --wait=hookOnly --timeout 180s</code></pre></details>
 <p>Это две альтернативы первого install, не последовательность повторной установки в одно имя. Watcher ожидает resource readiness; hookOnly ограничивает ожидание hooks, и команда может закончиться до готовности Deployment. Один --wait без значения выбирает watcher, отсутствие флага — hookOnly. Legacy сохраняет прежний механизм ожидания. --wait-for-jobs добавляет завершение обычных Jobs к wait; hook Job и так блокирует свою фазу. --timeout задаёт бюджет отдельной Kubernetes-операции/ожидания, включая hooks, а не универсальный deadline всей команды и бизнес-запроса.</p>
 <p>Время CLI включает package/network, discovery, render, API и wait. Сравните прогретый локальный template с server dry-run, затем настоящий upgrade с events. Если template занимает 30 мс, а wait длится 120 с из-за ImagePullBackOff, увеличение CPU клиента не исправит registry. Если гигантский chart долго сериализуется, сначала измерьте локальные CPU/RSS, число objects и bytes, затем обсуждайте API QPS.</p>
 
