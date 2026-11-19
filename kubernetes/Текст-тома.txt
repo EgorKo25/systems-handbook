@@ -193,7 +193,7 @@ python3 bundle_manifest.py verify /path/to/staged-bundle
 
 Том XXVI · Книга I · Получить и сохранить кластер
 
-Постоянный кластер kubeadm в личных Ubuntu-VMЭтот раздел — рецепт для своих VM. Он не был исполнен при подготовке тома и не должен применяться к рабочему хосту. · 1536 словСодержание главы
+Постоянный кластер kubeadm в личных Ubuntu-VMЦель опыта — запустить управляющие компоненты на cp1, подключить рабочий узел wk1 и проверить восстановление их работы после перезагрузки. Этот рецепт предназначен для своих VM. Реальный кластер по нему при подготовке тома не запускался; рабочий хост для опыта не подходит. · 2054 словСодержание главы
 
 Сначала карта адресов, прав и дисков
 
@@ -211,7 +211,7 @@ CNI, join и приёмка после reboot
 
 Создайте cp1 и wk1 из проверенного Ubuntu 24.04 ISO. У каждой уникальны hostname, MAC и product_uuid. Пример private-сети: cp1 192.168.56.10, wk1 192.168.56.11, имя cp1.lab.internal разрешается на обеих VM и клиенте. Это пример, который надо проверить на пересечение с домашней LAN/VPN/WSL/Docker. PodCIDR 10.244.0.0/16 и ServiceCIDR 10.96.0.0/16 тоже не должны пересекаться с внешними маршрутами и друг с другом. CIDR — адресный префикс; /16 обозначает фиксированные первые 16 бит IPv4, а не количество машин.
 
-Сделайте снимок чистых выключенных VM и запишите ресурсы, версии ядра, диски, время, DNS, routes и свободное место. Снимок двух работающих etcd VM не равен согласованному backup приложения. В выбранном базовом варианте один cp1: его потеря останавливает новые API-изменения и согласование, хотя уже запущенное приложение на wk1 может некоторое время отвечать. Порт TCP 6443 доступен только доверенным клиентам/nodes, kubelet TCP 10250 — control plane; etcd 2379/2380 только соответствующим control-plane членам. VXLAN UDP 4789 — только между nodes. Не открывайте все порты всем ради прохождения join.
+Сделайте снимок чистых выключенных VM и запишите ресурсы, версии ядра, диски, время, DNS, routes и свободное место. Снимки работающих VM не заменяют согласованную резервную копию etcd и данных приложения. В выбранном базовом варианте один cp1: его потеря останавливает новые API-изменения и согласование, хотя уже запущенное приложение на wk1 может некоторое время отвечать. Порт TCP 6443 доступен только доверенным клиентам/nodes, kubelet TCP 10250 — control plane; etcd 2379/2380 только соответствующим control-plane членам. VXLAN UDP 4789 — только между nodes. Не открывайте все порты всем ради прохождения join.
 
 Подготовить node, не меняя рабочий компьютер
 
@@ -230,24 +230,15 @@ sudo sysctl -w net.bridge.bridge-nf-call-iptables=1
 
 Ожидаем cgroup2fs на Ubuntu с cgroup v2. cgroup — иерархия учёта и ограничения ресурсов Linux. kubelet и containerd используют systemd-драйвер, иначе две программы могут считать ресурсную иерархию по-разному. Файл containerd.toml использует config version 3 и plugin path containerd 2.x, а не старую секцию 1.x. CRI не должен быть в disabled_plugins. sandbox image pause:3.10.2 согласован с исходником kubeadm v1.36.6. Служба containerd хранит persistent content/snapshots в /var/lib/containerd, runtime socket/state — в /run/containerd; kubelet state — /var/lib/kubelet. Не удаляйте эти каталоги как «кэш», пока не понимаете владельцев и mounts.
 
-Установите заранее проверенные containerd/runc/CNI и пакеты kubelet/kubeadm/kubectl внутри VM. Upstream containerd tar обычно распаковывается под /usr/local, runc помещается в /usr/local/sbin; unit возьмите из того же tag и проверьте ExecStart. Упаковка .deb может использовать другие пути и не должна одновременно владеть теми же файлами. systemctl enable --now containerd меняет автозагрузку и запускает службу. systemctl status, journalctl -u containerd, crictl --runtime-endpoint unix:///run/containerd/containerd.sock info подтверждают процесс, CRI и согласование cgroup. Running systemd ещё не доказывает возможности создать Pod.
+Установите заранее проверенные containerd/runc/CNI и пакеты kubelet/kubeadm/kubectl внутри VM. Upstream containerd tar обычно распаковывается под /usr/local, runc помещается в /usr/local/sbin; unit возьмите из того же tag и проверьте ExecStart. Упаковка .deb может использовать другие пути и не должна одновременно владеть теми же файлами. systemctl enable --now containerd меняет автозагрузку и запускает службу. systemctl status, journalctl -u containerd, crictl --runtime-endpoint unix:///run/containerd/containerd.sock info подтверждают процесс, CRI и согласование cgroup. Даже при работающей службе создание Pod может завершиться ошибкой: отдельно проверяются CRI и доступность образов.
 
 Точная установка выбранных пакетов в VM
 
-Полный сохраняемый command recipe находится в INSTALL.txt: получение, проверка, systemd unit, paths, scoped apt keyring, Debian package revision и cold offline проверка. Здесь проследим важные переходы. Upstream tar containerd 2.4.2-linux-amd64 содержит bin/containerd и shims; runc.amd64 поставляется отдельно. После проверки tar распаковывают в /usr/local, runc устанавливают в /usr/local/sbin/runc, официальный unit того же tag — в /usr/local/lib/systemd/system. Его ExecStart должен ссылаться именно на установленный binary. Затем размещают наш configversion3, daemon-reload перечитывает unit, enable создаёт автозагрузку, start запускает процесс. Status/logs и ctr plugins list отличают неудачный plugin от отсутствующего process.
+Полная последовательность команд находится в INSTALL.txt: получение, проверка, systemd unit, paths, scoped apt keyring, Debian package revision и cold offline проверка. Здесь проследим важные переходы. Upstream tar containerd 2.4.2-linux-amd64 содержит bin/containerd и shims; runc.amd64 поставляется отдельно. После проверки tar распаковывают в /usr/local, runc устанавливают в /usr/local/sbin/runc, официальный unit того же tag — в /usr/local/lib/systemd/system. Его ExecStart должен ссылаться именно на установленный binary. Затем размещают нашу конфигурацию формата 3, daemon-reload перечитывает unit, enable создаёт автозагрузку, start запускает процесс. Состояние службы, журналы и ctr plugins list помогают различить остановленный процесс и ошибку загрузки CRI-плагина.
 
-curl -fLO https://github.com/containerd/containerd/releases/download/v2.4.2/containerd-2.4.2-linux-amd64.tar.gz
-curl -fLO https://github.com/containerd/containerd/releases/download/v2.4.2/containerd-2.4.2-linux-amd64.tar.gz.sha256sum
-sha256sum -c containerd-2.4.2-linux-amd64.tar.gz.sha256sum
-# After staged verification, inside each personal VM:
-sudo tar -C /usr/local -xzf containerd-2.4.2-linux-amd64.tar.gz
-sudo install -m 0755 runc.amd64 /usr/local/sbin/runc
-sudo install -m 0644 containerd.service /usr/local/lib/systemd/system/containerd.service
-sudo install -m 0644 containerd.toml /etc/containerd/config.toml
-sudo systemctl daemon-reload
-sudo systemctl enable --now containerd
+В полном рецепте раздел 1 заканчивается проверкой архивов и отдельных файлов. После успеха раздел 2 переносит проверенные файлы в системные каталоги вашей VM, устанавливает containerd.toml из $K8S_LAB_ROOT/vm и запускает службу. На этом этапе сравните путь ExecStart с установленным файлом и откройте sudo ctr plugins list, чтобы увидеть CRI-плагин.
 
-Перед install создаются требуемые directories; полный рецепт показывает их явно. Не распаковывайте tar поверх package-managed containerd другой версии. У unit есть полномочия root VM: проверка URL/hash/содержимого unit столь же важна, как проверка binary. Краткая успешная status строка не означает, что runc найден в PATH systemd или что CRI plugin исправен. После kubelet пакетов проверяется crictl info по заданному socket.
+Перед установкой создаются нужные каталоги; полный рецепт показывает их явно. Не распаковывайте tar поверх package-managed containerd другой версии. У unit есть полномочия root VM: проверка URL/hash/содержимого unit столь же важна, как проверка binary. Краткая успешная status строка не означает, что runc найден в PATH systemd или что CRI plugin исправен. После kubelet пакетов проверяется crictl info по заданному socket.
 
 Официальный minor repository для этого baseline — pkgs.k8s.io/core:/stable:/v1.36/deb/. Release.key сначала сохраняется в файл и сверяется по официальной цепочке поставщика, затем превращается gpg --dearmor в отдельный keyring. Signed-By ограничивает доверие этим source. На 01.11.2026 Packages.gz действительно содержит amd64 версии kubeadm/kubelet/kubectl1.36.6-1.1; это конкретная Debian revision, а не догадка из SemVer.
 
@@ -263,22 +254,55 @@ apt разрешает транзитивные package dependencies, котор
 
 Bootstrap: какие файлы рождаются
 
+Перед init должны работать CRI и выбранный runtime. Для офлайн-запуска заранее импортируйте все требуемые образы по INSTALL.txt и проверьте их наличие командой crictl --runtime-endpoint unix:///run/containerd/containerd.sock images. Команда kubeadm config images list только перечисляет имена: она не загружает образы и не проверяет, что runtime уже имеет их.
+
 На cp1 изучите kubeadm.yaml и сравните с kubeadm config print init-defaults. InitConfiguration задаёт node/CRI, ClusterConfiguration — версию, endpoint и подсети; KubeletConfiguration — cgroup/swap; KubeProxyConfiguration явно фиксирует iptables. kubeadm API v1beta4 — версия конфигурации bootstrap, не apps/v1 workload API. API endpoint должен присутствовать в SAN (subject alternative name, списке допустимых имён/IP) сертификата; подмена адреса в kubeconfig не расширяет сертификат.
 
-sudo kubeadm config validate --config vm/kubeadm.yaml
-sudo kubeadm config images list --config vm/kubeadm.yaml
-sudo kubeadm init --config vm/kubeadm.yaml
-mkdir -p "$HOME/.kube"
-sudo install -m 0600 -o "$(id -u)" -g "$(id -g)" /etc/kubernetes/admin.conf "$HOME/.kube/handbook.conf"
-export KUBECONFIG="$HOME/.kube/handbook.conf"
-kubectl config rename-context kubernetes-admin@handbook handbook-admin
-export LAB_CONTEXT=handbook-admin
+Выполните блок один раз на подготовленной cp1 с сохранённой переменной K8S_LAB_ROOT. K8S_LAB_ROOT должен быть абсолютным путём к вашей копии каталога labs из тома; внутри него находятся vm/kubeadm.yaml и customize_calico.py. Не выполняйте параллельную инициализацию и не меняйте целевой файл kubeconfig во время блока. Выбранный каталог должен быть доступен для записи только вам. Для копии kubeconfig по умолчанию используется $HOME/.kube/handbook.conf. Если нужен другой путь, заранее задайте handbook_kubeconfig полным именем нового файла.
 
-validate проверяет конфигурацию, images list — перечень, init создаёт PKI (public key infrastructure, инфраструктуру ключей и сертификатов) в /etc/kubernetes/pki, kubeconfig и static Pod manifests в /etc/kubernetes/manifests. kubelet замечает manifests и запускает etcd/API/scheduler/controller-manager через CRI. В /var/lib/etcd находятся WAL (write-ahead log, журнал предварительной записи) и база etcd, а не YAML-файлы по одному объекту. admin.conf — чувствительный административный ключ. Нельзя публиковать его, отправлять в Git или использовать ежедневно для чтения журнала приложения.
+handbook_kubeconfig="${handbook_kubeconfig:-$HOME/.kube/handbook.conf}"
+bootstrap_handbook() {
+  case "${K8S_LAB_ROOT:-}" in
+    /*) ;;
+    *) printf '%s\n' 'Нужен абсолютный K8S_LAB_ROOT.' >&2; return 1 ;;
+  esac
+  case "$handbook_kubeconfig" in
+    /*) ;;
+    *) printf '%s\n' 'Нужен абсолютный путь kubeconfig.' >&2; return 1 ;;
+  esac
+  config="$K8S_LAB_ROOT/vm/kubeadm.yaml"
+  test -f "$config" || return 1
+  if test -e "$handbook_kubeconfig" || test -L "$handbook_kubeconfig"; then
+    printf '%s\n' 'Файл для учебного kubeconfig уже существует.' >&2
+    return 1
+  fi
+  sudo kubeadm config validate --config "$config" || return 1
+  sudo kubeadm config images list --config "$config" || return 1
+  sudo kubeadm init --config "$config" || return 1
+  mkdir -p -- "$(dirname -- "$handbook_kubeconfig")" || return 1
+  sudo install -m 0600 -o "$(id -u)" -g "$(id -g)" \
+    /etc/kubernetes/admin.conf "$handbook_kubeconfig" || return 1
+  kubectl --kubeconfig "$handbook_kubeconfig" \
+    config rename-context kubernetes-admin@handbook handbook-admin
+}
+bootstrap_handbook &&
+export KUBECONFIG="$handbook_kubeconfig" LAB_CONTEXT=handbook-admin
+
+Каждый шаг запускается после успеха предыдущего. Ошибка проверки или списка образов останавливает блок до init. Если ошибка возникла внутри init, часть сертификатов и манифестов уже могла появиться, а часть компонентов — запуститься. Запишите последнюю фазу из вывода и проверьте файлы, журналы kubelet и состояние API до решения о повторе. Если отказало только копирование kubeconfig или переименование контекста, восстановите этот шаг отдельно: повторный init для него не нужен. Переменные для следующих команд устанавливаются после успешной подготовки файла и контекста.
+
+validate проверяет конфигурацию, images list — перечень, init создаёт PKI (public key infrastructure, инфраструктуру ключей и сертификатов) в /etc/kubernetes/pki, kubeconfig и static Pod manifests в /etc/kubernetes/manifests. kubelet замечает manifests и запускает etcd/API/scheduler/controller-manager через CRI. В /var/lib/etcd находятся WAL (write-ahead log, журнал предварительной записи) и база etcd, а не YAML-файлы по одному объекту. admin.conf — файл kubeconfig с адресом API, данными доверия и административными учётными данными. Нельзя публиковать его, отправлять в Git или использовать ежедневно для чтения журнала приложения.
+
+Локальный манифест сообщает kubelet, какой Pod поддерживать на узле. Для управляющих компонентов kubeadm задаёт сеть самого узла, hostNetwork: true: им не требуется сначала получить обычный адрес Pod из Calico. Поэтому готовность API ещё не доказывает готовность сети обычных Pod. CoreDNS и прикладным Pod потребуется работающий CNI. Это свойство выбранных манифестов kubeadm, а не всех локально заданных Pod. Создание Pod управляющих компонентов в v1.36.6.
+
+От локальных файлов до API на cp1
+
+Это зависимости выбранного профиля, а не замер времени запуска. Компоненты могут запускаться, пока init ещё выполняет следующие фазы. После ошибки сначала определяют, какие файлы и процессы уже появились; имя команды само по себе не описывает текущее состояние узла.
+
+Текстовая альтернатива: kubeadm создаёт локальные файлы; kubelet читает манифесты и поручает containerd запуск компонентов через CRI. Их сеть узла отделена от создаваемой затем сети обычных Pod. Работоспособный API без Calico ещё не завершает опыт; после ошибки init могут остаться файлы и работающие компоненты.
 
 CNI, join и приёмка после reboot
 
-Команды ниже продолжают работу из сохранённого K8S_LAB_ROOT. Исходный официальный файл и преобразованный calico-lab.yaml имеют разные имена. Helper отказывается перезаписывать существующий output, поэтому при повторном занятии сначала сравнивают уже подготовленный файл и текущий кластер; новую генерацию сохраняют под другим именем. После ошибки checksum или transform apply не выполняется. На офлайн-машину переносят уже проверенный source вместе с image-набором; наличие YAML не доказывает наличие образов.
+Продолжайте только после успешной подготовки kubeconfig и контекста. Если предыдущий блок отказал, не переходите к apply. Сверьте в выбранном kubeconfig адрес API https://cp1.lab.internal:6443 и данные доверия с паспортом своего кластера: одно имя handbook-admin не доказывает, к какому API пойдёт запрос. Переименование контекста меняет локальное имя, не адрес и не права. Команды ниже продолжают работу из сохранённого K8S_LAB_ROOT. Исходный официальный файл и преобразованный calico-lab.yaml имеют разные имена. Helper отказывается перезаписывать существующий output, поэтому при повторном занятии сначала сравнивают уже подготовленный файл и текущий кластер; новую генерацию сохраняют под другим именем. После ошибки checksum или transform apply не выполняется. На офлайн-машину переносят уже проверенный source вместе с image-набором; наличие YAML не доказывает наличие образов.
 
 До установки CNI CoreDNS может быть Pending, nodes — NotReady. Скачайте точный официальный calico.yaml, проверьте SHA из журнала источников; customize_calico.py офлайн изменяет только staged manifest: VXLAN Always, IPIP Never, pool 10.244/16, выбор IP из private-сети, MTU 1450 для underlay 1500, eBPF выключен, BIRD-проверки убраны из VXLAN-профиля. Этот MTU правильный лишь при IPv4 VXLAN с overhead 50 байт и underlay MTU 1500. Если поверх VPN есть меньший MTU, 1450 тоже может оказаться слишком большим.
 
@@ -292,8 +316,11 @@ prepare_calico() {
   python3 customize_calico.py staged/calico-v3.33.0.yaml staged/calico-lab.yaml || return 1
 }
 prepare_calico && kubectl --context "$LAB_CONTEXT" apply -f staged/calico-lab.yaml
+
+После успешного apply попросите cp1 напечатать команду подключения. Выполните её с указанным отпечатком CA только на wk1. После подключения вернитесь на cp1 и проверьте состояния узлов и системных Pod.
+
 sudo kubeadm token create --print-join-command
-# Execute the printed join command on wk1 only, with the displayed CA hash.
+
 kubectl --context "$LAB_CONTEXT" get nodes -o wide
 kubectl --context "$LAB_CONTEXT" -n kube-system get pods -o wide
 kubectl --context "$LAB_CONTEXT" get --raw='/readyz?verbose'
