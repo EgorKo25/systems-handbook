@@ -86,28 +86,28 @@
   {
     "id": "12-k8s-addressing",
     "title": "Адреса Pod и Service, EndpointSlice и DNS-имена",
-    "words": 563,
+    "words": 708,
     "part": "Книга IV · Путь пакета",
     "number": "12"
   },
   {
     "id": "13-k8s-packet",
     "title": "Пакет через Calico VXLAN и kube-proxy iptables",
-    "words": 1401,
+    "words": 1519,
     "part": "Книга IV · Путь пакета",
     "number": "13"
   },
   {
     "id": "14-k8s-dns-policy",
     "title": "DNS и NetworkPolicy: разрешённый API не доказывает проход пакета",
-    "words": 783,
+    "words": 807,
     "part": "Книга IV · Путь пакета",
     "number": "14"
   },
   {
     "id": "15-k8s-edge",
     "title": "Внешний клиент, source IP, Ingress и Gateway API",
-    "words": 1243,
+    "words": 1341,
     "part": "Книга IV · Путь пакета",
     "number": "15"
   },
@@ -135,7 +135,7 @@
   {
     "id": "19-k8s-observe",
     "title": "Диагностика по объекту, процессу и ресурсу",
-    "words": 1134,
+    "words": 1255,
     "part": "Книга VI · Эксплуатация и развитие",
     "number": "19"
   },

@@ -1161,7 +1161,7 @@ ServiceAccount представляет workload identity для API. Поле s
 
 Том XXVI · Книга IV · Путь пакета
 
-Адреса Pod и Service, EndpointSlice и DNS-именаPod IP указывает сетевую среду экземпляра, Service IP — виртуальную точку выбора endpoint. DNS лишь сообщает адрес и не пересылает HTTP сам. · 563 словСодержание главы
+Адреса Pod и Service, EndpointSlice и DNS-именаPod IP указывает сетевую среду экземпляра, Service IP — виртуальную точку выбора endpoint. DNS лишь сообщает адрес и не пересылает HTTP сам. · 708 словСодержание главы
 
 Три пространства адресов
 
@@ -1193,9 +1193,19 @@ ClusterIP предназначен для внутренней виртуаль�
 
 DNS-запрос до HTTP
 
-CoreDNS обслуживает кластерные имена, например ledger-api.lab.svc.cluster.local. kubelet формирует resolv.conf Pod по dnsPolicy/dnsConfig, включая search domains и ndots. Короткое ledger-api из namespace lab разрешается иначе, чем из helm-lab; полное имя явно задаёт область. DNS возвращает ClusterIP, затем клиент открывает TCP к нему. NXDOMAIN, timeout DNS и TCP connection refused — разные результаты. При большом ndots внешнее имя без завершающей точки может вызвать дополнительные search-запросы; снижать ndots нужно после измерения запросов и понимания имён, а не как универсальный tuning.
+CoreDNS обслуживает кластерные имена, например ledger-api.lab.svc.cluster.local. kubelet формирует resolv.conf Pod по dnsPolicy/dnsConfig, включая search domains и ndots. Короткое ledger-api из namespace lab разрешается иначе, чем из helm-lab; полное имя явно задаёт область. Для обычного Service DNS возвращает его ClusterIP, затем клиент открывает TCP к этому адресу. NXDOMAIN, timeout DNS и TCP connection refused — разные результаты. При большом ndots внешнее имя без завершающей точки может вызвать дополнительные search-запросы; снижать ndots нужно после измерения запросов и понимания имён, а не как универсальный tuning.
 
-В поставляемом diagnostic.yaml используется закреплённый BusyBox: в нём есть nslookup, wget, cat и sh; наличие dig и curl этот образ не обещает. Полный опыт из следующей главы сравнивает DNS, прямой IP и HTTP именно этими средствами. Для других инструментов заранее выберите и доставьте другой проверенный образ, а затем запишите его точную ссылку. Scratch-образ Go не содержит даже shell: отказ exec … -- sh в нём объясняется отсутствием файла программы.
+Что изменится в DNS, если один из двух Pod перестанет быть готов? Пусть два IPv4 Service в lab выбирают одни и те же Pod с адресами 10.244.2.3 и 10.244.2.4. У ledger-api выделен ClusterIP 10.96.10.20, у ledger-peers задано clusterIP: None. Параметр publishNotReadyAddresses не включён. Сначала оба endpoint имеют ready: true, затем у 10.244.2.4 это поле в EndpointSlice меняется на false.
+
+ | Имя Service в lab | A-записи, пока оба готовы | A-записи после обновления DNS
+
+ | ledger-api | 10.96.10.20 | 10.96.10.20
+
+ | ledger-peers | 10.244.2.3, 10.244.2.4 | 10.244.2.3
+
+Для первого имени CoreDNS берёт адрес из объекта Service. Изменение готовности отражается в выборе получателя нового соединения на стороне kube-proxy. Для второго имени CoreDNS берёт адреса готовых endpoint из EndpointSlice, поэтому из нового ответа пропадает 10.244.2.4. Клиентский кеш ещё может хранить старый ответ до истечения TTL. Спецификация DNS-записей headless Service.
+
+В поставляемом diagnostic.yaml используется закреплённый BusyBox: в нём есть nslookup, wget, cat и sh; наличие dig и curl этот образ не обещает. В главе «DNS и NetworkPolicy» разобран опыт, который сравнивает DNS, прямой IP и HTTP именно этими средствами. Для других инструментов заранее выберите и доставьте другой проверенный образ, а затем запишите его точную ссылку. Scratch-образ Go не содержит даже shell: отказ exec … -- sh в нём объясняется отсутствием файла программы.
 
 Измеряйте задержку DNS, долю ответов из кэша, NXDOMAIN и тайм-ауты отдельно от HTTP. Увеличение числа Pods приложения не исправляет недоступный DNS Service. Внешний рекурсивный DNS и кластерный модуль CoreDNS отвечают за разные имена и участки запроса.
 
@@ -1203,7 +1213,7 @@ CoreDNS обслуживает кластерные имена, например
 
 Том XXVI · Книга IV · Путь пакета
 
-Пакет через Calico VXLAN и kube-proxy iptablesТочный сценарий: Linux VM, single-stack IPv4, Calico 3.33 VXLAN Always, eBPF выключен, kube-proxy 1.36 iptables. Для другого стека этот путь нельзя копировать механически. · 1401 словСодержание главы
+Пакет через Calico VXLAN и kube-proxy iptablesТочный сценарий: Linux VM, single-stack IPv4, Calico 3.33 VXLAN Always, eBPF выключен, kube-proxy 1.36 iptables. Для другого стека этот путь нельзя копировать механически. · 1519 словСодержание главы
 
 Фиксируем наблюдаемый эксперимент
 
@@ -1234,6 +1244,8 @@ Service добавляет DNAT и состояние соединения
 При обращении A→S первый пакет на node клиента попадает в правила Service, установленные kube-proxy. Из готовых endpoints выбирается B, destination NAT, DNAT, меняет destination 10.96.10.20:80 на 10.244.2.3:8080. Для этого внутрикластерного не-hairpin сценария исходный Pod IP обычно сохраняется; специальные masquerade настройки/исключения меняют условия. Затем маршрутизация Calico доставляет пакет к B через VXLAN. Service IP не должен появляться на eth0 Go-процесса как адрес listener: процесс принимает на PodIP:8080/0.0.0.0:8080.
 
 Conntrack — отслеживание состояния соединений Linux/netfilter — сохраняет соответствие исходного и переведённого tuple. Ответ B→A возвращается по предусмотренному маршруту к node, где применялась трансляция; обратное NAT представляет клиенту ответ от Service IP:80. Если ответ ушёл в обход необходимого stateful узла, асимметрия и filtering могут сломать соединение. TCP keepalive, long-lived соединения и UDP timeouts имеют последствия для удаления endpoint: обновление списка endpoints не переписывает магически все старые соединения.
+
+Что изменится, если у Service S совсем не осталось endpoints? Пусть в EndpointSlice для S больше нет адресов, а kube-proxy на cp1 уже обновил правила. При стандартной настройке CoreDNS имя по-прежнему разрешается в 10.96.10.20. Новый SYN от A приходит на cp1 с тем же назначением 10.96.10.20:80. В режиме iptables для этого назначения kube-proxy устанавливает правило REJECT в таблице filter. Если SYN доходит до правила, узел отклоняет соединение. Пакет не получает адрес B через DNAT и не уходит в VXLAN. Поэтому отказ после успешного DNS сам по себе ничего не говорит о том, слушает ли Go на wk1. В учебном опыте правило можно искать в выводе iptables-save -t filter по ClusterIP и порту. Правило kube-proxy iptables в Kubernetes 1.36.6.
 
 # Read-only, only on your prepared VM nodes:
 sudo ip -details link show vxlan.calico
@@ -1334,7 +1346,7 @@ iptables — пользовательский интерфейс управле�
 
 Том XXVI · Книга IV · Путь пакета
 
-DNS и NetworkPolicy: разрешённый API не доказывает проход пакетаNetworkPolicy описывает L3/L4 допускаемые связи между выбранными endpoints. Реализация CNI решает, будут ли эти связи фактически ограничены. · 783 словСодержание главы
+DNS и NetworkPolicy: разрешённый API не доказывает проход пакетаNetworkPolicy описывает L3/L4 допускаемые связи между выбранными endpoints. Реализация CNI решает, будут ли эти связи фактически ограничены. · 807 словСодержание главы
 
 Как policy меняет состояние доступа
 
@@ -1352,11 +1364,8 @@ Namespace и label как границы доверия
 
 Файл 30-policy выбирает только ledger-api и разрешает ingress TCP 8080 от Pods namespace lab с label access=ledger. podSelector внутри from без namespaceSelector относится к тому же namespace. Если один элемент содержит и namespaceSelector, и podSelector, они сочетаются как AND; два разных элемента списка — OR. Это маленькое различие YAML способно открыть доступ всему namespace вместо одной группе. ipBlock описывает IP-префиксы, но packet rewrite до/после policy и node-originated трафик зависят от CNI; для Pod identities предпочитают selectors с контролируемыми labels.
 
-kubectl --context "$LAB_CONTEXT" -n lab apply -f manifests/30-policy.yaml
-kubectl --context "$LAB_CONTEXT" -n lab get networkpolicy ledger-ingress -o yaml
+kubectl --context "$LAB_CONTEXT" -n lab get networkpolicy -o yaml
 kubectl --context "$LAB_CONTEXT" -n lab get pod --show-labels
-# Test from two prepared diagnostic Pods in lab: one with access=ledger,
-# one without. Use Service DNS and direct Pod IP, record both outcomes.
 
 Важны два наблюдения: allowed client действительно получает HTTP, denied client действительно получает ожидаемый timeout/reject по implementation. Одно отсутствие ответа может быть сломанным DNS/listener, поэтому baseline до policy обязателен. Проверка через kubectl port-forward не проходит обычный Pod→Service dataplane и не доказывает policy. На default kindnet API-объект policy может сохраниться без enforcement; это не нарушение schema и не защита.
 
@@ -1380,6 +1389,8 @@ Namespace и label как границы доверия
 
 Диагностические Pods используют официальный BusyBox1.37.0 по проверенному 01.11.2026 OCI index digest a7dbc319…; source log содержит полный digest. Он один и тот же в client и storage Job. Образ не исполнялся автором. Staging/import должен сохранить content именно под этой ссылкой на каждом нужном node. Клиент без label и клиент access=ledger сначала должны оба проходить до установки policy, иначе сравнение не отделяет policy от исходного сетевого отказа.
 
+При повторении опыта проверьте список NetworkPolicy в lab. Если ledger-ingress осталась от предыдущего запуска, текущие запросы уже относятся к состоянию «после». Для нового исходного замера удалите эту учебную политику командой kubectl --context "$LAB_CONTEXT" -n lab delete networkpolicy ledger-ingress, дождитесь обновления правил CNI и подтвердите HTTP-ответы обоих клиентов командами ниже. Если действуют другие политики, учитывайте их правила при сравнении.
+
 kubectl --context "$LAB_CONTEXT" apply -f vm/diagnostic.yaml
 kubectl --context "$LAB_CONTEXT" -n lab wait --for=condition=Ready pod/client-allowed pod/client-denied --timeout=120s
 kubectl --context "$LAB_CONTEXT" -n lab exec client-allowed -- nslookup ledger-api.lab.svc.cluster.local
@@ -1392,7 +1403,7 @@ kubectl --context "$LAB_CONTEXT" -n lab apply -f manifests/30-policy.yaml
 
 Том XXVI · Книга IV · Путь пакета
 
-Внешний клиент, source IP, Ingress и Gateway APIМаршрут, сертификат и фактический controller образуют один контракт. Один объект Ingress или HTTPRoute не запускает прокси сам. · 1243 словСодержание главы
+Внешний клиент, source IP, Ingress и Gateway APIМаршрут, сертификат и фактический controller образуют один контракт. Один объект Ingress или HTTPRoute не запускает прокси сам. · 1341 словСодержание главы
 
 Как клиент входит в сеть
 
@@ -1442,6 +1453,17 @@ spec:
 В обычном режиме выбранного Envoy Gateway объекты Gateway и HTTPRoute остаются в lab, а создаваемые контроллером proxy Deployment и Service находятся в envoy-gateway-system. Namespace объекта-намерения не обязан совпадать с namespace его исполняющего прокси. Поэтому ниже proxy ищут по меткам owning-gateway-namespace и owning-gateway-name в envoy-gateway-system; NetworkPolicy разрешает трафик оттуда. Режим развёртывания proxy в namespace Gateway существует отдельно и этим набором не включается. Официальное описание: Gateway Namespace Mode, линия 1.9.
 
 Проверка формы CRD не подтверждает существование всех ссылок: контроллер сообщает об этом через conditions. Версия API также не обещает реализации каждой экспериментальной возможности; проверяют совместимость контроллера и поддерживаемые им функции.
+
+Где заканчивается префикс пути
+
+Правило выше без matches принимает любой путь для ledger.lab.internal. В отдельном примере добавим в тот же элемент rules условие рядом с backendRefs:
+
+matches:
+- path:
+    type: PathPrefix
+    value: /api
+
+При том же Host: ledger.lab.internal пути /api и /api/hello совпадут с этим правилом, которое ссылается на Service ledger-api. В /apix первый сегмент целиком равен apix, поэтому запрос не совпадёт с этим правилом. Если у этого Gateway других подходящих правил нет, он вернёт HTTP 404 без обращения к ledger-api. Успешное сопоставление пути определяет назначение запроса. Код ответа на совпавший путь зависит от работы backend и приложения.
 
 TLS и исходная личность
 
@@ -1724,7 +1746,7 @@ hostPath даёт доступ к файловой системе node, hostNetw
 
 Том XXVI · Книга VI · Эксплуатация и развитие
 
-Диагностика по объекту, процессу и ресурсуНужны три независимых взгляда: намерение и status API, локальное исполнение node и результат запроса приложения. Метрика использования не объясняет причину сама. · 1134 словСодержание главы
+Диагностика по объекту, процессу и ресурсуНужны три независимых взгляда: намерение и status API, локальное исполнение node и результат запроса приложения. Метрика использования не объясняет причину сама. · 1255 словСодержание главы
 
 Короткая лестница наблюдений
 
@@ -1745,10 +1767,12 @@ QoS и квантили без подмены измерения
 kubectl --context "$LAB_CONTEXT" -n lab get deployment ledger-api -o wide
 kubectl --context "$LAB_CONTEXT" -n lab describe pod POD_NAME
 kubectl --context "$LAB_CONTEXT" -n lab logs POD_NAME -c api --since=10m --timestamps
-kubectl --context "$LAB_CONTEXT" -n lab logs POD_NAME -c api --previous --tail=100
+kubectl --context "$LAB_CONTEXT" -n lab logs POD_NAME -c api --previous --tail=100 --timestamps
 kubectl --context "$LAB_CONTEXT" -n lab get events --sort-by=.metadata.creationTimestamp
 
-Сравните logs без --previous и с ним: первый относится к текущему container instance, второй — к доступному предыдущему. --tail=100 ограничивает строки, --since — время. Никакой флаг не восстанавливает уже ротированный файл. --all-containers может смешать app/init/sidecar; всегда отмечайте Pod UID, container name, timestamps и timezone. Не помещайте credentials в журнал ради диагностики.
+Допустим, фаза Pod — Running. В выводе describe pod у контейнера api видны State: Running, Last State: Terminated и Restart Count: 1. Kubelet уже запустил следующий экземпляр контейнера внутри того же Pod. Для разбора завершения запишите Exit Code из Last State и найдите в журнале прежнего запуска строки перед временем Finished.
+
+Команда logs --previous запрашивает доступный журнал предыдущего экземпляра api в этом Pod. В этом примере команда без флага читает журнал текущего запуска. Сверьте UID Pod и часовой пояс: при повторном использовании имени с новым UID --previous относится уже к новому Pod. --timestamps выводит время каждой строки, --tail=100 ограничивает вывод сотней строк, --since задаёт относительное окно. Ротация может убрать нужные строки. --all-containers объединяет вывод разных контейнеров. Не добавляйте в журнал секреты.
 
 kubectl debug и scratch
 
@@ -1760,7 +1784,7 @@ kubectl top pod читает resource metrics API, обычно предоста
 
 OOM, throttling, eviction — разные механизмы
 
-Memory cgroup OOM (out of memory, нехватка памяти) kill может завершить container при достижении memory limit; status lastState.terminated.reason=OOMKilled вместе с node/cgroup данными — сильная подсказка. Exit137 означает SIGKILL-подобный результат по shell convention, но сам по себе не доказывает OOM: возможна принудительная остановка. Go heap меньше RSS: stacks, runtime, mappings и kernel accounting добавляют расход. GOMEMLIMIT помогает Go управлять памятью runtime как мягким бюджетом, но не является cgroup limit и не гарантирует отсутствие OOM.
+Memory cgroup OOM (out of memory, нехватка памяти) kill может завершить container при достижении memory limit; status lastState.terminated.reason=OOMKilled вместе с node/cgroup данными — сильная подсказка. Exit137 означает SIGKILL-подобный результат по shell convention, но сам по себе не доказывает OOM: возможна принудительная остановка. Счётчик HeapAlloc из runtime.MemStats учитывает байты выделенных и ещё не освобождённых объектов кучи Go. RSS показывает страницы адресного пространства процесса, находящиеся в RAM, включая страницы кучи, стеков, исполняемого кода и отображённых файлов. В каталоге cgroup v2 контейнера текущий расход группы показывает memory.current, её предел — memory.max. Файл memory.stat раскрывает состав учтённой памяти, включая анонимную память, файловый кеш, таблицы страниц и сетевые буферы. GOMEMLIMIT помогает Go управлять памятью runtime как мягким бюджетом, но не является cgroup limit и не гарантирует отсутствие OOM.
 
 CPU throttling ограничивает доступное CPU-время при quota; процесс может оставаться живым и показывать высокий p99 из-за ожидания. Смотрите throttled seconds/periods и CPU saturation вместе с latency, а не только средний usage. Node-pressure eviction — kubelet освобождает ресурс при давлении memory/disk/PID и выбирает Pods по условиям requests/priority/usage; это не то же, что container memory OOM. QoS (quality of service, класс обслуживания) Guaranteed/Burstable/BestEffort выводятся из resource specifications и влияют на обработку давления, но не дают абсолютной гарантии не быть убитым.
 

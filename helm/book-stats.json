@@ -2,7 +2,7 @@
   {
     "id": "00-route",
     "title": "Helm: чарт и установка приложения",
-    "words": 591,
+    "words": 592,
     "part": "Начало",
     "number": "•"
   },
@@ -23,21 +23,21 @@
   {
     "id": "03-helm-chart",
     "title": "Чарт как проверяемый интерфейс",
-    "words": 493,
+    "words": 708,
     "part": "Начало",
     "number": "3"
   },
   {
     "id": "04-helm-values",
     "title": "Values: типы и порядок объединения",
-    "words": 1325,
+    "words": 1369,
     "part": "Книга I · Данные и язык шаблонов",
     "number": "4"
   },
   {
     "id": "05-helm-template-model",
     "title": "Go templates: выражение, функция и байты",
-    "words": 851,
+    "words": 860,
     "part": "Книга I · Данные и язык шаблонов",
     "number": "5"
   },
@@ -78,8 +78,8 @@
   },
   {
     "id": "11-helm-first-release",
-    "title": "Первый release: от image до HTTP-ответа",
-    "words": 830,
+    "title": "Первый релиз Helm: от образа до HTTP-ответа",
+    "words": 974,
     "part": "Книга III · Жизненный цикл релиза",
     "number": "11"
   },
@@ -142,7 +142,7 @@
   {
     "id": "99-glossary",
     "title": "Словарь · Helm",
-    "words": 1775,
+    "words": 1786,
     "part": "Справочник",
     "number": "•"
   }
