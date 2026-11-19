@@ -60,6 +60,9 @@ html{scroll-padding-top:76px}body{padding-bottom:0}main{padding:24px 20px calc(1
 .chapter .command-ref{border-bottom:0!important;text-decoration:none!important;color:var(--accent)!important;cursor:pointer}
 .chapter .command-ref:hover:not(:focus-visible){outline:none}
 .chapter a:focus-visible,.drawer a:focus-visible,.chapter .command-ref:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:3px}
+.chapter pre .command-ref{color:var(--code-text)!important}
+.chapter pre .command-ref:hover,.chapter pre .command-ref:focus-visible{background:transparent!important}
+.chapter pre .command-ref:focus-visible{outline-color:var(--code-text)}
 }
 '''
 
