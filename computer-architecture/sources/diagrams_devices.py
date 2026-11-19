@@ -105,7 +105,7 @@ DIAGRAMS = [{'id': 'ca-devices-trap',
   'volume': 'computer-architecture',
   'chapter': 'ca-22-io-interconnects',
   'anchor': 'ca-22-io-interconnects',
-  'insert_before': '<h2>Публикация должна произойти в правильном порядке</h2>',
+  'insert_before': '<h2>Порядок публикации описателя</h2>',
   'title': 'Поля, видимость, владение и doorbell',
   'intro': 'Поля в RAM становятся видимыми до того, как устройство узнает о новой работе через MMIO.',
   'assumptions': 'Учебная последовательность событий с параметрами из главы. Переходы не измеряют аппаратные такты. '
