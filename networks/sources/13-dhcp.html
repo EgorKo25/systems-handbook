@@ -163,7 +163,8 @@ tcpdump -nn -vvv -r control-samples/control-packets.pcap 'udp port 67 or 68'</co
 
 <h2 id="dhcp-live-isolated">10.13. Отдельный опыт с работающим сервером</h2>
 <p>Программа <code>isolated-control-lab.sh</code> выполняет уже настоящий обмен с установленным dnsmasq. Она создаёт новые пользовательское, монтажное и сетевое пространства Linux, внутри — два изолированных сетевых пространства с виртуальным проводом. Основные интерфейсы и сетевые службы компьютера не перенастраиваются. Нужны команды <code>unshare</code>, <code>ip</code>, <code>mount</code>, <code>sysctl</code>, <code>dnsmasq</code> и <code>python3</code>, а также разрешённое системой создание пользовательских пространств.</p>
-<pre><code>cd /путь/к/network-textbook/lab-assets
+<p>Откройте Bash в каталоге <code>networks</code> сохранённого полного комплекта книги. Вложенный каталог <code>labs</code> содержит оба скрипта; путь веб-страницы не задаёт текущий каталог терминала.</p>
+<pre><code>cd labs || exit 1
 bash isolated-control-lab.sh
 # Прочитать описание опыта, затем выполнить:
 bash isolated-control-lab.sh --run</code></pre>
