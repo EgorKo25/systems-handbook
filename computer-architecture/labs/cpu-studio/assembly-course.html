@@ -231,6 +231,43 @@ again:
 </div>
 <p>Адрес <code>again</code> равен <code>0x100C</code> в обеих сборках. При старте с 3 тело выполняется трижды и <code>R0 = 3</code>. При старте с 1 тело успевает выполниться один раз до первого <code>JNZ</code>, поэтому <code>R0 = 1</code>. К моменту остановки <code>R1 = 0</code> в обоих случаях.</p>
 </details>
+<h3 id="carry-overflow-exercise">Перенос C и знаковое переполнение V</h3>
+<p>Восьмибитное сложение оставляет в регистре младшие восемь битов суммы. Флаг <code>C</code> показывает перенос в девятый бит при беззнаковом сложении. Флаг <code>V</code> показывает, что сумма при знаковом сложении вышла за диапазон от −128 до 127.</p>
+<pre><code id="carry-overflow-source">.org 0x20
+    LDI R0, 127
+    ADDI R0, 1
+    JC unsigned_carry
+    JV signed_overflow
+    LDI R2, 0
+    HALT
+unsigned_carry:
+    LDI R2, 1
+    HALT
+signed_overflow:
+    LDI R2, 2
+    HALT</code></pre>
+<p>После <code>ADDI</code> команда <code>JC</code> переходит к <code>unsigned_carry</code> при <code>C = 1</code>. Иначе выполняется <code>JV</code>, которая проверяет <code>V</code> от того же сложения и переходит к <code>signed_overflow</code> при <code>V = 1</code>. Каждая ветвь записывает своё число в <code>R2</code> и завершает программу.</p>
+<ol>
+<li><a id="carry-overflow-ide" href="index.html">Откройте конструктор для опыта с C и V</a> и вставьте программу в редактор. В панели «Архитектура» раскройте «Изменить устройство процессора» и задайте разрядность <strong>8 бит</strong>, <strong>4 регистра</strong> и <strong>256 байт</strong> памяти. Нажмите «Применить и собрать».</li>
+<li>Для каждого входа предскажите флаги <code>C</code> и <code>V</code> после сложения, <code>PC</code> после каждого выполненного перехода и конечный <code>R2</code>. Для расчёта адресов начните с <code>0x20</code> и отсчитайте по четыре байта на команду. Метка занимает адрес команды под ней.</li>
+<li>Дважды нажмите «Шаг» и сверьте флаги после <code>ADDI</code>. Выполните <code>JC</code> и проверьте <code>PC</code> в списке регистров. Если следующим идёт <code>JV</code>, выполните его и ещё раз проверьте <code>PC</code>. Дойдите до <code>HALT</code> и прочитайте <code>R2</code>.</li>
+<li>Повторите опыт с числами <code>255</code> и <code>126</code>. Меняйте только число в <code>LDI R0, 127</code> и нажимайте «Собрать» перед каждым прогоном.</li>
+</ol>
+<details>
+<summary>Сверить флаги и переходы</summary>
+<div class="table-wrap">
+<table id="carry-overflow-results">
+<thead><tr><th scope="col">Вход</th><th scope="col">C, V</th><th scope="col">PC после JC</th><th scope="col">PC после JV</th><th scope="col">R2</th></tr></thead>
+<tbody>
+<tr><th scope="row">127</th><td>0, 1</td><td><code>0x2C</code></td><td><code>0x40</code></td><td>2</td></tr>
+<tr><th scope="row">255</th><td>1, 0</td><td><code>0x38</code></td><td>—</td><td>1</td></tr>
+<tr><th scope="row">126</th><td>0, 0</td><td><code>0x2C</code></td><td><code>0x30</code></td><td>0</td></tr>
+</tbody>
+</table>
+</div>
+<p>При входе 127 сумма 128 помещается в беззнаковый байт. В знаковом диапазоне 128 не представимо, и сохранённый байт <code>0x80</code> читается как −128.</p>
+<p>При входе 255 байт <code>0xFF</code> означает −1 в знаковой записи. Сумма −1 + 1 равна нулю и помещается в знаковый диапазон, а беззнаковая сумма 255 + 1 даёт перенос. Поэтому <code>JC</code> сразу уводит выполнение на <code>0x38</code> и <code>JV</code> пропускается. Для 126 + 1 сумма 127 помещается в оба диапазона.</p>
+</details>
 </section>
 <section id="subroutine"><h2>CALL, стек и возврат</h2>
 <p>Ниже программа получает значение из порта, передаёт управление подпрограмме и выводит увеличенный результат.</p>

@@ -155,7 +155,7 @@
     "slug": "grafana",
     "title": "Grafana: от вопроса к данным, графику и проверяемому сигналу",
     "volume": "XXV",
-    "words": 17194,
+    "words": 17294,
     "chapters": 22,
     "terms": 87
   },
@@ -187,7 +187,7 @@
     "slug": "ansible",
     "title": "Ansible: от SSH и одной задачи до управляемого выпуска Go",
     "volume": "XXII",
-    "words": 21112,
+    "words": 21209,
     "chapters": 24,
     "terms": 96
   },
