@@ -35,4 +35,15 @@ helm upgrade ledger ./chart --reuse-values --set replicaCount=2 \
 <p>В 4.3.1 rollback-on-failure включает watcher, если оставлен hookOnly, и при неудаче пытается вернуться к предыдущему успешному релизу. Это компенсирующее действие с собственными ошибками API и обработчиков, а не атомарная отмена. До возврата часть ресурсов и внешние побочные эффекты уже могли измениться. Cleanup-on-fail разрешает удаление новых ресурсов неудачного обновления; он не возвращает запись в БД и не уничтожает все внешние эффекты обработчика.</p>
 <p>Сломанный readinessPath=/missing-readyz создаёт новый Pod с живым процессом, но проба готовности получает 404. При maxUnavailable=0 старый готовый Pod может сохранить обслуживание, а обновление дойдёт до предельного времени. После исправления пробы следующий upgrade восстанавливает обновление экземпляров без удаления релиза или сброса. Измеряйте принятие API-запросов, готовые реплики и долю ошибок HTTP отдельно: failed в истории не означает, что все прежние пользователи уже потеряли доступ.</p>
 
+<p><strong>Упражнение к рисунку.</strong> Начните с двух готовых Pod ревизии 1. В модели API принимает новый <code>MESSAGE</code> и шаблон с пробой <code>/missing-readyz</code>. Места хватает ещё на один Pod, <code>maxSurge=1</code> и <code>maxUnavailable=0</code>. Helm ждёт готовности. Флаг <code>--rollback-on-failure</code> выключен.</p>
+<p>Перед тем как открыть шаг «Ожидание завершилось ошибкой», запишите три строки. Какой статус у ревизии 2 в истории Helm? Какие данные теперь хранятся в ConfigMap и шаблоне Deployment? Сколько старых Pod остаются готовыми и какое сообщение они используют?</p>
+<details class="callout">
+<summary>Сверить ответ со схемой</summary>
+<ol>
+<li><strong>История Helm.</strong> Ревизия 2 получила статус <code>failed</code> после истечения времени ожидания.</li>
+<li><strong>Объекты API.</strong> В ConfigMap уже новый <code>MESSAGE</code>. Deployment хранит шаблон ревизии 2 с пробой <code>/missing-readyz</code>. В модели эти поля сохраняются после ошибки ожидания.</li>
+<li><strong>Готовые Pod.</strong> Оба старых Pod в этой модели остаются готовыми и используют прежний <code>MESSAGE</code> из своего окружения. Новый Pod получает 404 на пробе и остаётся неготовым.</li>
+</ol>
+</details>
+
 <h2>Первичные источники и версия</h2><p>Проверено 1 ноября 2026; основной CLI Helm 4.3.1, chart API v2. <a href="https://helm.sh/docs/helm/helm_upgrade/">Upgrade flags</a>, <a href="https://github.com/helm/helm/blob/v4.3.1/pkg/action/upgrade.go">Values exact implementation</a>, <a href="https://helm.sh/docs/overview/">Helm 4 SSA</a>, <a href="https://kubernetes.io/docs/reference/using-api/server-side-apply/">Kubernetes SSA</a>.</p>
