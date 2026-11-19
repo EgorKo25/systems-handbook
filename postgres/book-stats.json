@@ -75,7 +75,7 @@
     {
       "id": "14-locks",
       "title": "Блокировки и взаимные ожидания",
-      "words": 1636
+      "words": 1810
     },
     {
       "id": "15-vacuum",
@@ -125,7 +125,7 @@
     {
       "id": "24-ha-patroni",
       "title": "Высокая доступность и Patroni",
-      "words": 5953
+      "words": 6110
     },
     {
       "id": "99-glossary",
@@ -133,7 +133,7 @@
       "words": 8937
     }
   ],
-  "words": 79340,
+  "words": 79671,
   "terms": 441,
   "external_assets": 0
 }

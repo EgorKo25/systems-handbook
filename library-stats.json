@@ -19,7 +19,7 @@
     "slug": "bash",
     "title": "Bash: от объектов ядра до надёжного сценария",
     "volume": "IV",
-    "words": 54338,
+    "words": 54423,
     "chapters": 19,
     "terms": 273
   },
@@ -27,7 +27,7 @@
     "slug": "postgres",
     "title": "PostgreSQL: от SQL до эксплуатации и высокой доступности",
     "volume": "IX",
-    "words": 79340,
+    "words": 79671,
     "chapters": 25,
     "terms": 441
   },
@@ -67,7 +67,7 @@
     "slug": "gitlab",
     "title": "GitLab: платформа, исполнение CI и эксплуатация",
     "volume": "XX",
-    "words": 24553,
+    "words": 24591,
     "chapters": 18,
     "terms": 167
   },
@@ -171,7 +171,7 @@
     "slug": "argocd",
     "title": "Argo CD: GitOps, согласование состояния и эксплуатация",
     "volume": "XXVIII",
-    "words": 18956,
+    "words": 18981,
     "chapters": 21,
     "terms": 97
   },
