@@ -55,17 +55,17 @@
     {
       "id": "10-ipc",
       "title": "Как процессы договариваются",
-      "words": 3723
+      "words": 3754
     },
     {
       "id": "11-boot",
       "title": "От включения до первой службы",
-      "words": 1457
+      "words": 1580
     },
     {
       "id": "12-services",
       "title": "Как служба работает под наблюдением",
-      "words": 1775
+      "words": 1810
     },
     {
       "id": "13-devices-network",
@@ -75,17 +75,17 @@
     {
       "id": "14-isolation",
       "title": "Как собирается контейнер",
-      "words": 1848
+      "words": 1900
     },
     {
       "id": "15-observation",
       "title": "Как читать состояние системы",
-      "words": 2274
+      "words": 2300
     },
     {
       "id": "16-investigation",
       "title": "Проследить запрос и расследовать сбой",
-      "words": 1921
+      "words": 1975
     },
     {
       "id": "17-experiments",
@@ -103,7 +103,7 @@
       "words": 8642
     }
   ],
-  "words": 55975,
+  "words": 56296,
   "terms": 348,
   "external_assets": 0
 }
