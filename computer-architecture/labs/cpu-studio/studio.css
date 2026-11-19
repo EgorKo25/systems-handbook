@@ -251,3 +251,18 @@ summary { padding: 8px 0; color: var(--accent); font-weight: 650; }
   .listing-scroll { min-height: 0; max-height: none; overflow: visible; }
   .port-output { max-height: none; }
 }
+
+#rv32-source {
+  display: block;
+  width: 100%;
+  min-height: 9rem;
+  padding: 12px;
+  border: 0;
+  resize: vertical;
+  background: var(--code);
+  color: var(--code-ink);
+  font: 14px/1.6 var(--mono);
+}
+
+#rv32-source:focus-visible { outline-offset: -3px; }
+#rv32-listing { margin: 0; padding: 12px; }

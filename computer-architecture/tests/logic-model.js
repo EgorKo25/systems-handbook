@@ -41,4 +41,15 @@ check('binary32 subnormal/nearest-even boundary',()=>{assert.equal(M.float32(2**
 check('CMOS complementary paths for every stable input',()=>{for(const kind of ['NOT','NAND','NOR'])for(let a=0;a<2;a++)for(let b=0;b<(kind==='NOT'?1:2);b++){const r=M.cmos(kind,a,b),expected=kind==='NOT'?1-a:kind==='NAND'?1-(a&b):1-(a|b);assert.equal(r.output,expected);assert.equal(Number(r.conductingUp.length>0)+Number(r.conductingDown.length>0),1);}});
 check('changed CMOS input changes active path',()=>{const a=M.cmos('NAND',0,1),b=M.cmos('NAND',1,1);assert.deepEqual(a.conductingUp,[['P_A']]);assert.deepEqual(a.conductingDown,[]);assert.deepEqual(b.conductingUp,[]);assert.deepEqual(b.conductingDown,[['N_A','N_B']]);assert.throws(()=>M.cmos('NAND',2,0));});
 check('RC calculation uses stated units/energy',()=>{const r=M.rcCharge({resistanceOhm:10000,capacitanceFarad:10e-15,supplyVolt:1,timeSecond:100e-12});assert(Math.abs(r.tauSecond-100e-12)<1e-24);assert(Math.abs(r.outputVolt-(1-Math.exp(-1)))<1e-12);assert.equal(r.fullCycleSupplyJoule,10e-15);const larger=M.rcCharge({resistanceOhm:10000,capacitanceFarad:20e-15,supplyVolt:1,timeSecond:100e-12});assert(larger.outputVolt<r.outputVolt);});
+check('edited assembly produces different output and reports source errors', () => {
+  const variant = M.SOURCE.replace('addi x6, x6, 1', 'addi x6, x6, 2');
+  const machine = M.create(variant);
+  assert.equal(M.read32(machine.memory, 0x1008), 0x00230313);
+  M.run(machine);
+  assert.equal(M.read32(machine.memory, 0x2200), 44);
+  assert.equal(machine.status, 'breakpoint');
+  assert.throws(() => M.assemble('# comment\naddi x6,x6,2048'), /Строка 2/);
+  assert.throws(() => M.assemble('jal x0,0'), /вне учебного профиля/);
+  assert.throws(() => M.assemble('addi x6,x 6,1'), /регистр/);
+});
 console.log(JSON.stringify({kind:'executed-pure-browser-engine-in-Node',passed:true,checks,randomCounterInputs:1000,adderPairs:256,not:'native CPU, cycle timing, UI or full RV32I validation'}));

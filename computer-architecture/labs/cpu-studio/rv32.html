@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Первые пять команд RV32I · IDE</title>
+  <link rel="stylesheet" href="studio.css">
+  <script src="../m32/appearance.js" defer></script>
+  <script src="../logic/model.js" defer></script>
+  <script src="rv32.js" defer></script>
+</head>
+<body>
+  <header class="site-bar">
+    <nav aria-label="Режим IDE">
+      <a href="index.html">Учебный процессор</a>
+      <a href="rv32.html" aria-current="page">RV32I</a>
+      <a href="../../index.html#ca-01-computer-model">Пример в книге</a>
+    </nav>
+    <label>Тема <select id="studio-theme"></select></label>
+    <input id="warmth" type="range" hidden aria-label="Теплота оформления">
+  </header>
+  <main>
+    <header class="intro"><div>
+      <h1>Первые пять команд RV32I</h1>
+      <p>Код начинается по адресу 0x1000. На входе по адресу 0x2000 лежит число 42. После ADDI посмотрите на x6, затем после SW сравните его с байтами по адресу 0x2200.</p>
+      <p>В этом режиме доступны LUI, LW, ADDI, SW и EBREAK. EBREAK останавливает учебный запуск.</p>
+    </div></header>
+    <section class="workbench" aria-label="Редактор и выполнение">
+      <div class="execution">
+        <div class="actions">
+          <button id="assemble" class="primary" type="button">Собрать</button>
+          <button id="step" type="button">Шаг</button>
+          <button id="run" type="button">Запустить</button>
+          <button id="reset" type="button">Сбросить выполнение</button>
+        </div>
+        <p id="status" role="status"></p>
+      </div>
+      <section class="panel code-panel">
+        <header class="panel-header"><h2><label for="rv32-source">Исходный код</label></h2></header>
+        <div class="source-scroll"><textarea id="rv32-source" rows="7" cols="32" spellcheck="false"></textarea></div>
+      </section>
+      <section class="panel">
+        <header class="panel-header"><h2>Состояние машины</h2></header>
+        <dl>
+          <dt>PC</dt><dd id="pc"></dd>
+          <dt>x5</dt><dd id="x5"></dd>
+          <dt>x6</dt><dd id="x6"></dd>
+          <dt>Вход по адресу 0x2000</dt><dd id="input-word"></dd>
+          <dt>Выход по адресу 0x2200</dt><dd id="output-word"></dd>
+        </dl>
+      </section>
+      <section class="panel">
+        <header class="panel-header"><h2>Листинг сборки</h2></header>
+        <div class="listing-scroll"><pre id="rv32-listing"></pre></div>
+      </section>
+    </section>
+  </main>
+</body>
+</html>

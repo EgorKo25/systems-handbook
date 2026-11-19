@@ -8,7 +8,79 @@
 }(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
   const SIZE=65536, ENTRY=0x1000, TRACE_LIMIT=1000;
-  const PROGRAM=Object.freeze([0x000022b7,0x0002a303,0x00130313,0x2062a023,0x00100073]);
+  const encoding = Object.freeze({ lui: 0x37, addi: 0x13, lw: 0x03, sw: 0x23, ebreak: 0x00100073 });
+  const wordAccess = 2;
+  const SOURCE = [
+    'lui x5, 0x2',
+    'lw x6, 0(x5)',
+    'addi x6, x6, 1',
+    'sw x6, 512(x5)',
+    'ebreak',
+  ].join('\n');
+  function register(text) {
+    if (!/^x(?:[0-9]|[12][0-9]|3[01])$/i.test(text)) {
+      throw new Error('Ожидается регистр x0–x31');
+    }
+    return Number(text.slice(1));
+  }
+
+  function immediate(text, min, max) {
+    if (!/^-?(?:0x[0-9a-f]+|[0-9]+)$/i.test(text)) {
+      throw new Error('Ожидается целая константа');
+    }
+    const value = text.startsWith('-') ? -Number(text.slice(1)) : Number(text);
+    if (!Number.isSafeInteger(value) || value < min || value > max) {
+      throw new Error('Константа выходит за границы поля');
+    }
+    return value;
+  }
+
+  function assembleLine(line) {
+    const source = line.replace(/#.*/, '').trim();
+    if (!source) return null;
+    const [name, operands = ''] = /^([^\s]+)(?:\s+(.*))?$/.exec(source).slice(1);
+    const args = operands.split(',').map(arg => arg.trim());
+    const op = name.toLowerCase();
+    if (op === 'ebreak' && !operands) return encoding.ebreak;
+    if (op === 'lui' && args.length === 2) {
+      const upper = immediate(args[1], 0, 0xfffff);
+      return ((upper << 12) | (register(args[0]) << 7) | encoding.lui) >>> 0;
+    }
+    if (op === 'addi' && args.length === 3) {
+      const imm = immediate(args[2], -2048, 2047) & 0xfff;
+      return ((imm << 20) | (register(args[1]) << 15) | (register(args[0]) << 7) | encoding.addi) >>> 0;
+    }
+    if ((op === 'lw' || op === 'sw') && args.length === 2) {
+      const address = /^([^()]+)\(\s*(x[0-9]+)\s*\)$/i.exec(args[1]);
+      if (!address) throw new Error('Ожидается смещение(регистр)');
+      const imm = immediate(address[1].trim(), -2048, 2047) & 0xfff;
+      const base = register(address[2]) << 15;
+      const reg = register(args[0]);
+      if (op === 'lw') return ((imm << 20) | base | (wordAccess << 12) | (reg << 7) | encoding.lw) >>> 0;
+      return (((imm >>> 5) << 25) | (reg << 20) | base | (wordAccess << 12) | ((imm & 31) << 7) | encoding.sw) >>> 0;
+    }
+    throw new Error('Команда или форма операндов вне учебного профиля');
+  }
+
+  function assemble(source) {
+    const listing = [];
+    for (const [index, text] of source.split(/\r?\n/).entries()) {
+      try {
+        const word = assembleLine(text);
+        if (word === null) continue;
+        const address = ENTRY + 4 * listing.length;
+        // Leave the input and output words intact.
+        if (address >= 0x2000) throw new Error('Код не помещается до входных данных');
+        listing.push({ address, word, text, line: index + 1 });
+      } catch (error) {
+        throw new Error('Строка ' + (index + 1) + '. ' + error.message);
+      }
+    }
+    if (!listing.length) throw new Error('Введите хотя бы одну команду');
+    return listing;
+  }
+
+  const PROGRAM = Object.freeze(assemble(SOURCE).map(row => row.word));
   const u32=n=>n>>>0;
   const hex=(n,width=8)=>u32(n).toString(16).toUpperCase().padStart(width,'0');
   const signed=(n,bits)=>{const sign=2**(bits-1);return n>=sign?n-2**bits:n;};
@@ -18,18 +90,20 @@
   }
   function read32(memory,address){checkWord(address);return u32(memory[address]+memory[address+1]*256+memory[address+2]*65536+memory[address+3]*16777216);}
   function write32(memory,address,value){checkWord(address);for(let i=0;i<4;i++)memory[address+i]=u32(value)>>>8*i&255;}
-  function create(){
+  function create(source = SOURCE){
+    const listing = assemble(source);
     const s={version:1,profile:'M32-physical-RV32I-five',pc:ENTRY,regs:new Uint32Array(32),memory:new Uint8Array(SIZE),status:'ready',retired:0,attempts:0,trap:null,trace:[],traceDropped:0};
-    PROGRAM.forEach((word,i)=>write32(s.memory,ENTRY+4*i,word));write32(s.memory,0x2000,42);return s;
+    for (const { word, address } of listing) write32(s.memory,address,word);
+    write32(s.memory,0x2000,42);return s;
   }
   function decode(word){
     word=u32(word);const opcode=word&127,rd=word>>>7&31,funct3=word>>>12&7,rs1=word>>>15&31,rs2=word>>>20&31;
     const result={word,opcode,rd,funct3,rs1,rs2};
-    if(word===0x00100073)return {...result,op:'EBREAK',format:'SYSTEM',immediate:null};
-    if(opcode===0x37)return {word,opcode,rd,op:'LUI',format:'U',immediate:u32(word&0xfffff000),upper:word>>>12};
-    if(opcode===0x13&&funct3===0)return {...result,op:'ADDI',format:'I',immediate:signed(word>>>20,12)};
-    if(opcode===3&&funct3===2)return {...result,op:'LW',format:'I',immediate:signed(word>>>20,12)};
-    if(opcode===0x23&&funct3===2){const imm=(word>>>25)*32+(word>>>7&31);return {...result,op:'SW',format:'S',immediate:signed(imm,12)};}
+    if(word===encoding.ebreak)return {...result,op:'EBREAK',format:'SYSTEM',immediate:null};
+    if(opcode===encoding.lui)return {word,opcode,rd,op:'LUI',format:'U',immediate:u32(word&0xfffff000),upper:word>>>12};
+    if(opcode===encoding.addi&&funct3===0)return {...result,op:'ADDI',format:'I',immediate:signed(word>>>20,12)};
+    if(opcode===encoding.lw&&funct3===wordAccess)return {...result,op:'LW',format:'I',immediate:signed(word>>>20,12)};
+    if(opcode===encoding.sw&&funct3===wordAccess){const imm=(word>>>25)*32+(word>>>7&31);return {...result,op:'SW',format:'S',immediate:signed(imm,12)};}
     throw new Error('unsupported-instruction');
   }
   function record(s,event){s.trace.push(event);if(s.trace.length>TRACE_LIMIT){const count=s.trace.length-TRACE_LIMIT;s.trace.splice(0,count);s.traceDropped+=count;}}
@@ -100,5 +174,5 @@
     const tauSecond=resistanceOhm*capacitanceFarad;
     return {tauSecond,outputVolt:supplyVolt*(1-Math.exp(-timeSecond/tauSecond)),fullCycleSupplyJoule:capacitanceFarad*supplyVolt*supplyVolt,storedAtFullJoule:.5*capacitanceFarad*supplyVolt*supplyVolt};
   }
-  return Object.freeze({SIZE,ENTRY,TRACE_LIMIT,PROGRAM,hex,u32,signed,checkWord,read32,write32,create,decode,step,run,snapshot,restore,addBits,float32,cmos,rcCharge});
+  return Object.freeze({SIZE,ENTRY,TRACE_LIMIT,PROGRAM,SOURCE,assemble,hex,u32,signed,checkWord,read32,write32,create,decode,step,run,snapshot,restore,addBits,float32,cmos,rcCharge});
 }));
