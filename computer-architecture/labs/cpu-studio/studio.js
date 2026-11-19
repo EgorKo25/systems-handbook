@@ -314,6 +314,26 @@
     renderSourcePC();
   }
 
+  function renderPCWord() {
+    const { address: pc, bytes, word, instruction, operands, error } = machine.inspectInstruction();
+    const formatBytes = values => values.length ? values.map(value => hex(value, 2)).join(' ') : '—';
+    const listing = bytes.length && bytes.every((_, i) => hasResidentByte.has(pc + i))
+      ? program.bytes.slice(pc - program.origin, pc - program.origin + bytes.length) : [];
+    $('pc-word-address').textContent = address(pc);
+    $('pc-word-listing').textContent = formatBytes(listing);
+    $('pc-word-memory').textContent = formatBytes(bytes);
+    $('pc-word-value').textContent = word === null ? '—' : '0x' + hex(word, 8);
+    $('pc-word-changed').hidden = !listing.some((byte, index) => byte !== bytes[index]);
+    if (error !== null) {
+      $('pc-word-decoded').textContent = 'Ошибка декодирования. ' + error;
+    } else {
+      const fields = Object.entries(operands).map(([name, value]) =>
+        name === 'imm' ? 'imm = ' + value : name + ' = r' + value);
+      $('pc-word-decoded').textContent = instruction.name + (fields.length ? ' · ' + fields.join(' · ') : '');
+    }
+    $('pc-word-open-memory').disabled = bytes.length === 0;
+  }
+
   function renderRegisters() {
     const regs = Array.from(machine.registers, (value, index) => ['R' + index, value, config.bits / 4]);
     regs.push(['PC', machine.pc, 4], ['SP', machine.sp, 4]);
@@ -424,6 +444,7 @@
 
   function renderMachine(follow = false) {
     renderPC(follow);
+    renderPCWord();
     renderRegisters();
     renderMemory(false);
     renderPorts();
@@ -685,6 +706,10 @@
       }
     });
     $('memory-prev').addEventListener('click', () => showMemory(memoryStart - pageSize));
+    $('pc-word-open-memory').addEventListener('click', () => {
+      showMemory(machine.pc);
+      $('memory-address').focus();
+    });
     $('memory-next').addEventListener('click', () => showMemory(memoryStart + pageSize));
     $('memory-grid').addEventListener('keydown', event => {
       if (event.target.tagName !== 'INPUT' || running || event.key !== 'Enter') return;
@@ -700,6 +725,7 @@
       const value = Number.parseInt(text, 16);
       machine.memory[addr] = value;
       updateMemoryField(field, Number(field.dataset.offset));
+      renderPCWord();
       message('По адресу ' + address(addr) + ' записано ' + hex(value, 2) + '.');
     });
 

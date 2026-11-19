@@ -6,8 +6,8 @@
   <title>Конструктор процессора · Архитектура компьютера</title>
   <script src="../m32/appearance.js"></script>
   <link rel="stylesheet" href="studio.css">
-  <script src="engine.js" defer></script>
-  <script src="studio.js" defer></script>
+  <script src="engine.js?v=1" defer></script>
+  <script src="studio.js?v=1" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#workspace">К рабочей области</a>
@@ -87,7 +87,16 @@
               <tbody id="listing"></tbody>
             </table>
           </div>
-          <p class="note panel-note" id="instruction-note">Стрелка <samp>▶</samp> указывает следующую команду по адресу <code>PC</code>.</p>
+          <div class="panel-note" aria-labelledby="pc-word-title">
+            <h3 id="pc-word-title">Слово по адресу PC <code id="pc-word-address"></code></h3>
+            <p><code>PC</code> хранит адрес, с которого процессор прочитает четыре байта для следующего шага. Байты показаны от меньшего адреса к большему.</p>
+            <p>Байты листинга <code id="pc-word-listing"></code></p>
+            <p>Байты RAM <code id="pc-word-memory"></code> · слово <code id="pc-word-value"></code></p>
+            <p id="pc-word-changed" hidden>Байты RAM отличаются от листинга.</p>
+            <p id="pc-word-decoded"></p>
+            <button id="pc-word-open-memory" type="button">Показать в памяти</button>
+          </div>
+          <p class="note panel-note" id="instruction-note">Стрелка <samp>▶</samp> отмечает строку листинга с адресом <code>PC</code>.</p>
         </section>
 
         <section class="panel registers-panel" aria-labelledby="register-title">

@@ -602,17 +602,31 @@
       });
     }
 
+    inspectInstruction(address = this.pc) {
+      const result = { address, bytes: [], word: null, instruction: null, operands: null, error: null };
+      try {
+        checkPc(address, this.memory.length);
+        result.bytes = Array.from(this.memory.subarray(address, address + INSTRUCTION_SIZE));
+        result.word = readNumber((index) => result.bytes[index - address], address, INSTRUCTION_SIZE);
+        const opcode = result.word & 0xff;
+        result.instruction = this.instructionSet.get(opcode) ?? null;
+        assert(result.instruction, `Неизвестный код операции 0x${opcode.toString(16).padStart(2, '0')}`);
+        result.operands = decode(result.word, result.instruction, this.config.registers);
+      } catch (error) {
+        result.error = error.message;
+      }
+      return result;
+    }
+
     step() {
       if (this.halted) return { kind: 'halt', message: 'Процессор остановлен', pc: this.pc };
       const address = this.pc;
       try {
         checkPc(address, this.memory.length);
         assert(this.steps < Number.MAX_SAFE_INTEGER, 'Счётчик шагов переполнен');
-        const word = readNumber((index) => this.memory[index], address, INSTRUCTION_SIZE);
-        const opcode = word & 0xff;
-        const instruction = this.instructionSet.get(opcode);
-        assert(instruction, `Неизвестный код операции 0x${opcode.toString(16).padStart(2, '0')}`);
-        const operands = decode(word, instruction, this.config.registers);
+        const { instruction, operands, error } = this.inspectInstruction(address);
+        assert(error === null, error);
+        const { opcode } = instruction;
         const state = {
           registers: [...this.registers], pc: address + INSTRUCTION_SIZE, sp: this.sp, flags: this.flags,
           writes: new Map(), consumed: new Map(), outputs: [], halted: false,
