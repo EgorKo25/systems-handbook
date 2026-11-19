@@ -20,12 +20,12 @@
     {
       "id": "03-process",
       "title": "Как появляется и живёт процесс",
-      "words": 1918
+      "words": 1854
     },
     {
       "id": "04-scheduling",
       "title": "Потоки, планировщик и совместная работа",
-      "words": 3973
+      "words": 3988
     },
     {
       "id": "05-memory",
@@ -103,7 +103,7 @@
       "words": 8642
     }
   ],
-  "words": 56059,
+  "words": 56010,
   "terms": 348,
   "external_assets": 0
 }
