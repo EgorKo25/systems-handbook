@@ -9,12 +9,24 @@
 <p>При 8 GiB всей машины начните с kind одним node и лимита памяти VM/container engine около 3–4 GiB, если ОС и IDE помещаются в остаток. Это начальная гипотеза, а не гарантия. При 16 GiB можно выделить cp1 2 vCPU/2.5 GiB и wk1 2 vCPU/2.5 GiB, оставив примерно 11 GiB до учёта гипервизора и прочих программ. На каждую VM планируем диск 25 GiB thin, затем измеряем фактически занятое. Нельзя складывать виртуальные размеры файлов и считать их свободной RAM. Одновременные image pulls и сборки могут исчерпать диск или вызвать memory pressure при маленьком приложении.</p>
 <h2>Фиксируем версии и происхождение</h2>
 <p>На 01.11.2026 stable.txt показал Kubernetes v1.37.2, stable-1.36.txt — v1.36.6. Для VM выбран второй; kubeadm, kubelet и kubectl фиксируем одним patch. Официальные release endpoints дали containerd v2.4.2, runc v1.5.2, reference CNI plugins v1.9.1, Calico v3.33.0 и kind v0.33.0. Calico 3.33 официально тестируется с Kubernetes 1.35/1.36/1.37. Это проверка опубликованной совместимости, не выполненный интеграционный тест нашей пары VM. Аппаратная архитектура amd64/arm64 должна совпадать у ОС, бинарника и образа.</p>
-<pre><code>curl -fL -o kubectl https://dl.k8s.io/release/v1.36.6/bin/linux/amd64/kubectl
-curl -fL -o kubectl.sha256 https://dl.k8s.io/release/v1.36.6/bin/linux/amd64/kubectl.sha256
-printf &#x27;%s  kubectl
-&#x27; &quot;$(cat kubectl.sha256)&quot; | sha256sum -c -
-chmod +x ./kubectl
-./kubectl version --client -o yaml</code></pre>
+<p>Ниже проверяем клиент для Linux amd64. Откройте Bash в личной учебной среде. Блок создаёт новый каталог, скачивает в него клиент и файл суммы. Команды пишут файлы только в созданный каталог.</p>
+<pre><code>(
+  kubectl_dir="$(mktemp -d "${TMPDIR:-/tmp}/kubectl-1.36.6.XXXXXX")" || exit 1
+  CDPATH= cd -- "$kubectl_dir" || exit 1
+  kubectl_dir="$(pwd -P)" || exit 1
+  printf 'Каталог попытки: %s\n' "$kubectl_dir"
+  curl -fL -o kubectl https://dl.k8s.io/release/v1.36.6/bin/linux/amd64/kubectl || exit 1
+  curl -fL -o kubectl.sha256 https://dl.k8s.io/release/v1.36.6/bin/linux/amd64/kubectl.sha256 || exit 1
+  expected="$(cat kubectl.sha256)" || exit 1
+  [[ "$expected" =~ ^[[:xdigit:]]{64}$ ]] || { printf 'Неверный формат SHA-256\n' &gt;&amp;2; exit 1; }
+  printf '%s  kubectl\n' "$expected" | sha256sum --check --strict - || exit 1
+  chmod u+x ./kubectl || exit 1
+  ./kubectl version --client -o yaml || exit 1
+  printf 'Проверенный клиент: %s/kubectl\n' "$kubectl_dir"
+)</code></pre>
+<p>Ожидаются <code>kubectl: OK</code> и версия <code>v1.36.6</code>. При ошибке загрузки или несовпадении суммы блок завершится до выдачи права на исполнение. Строка «Каталог попытки» позволяет найти файлы и после ошибки; каталог сохраняется для разбора. Он может содержать неполную загрузку.</p>
+<p>Строка «Проверенный клиент» появляется только после успешной проверки и запуска команды версии. Круглые скобки выполняют блок в отдельной оболочке: её <code>exit 1</code> прекращает попытку, не закрывая ваш терминал и не меняя его текущий каталог.</p>
+<p>Временный каталог может быть удалён при перезагрузке или очистке. Для следующих глав перенесите проверенный файл в постоянный личный каталог либо установите согласованный пакет той же версии. Если сама команда версии завершится ошибкой, файл уже будет исполняемым, но строка «Проверенный клиент» не появится. Сам блок не устанавливает клиент в <code>PATH</code>. Сравните показанный путь с результатом <code>command -v kubectl</code>: короткое имя может запускать другую установленную копию.</p>
 <p><code>-f</code> завершает curl ошибкой на HTTP-ошибке, <code>-L</code> следует redirect, <code>-o</code> задаёт файл. Сумма проверяет целостность относительно доверенно полученного значения; если атакующий заменил и бинарник, и сумму, арифметика не докажет происхождение. Сохраняйте TLS-цепочку доверия, официальный URL, release notes, опубликованные подписи/attestations там, где они предоставлены, и отдельно подтверждённую сумму. Не запускайте скачанное до проверки. На Windows используют официальный kubectl.exe той же версии, <code>Get-FileHash -Algorithm SHA256</code> и собственный kubeconfig; кластер остаётся Linux-кластером.</p>
 <h2>Что должно доехать без сети</h2>
 <p>Офлайн-набор содержит Ubuntu ISO с суммами и подписью поставщика, все .deb зависимости выбранного ОС/архитектуры, kubelet/kubeadm/kubectl и kubernetes-cni/cri-tools в согласованной версии, containerd/runc и systemd unit, CNI binaries, точный Calico manifest, все его images, control-plane/CoreDNS/pause/etcd images из <code>kubeadm config images list --config vm/kubeadm.yaml</code>, собственный Go binary/image, диагностический образ, исходники, Python wheels при необходимости и документацию. Kubernetes пакеты получают из отдельного minor-репозитория pkgs.k8s.io; legacy apt.kubernetes.io не используем.</p>
