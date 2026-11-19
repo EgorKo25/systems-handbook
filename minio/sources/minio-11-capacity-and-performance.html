@@ -20,6 +20,22 @@
 <h2>Конкуренция, память и очередь</h2>
 <p>Concurrency — число одновременно выполняемых запросов. Увеличение его скрывает отдельные задержки и может поднять throughput до насыщения CPU, сети или диска. После насыщения растёт очередь, время ожидания и число deadline failures. Модель L=λW связывает среднее число задач в устойчивой системе L, средний завершённый поток λ задач/с и среднее время W секунд; она не вычисляет p99 и неприменима как обещание для растущей без границ очереди.</p>
 <p>Буферы — только часть памяти. Если бы каждый из 32 запросов одновременно держал все N shard chunks одного B=1 MiB,K=2,N=4 блока, эти буферы заняли бы 32×4×512 KiB=64 MiB. Это явно заданная учебная схема владения буферами, не измеренный MinIO RSS. Реальная программа использует pools, goroutines, metadata, Go heap/GC, TLS и другие выделения. RSS процесса отличается от heap, а page cache и память гостевой VM учитываются отдельно.</p>
+<figure id="minio11-buffer-model" aria-labelledby="minio11-buffer-caption">
+<style>
+#minio11-buffer-model{margin:1.4em 0;padding:1em;border:1px solid var(--line,#777);border-radius:.5em;background:var(--paper,#fff);color:var(--text,#20252b)}
+#minio11-buffer-model .m11-request{padding:.8em;border:2px solid var(--accent,#246b5c);border-radius:.4em}
+#minio11-buffer-model .m11-buffers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5em;margin:.6em 0}
+#minio11-buffer-model .m11-buffer{padding:.5em .25em;text-align:center;border:1px solid var(--line,#777);border-radius:.3em;background:var(--soft,#eef1f4)}
+#minio11-buffer-model .m11-total{margin:.8em 0;font-weight:700}
+#minio11-buffer-model .m11-outside{padding:.7em;border:1px dashed var(--line,#777);border-radius:.3em}
+#minio11-buffer-model figcaption{margin-top:.8em}
+</style>
+<div class="m11-request"><strong>Один запрос: одновременно удерживает 4 отдельных буфера</strong>
+<div class="m11-buffers"><div class="m11-buffer">Буфер 1<br>512 KiB</div><div class="m11-buffer">Буфер 2<br>512 KiB</div><div class="m11-buffer">Буфер 3<br>512 KiB</div><div class="m11-buffer">Буфер 4<br>512 KiB</div></div></div>
+<div class="m11-total">32 таких запроса × 4 буфера × 512 KiB = 64 MiB буферов</div>
+<div class="m11-outside">За границей расчёта: структуры данных, TLS и другие выделения.</div>
+<figcaption id="minio11-buffer-caption">Учебная модель: каждый из 32 запросов одновременно держит четыре буфера. 64 MiB — сумма только этих буферов; для прогноза RSS нужны сведения об остальных выделениях и их использовании процессом.</figcaption>
+</figure>
 <p>Поэтому профиль 8–16 GiB хоста начинается с одного небольшого потока и последовательной сборки. RAM не создаёт независимых дисков. Нельзя назначать одновременно весь ресурс нескольким тяжёлым службам или обещать многоузловой HA-тест только по сумме гигабайт. Увеличивают один параметр за опыт, сохраняя выбранный объект и исходное серверное состояние.</p>
 <h2>Что фиксировать перед измерением</h2>
 <table><thead><tr><th>Поле опыта</th><th>Зачем оно нужно</th></tr></thead><tbody>
