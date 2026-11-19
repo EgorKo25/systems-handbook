@@ -30,12 +30,12 @@
     {
       "id": "05-memory",
       "title": "Виртуальная память по шагам",
-      "words": 4570
+      "words": 4481
     },
     {
       "id": "06-vfs",
       "title": "От имени файла к его байтам",
-      "words": 2288
+      "words": 2275
     },
     {
       "id": "07-storage",
@@ -103,7 +103,7 @@
       "words": 8642
     }
   ],
-  "words": 56010,
+  "words": 55908,
   "terms": 348,
   "external_assets": 0
 }
