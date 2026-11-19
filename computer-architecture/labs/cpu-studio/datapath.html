@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Тракт данных ADDI · Конструктор процессора</title>
+  <link rel="stylesheet" href="studio.css">
+  <script src="../m32/appearance.js" defer></script>
+  <script src="../logic/model.js?v=2" defer></script>
+  <script src="datapath.js" defer></script>
+  <style>
+    #datapath-settings { display:flex; flex-wrap:wrap; gap:12px; align-items:end }
+    #datapath-settings label { display:grid; gap:4px }
+    #datapath-settings input { max-width:100%; width:11rem }
+    .datapath-stages { display:grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,14rem),1fr)); padding:0; gap:10px; list-style:none }
+    .datapath-stages li { padding:12px; border:1px solid var(--line); border-radius:8px; overflow-wrap:anywhere }
+    .datapath-stages li[aria-current] { outline:2px solid currentColor; outline-offset:-2px }
+    .datapath-stages span { display:block; margin-top:4px }
+  </style>
+</head>
+<body>
+  <header class="site-bar">
+    <nav aria-label="Лаборатория"><a href="index.html">Конструктор</a><a href="rv32.html">Программы RV32I</a><a href="../../index.html#ca-08-instruction-cycle">Глава об исполнении</a></nav>
+    <label>Тема <select id="studio-theme"></select></label>
+    <input id="warmth" type="range" hidden aria-label="Теплота оформления">
+  </header>
+  <main>
+    <header class="intro"><div>
+      <h1>Тракт данных ADDI</h1>
+      <p>Команда прибавляет константу к x6. За четыре такта учебной схемы код проходит из памяти в регистр инструкции, операнды поступают в АЛУ, а сумма затем записывается в x6. PC меняется при записи результата.</p>
+    </div></header>
+    <section class="workbench" aria-label="Модель четырёх тактов">
+      <form id="datapath-settings">
+        <label>Начальное x6 <input id="initial" inputmode="numeric" value="42" required></label>
+        <label>Константа ADDI <input id="increment" inputmode="text" value="1" required></label>
+        <button type="submit">Применить и начать заново</button>
+      </form>
+      <div class="execution">
+        <button class="primary" id="clock" type="button">Следующий такт</button>
+        <p id="status" role="status"></p>
+      </div>
+      <p>PC <code id="pc"></code> · x6 <code id="register"></code></p>
+      <ol class="datapath-stages" aria-label="Тракт данных по порядку">
+        <li id="stage-0"><strong>1. Память → регистр инструкции</strong><span>Слово по 0x1000 <code id="word"></code></span><span>Регистр инструкции <code id="ir"></code></span></li>
+        <li id="stage-1"><strong>2. Декодер → входы АЛУ</strong><span>Исходный x6 и знаковая константа <code id="operand"></code></span></li>
+        <li id="stage-2"><strong>3. АЛУ → результат</strong><span>Младшие 32 бита суммы <code id="alu"></code></span></li>
+        <li id="stage-3"><strong>4. Запись x6 и смена PC</strong><span>Результат становится виден программе.</span></li>
+      </ol>
+      <details><summary>Упражнение с переполнением</summary><p>Задайте x6 равным 4294967295, константу 1 и выполните три такта. АЛУ уже выдаёт ноль, а x6 ещё хранит <code>0xFFFFFFFF</code>. На четвёртом такте x6 получит ноль.</p></details>
+    </section>
+  </main>
+</body>
+</html>
