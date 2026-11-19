@@ -1,14 +1,69 @@
-<header><h1>Путь migrate: от argv до commit</h1><p>Сеть, история, блокировка и SQL соединяются в один конечный процесс.</p></header>
+<header><h1>Как Flyway выполняет миграцию V2</h1><p>Проследим, когда в app.notes появляется title и по какой записи повторный запуск пропускает V2.</p></header>
 <h2>Участники по порядку</h2>
-<p><strong>argv</strong> — массив аргументов после обработки оболочкой. Bash убирает кавычки и разделяет слова; Flyway уже не видит исходные кавычки. Launcher выбирает Java и classpath, то есть набор Java-компонентов. CLI разбирает команду и настройки, resolver обнаруживает ресурсы. Ошибка имени, неизвестной настройки или отсутствующего файла может остановить процесс до DDL.</p>
-<p>JDBC-драйвер открывает TCP к 127.0.0.1:15432, проверяет TLS по CA/SAN, а затем проходит аутентификацию роли flyway_owner. PostgreSQL проверяет право CONNECT и контекст схемы. Flyway читает возможности PostgreSQL и history, валидирует соответствие файлов принятой истории. Он не загружает всё приложение Go в Java и не обращается к его HTTP-порту.</p>
+<p>После первого выпуска в базе уже есть <code>app.notes</code> и представление <code>app.note_count</code>. В каталоге проекта появился файл <code>V2__expand_title.sql</code>. Предыдущая глава показала, как Flyway распознаёт в имени версию 2. Продолжайте после <a href="#flyway-04-first-release">первого выпуска</a> в своей рабочей копии <code>labs/</code>, где лежат <code>lab.py</code>, <code>flyway.conf</code> и <code>migrations/</code>. Собственная база должна быть запущена и уже содержать V1 и R. Обёртка передаст CLI частные настройки подключения; выполните в этом каталоге:</p>
+<pre><code>python3 lab.py flyway migrate -target=2</code></pre>
+<p>Если V2 уже принята с теми же файлами, команда проверит историю и пропустит её.</p>
+<p>Bash запускает <code>lab.py</code>. Обёртка читает сохранённое подключение и передаёт отдельные аргументы <code>migrate</code> и <code>-target=2</code> стартовому скрипту Flyway. Скрипт запускает Java, а Flyway читает настройки и ищет миграции. Драйвер JDBC подключается к PostgreSQL на <code>127.0.0.1:15432</code>, проверяет сертификат сервера и проходит аутентификацию как <code>flyway_owner</code>. Теперь Flyway может сопоставить найденные файлы со строками таблицы <code>flyway_meta.flyway_schema_history</code>.</p>
 <h2>Критическая область истории</h2>
-<p><strong>Блокировка</strong> — координационное состояние сервера, заставляющее конфликтующие операции ждать или отказать. Для PostgreSQL Flyway использует advisory lock: прикладную блокировку с ключом, выбранным инструментом по объекту истории. Она нужна, чтобы два согласованно настроенных Flyway-процесса не решили одновременно исполнить одно pending-действие. После получения блокировки исполнитель обновляет сведения истории и повторно выбирает то, что ещё нужно выполнить. Решение info, полученное минуту назад, не является бронью следующей миграции.</p>
-<p>В исходнике 13.12.0 <code>PostgreSQLAdvisoryLockTemplate</code> применяет <code>pg_try_advisory_xact_lock</code> для транзакционной настройки либо <code>pg_try_advisory_lock</code> для сессионной, повторяет попытки в заданном бюджете и освобождает сессионный lock в finally. Дефолт — транзакционная блокировка. Наш conf явно выбирает сессионную, поскольку V5 создаёт индекс CONCURRENTLY; это официально рекомендованная настройка для этой операции.</p>
-<p>Сессионная означает «до явного unlock либо завершения соединения»; транзакционная — «до конца владеющей транзакции». У Flyway могут быть служебное и рабочее соединения, и нельзя отождествлять всю работу Java с одной транзакцией одного соединения. Упрощённое правило «SQL и history фиксируются вместе» верно для обычной успешной транзакционной миграции PostgreSQL, но требует уточнения для нетранзакционных действий и частичных отказов.</p>
+<p>Представьте, что два процесса Flyway одновременно нашли V2 и оба собираются выполнить <code>ALTER TABLE</code>. Перед выбором очередной миграции каждый запрашивает у PostgreSQL <code>advisory lock</code> с ключом, рассчитанным по таблице истории. Если ключ занят первым процессом, второй повторяет запрос в пределах <code>lockRetryCount</code>. Получив ключ, Flyway перечитывает историю. Если первый процесс уже зафиксировал V2, второму незачем снова добавлять <code>title</code>.</p>
+<p>С настройками стенда (<code>group=false</code>) Flyway освобождает блокировку после каждой миграции и при следующем выборе снова запрашивает её. Стенд задаёт <code>flyway.postgresql.transactional.lock=false</code>: PostgreSQL держит сессионную блокировку до явного освобождения ключа либо до закрытия соединения. Такая настройка нужна позже, когда V5 выполняет <code>CREATE INDEX CONCURRENTLY</code>. V2 по-прежнему выполняется в транзакции. Правила для обоих видов <code>advisory lock</code> есть в <a href="#99-glossary">словаре</a>.</p>
 <h2>Исполнение и ответ</h2>
-<p>Для подходящей транзакционной SQL-миграции Flyway начинает транзакцию, отправляет подготовленные SQL statements, PostgreSQL получает нужные объектные блокировки, меняет страницы/системный каталог и пишет WAL. <strong>WAL</strong> — журнал предзаписи для восстановления принятых изменений после сбоя. Результат записывается в history; commit делает переход видимым другим транзакциям по правилам PostgreSQL. После выбранного набора Flyway освобождает координацию и возвращает код процесса/отчёт.</p>
-<p>Если JDBC потерял ответ commit, оператор не знает результат только по ошибке клиента. После восстановления соединения сверяют history, реальные объекты и данные. Нельзя повторять нетранзакционный INSERT на основании «консоль не напечатала успех». Коды 13.12.0 различают семейства ошибок; автоматизация требует нулевой код и нужную проверку состояния, а не универсальный конкретный номер 1.</p>
+<p>Вот команды из <code>V2__expand_title.sql</code>. Flyway передаёт их PostgreSQL внутри транзакции. <code>SET LOCAL</code> задаёт предел ожидания при получении блокировки в этой транзакции.</p>
+<pre><code>SET LOCAL lock_timeout = '2s';
+ALTER TABLE app.notes ADD COLUMN title text;
+ALTER TABLE app.notes ALTER COLUMN body DROP NOT NULL;
+</code></pre>
+<p>Пока транзакция открыта, PostgreSQL добавляет столбец <code>title</code> и снимает требование <code>NOT NULL</code> с <code>body</code>. Flyway вставляет строку с <code>version=2</code> и <code>success=true</code>. При <code>COMMIT</code> PostgreSQL фиксирует оба изменения схемы и строку истории вместе. У старых заметок в <code>title</code> пока <code>NULL</code>: в файле нет команды, которая заполнила бы новый столбец.</p>
+<p>Если первый запуск завершился после фиксации V2, повтор той же команды с теми же файлами оставит в истории одну строку V2. Если соединение оборвалось в момент <code>COMMIT</code>, клиенту может быть неизвестно, успел ли сервер зафиксировать транзакцию. После восстановления подключения проверьте три признака: строку V2 с <code>success=true</code>, наличие <code>title</code> и снятый <code>NOT NULL</code> с <code>body</code>. В <a href="#flyway-07-history">следующей главе</a> показано, как прочитать строку истории и сопоставить её с выводом <code>info</code>.</p>
+<details><summary>Прочитать результат V2 после восстановления связи</summary>
+<p>В той же рабочей копии, при доступной собственной базе, выполните этот читающий запрос через функции <code>lab.py</code>. Он использует сохранённое подключение к <code>handbook</code> и ничего не меняет.</p>
+<pre><code>python3 - &lt;&lt;'PY'
+import lab
+config = lab.load()
+result = lab.sql(config, """
+SELECT label, result FROM (
+  SELECT 0 AS position, version AS label,
+         CASE WHEN success THEN 't' ELSE 'f' END AS result
+  FROM flyway_meta.flyway_schema_history WHERE version = '2'
+  UNION ALL
+  SELECT 1, column_name, is_nullable
+  FROM information_schema.columns
+  WHERE table_schema = 'app' AND table_name = 'notes'
+    AND column_name IN ('body', 'title')
+) AS observed ORDER BY position, label;
+""", capture=True)
+print(result.stdout, end="")
+PY</code></pre>
+<p>После успешного V2 ожидается:</p>
+<pre><code>2|t
+body|YES
+title|YES</code></pre>
+<p>Запрос читает историю и столбцы в одном снимке базы. Если исходная транзакция ещё работает, этот снимок может предшествовать её фиксации. Делать вывод об откате можно после подтверждённого завершения той транзакции. После отката V2 в исходном стенде строки версии 2 и столбца <code>title</code> нет, остаётся <code>body|NO</code>. Если результаты смешаны, остановитесь и сохраните журнал и выборку: другие миграции или ручные изменения требуют отдельного разбора. Переписывание истории не приведёт столбцы к нужному состоянию.</p>
+</details>
 <h2>Где заканчивается advisory lock</h2>
-<p>Приложение Go и ручной SQL не обязаны запрашивать ключ Flyway и потому не ждут этот lock автоматически. Их конфликт с ALTER TABLE регулируют обычные PostgreSQL DDL locks на таблицах/индексах. Если два Flyway используют разные history table или разные схемы, они могут получить разные advisory keys и всё равно менять одну notes. Поэтому единый договор ownership, history и locations — часть выпуска, а не косметика CLI.</p>
-<p>Источники: <a href="https://github.com/flyway/flyway/blob/flyway-13.12.0/flyway-database/flyway-database-postgresql/src/main/java/org/flywaydb/database/postgresql/PostgreSQLAdvisoryLockTemplate.java">реализация lock</a>, <a href="https://documentation.red-gate.com/flyway/reference/database-driver-reference/postgresql-database">особенности PostgreSQL</a>.</p>
+<p>Обычный <code>SELECT</code> приложения не запрашивает ключ Flyway. Если читающая транзакция ещё открыта, она может удерживать на <code>app.notes</code> блокировку <code>ACCESS SHARE</code>. Для <code>ALTER TABLE</code> из V2 PostgreSQL нужна <code>ACCESS EXCLUSIVE</code>. Даже с полученным ключом истории Flyway будет ждать освобождения таблицы. Если ожидание получения блокировки превысит заданные две секунды, PostgreSQL прервёт команду. При откате V2 в истории по-прежнему не будет строки о её успешном выполнении. В <a href="#flyway-13-concurrency-failure">главе о параллельных выпусках</a> этот случай разобран с наблюдением блокировок.</p>
+<figure id="flyway-v2-table-lock" style="margin:1em 0;break-inside:avoid">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 416" role="img" aria-labelledby="flyway-v2-lock-title flyway-v2-lock-desc" style="display:block;width:100%;max-width:430px;height:auto;margin:auto">
+<title id="flyway-v2-lock-title">Полученный ключ Flyway не освобождает app.notes</title>
+<desc id="flyway-v2-lock-desc">Сессионный ключ Flyway уже получен. Читающая транзакция держит ACCESS SHARE на app.notes. Запрос V2 на несовместимую ACCESS EXCLUSIVE ждёт и получает ошибку через две секунды. После отката title отсутствует, body сохраняет NOT NULL.</desc>
+<style>#flyway-v2-table-lock text{fill:var(--reader-text,#18252b);font:17px sans-serif}#flyway-v2-table-lock .mono{font:16px monospace}#flyway-v2-table-lock .small{font-size:15px}#flyway-v2-table-lock .frame{fill:var(--reader-paper,#fffdf7);stroke:var(--reader-line,#68767c);stroke-width:1.5}#flyway-v2-table-lock .line{fill:none;stroke:var(--reader-text,#18252b);stroke-width:2}@media print{#flyway-v2-table-lock text{fill:#000}#flyway-v2-table-lock .frame{fill:#fff;stroke:#000}#flyway-v2-table-lock .line{stroke:#000}}</style>
+<text x="20" y="28" style="font-weight:bold">Ключ Flyway: получен</text>
+<text x="20" y="54" class="small">Он согласует выбор миграций.</text>
+<rect class="frame" x="16" y="78" width="368" height="214" rx="5"/>
+<text x="32" y="105" class="mono">app.notes · блокировки таблицы</text>
+<path class="line" d="M16 119 H384"/>
+<text x="32" y="148">Читающая транзакция открыта</text>
+<text x="32" y="175" class="mono">ACCESS SHARE: выдана</text>
+<path class="line" d="M32 195 H368 M190 187 L206 203 M206 187 L190 203"/>
+<text x="32" y="227">V2: ALTER TABLE</text>
+<text x="32" y="255" class="mono">ACCESS EXCLUSIVE: ожидание</text>
+<text x="32" y="280" class="small">Эти режимы несовместимы.</text>
+<path class="line" d="M200 298 V321 M193 314 L200 322 L207 314"/>
+<text x="20" y="348">lock_timeout = 2s → ошибка V2</text>
+<text x="20" y="377" class="small">После отката: title отсутствует,</text>
+<text x="20" y="401" class="small">body остаётся NOT NULL; успеха V2 нет.</text>
+</svg>
+<figcaption>Две разные блокировки в одном запуске. Обычный SELECT уже завершился, но его транзакция продолжает держать ACCESS SHARE. Две секунды относятся к ожиданию блокировки, а не ко всему запуску Flyway.</figcaption>
+</figure>
+<p>Оба процесса Flyway согласуют выбор V2, пока используют одну таблицу истории в одной базе. Если настроить разные таблицы истории, процессы могут получить разные ключи и всё равно попытаться изменить одну <code>app.notes</code>.</p>
+<p>Исходники Flyway 13.12.0 показывают <a href="https://github.com/flyway/flyway/blob/flyway-13.12.0/flyway-core/src/main/java/org/flywaydb/core/internal/command/DbMigrate.java#L131-L177">выбор миграции под блокировкой</a> и <a href="https://github.com/flyway/flyway/blob/flyway-13.12.0/flyway-database/flyway-database-postgresql/src/main/java/org/flywaydb/database/postgresql/PostgreSQLAdvisoryLockTemplate.java">запрос и освобождение ключа</a>. Режимы блокировки таблиц перечислены в <a href="https://www.postgresql.org/docs/18/explicit-locking.html#LOCKING-TABLES">документации PostgreSQL</a>.</p>

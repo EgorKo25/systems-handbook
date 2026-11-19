@@ -2,7 +2,7 @@
   {
     "id": "00-route",
     "title": "Flyway: как менять базу, в которой продолжают жить данные",
-    "words": 413,
+    "words": 412,
     "part": "Начало",
     "number": "•"
   },
@@ -43,8 +43,8 @@
   },
   {
     "id": "flyway-06-request-path",
-    "title": "Путь migrate: от argv до commit",
-    "words": 722,
+    "title": "Как Flyway выполняет миграцию V2",
+    "words": 1128,
     "part": "Книга II · От файла до зафиксированной истории",
     "number": "6"
   },
