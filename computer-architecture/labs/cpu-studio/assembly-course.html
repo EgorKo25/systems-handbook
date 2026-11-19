@@ -65,6 +65,36 @@ start:
 <p><code>LDB</code> в обоих опытах читает только что записанный <code>FF</code>, поэтому в <code>R3</code> получается <code>0x000000FF</code>, то есть 255. В слове из <code>LD</code> байт <code>FF</code> занимает место, заданное адресом записи. По адресу <code>0x81</code> он заменяет <code>56</code>, а по адресу <code>0x80</code> заменяет <code>78</code>.</p>
 </details>
 </section>
+<section id="and-xor-exercise">
+<h2>Как проверить и переключить бит маской</h2>
+<p>Байты <code>0xA4</code> (<code>10100100</code>) и <code>0xAC</code> (<code>10101100</code>) различаются одним битом. Маска <code>0x08</code> (<code>00001000</code>) выделяет бит 3, если считать с нуля от младшего бита. <code>AND</code> обнуляет позиции, на которых в маске стоят нули, и оставляет выбранный бит на его месте. <code>XOR</code> переключает бит в позиции единицы маски и сохраняет остальные биты.</p>
+<pre><code id="and-xor-source">.org 0x20
+    LDI R0, 0xA4
+    LDI R1, 0x08
+    AND R2, R0, R1
+    XOR R3, R0, R1
+    XOR R3, R3, R1
+    HALT</code></pre>
+<p>Для каждого входа предскажите <code>R2</code> после <code>AND</code> и два значения <code>R3</code> после <code>XOR</code>. Первый <code>XOR</code> берёт байт из <code>R0</code>. Второй читает результат первого из <code>R3</code> и записывает новое значение в тот же регистр.</p>
+<ol>
+<li><a id="and-xor-ide" href="index.html">Откройте конструктор для опыта с маской</a> и вставьте программу в редактор. В панели «Архитектура» раскройте «Изменить устройство процессора». Задайте <strong>8 бит</strong>, <strong>4 регистра</strong> и <strong>256 байт</strong> памяти. Нажмите «Применить и собрать».</li>
+<li>Дважды нажмите «Шаг», чтобы загрузить байт и маску. Третьим шагом выполните <code>AND</code> и прочитайте <code>R2</code>. Четвёртым и пятым шагами выполните оба <code>XOR</code> по очереди, после каждого записывая показанное значение <code>R3</code>. Проверьте, что в <code>R0</code> остался исходный байт.</li>
+<li>Замените <code>LDI R0, 0xA4</code> на <code>LDI R0, 0xAC</code>, нажмите «Собрать» и повторите опыт с той же маской.</li>
+</ol>
+<details>
+<summary>Сверить значения регистров</summary>
+<div class="table-wrap">
+<table id="and-xor-results">
+<thead><tr><th scope="col">Вход R0</th><th scope="col">R2 после AND</th><th scope="col">R3 после первого XOR</th><th scope="col">R3 после второго XOR</th></tr></thead>
+<tbody>
+<tr><th scope="row"><code>0xA4</code></th><td><code>0x00</code></td><td><code>0xAC</code></td><td><code>0xA4</code></td></tr>
+<tr><th scope="row"><code>0xAC</code></th><td><code>0x08</code></td><td><code>0xA4</code></td><td><code>0xAC</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>При входе <code>0xAC</code> <code>AND</code> даёт <code>0x08</code>, потому что выбранная единица осталась в бите 3. Два <code>XOR</code> с той же маской меняют этот бит дважды, поэтому <code>R3</code> возвращается к исходному байту при обоих входах.</p>
+</details>
+</section>
 <section id="rv32-control">
 <h2>Цикл, вызов и возврат в RV32I</h2>
 <p>Чтобы повторить вычитание три раза, положим в <code>x7</code> число 3. После каждого вычитания <code>BNE</code> сравнивает <code>x7</code> с <code>x0</code>, который всегда содержит ноль. Если числа различаются, следующей командой снова будет вычитание.</p>
