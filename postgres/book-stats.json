@@ -70,7 +70,7 @@
     {
       "id": "13-isolation",
       "title": "Уровни изоляции на двух сеансах",
-      "words": 1681
+      "words": 1694
     },
     {
       "id": "14-locks",
@@ -90,7 +90,7 @@
     {
       "id": "17-security",
       "title": "Проверка личности и права",
-      "words": 2339
+      "words": 2461
     },
     {
       "id": "18-recovery",
@@ -120,7 +120,7 @@
     {
       "id": "23-monitoring-capacity",
       "title": "Наблюдение, нагрузка и запас ёмкости",
-      "words": 7527
+      "words": 7731
     },
     {
       "id": "24-ha-patroni",
@@ -133,7 +133,7 @@
       "words": 8937
     }
   ],
-  "words": 79001,
+  "words": 79340,
   "terms": 441,
   "external_assets": 0
 }
