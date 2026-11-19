@@ -3,14 +3,15 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Тракт данных ADDI · Конструктор процессора</title>
+  <title>Тракт данных ADDI, LW и SW · Конструктор процессора</title>
   <link rel="stylesheet" href="studio.css">
   <script src="../m32/appearance.js" defer></script>
   <script src="../logic/model.js?v=2" defer></script>
-  <script src="datapath.js" defer></script>
+  <script src="datapath.js?v=2" defer></script>
   <style>
     #datapath-settings { display:flex; flex-wrap:wrap; gap:12px; align-items:end }
     #datapath-settings label { display:grid; gap:4px }
+    #datapath-settings label[hidden], .datapath-stages [hidden] { display:none }
     #datapath-settings input { max-width:100%; width:11rem }
     .datapath-stages { display:grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,14rem),1fr)); padding:0; gap:10px; list-style:none }
     .datapath-stages li { padding:12px; border:1px solid var(--line); border-radius:8px; overflow-wrap:anywhere }
@@ -26,27 +27,32 @@
   </header>
   <main>
     <header class="intro"><div>
-      <h1>Тракт данных ADDI</h1>
-      <p>Команда прибавляет константу к x6. За четыре такта учебной схемы код проходит из памяти в регистр инструкции, операнды поступают в АЛУ, а сумма затем записывается в x6. PC меняется при записи результата.</p>
+      <h1>Тракт данных ADDI, LW и SW</h1>
+      <p>В этой учебной схеме одна команда занимает четыре такта. АЛУ на третьем такте вычисляет сумму для <code>ADDI</code> либо адрес для <code>LW</code> и <code>SW</code>. На четвёртом такте <code>LW</code> читает слово из RAM в x6, а <code>SW</code> записывает в RAM четыре байта из x6.</p>
     </div></header>
     <section class="workbench" aria-label="Модель четырёх тактов">
       <form id="datapath-settings">
+        <label>Команда <select id="operation"><option>ADDI</option><option>LW</option><option>SW</option></select></label>
         <label>Начальное x6 <input id="initial" inputmode="numeric" value="42" required></label>
-        <label>Константа ADDI <input id="increment" inputmode="text" value="1" required></label>
+        <label><span id="increment-label">Константа ADDI</span> <input id="increment" inputmode="text" value="1" required></label>
+        <label id="memory-settings" hidden>Начальное слово в RAM <input id="memory-initial" inputmode="text" value="0x11223344"></label>
         <button type="submit">Применить и начать заново</button>
       </form>
       <div class="execution">
         <button class="primary" id="clock" type="button">Следующий такт</button>
         <p id="status" role="status"></p>
       </div>
-      <p>PC <code id="pc"></code> · x6 <code id="register"></code></p>
+      <p><code id="instruction-source"></code></p>
+      <p>PC <code id="pc"></code> · x6 <code id="register"></code> <span id="base-line" hidden>· x5 <code>0x00002000</code></span></p>
+      <p id="memory-line" hidden>RAM по адресу <code id="memory-address"></code> · байты по возрастанию адресов <code id="memory-bytes"></code></p>
       <ol class="datapath-stages" aria-label="Тракт данных по порядку">
         <li id="stage-0"><strong>1. Память → регистр инструкции</strong><span>Слово по 0x1000 <code id="word"></code></span><span>Регистр инструкции <code id="ir"></code></span></li>
-        <li id="stage-1"><strong>2. Декодер → входы АЛУ</strong><span>Исходный x6 и знаковая константа <code id="operand"></code></span></li>
-        <li id="stage-2"><strong>3. АЛУ → результат</strong><span>Младшие 32 бита суммы <code id="alu"></code></span></li>
-        <li id="stage-3"><strong>4. Запись x6 и смена PC</strong><span>Результат становится виден программе.</span></li>
+        <li id="stage-1"><strong>2. Декодер → входы АЛУ</strong><span><span id="operand-label">x6 и константа</span> <code id="operand"></code></span><span id="store-line" hidden>Данные из x6 <code id="store-word"></code></span></li>
+        <li id="stage-2"><strong>3. АЛУ → результат</strong><span><span id="alu-label">Младшие 32 бита суммы</span> <code id="alu"></code></span></li>
+        <li id="stage-3"><strong id="commit-heading">4. Запись x6 и смена PC</strong><span id="effect">—</span></li>
       </ol>
-      <details><summary>Упражнение с переполнением</summary><p>Задайте x6 равным 4294967295, константу 1 и выполните три такта. АЛУ уже выдаёт ноль, а x6 ещё хранит <code>0xFFFFFFFF</code>. На четвёртом такте x6 получит ноль.</p></details>
+      <details><summary>Упражнение с памятью</summary><p>Выберите <code>SW</code>, задайте смещение 4 и x6 равным <code>0xA1B2C3D4</code>. Нажмите «Применить и начать заново». На третьем такте видны адрес <code>0x2004</code> и исходные байты <code>44 33 22 11</code>. На четвёртом байты станут <code>D4 C3 B2 A1</code>, начиная с младшего. Задайте смещение 2 и повторите. На четвёртом такте схема сообщит об исключении при обращении к невыравненному слову.</p></details>
+      <details><summary>Упражнение с переполнением</summary><p>Выберите <code>ADDI</code>. Задайте x6 равным 4294967295, константу 1, примените настройки и выполните три такта. АЛУ уже выдаёт ноль, а x6 ещё хранит <code>0xFFFFFFFF</code>. На четвёртом такте x6 получит ноль.</p></details>
     </section>
   </main>
 </body>
