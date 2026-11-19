@@ -8,6 +8,20 @@
 <h2>Частичный результат требует осмотра</h2>
 <p>У V5 может остаться невалидный индекс. Он занимает диск и способен увеличивать стоимость записей, хотя планировщик не использует его как обычный valid index. Проверяют <code>pg_index.indisvalid</code>, <code>indisready</code>, реальное определение и history. Слепое <code>CREATE INDEX IF NOT EXISTS</code> может «успешно» пропустить неправильный/invalid объект по имени. Сначала выясняют факт и допустимый способ удаления/перестроения; repair не ремонтирует индекс.</p>
 <p>В <code>experiments/</code> два V7-файла создают таблицу и дважды вставляют одинаковый primary key. Транзакционный опыт должен оставить исходную базу без probe-таблицы. Нетранзакционный оставляет таблицу и первую строку; при доступном сервере Flyway регистрирует Failed. Если соединение погибло до записи результата, history может не содержать даже этого факта. Эксперименты не входят в обычную location и не запускаются на продолжаемом читательском экземпляре.</p>
+<figure id="flyway-v7-results" style="margin:1em 0;text-align:start">
+<figcaption><strong>Две V7 и ошибка на второй вставке id=1</strong></figcaption>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,15rem),1fr));gap:0.8rem">
+<div style="border:1px solid var(--line);border-radius:0.5rem;padding:0.8rem">
+<strong>В транзакции → rollback</strong>
+<p>Таблица <code>app.failure_probe</code> отсутствует. Строк нет: первая вставка откатилась вместе с созданием таблицы.</p>
+</div>
+<div style="border:1px solid var(--line);border-radius:0.5rem;padding:0.8rem">
+<strong>Без общей транзакции → частичный результат</strong>
+<p>Таблица <code>app.partial_probe</code> существует. В ней одна строка с <code>id=1</code>; вторая вставка нарушила первичный ключ.</p>
+</div>
+</div>
+<p><strong>Отдельно посмотрите историю.</strong> В нетранзакционном опыте при доступном соединении Flyway записывает <code>Failed</code>. Если соединение погибло до записи результата, такой записи может не быть. Состояние таблицы проверяют отдельно.</p>
+</figure>
 <h2>Что не откатывает PostgreSQL</h2>
 <p>Файлы, HTTP-запросы callback и действия внешнего скрипта не становятся частью транзакции PostgreSQL. Выданные sequence-значения могут образовать пропуски после rollback. Переименование Go binary не отменяет commit DDL. Поэтому «rollback прошёл» всегда уточняют объектом: транзакция SQL, версия приложения, история инструмента или вся база на контрольную точку.</p>
 <p>Ссылки: <a href="https://documentation.red-gate.com/fd/migration-transaction-handling-273973399.html">границы Flyway</a>, <a href="https://www.postgresql.org/docs/18/sql-createindex.html">CREATE INDEX PostgreSQL 18</a>. Следующая глава использует эти границы для совместимого выпуска, а не обещает нулевые задержки любой операции.</p>

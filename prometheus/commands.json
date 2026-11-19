@@ -17105,24 +17105,38 @@
     "flags": [
       {
         "flag": "-c NAME",
-        "action": "Выбрать container.",
-        "when": "Отделить api от init/sidecar.",
+        "action": "Выбрать контейнер внутри указанного Pod.",
+        "when": "Получить журнал api, когда в Pod несколько контейнеров.",
         "example": "kubectl --context \"$LAB_CONTEXT\" -n lab logs POD_NAME -c api",
-        "result": "Требуется pods/log access, не pods/exec."
+        "result": "Имя api в примере соответствует spec.containers[].name. Для чтения журнала требуется право get на подресурс pods/log."
       },
       {
         "flag": "--previous",
-        "action": "Читать предыдущий доступный экземпляр container.",
-        "when": "CrashLoop диагностика.",
-        "example": "kubectl --context \"$LAB_CONTEXT\" -n lab logs POD_NAME -c api --previous --tail=100",
-        "result": "Отличается от текущего logs; не архив всех revisions."
+        "action": "Выбрать доступный журнал предыдущего завершившегося экземпляра контейнера в этом Pod.",
+        "when": "Контейнер api уже перезапустился, а нужно исследовать причину прежнего завершения.",
+        "example": "kubectl --context \"$LAB_CONTEXT\" -n lab logs POD_NAME -c api --previous --tail=100 --timestamps",
+        "result": "При State: Running обычный logs читает текущий запуск. С --previous kubelet выбирает последний завершившийся экземпляр. Если сведений о нём нет, команда возвращает ошибку."
       },
       {
-        "flag": "--since DURATION --timestamps",
-        "action": "Ограничить время и добавить stamps.",
-        "when": "Корреляция с Events.",
-        "example": "kubectl --context \"$LAB_CONTEXT\" -n lab logs POD_NAME -c api --since=10m --timestamps",
-        "result": "Ротация/потеря старых bytes остаётся; чувствительные данные защитить."
+        "flag": "--tail N",
+        "action": "Ограничить вывод последними N строками доступного журнала.",
+        "when": "Быстро прочитать конец журнала перед завершением контейнера.",
+        "example": "kubectl --context \"$LAB_CONTEXT\" -n lab logs POD_NAME -c api --previous --tail=100",
+        "result": "Значение 100 даёт до ста последних строк. Значение -1 запрашивает все доступные строки. Доступность старых строк зависит от ротации и сохранности журнала."
+      },
+      {
+        "flag": "--since DURATION",
+        "action": "Отобрать строки за указанный промежуток времени до текущего момента.",
+        "when": "Сопоставить сообщения контейнера с недавним событием в кластере.",
+        "example": "kubectl --context \"$LAB_CONTEXT\" -n lab logs POD_NAME -c api --since=10m",
+        "result": "Значение 10m оставляет строки последних десяти минут. Можно задать секунды, минуты или часы, например 30s, 10m или 2h. При дополнительном --tail=100 действуют оба ограничения."
+      },
+      {
+        "flag": "--timestamps",
+        "action": "Добавить отметку времени в начало каждой строки журнала.",
+        "when": "Сравнить момент сообщения с Finished прежнего запуска или временем события.",
+        "example": "kubectl --context \"$LAB_CONTEXT\" -n lab logs POD_NAME -c api --previous --tail=100 --timestamps",
+        "result": "Состав выбранных строк сохраняется, перед текстом появляется время записи строки. Для сопоставления с describe учитывайте указанный часовой пояс."
       },
       {
         "flag": "--follow, -f",
@@ -17162,6 +17176,8 @@
     ],
     "situations": [],
     "flagScopes": [
+      "kubectl logs",
+      "kubectl logs",
       "kubectl logs",
       "kubectl logs",
       "kubectl logs",

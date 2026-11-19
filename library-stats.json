@@ -43,7 +43,7 @@
     "slug": "git",
     "title": "Git: от байтов объектов до совместной работы и восстановления",
     "volume": "VI",
-    "words": 49225,
+    "words": 49330,
     "chapters": 27,
     "terms": 178
   },
@@ -59,7 +59,7 @@
     "slug": "jenkins",
     "title": "Jenkins: от установки и плагинов до устройства и эксплуатации Pipeline",
     "volume": "XIX",
-    "words": 30262,
+    "words": 30315,
     "chapters": 16,
     "terms": 88
   },
@@ -99,7 +99,7 @@
     "slug": "computer-architecture",
     "title": "Архитектура компьютера: от сигнала до исполняемой машины",
     "volume": "I",
-    "words": 61448,
+    "words": 61564,
     "chapters": 36,
     "terms": 218
   },
@@ -107,7 +107,7 @@
     "slug": "operating-systems",
     "title": "Операционные системы: от аппаратных механизмов до управляемой программы",
     "volume": "II",
-    "words": 82487,
+    "words": 82580,
     "chapters": 38,
     "terms": 270
   },
@@ -195,7 +195,7 @@
     "slug": "prometheus",
     "title": "Prometheus и PromQL: измерение, вычисление и хранение",
     "volume": "XXIV",
-    "words": 17516,
+    "words": 17566,
     "chapters": 22,
     "terms": 93
   },
@@ -203,7 +203,7 @@
     "slug": "flyway",
     "title": "Flyway: управляемое изменение живой базы данных",
     "volume": "X",
-    "words": 14921,
+    "words": 14992,
     "chapters": 20,
     "terms": 80
   },
