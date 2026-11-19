@@ -25,6 +25,7 @@
   ].join('\n');
   let assembled;
   let machine;
+  let listingWords;
   let lastStore;
   let lastBranch;
   let lastJump;
@@ -55,12 +56,15 @@
     const canContinue = machine.status === 'ready' && editor.value === assembled;
     $('step').disabled = !canContinue;
     $('run').disabled = !canContinue;
+    updateDatapathLink(canContinue);
   }
 
   function load(source) {
     const next = cpu.create(source);
-    const listing = cpu.assemble(source).map(row =>
+    const rows = cpu.assemble(source);
+    const listing = rows.map(row =>
       [address(row.address), bytes(next.memory, row.address), row.text.trim()].join('  '));
+    listingWords = new Map(rows.map(row => [row.address, row.word]));
     machine = next;
     lastStore = null;
     lastBranch = null;
@@ -68,6 +72,28 @@
     assembled = source;
     $('rv32-listing').textContent = listing.join('\n');
     render();
+  }
+
+  function updateDatapathLink(canContinue) {
+    const link = $('rv32-datapath');
+    link.hidden = true;
+    link.removeAttribute('href');
+    const word = listingWords.get(machine.pc);
+    if (!canContinue || word === undefined || cpu.read32(machine.memory, machine.pc) !== word) return;
+    const decoded = cpu.decode(word);
+    if (decoded.op !== 'SW' || decoded.rs1 !== 5 || decoded.rs2 !== 6) return;
+
+    const x5 = machine.regs[5];
+    const target = cpu.u32(x5 + decoded.immediate);
+    if (target % 4 !== 0 || target > cpu.SIZE - 4) return;
+    const ram = cpu.read32(machine.memory, target);
+    const snapshot = new URLSearchParams({
+      pc: cpu.hex(machine.pc), word: cpu.hex(word), x5: cpu.hex(x5),
+      x6: cpu.hex(machine.regs[6]), ram: cpu.hex(ram),
+    });
+    link.href = 'datapath.html#sw?' + snapshot;
+    link.textContent = 'Разобрать SW по адресу ' + address(machine.pc) + ' по тактам';
+    link.hidden = false;
   }
 
   function remember(event) {

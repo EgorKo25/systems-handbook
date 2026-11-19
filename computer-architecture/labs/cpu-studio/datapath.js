@@ -2,14 +2,17 @@
   'use strict';
 
   const cpu = typeof module === 'object' ? require('../logic/model.js') : window.M32Logic;
-  const base = 0x2000;
+  const defaultBase = 0x2000;
   const instructions = {
     ADDI: immediate => `addi x6, x6, ${immediate}`,
     LW: immediate => `lw x6, ${immediate}(x5)`,
     SW: immediate => `sw x6, ${immediate}(x5)`,
   };
 
-  function create(value = 42, immediate = 1, operation = 'ADDI', memoryWord = 0x11223344, wiring = {}) {
+  function create(value = 42, immediate = 1, operation = 'ADDI', memoryWord = 0x11223344, wiring = {}, context = {}) {
+    const { pc = cpu.ENTRY, base = defaultBase } = context;
+    cpu.checkWord(pc);
+    if (!Number.isInteger(base) || base < 0 || base > 0xffffffff) throw new Error('Недопустимое значение x5.');
     const { useZero = false, inhibitRegister = false, inhibitStore = false } = wiring;
     if ([useZero, inhibitRegister, inhibitStore].some(flag => typeof flag !== 'boolean')) {
       throw new Error('Параметры управляющих сигналов должны принимать значение 0 или 1.');
@@ -25,18 +28,23 @@
     const source = instructions[operation](immediate);
     const instruction = cpu.assemble(source)[0].word;
     const memory = new Uint8Array(cpu.SIZE);
-    cpu.write32(memory, cpu.ENTRY, instruction);
+    cpu.write32(memory, pc, instruction);
 
     if (operation !== 'ADDI') {
       if (!Number.isInteger(memoryWord) || memoryWord < 0 || memoryWord > 0xffffffff) {
         throw new Error('Начальное слово в памяти должно быть целым числом от 0 до 4294967295.');
       }
       // Initialize the chosen data word. Unaligned accesses stop at the memory stage.
-      const address = base + immediate;
-      if (address % 4 === 0) cpu.write32(memory, address, memoryWord);
+      const address = cpu.u32(base + immediate);
+      if (address % 4 === 0 && address <= cpu.SIZE - 4) {
+        if (address === pc && memoryWord !== instruction) {
+          throw new Error('Слово по адресу PC уже содержит код команды.');
+        }
+        cpu.write32(memory, address, memoryWord);
+      }
     }
     return {
-      operation, source, memory, instruction, cycle: 0, pc: cpu.ENTRY, x6: value,
+      operation, source, memory, instruction, cycle: 0, pc, base, x6: value,
       ir: null, decoded: null, operand: null, result: null, access: null, fault: null,
       wiring: { useZero, inhibitRegister, inhibitStore }, signals: null,
     };
@@ -50,7 +58,7 @@
         const decoded = cpu.decode(state.ir);
         const store = decoded.op === 'SW';
         return {
-          ...state, cycle: 2, decoded, operand: decoded.op === 'ADDI' ? state.x6 : base,
+          ...state, cycle: 2, decoded, operand: decoded.op === 'ADDI' ? state.x6 : state.base,
           signals: {
             right: state.wiring.useZero ? 0 : decoded.immediate,
             registerWrite: !store && !state.wiring.inhibitRegister,
@@ -89,13 +97,31 @@
     }
   }
 
+  function fromSnapshot(hash) {
+    if (!hash.startsWith('#sw?') || hash.length > 100) throw new Error('Неизвестный формат снимка.');
+    const params = new URLSearchParams(hash.slice(4));
+    const names = ['pc', 'word', 'x5', 'x6', 'ram'];
+    if ([...params].length !== names.length || names.some(name => !/^[0-9a-f]{8}$/i.test(params.get(name) ?? ''))) {
+      throw new Error('В снимке нужны 32-битные PC, код команды, x5, x6 и слово RAM.');
+    }
+    const [pc, word, base, value, memoryWord] = names.map(name => parseInt(params.get(name), 16));
+    const decoded = cpu.decode(word);
+    if (decoded.op !== 'SW' || decoded.rs1 !== 5 || decoded.rs2 !== 6) throw new Error('Снимок должен содержать SW из x6 по адресу на основе x5.');
+    cpu.checkWord(cpu.u32(base + decoded.immediate));
+    const context = { pc, base };
+    const state = create(value, decoded.immediate, 'SW', memoryWord, {}, context);
+    if (state.instruction !== word) throw new Error('Машинное слово снимка не совпало с результатом сборки.');
+    return { context, state, memoryWord, offset: decoded.immediate };
+  }
+
   if (typeof module === 'object' && module.exports) {
-    module.exports = { create, clock };
+    module.exports = { create, clock, fromSnapshot };
     return;
   }
 
   const $ = id => document.getElementById(id);
   let state = create();
+  let context = {};
   window.M32Appearance?.mount($('studio-theme'), $('warmth'));
   const hex = value => value === null ? '—' : '0x' + cpu.hex(value);
 
@@ -103,10 +129,12 @@
     const arithmetic = state.operation === 'ADDI';
     const store = state.operation === 'SW';
     const address = state.result;
-    const hasWord = !arithmetic && address !== null && address % 4 === 0;
+    const hasWord = !arithmetic && address !== null && address % 4 === 0 && address <= cpu.SIZE - 4;
     const stages = ['Выборка', 'Декодирование', arithmetic ? 'Сложение' : 'Вычисление адреса', 'Завершение'];
     $('instruction-source').textContent = state.source;
     $('word').textContent = hex(state.instruction);
+    $('instruction-address').textContent = hex(context.pc ?? cpu.ENTRY);
+    $('base-value').textContent = hex(state.base);
     $('ir').textContent = hex(state.ir);
     $('operand-label').textContent = arithmetic ? 'x6 и константа' : 'x5 и смещение';
     $('operand').textContent = state.operand === null ? '—' : hex(state.operand) + ' + (' + state.signals.right + ')';
@@ -143,7 +171,9 @@
   function effectText(state) {
     if (state.cycle < 4) return '—';
     if (state.fault) {
-      return 'Исключение: адрес слова должен делиться на 4. PC, x6 и память сохраняют прежние значения.';
+      const reason = state.fault === 'data:address-misaligned'
+        ? 'адрес слова должен делиться на 4' : 'слово выходит за пределы RAM';
+      return 'Исключение: ' + reason + '. PC, x6 и память сохраняют прежние значения.';
     }
     if (state.operation === 'SW') {
       return state.signals.memoryWrite
@@ -171,7 +201,7 @@
         useZero: $('alu-zero').checked,
         inhibitRegister: $('stop-reg-write').checked,
         inhibitStore: $('stop-mem-write').checked,
-      });
+      }, context);
       render();
     } catch (error) {
       $('status').textContent = error.message;
@@ -196,5 +226,21 @@
     state = clock(state);
     render();
   });
+  let snapshotError;
+  if (window.location.hash.startsWith('#sw')) {
+    try {
+      const snapshot = fromSnapshot(window.location.hash);
+      ({ context, state } = snapshot);
+      $('operation').value = 'SW';
+      $('operation').dispatchEvent(new Event('change'));
+      $('initial').value = hex(state.x6);
+      $('increment').value = snapshot.offset;
+      $('memory-initial').value = hex(snapshot.memoryWord);
+      $('snapshot-note').hidden = false;
+    } catch (error) {
+      snapshotError = 'Не удалось открыть снимок из IDE. Открыт исходный пример ADDI.';
+    }
+  }
   render();
+  if (snapshotError) $('status').textContent = snapshotError;
 }());

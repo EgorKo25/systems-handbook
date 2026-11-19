@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="studio.css">
   <script src="../m32/appearance.js" defer></script>
   <script src="../logic/model.js?v=2" defer></script>
-  <script src="datapath.js?v=3" defer></script>
+  <script src="datapath.js?v=4" defer></script>
   <style>
     #datapath-settings { display:flex; flex-wrap:wrap; gap:12px; align-items:end }
     #datapath-settings label { display:grid; gap:4px }
@@ -34,6 +34,7 @@
       <p>В этой учебной схеме одна команда занимает четыре такта. АЛУ на третьем такте вычисляет сумму для <code>ADDI</code> либо адрес для <code>LW</code> и <code>SW</code>. На четвёртом такте <code>LW</code> читает слово из RAM в x6, а <code>SW</code> записывает в RAM четыре байта из x6.</p>
     </div></header>
     <section class="workbench" aria-label="Модель четырёх тактов">
+      <p id="snapshot-note" hidden>Снимок IDE перед SW содержит PC, x5, x6 и четыре байта по адресу записи. Остальная память модели изначально заполнена нулями, кроме слова с инструкцией.</p>
       <form id="datapath-settings">
         <label>Команда <select id="operation"><option>ADDI</option><option>LW</option><option>SW</option></select></label>
         <label>Начальное x6 <input id="initial" inputmode="numeric" value="42" required></label>
@@ -53,10 +54,10 @@
         <p id="status" role="status"></p>
       </div>
       <p><code id="instruction-source"></code></p>
-      <p>PC <code id="pc"></code> · x6 <code id="register"></code> <span id="base-line" hidden>· x5 <code>0x00002000</code></span></p>
+      <p>PC <code id="pc"></code> · x6 <code id="register"></code> <span id="base-line" hidden>· x5 <code id="base-value"></code></span></p>
       <p id="memory-line" hidden>RAM по адресу <code id="memory-address"></code> · байты по возрастанию адресов <code id="memory-bytes"></code></p>
       <ol class="datapath-stages" aria-label="Тракт данных по порядку">
-        <li id="stage-0"><strong>1. Память → регистр инструкции</strong><span>Слово по 0x1000 <code id="word"></code></span><span>Регистр инструкции <code id="ir"></code></span></li>
+        <li id="stage-0"><strong>1. Память → регистр инструкции</strong><span>Слово по адресу <code id="instruction-address"></code> <code id="word"></code></span><span>Регистр инструкции <code id="ir"></code></span></li>
         <li id="stage-1"><strong>2. Декодер → входы АЛУ</strong><span><span id="operand-label">x6 и константа</span> <code id="operand"></code></span><span id="store-line" hidden>Данные из x6 <code id="store-word"></code></span><span>Правый вход <code id="alu-source"></code></span><span><code>RegWrite</code> <code id="register-enable"></code> · <code>MemWrite</code> <code id="memory-enable"></code></span></li>
         <li id="stage-2"><strong>3. АЛУ → результат</strong><span><span id="alu-label">Младшие 32 бита суммы</span> <code id="alu"></code></span></li>
         <li id="stage-3"><strong id="commit-heading">4. Запись x6 и смена PC</strong><span id="effect">—</span></li>
