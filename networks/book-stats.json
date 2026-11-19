@@ -1,6 +1,6 @@
 {
   "date": "2026-11-01",
-  "words": 94148,
+  "words": 94213,
   "chapters": [
     {
       "id": "01-foundations",
@@ -25,7 +25,7 @@
     {
       "id": "21-link-reliability",
       "title": "Границы, ошибки и надёжность одного канала",
-      "words": 2387
+      "words": 2452
     },
     {
       "id": "04-ip-routing",

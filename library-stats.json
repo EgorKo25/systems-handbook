@@ -3,7 +3,7 @@
     "slug": "networks",
     "title": "Сети: от сигнала до приложения",
     "volume": "V",
-    "words": 94148,
+    "words": 94213,
     "chapters": 24,
     "terms": 379
   },
@@ -107,7 +107,7 @@
     "slug": "operating-systems",
     "title": "Операционные системы: от аппаратных механизмов до управляемой программы",
     "volume": "II",
-    "words": 82248,
+    "words": 82487,
     "chapters": 38,
     "terms": 270
   },
@@ -131,7 +131,7 @@
     "slug": "helm",
     "title": "Helm: типы, шаблоны, пакеты и жизненный цикл релиза",
     "volume": "XXVII",
-    "words": 19485,
+    "words": 19742,
     "chapters": 21,
     "terms": 97
   },

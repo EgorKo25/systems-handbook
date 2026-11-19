@@ -694,7 +694,7 @@ value: {{ .Values.flag | toString | quote }}
 
 Том XXVII · Книга I · Данные и язык шаблонов
 
-Контекст, циклы и переменныеПрослеживаем стек dot и передаваемых аргументов, чтобы range и include не скрывали источник данных. · 838 словСодержание главы
+Контекст, циклы и переменныеПрослеживаем стек dot и передаваемых аргументов, чтобы range и include не скрывали источник данных. · 1095 словСодержание главы
 
 If сохраняет точку, with меняет её
 
@@ -754,7 +754,65 @@ With extraLabels печатает пользовательское отобра�
 
 Опыт со стеком
 
-Во временной ConfigMap напечатайте kindOf . и $.Release.Name до with, затем внутри with items=[a,b]. Замените аргумент include на dict и сравните .Release.Name с .root.Release.Name. Текущие тесты проверяют rootRelease=ledger внутри with, а схема ниже дополнительно показывает передачу dict. Это фиксированная модель, не работающий отладчик: кнопки меняют шаг, не исполняют шаблон. Для ошибки важнее понять объект перед точкой, чем добавить ещё один символ $ наугад.
+Проследим один элемент extraEnv по шагам рисунка. Создайте временный каталог и перейдите в него. Для опыта нужны Helm 4.3.1 и право записи в этот каталог. Создайте подкаталог chart/templates и сохраните три файла.
+
+chart/Chart.yaml
+
+apiVersion: v2
+name: scope
+version: 0.1.0
+
+chart/values.yaml
+
+resources:
+  requests:
+    cpu: 50m
+extraEnv:
+  - name: TRACE
+    value: true-as-string
+
+chart/templates/trace.yaml
+
+{{- define "scope.trace" -}}
+dot={{ kindOf . }} item={{ $.item.name }} root={{ .root.Release.Name }}
+{{- end -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: scope-trace
+data:
+  {{- $root := . }}
+  {{- $before := printf "before=%s release=%s" (kindOf .) .Release.Name }}
+  {{- with .Values.resources }}
+  with: {{ printf "%s; inside=%s cpu=%s root=%s"
+    $before (kindOf .) .requests.cpu $.Release.Name | quote }}
+  {{- end }}
+  {{- range .Values.extraEnv }}
+  range: {{ printf "dot=%s name=%s value=%s root=%s"
+    (kindOf .) .name .value $root.Release.Name | quote }}
+  {{- $line := include "scope.trace" (dict "root" $root "item" .) }}
+  include: {{ printf "%s result=%s" $line (kindOf $line) | quote }}
+  {{- end }}
+
+Из временного каталога запустите локальный рендер. Helm выведет ConfigMap в терминал.
+
+helm template ledger ./chart --dry-run=client
+
+В поле data получатся три строки.
+
+  name: scope-trace
+data:
+  with: "before=map release=ledger; inside=map cpu=50m root=ledger"
+  range: "dot=map name=TRACE value=true-as-string root=ledger"
+  include: "dot=map item=TRACE root=ledger result=string"
+
+«Верхний уровень» и «Внутри with» соответствуют строке with. До блока точка содержит Release и Values. В блоке точка содержит requests со значением cpu: 50m. kindOf печатает map для обоих объектов. Выражение $.Release.Name внутри блока по-прежнему читает имя ledger из исходного объекта Helm.
+
+На шаге «Внутри range» точкой становится элемент {name: TRACE, value: true-as-string}. Строка range берёт имя и значение из этого элемента, а имя релиза из сохранённого $root.
+
+На шагах «Передан явный dict» и «Возвращена строка» смотрите на строку include. И точка, и $ внутри scope.trace обозначают словарь с ключами root и item. Шаблон читает TRACE через $.item.name и ledger через .root.Release.Name. Снаружи kindOf $line показывает тип возвращённого текста string.
+
+Кнопки рисунка переключают шаги модели. Для выполнения шаблона служит команда helm template.
 
 Разобрать по шагам
 

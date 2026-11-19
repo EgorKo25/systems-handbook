@@ -30,6 +30,52 @@ name: {{ .Release.Name }}
 <p>Create — логическое значение, existingSecret — строка; непустое имя одновременно с create=true отвергается до API. Пустой existingSecret при create=false допустим: учётные данные необязательны. Это доставка тестовой переменной, а не аутентификация сервиса. Проверка persistence требует одну реплику и выбирает Recreate; правило соответствует упражнению, а не универсальному смыслу RWO.</p>
 <p>With extraLabels печатает пользовательское отображение, но явная проверка запрещает ключи app.kubernetes.io/name и app.kubernetes.io/instance. Селектор Deployment должен совпадать с метками Pod и оставаться стабильным. Очень аккуратный вспомогательный шаблон способен успешно исполниться и при этом оторвать Service от конечных точек. Поэтому проверки разобранного YAML сравнивают селекторы независимо от формы исходника.</p>
 <h2>Опыт со стеком</h2>
-<p>Во временной ConfigMap напечатайте kindOf . и $.Release.Name до with, затем внутри with items=[a,b]. Замените аргумент include на dict и сравните .Release.Name с .root.Release.Name. Текущие тесты проверяют rootRelease=ledger внутри with, а схема ниже дополнительно показывает передачу dict. Это фиксированная модель, не работающий отладчик: кнопки меняют шаг, не исполняют шаблон. Для ошибки важнее понять объект перед точкой, чем добавить ещё один символ $ наугад.</p>
+<p>Проследим один элемент <code>extraEnv</code> по шагам рисунка. Создайте временный каталог и перейдите в него. Для опыта нужны Helm 4.3.1 и право записи в этот каталог. Создайте подкаталог <code>chart/templates</code> и сохраните три файла.</p>
+<p><code>chart/Chart.yaml</code></p>
+<pre><code>apiVersion: v2
+name: scope
+version: 0.1.0</code></pre>
+<p><code>chart/values.yaml</code></p>
+<pre><code>resources:
+  requests:
+    cpu: 50m
+extraEnv:
+  - name: TRACE
+    value: true-as-string</code></pre>
+<p><code>chart/templates/trace.yaml</code></p>
+<pre><code>{{- define "scope.trace" -}}
+dot={{ kindOf . }} item={{ $.item.name }} root={{ .root.Release.Name }}
+{{- end -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: scope-trace
+data:
+  {{- $root := . }}
+  {{- $before := printf "before=%s release=%s" (kindOf .) .Release.Name }}
+  {{- with .Values.resources }}
+  with: {{ printf "%s; inside=%s cpu=%s root=%s"
+    $before (kindOf .) .requests.cpu $.Release.Name | quote }}
+  {{- end }}
+  {{- range .Values.extraEnv }}
+  range: {{ printf "dot=%s name=%s value=%s root=%s"
+    (kindOf .) .name .value $root.Release.Name | quote }}
+  {{- $line := include "scope.trace" (dict "root" $root "item" .) }}
+  include: {{ printf "%s result=%s" $line (kindOf $line) | quote }}
+  {{- end }}</code></pre>
+<p>Из временного каталога запустите локальный рендер. Helm выведет ConfigMap в терминал.</p>
+<pre><code>helm template ledger ./chart --dry-run=client</code></pre>
+<p>В поле <code>data</code> получатся три строки.</p>
+<pre><code>  name: scope-trace
+data:
+  with: "before=map release=ledger; inside=map cpu=50m root=ledger"
+  range: "dot=map name=TRACE value=true-as-string root=ledger"
+  include: "dot=map item=TRACE root=ledger result=string"</code></pre>
+<ol>
+<li>«Верхний уровень» и «Внутри with» соответствуют строке <code>with</code>. До блока точка содержит <code>Release</code> и <code>Values</code>. В блоке точка содержит <code>requests</code> со значением <code>cpu: 50m</code>. <code>kindOf</code> печатает <code>map</code> для обоих объектов. Выражение <code>$.Release.Name</code> внутри блока по-прежнему читает имя <code>ledger</code> из исходного объекта Helm.</li>
+<li>На шаге «Внутри range» точкой становится элемент <code>{name: TRACE, value: true-as-string}</code>. Строка <code>range</code> берёт имя и значение из этого элемента, а имя релиза из сохранённого <code>$root</code>.</li>
+<li>На шагах «Передан явный dict» и «Возвращена строка» смотрите на строку <code>include</code>. И точка, и <code>$</code> внутри <code>scope.trace</code> обозначают словарь с ключами <code>root</code> и <code>item</code>. Шаблон читает <code>TRACE</code> через <code>$.item.name</code> и <code>ledger</code> через <code>.root.Release.Name</code>. Снаружи <code>kindOf $line</code> показывает тип возвращённого текста <code>string</code>.</li>
+</ol>
+<p>Кнопки рисунка переключают шаги модели. Для выполнения шаблона служит команда <code>helm template</code>.</p>
 
 <h2>Первичные источники и версия</h2><p>Проверено 1 ноября 2026; основной CLI Helm 4.3.1, chart API v2. <a href="https://helm.sh/docs/chart_template_guide/control_structures/">Control structures</a>, <a href="https://helm.sh/docs/chart_template_guide/variables/">Variables</a>, <a href="https://helm.sh/docs/chart_template_guide/named_templates/">Named templates</a>, <a href="https://pkg.go.dev/text/template#hdr-Variables">Go variables</a>.</p>
