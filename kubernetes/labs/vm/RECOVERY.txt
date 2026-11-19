@@ -8,10 +8,13 @@
 
 A. Подготовить и проверить backup на исходном личном cp1.
 
-sudo install -d -m 0700 /var/backups/handbook
-sudo etcdctl --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/healthcheck-client.crt --key=/etc/kubernetes/pki/etcd/healthcheck-client.key snapshot save /var/backups/handbook/etcd-before-maintenance.db
-sudo etcdutl snapshot status /var/backups/handbook/etcd-before-maintenance.db -w table
-sudo sha256sum /var/backups/handbook/etcd-before-maintenance.db
+Получите отдельное поколение снимка блоком главы 21: он создаёт закрытый
+каталог etcd-before-maintenance.XXXXXXXX и файл etcd.db. Запишите абсолютный
+путь, время снимка, ревизию и SHA-256. Не повторяйте старый рецепт с фиксированным
+именем etcd-before-maintenance.db: он может относиться к другому поколению.
+Для раздела D выберите именно проверенный файл и задайте ETCD_SNAPSHOT его
+абсолютным путём. На клоне путь может отличаться после переноса, но SHA-256
+должен совпасть с исходной записью журнала. Не записывайте ключи/Secrets в журнал.
 
 Отдельно защищённо сохранить /etc/kubernetes (включает закрытые ключи),
 /var/lib/kubelet/config.yaml, /etc/containerd/config.toml, /etc/default/kubelet,
@@ -54,13 +57,18 @@ D. Restore в новый data-dir, без перезаписи существу�
 restore_stopped_etcd() {
   # Run ONLY after section C proved the static containers stopped on the clone.
   # One operator owns these paths; no concurrent filesystem changes.
+  case "${ETCD_SNAPSHOT:-}" in
+    /*) ;;
+    *) printf '%s\n' 'Set ETCD_SNAPSHOT to the selected absolute snapshot path.' >&2; return 1 ;;
+  esac
+  sudo test -s "$ETCD_SNAPSHOT" || return 1
   sudo test -d /var/lib/etcd || return 1
   sudo test ! -L /var/lib/etcd || return 1
   for path in /var/lib/etcd-restored /var/lib/etcd-before-restore; do
     sudo test ! -e "$path" || return 1
     sudo test ! -L "$path" || return 1
   done
-  sudo etcdutl snapshot restore /var/backups/handbook/etcd-before-maintenance.db --data-dir=/var/lib/etcd-restored --name=cp1 --initial-cluster=cp1=https://192.168.56.10:2380 --initial-advertise-peer-urls=https://192.168.56.10:2380 --initial-cluster-token=handbook-restore-20261101 --bump-revision=150000000 --mark-compacted || return 1
+  sudo etcdutl snapshot restore "$ETCD_SNAPSHOT" --data-dir=/var/lib/etcd-restored --name=cp1 --initial-cluster=cp1=https://192.168.56.10:2380 --initial-advertise-peer-urls=https://192.168.56.10:2380 --initial-cluster-token=handbook-restore-20261101 --bump-revision=150000000 --mark-compacted || return 1
   sudo test -s /var/lib/etcd-restored/member/snap/db || return 1
   sudo mv -T -- /var/lib/etcd /var/lib/etcd-before-restore || return 1
   if ! sudo mv -T -- /var/lib/etcd-restored /var/lib/etcd; then
@@ -70,7 +78,7 @@ restore_stopped_etcd() {
 }
 restore_stopped_etcd
 
-Выбор bump150000000 имеет явное условие: максимум200 API/etcd revisions/s,
+Выбор bump150000000 имеет явное условие: максимальный прирост ревизии etcd200/s,
 не больше7days history после snapshot →200*7*86400=120960000; запас до150M.
 Это учебная верхняя оценка, НЕ универсальная константа. Если наблюдаемая
 скорость/интервал больше или bound неизвестен, пересчитайте по recovery guide.
@@ -96,18 +104,41 @@ hostPath=/var/lib/etcd и container data-dir=/var/lib/etcd остаются пр
 
 E. Поднять сначала etcd, затем API и controllers.
 
-sudo mv /var/lib/handbook/manifests-off/etcd.yaml /etc/kubernetes/manifests/
-sudo systemctl start kubelet
-sudo crictl --runtime-endpoint unix:///run/containerd/containerd.sock ps -a
-# Wait until the restored static etcd is actually healthy; a first immediate
-# invocation may fail while the container is still starting. Retry with a
-# bounded operator wait and inspect kubelet/containerd logs on persistent error.
-sudo etcdctl --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/healthcheck-client.crt --key=/etc/kubernetes/pki/etcd/healthcheck-client.key endpoint health
-sudo mv /var/lib/handbook/manifests-off/kube-apiserver.yaml /etc/kubernetes/manifests/
-sudo mv /var/lib/handbook/manifests-off/kube-controller-manager.yaml /etc/kubernetes/manifests/
-sudo mv /var/lib/handbook/manifests-off/kube-scheduler.yaml /etc/kubernetes/manifests/
-# Likewise wait for API static Pod startup before requiring readyz success.
+Перед командами проверьте KUBECONFIG: это защищённый kubeconfig выбранного
+клона. Сверьте адрес API и контекст handbook-admin с сетью клона. Одинаковые
+hostname/IP в изолированных сетях сами по себе не различают оригинал и клон;
+нужны проверенная изоляция и маршрут клиента. Не используйте неизвестный
+контекст из прежней оболочки.
+
+start_restored_etcd() {
+  sudo mv /var/lib/handbook/manifests-off/etcd.yaml /etc/kubernetes/manifests/ || return 1
+  sudo systemctl start kubelet || return 1
+  sudo crictl --runtime-endpoint unix:///run/containerd/containerd.sock ps -a || return 1
+}
+start_restored_etcd
+
+После успеха дождитесь готовности etcd. Не вставляйте следующий блок до
+разбора результата: запуск контейнера занимает время. Повторяйте проверку
+здоровья с ограниченным ожиданием, при устойчивом отказе читайте журналы
+kubelet/containerd и сохраняйте каталоги. Следующая функция сама ещё раз
+проверяет здоровье etcd и при отказе не возвращает остальные manifests.
+Частичный перенос manifests сохраняют и разбирают; функцию с начала не повторяют.
+
+start_restored_api() {
+  sudo etcdctl --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/healthcheck-client.crt --key=/etc/kubernetes/pki/etcd/healthcheck-client.key endpoint health || return 1
+  sudo mv /var/lib/handbook/manifests-off/kube-apiserver.yaml /etc/kubernetes/manifests/ || return 1
+  sudo mv /var/lib/handbook/manifests-off/kube-controller-manager.yaml /etc/kubernetes/manifests/ || return 1
+  sudo mv /var/lib/handbook/manifests-off/kube-scheduler.yaml /etc/kubernetes/manifests/ || return 1
+}
+start_restored_api
+
+После успеха дождитесь запуска API. До успешного readyz не переходят к проверкам
+nodes и приложения; отказ сначала разбирают по журналам статического API Pod.
+
 kubectl --context handbook-admin get --raw='/readyz?verbose'
+
+Только после готовности API:
+
 kubectl --context handbook-admin get nodes -o wide
 kubectl --context handbook-admin -n lab get deployment,pod,service,pvc
 
@@ -119,7 +150,11 @@ PodUID/owners, PVC/backend, DNS, межузловой путь, record hash и /
 Никакое Ready само по себе не доказывает восстановление business records.
 
 F. Записать RPO/RTO и судьбу клона.
-Засечь stop→etcdhealthy→APIready→appready→data-integrity. Не подключать clone
+Запишите длительность этапов stop→etcdhealthy→APIready→appready→data-integrity.
+Это измерение учебного прогона. Для RTO заранее выберите начало отсчёта простоя
+и критерий возврата услуги, затем сравните измерение с целью. Для RPO отдельно
+сравните момент инцидента/контрольного среза с последней восстановленной записью
+etcd и приложения; номер ревизии не является временем. Не подключать clone
 к исходной сети без отдельного migration/fencing plan. Original snapshot и
 before-restore data-dir сохранить защищённо до завершения проверки. Уничтожение
 клона — отдельное явное действие после сохранения результата, не часть обычного
