@@ -65,7 +65,7 @@
     {
       "id": "12-mvcc",
       "title": "MVCC: как выбирается видимая версия",
-      "words": 2214
+      "words": 2263
     },
     {
       "id": "13-isolation",
@@ -115,7 +115,7 @@
     {
       "id": "22-index-internals",
       "title": "Внутреннее устройство индексов",
-      "words": 1595
+      "words": 1720
     },
     {
       "id": "23-monitoring-capacity",
@@ -133,7 +133,7 @@
       "words": 8937
     }
   ],
-  "words": 78827,
+  "words": 79001,
   "terms": 441,
   "external_assets": 0
 }

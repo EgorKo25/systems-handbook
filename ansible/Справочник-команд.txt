@@ -6413,18 +6413,26 @@ kubectl --request-timeout=10s --context "$LAB_CONTEXT" get nodes
 kubectl logs
 Читать доступные container logs через API/kubelet; не восстанавливает потерянный node disk.
 kubectl logs POD [-c CONTAINER] [FLAGS]
--c NAME — Выбрать container.
-Когда: Отделить api от init/sidecar.
+-c NAME — Выбрать контейнер внутри указанного Pod.
+Когда: Получить журнал api, когда в Pod несколько контейнеров.
 kubectl --context "$LAB_CONTEXT" -n lab logs POD_NAME -c api
-Результат: Требуется pods/log access, не pods/exec.
---previous — Читать предыдущий доступный экземпляр container.
-Когда: CrashLoop диагностика.
+Результат: Имя api в примере соответствует spec.containers[].name. Для чтения журнала требуется право get на подресурс pods/log.
+--previous — Выбрать доступный журнал предыдущего завершившегося экземпляра контейнера в этом Pod.
+Когда: Контейнер api уже перезапустился, а нужно исследовать причину прежнего завершения.
+kubectl --context "$LAB_CONTEXT" -n lab logs POD_NAME -c api --previous --tail=100 --timestamps
+Результат: При State: Running обычный logs читает текущий запуск. С --previous kubelet выбирает последний завершившийся экземпляр. Если сведений о нём нет, команда возвращает ошибку.
+--tail N — Ограничить вывод последними N строками доступного журнала.
+Когда: Быстро прочитать конец журнала перед завершением контейнера.
 kubectl --context "$LAB_CONTEXT" -n lab logs POD_NAME -c api --previous --tail=100
-Результат: Отличается от текущего logs; не архив всех revisions.
---since DURATION --timestamps — Ограничить время и добавить stamps.
-Когда: Корреляция с Events.
-kubectl --context "$LAB_CONTEXT" -n lab logs POD_NAME -c api --since=10m --timestamps
-Результат: Ротация/потеря старых bytes остаётся; чувствительные данные защитить.
+Результат: Значение 100 даёт до ста последних строк. Значение -1 запрашивает все доступные строки. Доступность старых строк зависит от ротации и сохранности журнала.
+--since DURATION — Отобрать строки за указанный промежуток времени до текущего момента.
+Когда: Сопоставить сообщения контейнера с недавним событием в кластере.
+kubectl --context "$LAB_CONTEXT" -n lab logs POD_NAME -c api --since=10m
+Результат: Значение 10m оставляет строки последних десяти минут. Можно задать секунды, минуты или часы, например 30s, 10m или 2h. При дополнительном --tail=100 действуют оба ограничения.
+--timestamps — Добавить отметку времени в начало каждой строки журнала.
+Когда: Сравнить момент сообщения с Finished прежнего запуска или временем события.
+kubectl --context "$LAB_CONTEXT" -n lab logs POD_NAME -c api --previous --tail=100 --timestamps
+Результат: Состав выбранных строк сохраняется, перед текстом появляется время записи строки. Для сопоставления с describe учитывайте указанный часовой пояс.
 --follow, -f — Продолжать чтение потока.
 Когда: Короткое наблюдение своего запроса.
 kubectl --context "$LAB_CONTEXT" -n lab logs POD_NAME -c api -f

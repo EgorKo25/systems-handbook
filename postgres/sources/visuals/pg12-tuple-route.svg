@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 836" role="img" aria-labelledby="pg12-route-title pg12-route-desc" class="pg12-route-svg" data-plain-skip="true">
 <title id="pg12-route-title">От номера элемента к заголовку двух версий UPDATE</title>
-<desc id="pg12-route-desc">Рассчитанный блок0: LP1 в байтах24–27 указывает на старую версию8160–8191, LP2 в28–31 — на новую8128–8159. Обе версии32байта. У V1 xmin510,xmax520,t_ctid=(0,2),n0; у V2 xmin520,xmax недействителен,t_ctid=(0,2),n1. Пунктирная связь V1 идёт через LP2, а не прямо по байтовому адресу. После COMMIT520 старый снимок со списком520 выбирает V1, новый — V2.</desc>
+<desc id="pg12-route-desc">Рассчитанный блок0: LP1 в байтах24–27 указывает на старую версию8160–8191, LP2 в28–31 — на новую8128–8159. Обе версии32байта. У V1 xmin510,xmax520,t_ctid=(0,2),n0; у V2 xmin520,xmax недействителен,t_ctid=(0,2),n1. Пунктирная связь V1 идёт через LP2, а не прямо по байтовому адресу. После COMMIT 520 старый снимок с границей xmax=520 выбирает V1. Новый снимок с границей xmax=521 выбирает V2.</desc>
 <style>
 .pg12-route-svg{color:var(--reader-text,var(--text,#202d34));background:var(--paper,#fff);font:17px system-ui,sans-serif}
 .pg12-route-svg text{fill:currentColor}
