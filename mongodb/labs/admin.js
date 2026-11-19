@@ -17,10 +17,24 @@ if(action==='accept') {
  printjson({nReturned:x.executionStats.nReturned,totalKeysExamined:x.executionStats.totalKeysExamined,totalDocsExamined:x.executionStats.totalDocsExamined,executionTimeMillis:x.executionStats.executionTimeMillis,winningPlan:x.queryPlanner.winningPlan});
 } else if(action==='types') {
  const c=w.semantics;if(c.countDocuments({})!==0)throw Error('STOP: semantics already exists; inspect before repeating');
- c.insertMany([{_id:'missing'},{_id:'null',a:null},{_id:'array',a:[1,8]},{_id:'scalar',a:4}]);
+ c.insertMany([{_id:'missing'},{_id:'null',a:null},{_id:'array-null',a:[null]},{_id:'array',a:[1,8]},{_id:'scalar',a:4}]);
  const ids=q=>c.find(q,{_id:1}).toArray().map(d=>d._id).sort();
- const actual={nullOrMissing:ids({a:null}),onlyNull:ids({a:{$type:10}}),differentElements:ids({a:{$gt:5,$lt:3}}),sameElement:ids({a:{$elemMatch:{$gt:5,$lt:3}}})};
- const expected={nullOrMissing:['missing','null'],onlyNull:['null'],differentElements:['array'],sameElement:[]};
+ const actual={
+  nullOrMissing:ids({a:null}),
+  missingOnly:ids({a:{$exists:false}}),
+  queryTypeNull:ids({a:{$type:10}}),
+  exactScalarNull:ids({$expr:{$eq:[{$type:'$a'},'null']}}),
+  differentElements:ids({a:{$gt:5,$lt:3}}),
+  sameElement:ids({a:{$elemMatch:{$gt:5,$lt:3}}})
+ };
+ const expected={
+  nullOrMissing:['array-null','missing','null'],
+  missingOnly:['missing'],
+  queryTypeNull:['array-null','null'],
+  exactScalarNull:['null'],
+  differentElements:['array'],
+  sameElement:[]
+ };
  if(JSON.stringify(actual)!==JSON.stringify(expected))throw Error('STOP: BSON semantics mismatch '+JSON.stringify(actual));
  printjson(actual);
 } else if(action==='stats') {

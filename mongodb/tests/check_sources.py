@@ -17,7 +17,12 @@ for id in order:
  for href in re.findall(r'href="([^"]+)"',s):
   if href.startswith('#'):assert href[1:] in order,(id,href)
   elif not re.match(r'https?://',href):assert (p/html.unescape(href.split('#')[0])).is_file(),(id,href)
- for block in re.findall(r'<pre><code>(.*?)</code></pre>',s,re.S):assert block.startswith('set -euo pipefail\n'),id
+ for attrs,block in re.findall(r'<pre\b([^>]*)><code>(.*?)</code></pre>',s,re.S):
+  kind=re.search(r'data-code-kind=["\']([^"\']+)["\']',attrs)
+  kind=kind.group(1) if kind else 'shell'
+  assert kind in {'shell','example','output'},(id,kind)
+  assert block.strip(),id
+  if kind=='shell':assert block.startswith('set -euo pipefail\n'),id
 for d in diagrams:
  s=(p/'sources'/(d['chapter']+'.html')).read_text();assert s.count(d['insert_before'])==1
  nodes={x['id'] for x in d['nodes']};edges={x['id'] for x in d['edges']};assert len(nodes)==len(d['nodes'])
