@@ -99,7 +99,7 @@
     "slug": "computer-architecture",
     "title": "Архитектура компьютера: от сигнала до исполняемой машины",
     "volume": "I",
-    "words": 61189,
+    "words": 61448,
     "chapters": 36,
     "terms": 218
   },
@@ -115,7 +115,7 @@
     "slug": "nexus",
     "title": "Nexus Repository: артефакты, Go-модули и сохранение состояния",
     "volume": "XVII",
-    "words": 21858,
+    "words": 21960,
     "chapters": 19,
     "terms": 94
   },

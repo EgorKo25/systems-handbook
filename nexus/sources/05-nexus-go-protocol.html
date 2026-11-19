@@ -48,6 +48,31 @@ answer.go: b'package lab\n\nconst Answer = 42\n'</code></pre>
 example.invalid/bytes/lab v1.0.0/go.mod h1:UQlMCAh2EnFYrq3F/83ATd8bFMfx8DSuczv6vSHAQ6I=</code></pre>
 <p>Суффикс <code>/go.mod</code> здесь часть обозначения проверяемого объекта, а не ещё одна версия пакета. Наличие только этой строки не утверждает, что исходный ZIP уже скачан и проверен. Несколько версий одного модуля в go.sum также не означают, что все они одновременно выбраны для сборки: выбранный граф смотрят отдельно через команды Go. Файл сумм отвечает на другой вопрос.</p>
 
+<figure id="nexus-zip-h1-branches" aria-labelledby="nexus-zip-h1-caption" style="margin:1.2rem 0">
+<figcaption id="nexus-zip-h1-caption" style="margin-bottom:0.55rem"><strong>Один ZIP модуля, два входа для SHA-256</strong></figcaption>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,15rem),1fr));gap:0.8rem;text-align:start;font-size:0.9em;line-height:1.45">
+<div style="min-width:0;border:1px solid var(--line);border-radius:0.5rem;padding:0.75rem">
+<strong><span aria-hidden="true">↓ </span>Байты архива</strong>
+<ol style="margin:0.6rem 0;padding-inline-start:1.3em">
+<li style="text-align:start">Прочитать ZIP целиком, включая заголовки и сжатые данные.</li>
+<li style="text-align:start">Вычислить SHA-256 и записать шестнадцатеричную сумму ZIP.</li>
+</ol>
+<p style="text-align:start;margin:0.5rem 0"><strong>A → B.</strong> Перепаковка меняет сумму ZIP.</p>
+<p style="text-align:start;margin:0.5rem 0"><strong>A → E.</strong> Переименование меняет байты ZIP и его сумму.</p>
+</div>
+<div style="min-width:0;border:1px solid var(--line);border-radius:0.5rem;padding:0.75rem">
+<strong><span aria-hidden="true">↓ </span>Записи внутри ZIP</strong>
+<ol style="margin:0.6rem 0;padding-inline-start:1.3em">
+<li style="text-align:start">Для каждого полного имени взять SHA-256 несжатых байтов файла.</li>
+<li style="text-align:start">Из пар «сумма и имя» собрать сводку в порядке имён.</li>
+<li style="text-align:start">Вычислить SHA-256 сводки и записать результат в Base64 с префиксом <code>h1:</code>.</li>
+</ol>
+<p style="text-align:start;margin:0.5rem 0"><strong>A → B.</strong> Имена и несжатые байты прежние. <code>h1</code> совпадает.</p>
+<p style="text-align:start;margin:0.5rem 0"><strong>A → E.</strong> <code>answer.go</code> стал <code>renamed.go</code>. Сумма содержимого файла прежняя, имя в сводке меняется. <code>h1</code> меняется.</p>
+</div>
+</div>
+</figure>
+
 <h3>Пять опытов: что именно изменилось</h3>
 <table><thead><tr><th>Опыт</th><th>Изменение</th><th>Реальный результат</th></tr></thead><tbody>
 <tr><td>A</td><td>Первоначальный ZIP, два известных файла</td><td>Go вернул Sum и GoModSum, совпавшие с независимым вычислением</td></tr>
