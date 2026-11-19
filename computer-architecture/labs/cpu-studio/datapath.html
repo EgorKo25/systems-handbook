@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="studio.css">
   <script src="../m32/appearance.js" defer></script>
   <script src="../logic/model.js?v=2" defer></script>
-  <script src="datapath.js?v=4" defer></script>
+  <script src="datapath.js?v=5" defer></script>
   <style>
     #datapath-settings { display:flex; flex-wrap:wrap; gap:12px; align-items:end }
     #datapath-settings label { display:grid; gap:4px }
@@ -34,7 +34,7 @@
       <p>В этой учебной схеме одна команда занимает четыре такта. АЛУ на третьем такте вычисляет сумму для <code>ADDI</code> либо адрес для <code>LW</code> и <code>SW</code>. На четвёртом такте <code>LW</code> читает слово из RAM в x6, а <code>SW</code> записывает в RAM четыре байта из x6.</p>
     </div></header>
     <section class="workbench" aria-label="Модель четырёх тактов">
-      <p id="snapshot-note" hidden>Снимок IDE перед SW содержит PC, x5, x6 и четыре байта по адресу записи. Остальная память модели изначально заполнена нулями, кроме слова с инструкцией.</p>
+      <p id="snapshot-note" hidden>Снимок IDE перед LW или SW содержит PC, x5, x6 и четыре байта по адресу обращения. Остальная память модели изначально заполнена нулями, кроме слова с инструкцией.</p>
       <form id="datapath-settings">
         <label>Команда <select id="operation"><option>ADDI</option><option>LW</option><option>SW</option></select></label>
         <label>Начальное x6 <input id="initial" inputmode="numeric" value="42" required></label>

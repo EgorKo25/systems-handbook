@@ -98,18 +98,23 @@
   }
 
   function fromSnapshot(hash) {
-    if (!hash.startsWith('#sw?') || hash.length > 100) throw new Error('Неизвестный формат снимка.');
-    const params = new URLSearchParams(hash.slice(4));
+    const format = /^#(lw|sw)\?/.exec(hash);
+    if (!format || hash.length > 100) throw new Error('Неизвестный формат снимка.');
+    const operation = format[1].toUpperCase();
+    const params = new URLSearchParams(hash.slice(format[0].length));
     const names = ['pc', 'word', 'x5', 'x6', 'ram'];
     if ([...params].length !== names.length || names.some(name => !/^[0-9a-f]{8}$/i.test(params.get(name) ?? ''))) {
       throw new Error('В снимке нужны 32-битные PC, код команды, x5, x6 и слово RAM.');
     }
     const [pc, word, base, value, memoryWord] = names.map(name => parseInt(params.get(name), 16));
     const decoded = cpu.decode(word);
-    if (decoded.op !== 'SW' || decoded.rs1 !== 5 || decoded.rs2 !== 6) throw new Error('Снимок должен содержать SW из x6 по адресу на основе x5.');
+    const register = operation === 'LW' ? decoded.rd : decoded.rs2;
+    if (decoded.op !== operation || decoded.rs1 !== 5 || register !== 6) {
+      throw new Error('Код команды снимка должен совпадать с LW или SW на основе x5 и с регистром x6.');
+    }
     cpu.checkWord(cpu.u32(base + decoded.immediate));
     const context = { pc, base };
-    const state = create(value, decoded.immediate, 'SW', memoryWord, {}, context);
+    const state = create(value, decoded.immediate, operation, memoryWord, {}, context);
     if (state.instruction !== word) throw new Error('Машинное слово снимка не совпало с результатом сборки.');
     return { context, state, memoryWord, offset: decoded.immediate };
   }
@@ -227,11 +232,11 @@
     render();
   });
   let snapshotError;
-  if (window.location.hash.startsWith('#sw')) {
+  if (/^#(?:lw|sw)/.test(window.location.hash)) {
     try {
       const snapshot = fromSnapshot(window.location.hash);
       ({ context, state } = snapshot);
-      $('operation').value = 'SW';
+      $('operation').value = state.operation;
       $('operation').dispatchEvent(new Event('change'));
       $('initial').value = hex(state.x6);
       $('increment').value = snapshot.offset;

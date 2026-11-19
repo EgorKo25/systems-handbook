@@ -81,7 +81,9 @@
     const word = listingWords.get(machine.pc);
     if (!canContinue || word === undefined || cpu.read32(machine.memory, machine.pc) !== word) return;
     const decoded = cpu.decode(word);
-    if (decoded.op !== 'SW' || decoded.rs1 !== 5 || decoded.rs2 !== 6) return;
+    if (decoded.rs1 !== 5 || !(
+      (decoded.op === 'LW' && decoded.rd === 6) || (decoded.op === 'SW' && decoded.rs2 === 6)
+    )) return;
 
     const x5 = machine.regs[5];
     const target = cpu.u32(x5 + decoded.immediate);
@@ -91,8 +93,8 @@
       pc: cpu.hex(machine.pc), word: cpu.hex(word), x5: cpu.hex(x5),
       x6: cpu.hex(machine.regs[6]), ram: cpu.hex(ram),
     });
-    link.href = 'datapath.html#sw?' + snapshot;
-    link.textContent = 'Разобрать SW по адресу ' + address(machine.pc) + ' по тактам';
+    link.href = 'datapath.html#' + decoded.op.toLowerCase() + '?' + snapshot;
+    link.textContent = 'Разобрать ' + decoded.op + ' по адресу ' + address(machine.pc) + ' по тактам';
     link.hidden = false;
   }
 
