@@ -8,7 +8,11 @@
     LW: immediate => `lw x6, ${immediate}(x5)`,
     SW: immediate => `sw x6, ${immediate}(x5)`,
     BNE: immediate => `bne x7, x0, ${immediate}`,
+    JAL: immediate => `jal x1, ${immediate}`,
+    JALR: () => 'jalr x0, 0(x1)',
   };
+
+  const isJump = operation => operation === 'JAL' || operation === 'JALR';
 
   function create(value = 42, immediate = 1, operation = 'ADDI', memoryWord = 0x11223344, wiring = {}, context = {}) {
     const { pc = cpu.ENTRY, base = defaultBase } = context;
@@ -18,12 +22,14 @@
     if ([useZero, inhibitRegister, inhibitStore].some(flag => typeof flag !== 'boolean')) {
       throw new Error('Параметры управляющих сигналов должны принимать значение 0 или 1.');
     }
-    if (!Object.hasOwn(instructions, operation)) throw new Error('Выберите ADDI, LW, SW или BNE.');
+    if (!Object.hasOwn(instructions, operation)) throw new Error('Выберите ADDI, LW, SW, BNE, JAL или JALR.');
     if (!Number.isInteger(value) || value < 0 || value > 0xffffffff) {
       throw new Error('Начальное значение регистра должно быть целым числом от 0 до 4294967295.');
     }
     const branch = operation === 'BNE';
-    if (!branch && (!Number.isInteger(immediate) || immediate < -2048 || immediate > 2047)) {
+    const jump = isJump(operation);
+    if (operation === 'JALR' && immediate !== 0) throw new Error('Для этого возврата смещение равно нулю.');
+    if (!branch && !jump && (!Number.isInteger(immediate) || immediate < -2048 || immediate > 2047)) {
       throw new Error('Константа или смещение должны быть целым числом от −2048 до 2047.');
     }
 
@@ -46,8 +52,8 @@
       }
     }
     return {
-      operation, source, memory, instruction, cycle: 0, pc, base, x6: branch ? 0 : value,
-      x7: branch ? value : 0, branchEvent: null,
+      operation, source, memory, instruction, cycle: 0, pc, base, x6: branch || jump ? 0 : value,
+      x7: branch ? value : 0, x1: jump ? value : 0, branchEvent: null, jumpEvent: null,
       ir: null, decoded: null, operand: null, result: null, access: null, fault: null,
       wiring: { useZero, inhibitRegister, inhibitStore }, signals: null,
     };
@@ -63,6 +69,11 @@
           return { ...state, cycle: 2, decoded, operand: state.x7,
             signals: { right: 0, registerWrite: false, memoryWrite: false } };
         }
+        if (isJump(decoded.op)) {
+          return { ...state, cycle: 2, decoded,
+            operand: decoded.op === 'JAL' ? state.pc : state.x1,
+            signals: { right: decoded.immediate, registerWrite: decoded.rd === 1, memoryWrite: false } };
+        }
         const store = decoded.op === 'SW';
         return {
           ...state, cycle: 2, decoded, operand: decoded.op === 'ADDI' ? state.x6 : state.base,
@@ -74,15 +85,18 @@
         };
       }
       case 2:
-        if (state.decoded.op === 'BNE') {
-          // Evaluate with the IDE's instruction rule. Commit its PC on clock 4.
+        if (state.decoded.op === 'BNE' || isJump(state.decoded.op)) {
+          // Evaluate with the IDE's instruction rule. Commit its effects on clock 4.
           const registers = new Uint32Array(32);
           registers[7] = state.x7;
+          registers[1] = state.x1;
           const preview = {
             pc: state.pc, memory: state.memory, regs: registers,
             status: 'ready', attempts: 0, retired: 0, trace: [], traceDropped: 0,
           };
-          return { ...state, cycle: 3, branchEvent: cpu.step(preview) };
+          const event = cpu.step(preview);
+          return state.decoded.op === 'BNE' ? { ...state, cycle: 3, branchEvent: event }
+            : { ...state, cycle: 3, jumpEvent: event };
         }
         return { ...state, cycle: 3, result: cpu.u32(state.operand + state.signals.right) };
       case 3:
@@ -96,6 +110,12 @@
     if (state.decoded.op === 'BNE') {
       const event = state.branchEvent;
       return { ...state, cycle: 4, pc: event.pcAfter, fault: event.cause ?? null };
+    }
+    if (isJump(state.decoded.op)) {
+      const event = state.jumpEvent;
+      const write = event.registers.find(entry => entry.register === 1);
+      return { ...state, cycle: 4, pc: event.pcAfter, x1: write?.after ?? state.x1,
+        fault: event.cause ?? null };
     }
     const completed = { ...state, cycle: 4, pc: cpu.u32(state.pc + 4) };
     const { registerWrite, memoryWrite } = state.signals;
@@ -119,26 +139,29 @@
   }
 
   function fromSnapshot(hash) {
-    const format = /^#(addi|lw|sw|bne)\?/.exec(hash);
+    const format = /^#(addi|lw|sw|bne|jalr|jal)\?/.exec(hash);
     if (!format || hash.length > 100) throw new Error('Неизвестный формат снимка.');
     const operation = format[1].toUpperCase();
     const arithmetic = operation === 'ADDI';
     const params = new URLSearchParams(hash.slice(format[0].length));
     const branch = operation === 'BNE';
-    const names = branch ? ['pc', 'word', 'x7'] : arithmetic ? ['pc', 'word', 'x6'] : ['pc', 'word', 'x6', 'x5', 'ram'];
+    const jump = isJump(operation);
+    const names = jump ? ['pc', 'word', 'x1'] : branch ? ['pc', 'word', 'x7'] : arithmetic ? ['pc', 'word', 'x6'] : ['pc', 'word', 'x6', 'x5', 'ram'];
     if ([...params].length !== names.length || names.some(name => !/^[0-9a-f]{8}$/i.test(params.get(name) ?? ''))) {
       throw new Error('Снимок содержит лишние, пропущенные или неверные значения.');
     }
     const [pc, word, value, base, memoryWord] = names.map(name => parseInt(params.get(name), 16));
     const decoded = cpu.decode(word);
     const register = operation === 'SW' ? decoded.rs2 : decoded.rd;
-    const matchingRegisters = branch ? decoded.rs1 === 7 && decoded.rs2 === 0
+    const matchingRegisters = jump
+      ? operation === 'JAL' ? decoded.rd === 1 : decoded.rd === 0 && decoded.rs1 === 1 && decoded.immediate === 0
+      : branch ? decoded.rs1 === 7 && decoded.rs2 === 0
       : decoded.rs1 === (arithmetic ? 6 : 5) && register === 6;
     if (decoded.op !== operation || !matchingRegisters) {
       throw new Error('Команда и регистры снимка не совпадают с профилем тракта.');
     }
-    if (!arithmetic && !branch) cpu.checkWord(cpu.u32(base + decoded.immediate));
-    const context = arithmetic || branch ? { pc } : { pc, base };
+    if (!arithmetic && !branch && !jump) cpu.checkWord(cpu.u32(base + decoded.immediate));
+    const context = arithmetic || branch || jump ? { pc } : { pc, base };
     const state = create(value, decoded.immediate, operation, memoryWord, {}, context);
     if (state.instruction !== word) throw new Error('Машинное слово снимка не совпало с результатом сборки.');
     return { context, state, memoryWord, offset: decoded.immediate };
@@ -160,37 +183,49 @@
     const store = state.operation === 'SW';
     const branch = state.operation === 'BNE';
     const event = state.branchEvent;
+    const jump = isJump(state.operation);
+    const indirect = state.operation === 'JALR';
+    const jumpEvent = state.jumpEvent;
     const address = state.result;
     const hasWord = !arithmetic && address !== null && address % 4 === 0 && address <= cpu.SIZE - 4;
-    const stages = ['Выборка', 'Декодирование', branch ? 'Сравнение и выбор адреса' : arithmetic ? 'Сложение' : 'Вычисление адреса', 'Завершение'];
+    const stages = ['Выборка', 'Декодирование', jump ? 'Цель и адрес продолжения' : branch ? 'Сравнение и выбор адреса' : arithmetic ? 'Сложение' : 'Вычисление адреса', 'Завершение'];
     $('instruction-source').textContent = state.source;
     $('word').textContent = hex(state.instruction);
     $('instruction-address').textContent = hex(context.pc ?? cpu.ENTRY);
     $('base-value').textContent = hex(state.base);
     $('ir').textContent = hex(state.ir);
-    $('operand-label').textContent = branch ? 'x7 и x0' : arithmetic ? 'x6 и константа' : 'x5 и смещение';
+    $('operand-label').textContent = jump ? (indirect ? 'x1 и смещение' : 'PC и смещение') : branch ? 'x7 и x0' : arithmetic ? 'x6 и константа' : 'x5 и смещение';
     $('operand').textContent = state.operand === null ? '—' : branch ? hex(state.operand) + ' и 0' : hex(state.operand) + ' + (' + state.signals.right + ')';
     $('alu-source').textContent = !state.signals ? '—' : branch ? 'x0 → 0' : state.wiring.useZero
       ? 'x0 → 0' : 'поле команды → ' + state.decoded.immediate;
     $('register-enable').textContent = state.signals ? Number(state.signals.registerWrite) : '—';
     $('memory-enable').textContent = state.signals ? Number(state.signals.memoryWrite) : '—';
-    $('alu-label').textContent = branch ? 'Результат сравнения' : arithmetic ? 'Младшие 32 бита суммы' : 'Адрес в памяти';
-    $('alu').textContent = branch ? event ? event.branch.taken ? 'x7 ≠ x0' : 'x7 = x0' : '—' : hex(address);
-    $('register-name').textContent = branch ? 'x7' : 'x6';
-    $('register').textContent = hex(branch ? state.x7 : state.x6);
+    $('alu-label').textContent = jump ? 'Цель перехода' : branch ? 'Результат сравнения' : arithmetic ? 'Младшие 32 бита суммы' : 'Адрес в памяти';
+    const sum = jumpEvent ? cpu.u32(state.operand + state.decoded.immediate) : null;
+    // A trapping event has no jump payload. Show the rejected candidate as a calculation.
+    const target = jumpEvent?.jump?.target ?? (indirect && sum !== null ? cpu.u32(sum & ~1) : sum);
+    $('jump-addresses').hidden = !jumpEvent;
+    $('jump-continuation').textContent = hex(jumpEvent?.jump?.link ?? (jumpEvent ? cpu.u32(jumpEvent.pcBefore + 4) : null));
+    $('jalr-sum-line').hidden = !jumpEvent || !indirect;
+    $('jalr-sum').textContent = hex(sum);
+    $('alu').textContent = jump ? hex(target) : branch ? event ? event.branch.taken ? 'x7 ≠ x0' : 'x7 = x0' : '—' : hex(address);
+    $('register-name').textContent = jump ? 'x1' : branch ? 'x7' : 'x6';
+    $('register').textContent = hex(jump ? state.x1 : branch ? state.x7 : state.x6);
     $('branch-addresses').hidden = !event;
     $('branch-target').textContent = hex(event?.branch.target ?? null);
     $('branch-next').textContent = hex(event ? cpu.u32(event.pcBefore + 4) : null);
     $('pc').textContent = hex(state.pc);
-    $('base-line').hidden = arithmetic || branch;
+    $('base-line').hidden = arithmetic || branch || jump;
     $('store-line').hidden = !store;
     $('store-word').textContent = hex(state.decoded ? state.x6 : null);
-    $('memory-line').hidden = arithmetic || branch;
+    $('memory-line').hidden = arithmetic || branch || jump;
     $('memory-address').textContent = hex(address);
     $('memory-bytes').textContent = hasWord
       ? Array.from(state.memory.slice(address, address + 4), byte => cpu.hex(byte, 2)).join(' ')
       : '—';
-    $('commit-heading').textContent = branch ? '4. Запись выбранного PC' : arithmetic ? '4. Запись x6 и смена PC' : store
+    $('commit-heading').textContent = jump
+      ? indirect ? '4. Запись PC' : '4. Запись PC и x1'
+      : branch ? '4. Запись выбранного PC' : arithmetic ? '4. Запись x6 и смена PC' : store
       ? '4. Запись четырёх байтов и смена PC' : '4. Чтение слова, запись x6 и смена PC';
     $('effect').textContent = effectText(state);
     $('clock').disabled = state.cycle === stages.length;
@@ -206,6 +241,11 @@
 
   function effectText(state) {
     if (state.cycle < 4) return '—';
+    if (isJump(state.operation)) {
+      if (state.fault) return 'Исключение: цель не кратна 4. PC, регистры и RAM прежние.';
+      if (state.operation === 'JAL') return 'PC получает адрес цели. x1 получает адрес продолжения. RAM прежняя.';
+      return 'PC получает адрес цели. Адрес продолжения отбрасывается, поскольку получатель — x0.';
+    }
     if (state.operation === 'BNE') {
       if (state.fault) return 'Исключение: выбранная цель не кратна 4. PC, регистры и RAM прежние.';
       return (state.branchEvent.branch.taken ? 'Переход' : 'Следующая команда')
@@ -250,20 +290,22 @@
   }
 
   let previousKind = 'arithmetic';
-  const offsets = { arithmetic: '1', memory: '0', branch: '-4' };
+  const offsets = { arithmetic: '1', memory: '0', branch: '-4', jal: '8', jalr: '0' };
   $('operation').addEventListener('change', () => {
     const operation = $('operation').value;
-    const kind = operation === 'BNE' ? 'branch' : operation === 'ADDI' ? 'arithmetic' : 'memory';
+    const kind = isJump(operation) ? operation.toLowerCase() : operation === 'BNE' ? 'branch' : operation === 'ADDI' ? 'arithmetic' : 'memory';
     offsets[previousKind] = $('increment').value;
     $('increment').value = offsets[kind];
     previousKind = kind;
     $('increment-label').textContent = {
       arithmetic: 'Константа ADDI', memory: 'Смещение от x5', branch: 'Смещение от PC',
+      jal: 'Смещение от PC', jalr: 'Смещение от x1',
     }[kind];
-    $('initial-label').textContent = kind === 'branch' ? 'Начальное x7' : 'Начальное x6';
+    $('initial-label').textContent = isJump(operation) ? 'Начальное x1' : kind === 'branch' ? 'Начальное x7' : 'Начальное x6';
+    $('increment').readOnly = operation === 'JALR';
     $('memory-settings').hidden = kind !== 'memory';
-    $('wiring-settings').hidden = kind === 'branch';
-    $('wiring-settings').disabled = kind === 'branch';
+    $('wiring-settings').hidden = kind === 'branch' || isJump(operation);
+    $('wiring-settings').disabled = $('wiring-settings').hidden;
   });
   $('datapath-settings').addEventListener('submit', event => {
     event.preventDefault();
@@ -274,19 +316,20 @@
     render();
   });
   let snapshotError;
-  if (/^#(?:addi|lw|sw|bne)/.test(window.location.hash)) {
+  if (/^#(?:addi|lw|sw|bne|jalr|jal)/.test(window.location.hash)) {
     try {
       const snapshot = fromSnapshot(window.location.hash);
       ({ context, state } = snapshot);
       $('operation').value = state.operation;
       $('operation').dispatchEvent(new Event('change'));
       const branch = state.operation === 'BNE';
-      $('initial').value = hex(branch ? state.x7 : state.x6);
+      const jump = isJump(state.operation);
+      $('initial').value = hex(jump ? state.x1 : branch ? state.x7 : state.x6);
       $('increment').value = snapshot.offset;
       if (state.operation === 'LW' || state.operation === 'SW') {
         $('memory-initial').value = hex(snapshot.memoryWord);
       }
-      $(branch ? 'snapshot-bne-note' : state.operation === 'ADDI' ? 'snapshot-addi-note' : 'snapshot-note').hidden = false;
+      $(jump ? 'snapshot-jump-note' : branch ? 'snapshot-bne-note' : state.operation === 'ADDI' ? 'snapshot-addi-note' : 'snapshot-note').hidden = false;
     } catch (error) {
       snapshotError = 'Не удалось открыть снимок из IDE. Открыт исходный пример ADDI.';
     }

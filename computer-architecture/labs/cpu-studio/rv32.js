@@ -83,7 +83,13 @@
     const decoded = cpu.decode(word);
     const arithmetic = decoded.op === 'ADDI';
     const snapshot = new URLSearchParams({ pc: cpu.hex(machine.pc), word: cpu.hex(word) });
-    if (decoded.op === 'BNE') {
+    const jump = decoded.op === 'JAL' || decoded.op === 'JALR';
+    if (jump) {
+      const supported = decoded.op === 'JAL' ? decoded.rd === 1
+        : decoded.rd === 0 && decoded.rs1 === 1 && decoded.immediate === 0;
+      if (!supported) return;
+      snapshot.set('x1', cpu.hex(machine.regs[1]));
+    } else if (decoded.op === 'BNE') {
       if (decoded.rs1 !== 7 || decoded.rs2 !== 0) return;
       snapshot.set('x7', cpu.hex(machine.regs[7]));
     } else {
@@ -91,7 +97,7 @@
     }
     if (arithmetic) {
       if (decoded.rs1 !== 6 || decoded.rd !== 6) return;
-    } else if (decoded.op !== 'BNE') {
+    } else if (!jump && decoded.op !== 'BNE') {
       if (decoded.rs1 !== 5 || !(
         (decoded.op === 'LW' && decoded.rd === 6) || (decoded.op === 'SW' && decoded.rs2 === 6)
       )) return;
