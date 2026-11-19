@@ -1,8 +1,8 @@
 {
   "status": "PASS",
-  "book_sha256": "0e8331003f35d56f6cae38f803795f460c3f94c957d8a461e0a0302fcad21db6",
-  "links": 524,
-  "anchors": 751,
+  "book_sha256": "a3395a688de2d9694eb699583d65a7e562bcd1b492072f180cea9c83f44572c0",
+  "links": 533,
+  "anchors": 788,
   "diagrams": 9,
   "steps": 59,
   "replication_scenarios": 3,
