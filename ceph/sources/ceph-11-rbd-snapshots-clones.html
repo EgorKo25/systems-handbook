@@ -63,6 +63,26 @@ b children rbdstudy/report-disk@s0
 deep-flatten: без него снимки child могут сохранять зависимость.
 В этом упражнении у child снимков нет. Unprotect разрешён только после
 проверки зависимостей; rollback и удаление здесь не выполняются автоматически.</p>
+<figure id="ceph11-flatten-relations" style="margin:1.2rem 0;padding:1rem;border:1px solid var(--line);border-radius:.75rem;background:var(--soft)">
+<figcaption><strong>Какая ссылка исчезает при flatten</strong><br>Стрелка означает зависимость от снимка-родителя, а не направление копирования байтов.</figcaption>
+<div style="display:grid;gap:.7rem;grid-template-columns:repeat(auto-fit,minmax(min(100%,14rem),1fr));margin-block:.8rem">
+<section style="border:1px solid var(--line);padding:.7rem;border-radius:.5rem">
+<strong>До flatten · снимков child нет</strong>
+<p><code>report-child</code><br>↓ parent<br><code>report-disk@s0</code></p>
+<p><code>info report-child</code> показывает parent. <code>children report-disk@s0</code> включает child.</p>
+</section>
+<section style="border:1px solid var(--line);padding:.7rem;border-radius:.5rem">
+<strong>После успешного flatten</strong>
+<p><code>report-child</code> · без parent<br><code>report-disk@s0</code> · отдельно</p>
+<p>В этом упражнении <code>info</code> больше не показывает parent, а в <code>children</code> нет этого child.</p>
+</section>
+</div>
+<div style="border-top:1px solid var(--line);padding-top:.7rem">
+<strong>Другой случай: у child есть снимок</strong>
+<p><code>report-child</code> · head после flatten без parent<br><code>report-child@c0</code> ↓ может сохранять зависимость от <code>report-disk@s0</code></p>
+<p>При отсутствии <code>deep-flatten</code> снимок child может остаться связан с родителем. Одного отсутствия parent у head недостаточно для вывода обо всех снимках. Проверяйте сведения о снимках, feature и <code>children</code> родительского снимка; не переносите на них результат упражнения без снимков child.</p>
+</div>
+</figure>
 <h2>Задание и ответ</h2>
 <p>Почему удаление файла внутри гостевой файловой системы не обязано сразу
 освободить все старые байты Ceph? Файловая система может не передать discard,

@@ -79,7 +79,7 @@
   {
     "id": "ceph-11-rbd-snapshots-clones",
     "title": "Снимок RBD, clone и зависимость от родителя",
-    "words": 505,
+    "words": 616,
     "part": "Книга III · Блочное хранение RBD",
     "number": "11"
   },

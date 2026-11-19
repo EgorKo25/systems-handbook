@@ -203,7 +203,7 @@
     "slug": "flyway",
     "title": "Flyway: управляемое изменение живой базы данных",
     "volume": "X",
-    "words": 15069,
+    "words": 15157,
     "chapters": 20,
     "terms": 80
   },
@@ -227,7 +227,7 @@
     "slug": "ceph",
     "title": "Ceph: от объекта и карты до восстановления",
     "volume": "XV",
-    "words": 32060,
+    "words": 32171,
     "chapters": 28,
     "terms": 46
   }
