@@ -40,17 +40,17 @@
     {
       "id": "07-catalog-objects",
       "title": "Системные каталоги: устройство объектов",
-      "words": 1902
+      "words": 1994
     },
     {
       "id": "08-catalog-system",
       "title": "Системные каталоги: связи и работа сервера",
-      "words": 1649
+      "words": 1785
     },
     {
       "id": "09-storage",
       "title": "Файлы, страницы и версии строк",
-      "words": 2779
+      "words": 2887
     },
     {
       "id": "10-buffers",
@@ -133,7 +133,7 @@
       "words": 8937
     }
   ],
-  "words": 78126,
+  "words": 78462,
   "terms": 441,
   "external_assets": 0
 }
