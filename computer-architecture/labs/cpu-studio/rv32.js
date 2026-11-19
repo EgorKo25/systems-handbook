@@ -81,18 +81,22 @@
     const word = listingWords.get(machine.pc);
     if (!canContinue || word === undefined || cpu.read32(machine.memory, machine.pc) !== word) return;
     const decoded = cpu.decode(word);
-    if (decoded.rs1 !== 5 || !(
-      (decoded.op === 'LW' && decoded.rd === 6) || (decoded.op === 'SW' && decoded.rs2 === 6)
-    )) return;
-
-    const x5 = machine.regs[5];
-    const target = cpu.u32(x5 + decoded.immediate);
-    if (target % 4 !== 0 || target > cpu.SIZE - 4) return;
-    const ram = cpu.read32(machine.memory, target);
+    const arithmetic = decoded.op === 'ADDI';
     const snapshot = new URLSearchParams({
-      pc: cpu.hex(machine.pc), word: cpu.hex(word), x5: cpu.hex(x5),
-      x6: cpu.hex(machine.regs[6]), ram: cpu.hex(ram),
+      pc: cpu.hex(machine.pc), word: cpu.hex(word), x6: cpu.hex(machine.regs[6]),
     });
+    if (arithmetic) {
+      if (decoded.rs1 !== 6 || decoded.rd !== 6) return;
+    } else {
+      if (decoded.rs1 !== 5 || !(
+        (decoded.op === 'LW' && decoded.rd === 6) || (decoded.op === 'SW' && decoded.rs2 === 6)
+      )) return;
+      const x5 = machine.regs[5];
+      const target = cpu.u32(x5 + decoded.immediate);
+      if (target % 4 !== 0 || target > cpu.SIZE - 4) return;
+      snapshot.set('x5', cpu.hex(x5));
+      snapshot.set('ram', cpu.hex(cpu.read32(machine.memory, target)));
+    }
     link.href = 'datapath.html#' + decoded.op.toLowerCase() + '?' + snapshot;
     link.textContent = 'Разобрать ' + decoded.op + ' по адресу ' + address(machine.pc) + ' по тактам';
     link.hidden = false;

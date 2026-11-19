@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="studio.css">
   <script src="../m32/appearance.js" defer></script>
   <script src="../logic/model.js?v=2" defer></script>
-  <script src="rv32.js?v=4" defer></script>
+  <script src="rv32.js?v=5" defer></script>
 </head>
 <body>
   <header class="site-bar">
@@ -62,7 +62,7 @@
       <section class="panel">
         <header class="panel-header"><h2>Листинг сборки</h2></header>
         <div class="listing-scroll"><pre id="rv32-listing"></pre></div>
-        <p>При пошаговом исполнении перед <code>LW x6, смещение(x5)</code> или <code>SW x6, смещение(x5)</code> здесь появится ссылка на четыре такта. Она откроет новую вкладку с текущими PC, x5, x6 и четырьмя байтами по адресу обращения.</p>
+        <p>Из листинга можно открыть четыре такта для <code>ADDI x6, x6, константа</code>, <code>LW x6, смещение(x5)</code> и <code>SW x6, смещение(x5)</code>. Ссылка появится, когда PC укажет на такую команду. В новую вкладку передаются PC, машинное слово и x6. Для LW и SW передаются также x5 и четыре байта по адресу обращения.</p>
         <p><a id="rv32-datapath" target="_blank" rel="noopener" hidden></a></p>
       </section>
     </section>
