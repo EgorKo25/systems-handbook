@@ -465,6 +465,35 @@ signed_overflow:
 </div>
 <p>У <code>0x82</code> старший бит равен единице. Только <code>SAR</code> переносит эту единицу в освободившийся старший разряд. У <code>0x02</code> исходный старший бит равен нулю, поэтому обе команды вписывают слева ноль и дают одинаковый результат.</p>
 </details>
+<h3 id="multiword-increment-exercise">Как увеличить число из двух байтов</h3>
+<p>В 8-битной конфигурации пара <code>R1:R0</code> хранит 16-битное число. В <code>R1</code> лежит старший байт, в <code>R0</code> — младший. При прибавлении единицы сначала меняется младший байт. Если он переходит из <code>FF</code> в <code>00</code>, <code>ADDI</code> выставляет перенос <code>C = 1</code> и нужно увеличить старший байт. При <code>C = 0</code> команда <code>JNC done</code> сразу передаёт управление на <code>HALT</code>.</p>
+<pre><code id="multiword-increment-source">.org 0x20
+    LDI R0, 255
+    LDI R1, 1
+    ADDI R0, 1
+    JNC done
+    ADDI R1, 1
+done:
+    HALT</code></pre>
+<ol>
+<li><a id="multiword-increment-ide" href="index.html">Откройте конструктор для опыта с переносом между байтами</a> и вставьте программу в редактор. В панели «Архитектура» раскройте «Изменить устройство процессора». Задайте <strong>8 бит</strong>, <strong>4 регистра</strong> и <strong>256 байт</strong> памяти. Нажмите «Применить и собрать».</li>
+<li>Дважды нажмите «Шаг» и прочитайте исходную пару <code>01:FF</code>. Прежде чем выполнять оставшиеся команды, предскажите <code>C</code> после младшего <code>ADDI</code>, следующий <code>PC</code> после <code>JNC</code> и итоговую пару. <code>JNC</code> находится по <code>0x2C</code>, следующий <code>ADDI</code> — по <code>0x30</code>, а метка <code>done</code> указывает на <code>0x34</code>.</li>
+<li>Третьим шагом выполните <code>ADDI R0, 1</code> и сверьте <code>C</code> в списке флагов. Четвёртым шагом выполните <code>JNC</code> и прочитайте <code>PC</code>. Если он указывает на <code>ADDI R1, 1</code>, выполните эту команду. Перед <code>HALT</code> запишите <code>R1:R0</code> в порядке от старшего байта к младшему.</li>
+<li>Замените <code>LDI R0, 255</code> на <code>LDI R0, 16</code> и нажмите «Собрать». Повторите прогноз и шаги для исходной пары <code>01:10</code>.</li>
+</ol>
+<details>
+<summary>Сверить перенос, переход и итоговую пару</summary>
+<div class="table-wrap">
+<table id="multiword-increment-results">
+<thead><tr><th scope="col">Вход R1:R0</th><th scope="col">R0 после ADDI</th><th scope="col">C перед JNC</th><th scope="col">PC после JNC</th><th scope="col">R1:R0 перед HALT</th></tr></thead>
+<tbody>
+<tr><th scope="row"><code>01:FF</code></th><td><code>00</code></td><td>1</td><td><code>0x30</code></td><td><code>02:00</code></td></tr>
+<tr><th scope="row"><code>01:10</code></th><td><code>11</code></td><td>0</td><td><code>0x34</code></td><td><code>01:11</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>В первом запуске <code>JNC</code> оставляет выполнение на следующей команде, и <code>ADDI R1, 1</code> увеличивает старший байт. Во втором <code>JNC</code> перескакивает через эту команду, поэтому старший байт остаётся <code>01</code>. Для прогноза перехода нужен <code>C</code> сразу после сложения младшего байта.</p>
+</details>
 </section>
 <section id="subroutine"><h2>CALL, стек и возврат</h2>
 <p>Ниже программа получает значение из порта, передаёт управление подпрограмме и выводит увеличенный результат.</p>

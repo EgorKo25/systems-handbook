@@ -107,7 +107,7 @@
     "slug": "operating-systems",
     "title": "Операционные системы: от аппаратных механизмов до управляемой программы",
     "volume": "II",
-    "words": 82877,
+    "words": 83006,
     "chapters": 38,
     "terms": 270
   },
@@ -219,7 +219,7 @@
     "slug": "minio",
     "title": "MinIO: объект, кодированные части и восстановление",
     "volume": "XIV",
-    "words": 22398,
+    "words": 22503,
     "chapters": 13,
     "terms": 46
   },

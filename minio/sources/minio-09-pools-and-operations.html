@@ -55,6 +55,24 @@
 <h2>Как читать progress без ложной точности</h2>
 <p><code>Completed</code> означает завершение этого обхода или достижение цели по свободному месту. Отказ обработки отдельной версии или очистки источника может остаться в журнале. Для приёмки посмотрите ошибки и прочитайте выбранные идентификаторы версий из ожидаемого состояния.</p>
 <p>В этом поколении rebalanceStats.update добавляет оценку on-disk size как fi.Size × (K+P) / K для обычной версии. Это арифметическая оценка кодированного размера; в ней нет точного округления каждого блока, hash headers, файловой metadata и device write amplification. Поле Bytes в rebalance status не обязано совпасть с S3 Content-Length и не является измерением реальных записей block device.</p>
+<figure id="minio-rebalance-bytes-boundaries" style="margin:1.2rem auto;max-width:35rem">
+<svg viewBox="0 0 350 316" role="img" aria-labelledby="minio-bytes-title minio-bytes-desc" style="display:block;width:100%;height:auto;max-width:30rem;margin-inline:auto;color:var(--text)">
+<title id="minio-bytes-title">Три границы учёта байтов</title>
+<desc id="minio-bytes-desc">Учебный объект размером 8 MiB при K равно 4 и P равно 2 даёт расчётную оценку Bytes 12 MiB. Стрелка вычисления связывает эти две величины. Физические записи устройства неизвестны без отдельного измерения.</desc>
+<rect x="8" y="8" width="334" height="72" rx="7" fill="var(--soft)" stroke="currentColor"></rect>
+<text x="20" y="32" fill="currentColor" font-family="system-ui,sans-serif" font-size="15" font-weight="700">Логический размер объекта</text>
+<text x="20" y="57" fill="currentColor" font-family="system-ui,sans-serif" font-size="15">8 MiB · S3 Content-Length</text>
+<path d="M175 83V116 M170 110L175 116L180 110" stroke="currentColor" fill="none" stroke-width="1.5"></path>
+<text x="188" y="106" fill="currentColor" font-family="system-ui,sans-serif" font-size="14">× (4 + 2) / 4</text>
+<rect x="8" y="121" width="334" height="72" rx="7" fill="var(--soft)" stroke="currentColor"></rect>
+<text x="20" y="145" fill="currentColor" font-family="system-ui,sans-serif" font-size="15" font-weight="700">Расчётный кодированный размер</text>
+<text x="20" y="170" fill="currentColor" font-family="system-ui,sans-serif" font-size="15">12 MiB · оценка Bytes в status</text>
+<rect x="8" y="226" width="334" height="78" rx="7" fill="none" stroke="currentColor" stroke-dasharray="5 3"></rect>
+<text x="20" y="250" fill="currentColor" font-family="system-ui,sans-serif" font-size="15" font-weight="700">Физические записи устройства</text>
+<text x="20" y="276" fill="currentColor" font-family="system-ui,sans-serif" font-size="15">Неизвестны без отдельного измерения</text>
+</svg>
+<figcaption>Учебный пример для одной обычной версии: при K = 4 и P = 2 оценка составляет 8 × (4 + 2) / 4 = 12 MiB. Стрелка обозначает только расчёт оценки; фактические записи устройства из неё не определяются.</figcaption>
+</figure>
 <p>checkIfRebalanceDone сравнивает оценку (InitFreeSpace + Bytes) / InitCapacity с PercentFreeGoal и использует допуск 0.05. Это пять процентных пунктов доли, а не гарантия свободного резерва на всех дисках и не точный процент завершённых objects. CLI summary берёт максимальное elapsed/ETA среди pools; ETA остаётся оценкой. Нельзя из 0s to completion вывести отсутствие незавершённых IO или проверить пригодность всех старых версий.</p>
 <h2>Наблюдение на продолжаемом стенде</h2>
 <p>После успешной настройки <a href="#minio-03-workbench">прежнего стенда</a> используйте второй терминал той же VM. alias lab имеет owner-доступ, TLS CA загружен через enter.sh. Следующие команды только читают состояние; output сохраняется в новом закрытом этапе. Если этап уже есть, сначала просмотрите прежний результат, не создавайте новую копию под тем же именем.</p>
