@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="studio.css">
   <script src="../m32/appearance.js" defer></script>
   <script src="../logic/model.js?v=2" defer></script>
-  <script src="rv32.js?v=8" defer></script>
+  <script src="rv32.js?v=9" defer></script>
 </head>
 <body>
   <header class="site-bar">
@@ -52,6 +52,8 @@
         <header class="panel-header"><h2>Состояние машины</h2></header>
         <dl>
           <dt>PC</dt><dd id="pc"></dd>
+          <dt>Попытки исполнения</dt><dd id="attempts"></dd>
+          <dt>Принятые инструкции</dt><dd id="retired"></dd>
           <dt>x1 · адрес возврата</dt><dd id="x1"></dd>
           <dt>x2 · указатель стека</dt><dd id="x2"></dd>
           <dt>Последний JAL или JALR</dt><dd id="last-jump"></dd>
@@ -63,6 +65,7 @@
           <dt>Выход по адресу 0x2200</dt><dd id="output-word"></dd>
           <dt>Последняя запись в память</dt><dd id="last-store"></dd>
         </dl>
+        <p class="note">Остановка до адреса оставляет оба счётчика прежними. При <code>EBREAK</code> или исключении растёт только число попыток.</p>
       </section>
       <section class="panel">
         <header class="panel-header"><h2>Листинг сборки</h2></header>

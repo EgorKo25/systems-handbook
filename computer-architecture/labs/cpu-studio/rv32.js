@@ -47,6 +47,8 @@
 
   function render() {
     $('pc').textContent = address(machine.pc);
+    $('attempts').textContent = String(machine.attempts);
+    $('retired').textContent = String(machine.retired);
     $('x1').textContent = address(machine.regs[1]);
     $('x2').textContent = address(machine.regs[2]);
     $('last-jump').textContent = lastJump
