@@ -23,6 +23,13 @@
     'inner: addi x6, x6, 1',
     'jalr x0, 0(x1)',
   ].join('\n');
+  const byteOrderSource = [
+    'lui x5, 0x2',
+    'lui x6, 0x12345',
+    'addi x6, x6, 0x678',
+    'sw x6, 512(x5)',
+    'ebreak',
+  ].join('\n');
   let assembled;
   let machine;
   let listingWords;
@@ -130,7 +137,7 @@
 
   function loadExample() {
     const example = window.location.hash;
-    const examples = { '#loop': loopSource, '#calls': callsSource };
+    const examples = { '#loop': loopSource, '#calls': callsSource, '#byte-order': byteOrderSource };
     editor.value = examples[example] ?? cpu.SOURCE;
     $('loop').hidden = example !== '#loop';
     $('calls').hidden = example !== '#calls';
