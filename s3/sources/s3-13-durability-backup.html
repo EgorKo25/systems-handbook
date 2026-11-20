@@ -31,6 +31,27 @@
 <h2 id="s3-13-retention">Не дать уборке уничтожить нужную версию</h2>
 <p><strong>Lifecycle</strong> — правила службы для переходов между классами и удаления по условиям возраста. В Enabled-корзине обычное expiration текущей data version добавляет delete marker; удаление noncurrent versions задаётся отдельно и может окончательно уничтожить историю. В Suspended-корзине null-version требует особой осторожности: её замена не создаёт новую неизменную редакцию. Правила действуют и на уже существующие объекты, подходящие по условиям. См. <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/lifecycle-expire-general-considerations.html">expiration</a>.</p>
 <p>Практический расчёт начинает не с «храним неделю», а с максимального времени обнаружения ошибки. Если ошибку замечают через девять дней, семидневная история не закрывает эту задачу. К сроку добавляют время расследования и восстановления, а правила noncurrent expiration проверяют на конкретных версиях. Автоматическое удаление незавершённых multipart uploads решает другую задачу и не заменяет retention объектов.</p>
+<figure aria-labelledby="s3-13-history-caption">
+<svg viewBox="0 0 360 350" role="img" aria-labelledby="s3-13-history-title s3-13-history-desc" style="display:block;width:100%;max-width:360px;height:auto;margin:auto;color:inherit">
+<title id="s3-13-history-title">Горизонт сохранности одной версии</title>
+<desc id="s3-13-history-desc">День 0: новая версия заменяет текущую, прежняя нужная версия становится noncurrent. Семидневный учебный горизонт заканчивается в день 7. Ошибку обнаруживают в день 9, затем отдельно идут расследование и восстановление. Нужную прежнюю версию надо сохранить до окончания восстановления.</desc>
+<line x1="32" y1="28" x2="32" y2="310" stroke="currentColor" stroke-width="2"/>
+<line x1="32" y1="28" x2="32" y2="123" stroke="#297a61" stroke-width="7"/>
+<circle cx="32" cy="28" r="6" fill="#297a61"/><circle cx="32" cy="123" r="6" fill="#297a61"/><circle cx="32" cy="184" r="6" fill="#b66525"/>
+<text x="52" y="25" fill="currentColor" font-size="16" font-weight="bold">День 0 · замена версии</text>
+<text x="52" y="46" fill="currentColor" font-size="14">Прежняя нужная версия — noncurrent</text>
+<text x="52" y="94" fill="currentColor" font-size="14">Учебный горизонт: 7 дней</text>
+<text x="52" y="128" fill="currentColor" font-size="16" font-weight="bold">День 7 · горизонт закончился</text>
+<text x="52" y="189" fill="currentColor" font-size="16" font-weight="bold">День 9 · ошибку обнаружили</text>
+<path d="M32 204 v35 M25 232 l7 7 7 -7" fill="none" stroke="currentColor" stroke-width="2"/>
+<text x="52" y="226" fill="currentColor" font-size="15">Время расследования</text>
+<path d="M32 247 v35 M25 275 l7 7 7 -7" fill="none" stroke="currentColor" stroke-width="2"/>
+<text x="52" y="269" fill="currentColor" font-size="15">Время восстановления</text>
+<circle cx="32" cy="310" r="5" fill="currentColor"/>
+<text x="52" y="315" fill="currentColor" font-size="15" font-weight="bold">Восстановление завершено</text>
+</svg>
+<figcaption id="s3-13-history-caption">Условная шкала: прежнюю версию нужно сохранить до завершения восстановления. Семидневный горизонт закончился раньше обнаружения на два дня; длительности расследования и восстановления здесь не заданы. Шкала показывает требуемый срок сохранности, а не точное время выполнения правила Lifecycle.</figcaption>
+</figure>
 <p><strong>Object Lock</strong> защищает указанную версию от предусмотренных удаления и перезаписи в течение retention period или legal hold. Retention period задаёт срок, legal hold удерживает версию до явного снятия. Функция требует Enabled versioning; защищённая версия не запрещает создание новой версии или delete marker над ней. В governance есть специальный путь обхода уполномоченным субъектом; compliance ограничивает изменение срока и удаление строже. Это разные режимы, их нельзя свести к одному флагу «backup защищён». См. <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html">Object Lock</a>.</p>
 <p>Учебный опыт не включает включение необратимых настроек retention в чужом аккаунте. Для своей системы оператор документирует срок, режим, круг субъектов, способ чтения защищённой версии и тест восстановления. Наличие lock не исправляет изначально неверные байты. Ведомость с хешем нужна и для защищённых версий.</p>
 

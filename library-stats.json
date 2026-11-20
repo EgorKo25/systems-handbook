@@ -203,7 +203,7 @@
     "slug": "flyway",
     "title": "Flyway: управляемое изменение живой базы данных",
     "volume": "X",
-    "words": 15237,
+    "words": 15397,
     "chapters": 20,
     "terms": 80
   },
@@ -211,7 +211,7 @@
     "slug": "s3",
     "title": "S3: именованные байты, запросы и история объектов",
     "volume": "XIII",
-    "words": 23829,
+    "words": 23936,
     "chapters": 18,
     "terms": 62
   },

@@ -93,7 +93,7 @@
   {
     "id": "flyway-13-concurrency-failure",
     "title": "Конкурентный deploy и остановка после ошибки",
-    "words": 736,
+    "words": 896,
     "part": "Книга III · Выпуск при живых данных",
     "number": "13"
   },
