@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Read-only checks for the DEVICES-owned source package; no renderer or hardware."""
+from urllib.parse import urlsplit
 import ast
 from html.parser import HTMLParser
 import importlib.util
@@ -63,7 +64,7 @@ for p in chapters:
         if re.match('https?://', url):
             require(kind != 'src', p.name + ': active network script')
         elif not url.startswith('#'):
-            require((ROOT/url.split('#',1)[0]).exists(), p.name + ': local link ' + url)
+            require((ROOT/urlsplit(url).path).exists(), p.name + ': local link ' + url)
 ref = load('reference_devices')
 require(ref.COMMANDS == [], 'Hardware book does not require host command cards')
 require(len(ref.GLOSSARY) >= 40, 'Substantive device glossary')
