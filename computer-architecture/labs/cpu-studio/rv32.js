@@ -4,6 +4,7 @@
   const cpu = window.M32Logic;
   const $ = id => document.getElementById(id);
   const editor = $('rv32-source');
+  const listing = $('rv32-listing');
   const loopSource = [
     'addi x7, x0, 3',
     'loop: addi x7, x7, -1',
@@ -33,6 +34,8 @@
   let assembled;
   let machine;
   let listingWords;
+  let listingLines;
+  let currentLine;
   let lastStore;
   let lastBranch;
   let lastJump;
@@ -64,21 +67,44 @@
     $('step').disabled = !canContinue;
     $('run').disabled = !canContinue;
     $('run-to').disabled = !canContinue;
+    updateListingMarker(editor.value === assembled ? listingLines.get(machine.pc) : undefined);
     updateDatapathLink(canContinue);
+  }
+
+  function updateListingMarker(line) {
+    if (line === currentLine) return;
+    currentLine?.removeAttribute('aria-current');
+    currentLine = line;
+    if (!line) return;
+
+    line.setAttribute('aria-current', 'step');
+    const scroll = listing.parentElement;
+    const bounds = scroll.getBoundingClientRect();
+    const row = line.getBoundingClientRect();
+    const bottom = bounds.top + scroll.clientHeight;
+    if (row.top < bounds.top) scroll.scrollTop -= bounds.top - row.top;
+    else if (row.bottom > bottom) scroll.scrollTop += row.bottom - bottom;
   }
 
   function load(source) {
     const next = cpu.create(source);
     const rows = cpu.assemble(source);
-    const listing = rows.map(row =>
-      [address(row.address), bytes(next.memory, row.address), row.text.trim()].join('  '));
+    const fragment = document.createDocumentFragment();
+    listingLines = new Map();
+    for (const [index, row] of rows.entries()) {
+      if (index > 0) fragment.append('\n');
+      const line = document.createElement('span');
+      line.textContent = [address(row.address), bytes(next.memory, row.address), row.text.trim()].join('  ');
+      listingLines.set(row.address, line);
+      fragment.append(line);
+    }
     listingWords = new Map(rows.map(row => [row.address, row.word]));
     machine = next;
     lastStore = null;
     lastBranch = null;
     lastJump = null;
     assembled = source;
-    $('rv32-listing').textContent = listing.join('\n');
+    listing.replaceChildren(fragment);
     render();
   }
 
