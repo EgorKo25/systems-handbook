@@ -30,14 +30,14 @@
   {
     "id": "04-k8s-api",
     "title": "API server, etcd и смысл принятого объекта",
-    "words": 1309,
+    "words": 1330,
     "part": "Книга II · API и согласование",
     "number": "4"
   },
   {
     "id": "05-k8s-watch-apply",
     "title": "List/watch, server-side apply и конфликт владельцев",
-    "words": 1413,
+    "words": 1471,
     "part": "Книга II · API и согласование",
     "number": "5"
   },
@@ -51,7 +51,7 @@
   {
     "id": "07-k8s-scheduling",
     "title": "Scheduler: найти допустимый node, сравнить и назначить",
-    "words": 1312,
+    "words": 1409,
     "part": "Книга II · API и согласование",
     "number": "7"
   },
@@ -65,14 +65,14 @@
   {
     "id": "09-k8s-lifecycle",
     "title": "Pod lifecycle, probes, sidecars и завершение Go-сервиса",
-    "words": 900,
+    "words": 995,
     "part": "Книга III · Исполнение программы",
     "number": "9"
   },
   {
     "id": "10-k8s-workloads",
     "title": "Deployment, StatefulSet, DaemonSet и задания: выбрать lifecycle",
-    "words": 1202,
+    "words": 1401,
     "part": "Книга III · Исполнение программы",
     "number": "10"
   },
@@ -114,7 +114,7 @@
   {
     "id": "16-k8s-storage",
     "title": "PV/PVC, CSI, attachment и восстановление данных",
-    "words": 1450,
+    "words": 1579,
     "part": "Книга V · Данные и доверие",
     "number": "16"
   },
@@ -142,7 +142,7 @@
   {
     "id": "20-k8s-capacity",
     "title": "Доступность, PDB, drain и масштабирование без магических чисел",
-    "words": 1384,
+    "words": 1529,
     "part": "Книга VI · Эксплуатация и развитие",
     "number": "20"
   },

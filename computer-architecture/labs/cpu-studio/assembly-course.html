@@ -322,6 +322,41 @@ start:
     HALT</code></pre>
 <p>После LDI в r1 будет 38. Выборка INC4 читает уже собранные байты из памяти, декодер находит opcode 60 и выполняет заданное сложение. После него r1 и выведенное в порт 0 значение равны 42. Если поменять микрооперацию на прибавление пяти и пересобрать проект, результат станет 43.</p>
 <p>Попробуйте назначить INC4 opcode существующей ADD. Проверка конфигурации должна отклонить совпадение до замены работающего проекта. Затем верните свободный opcode и проверьте, как изменились четыре байта INC4 в листинге.</p>
+<h3 id="mov-if-z-exercise">Условная запись в регистр через MOV_IF_Z</h3>
+<p>Добавим команду, которая копирует число только при установленном флаге <code>Z</code>. В формате <code>RR</code> поле <code>d</code> выбирает первый регистр, а <code>s</code> — второй. В записи <code>MOV_IF_Z R2, R0</code> микрооперация <code>mov</code> читает <code>R0</code> через <code>s</code> и пишет в <code>R2</code> через <code>d</code>. Поле <code>"when": "z"</code> разрешает эту запись при <code>Z = 1</code>. Флаг перед командой задаст <code>CMP R0, R1</code>.</p>
+<pre><code id="mov-if-z-command">{
+  "name": "MOV_IF_Z",
+  "opcode": 61,
+  "format": "RR",
+  "microcode": [{"op": "mov", "dst": "d", "a": "s", "when": "z"}]
+}
+</code></pre>
+<pre><code id="mov-if-z-source">.org 0x20
+    LDI R0, 7
+    LDI R1, 7
+    LDI R2, 99
+    CMP R0, R1
+    MOV_IF_Z R2, R0
+    HALT
+</code></pre>
+<ol>
+<li><a id="mov-if-z-ide" href="index.html">Откройте конструктор для опыта с MOV_IF_Z</a>. В панели «Архитектура» раскройте «Изменить устройство процессора» и задайте <strong>16 бит</strong>, <strong>4 регистра</strong> и <strong>256 байт</strong> памяти. В поле «Таблица команд, JSON» добавьте объект <code>MOV_IF_Z</code> перед последней квадратной скобкой массива, отделив его запятой от предыдущего объекта. Вставьте программу в редактор и нажмите «Применить и собрать».</li>
+<li>Четыре раза нажмите «Шаг», чтобы выполнить три <code>LDI</code> и <code>CMP</code>. При <code>PC = 0x0030</code> сравните байты <code>3D 02 00 00</code> в листинге и RAM. Десятичный код операции 61 в листинге записан как <code>3D</code>. Запишите флаги и предскажите, что покажут <code>R2</code>, <code>PC</code> и счётчик после пятого шага. Нажмите «Шаг» и сверьте также все четыре флага.</li>
+<li>Замените <code>LDI R1, 7</code> на <code>LDI R1, 8</code> и нажмите «Собрать». Снова остановитесь после четвёртого шага и сделайте прогноз. Проверьте, изменились ли байты <code>MOV_IF_Z</code> и куда указывает <code>PC</code> после её выполнения.</li>
+</ol>
+<details>
+<summary>Сверить флаги, регистр и PC</summary>
+<div class="table-wrap">
+<table id="mov-if-z-results">
+<thead><tr><th scope="col">Сравнение CMP</th><th scope="col">Z, N, C, V до и после MOV_IF_Z</th><th scope="col">R2 после шага</th><th scope="col">PC после шага</th></tr></thead>
+<tbody>
+<tr><th scope="row">7 и 7</th><td><code>1, 0, 0, 0</code></td><td><code>0007</code></td><td><code>0x0034</code></td></tr>
+<tr><th scope="row">7 и 8</th><td><code>0, 1, 1, 0</code></td><td><code>0063</code></td><td><code>0x0034</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>При равенстве <code>Z = 1</code>, и <code>R2</code> получает 7. При неравенстве <code>Z = 0</code>, и в <code>R2</code> остаётся 99 (<code>0063</code>). Условие управляет только записью в регистр. В обоих случаях конструктор засчитывает команду как пятую, переводит <code>PC</code> на <code>HALT</code> и сохраняет все флаги от <code>CMP</code>.</p>
+</details>
 </section>
 <section id="inpair-exercise">
 <h2>Два числа из одной очереди за шаг INPAIR</h2>

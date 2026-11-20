@@ -123,7 +123,7 @@
     "slug": "kubernetes",
     "title": "Kubernetes: от API до процесса, пакета и восстановления",
     "volume": "XXVI",
-    "words": 28408,
+    "words": 29152,
     "chapters": 26,
     "terms": 130
   },
@@ -203,7 +203,7 @@
     "slug": "flyway",
     "title": "Flyway: управляемое изменение живой базы данных",
     "volume": "X",
-    "words": 15413,
+    "words": 15414,
     "chapters": 20,
     "terms": 80
   },
