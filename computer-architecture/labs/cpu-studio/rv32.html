@@ -66,6 +66,47 @@
         <p><a id="rv32-datapath" target="_blank" rel="noopener" hidden></a></p>
       </section>
     </section>
+    <section id="rv32-lw-x0" aria-labelledby="rv32-lw-x0-title">
+      <h2 id="rv32-lw-x0-title">Что делает LW, если получатель — x0</h2>
+      <p>По адресу <code>0x2000</code> лежит слово 42. Во всех трёх листингах <code>lui x5, 0x2</code> задаёт этот базовый адрес, а за <code>LW</code> стоит <code>addi x6, x0, 7</code>. Регистр <code>x0</code> всегда читается как ноль. Предскажите, дойдёт ли до сложения каждый листинг, если меняются получатель и смещение загрузки.</p>
+      <h3>Выровненное чтение в x6</h3>
+      <pre><code id="lw-x6-aligned-source">lui x5, 0x2
+lw x6, 0(x5)
+addi x6, x0, 7
+ebreak
+</code></pre>
+      <h3>Выровненное чтение в x0</h3>
+      <pre><code id="lw-x0-aligned-source">lui x5, 0x2
+lw x0, 0(x5)
+addi x6, x0, 7
+ebreak
+</code></pre>
+      <h3>Невыровненное чтение в x0</h3>
+      <pre><code id="lw-x0-misaligned-source">lui x5, 0x2
+lw x0, 2(x5)
+addi x6, x0, 7
+ebreak
+</code></pre>
+      <ol>
+        <li>Для каждого листинга скопируйте исходник в <a id="rv32-lw-x0-editor" href="#rv32-source">редактор RV32I</a> и нажмите «Собрать». Первым нажатием «Шаг» выполните <code>LUI</code>. Проверьте, что <code>x5 = 0x2000</code>, <code>PC = 0x1004</code>, а память по базовому адресу показывает <code>2A 00 00 00</code>.</li>
+        <li>Вычислите адрес <code>LW</code> как сумму <code>x5</code> и смещения. Перед вторым шагом запишите прогноз для <code>PC</code>, <code>x6</code> и доступности кнопки «Шаг». Выполните <code>LW</code> и сравните эти три наблюдения со своим прогнозом.</li>
+        <li>Если «Шаг» доступен, выполните <code>ADDI</code> и снова проверьте <code>x6</code>. При остановке на <code>LW</code> прочитайте причину в строке состояния.</li>
+      </ol>
+      <details>
+        <summary>Сверить PC, x6 и следующий шаг</summary>
+        <div style="overflow-x:auto">
+          <table id="rv32-lw-x0-results">
+            <thead><tr><th scope="col">LW</th><th scope="col">PC и x6 после LW</th><th scope="col">Третий шаг</th></tr></thead>
+            <tbody>
+              <tr><th scope="row"><code>lw x6, 0(x5)</code></th><td><code>0x1008</code>, <code>0x002A</code></td><td><code>x6 = 0x0007</code></td></tr>
+              <tr><th scope="row"><code>lw x0, 0(x5)</code></th><td><code>0x1008</code>, <code>0x0000</code></td><td><code>x6 = 0x0007</code></td></tr>
+              <tr><th scope="row"><code>lw x0, 2(x5)</code></th><td><code>0x1004</code>, <code>0x0000</code></td><td>Недоступен</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Обе выровненные загрузки читают 42 по адресу <code>0x2000</code>. При получателе <code>x0</code> прочитанное значение отбрасывается, а <code>PC</code> получается таким же, как при чтении в <code>x6</code>. В третьем листинге адрес <code>0x2002</code> не кратен четырём. Учебный исполнитель останавливает загрузку с сообщением <code>data:address-misaligned</code>, хотя получателем указан <code>x0</code>. <code>PC</code> остаётся на <code>LW</code>, и <code>ADDI</code> не выполняется.</p>
+      </details>
+    </section>
   </main>
 </body>
 </html>
