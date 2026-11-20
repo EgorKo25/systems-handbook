@@ -63,6 +63,7 @@
     const canContinue = machine.status === 'ready' && editor.value === assembled;
     $('step').disabled = !canContinue;
     $('run').disabled = !canContinue;
+    $('run-to').disabled = !canContinue;
     updateDatapathLink(canContinue);
   }
 
@@ -173,6 +174,31 @@
     for (const event of events) remember(event);
     report(events.at(-1));
     if (machine.status === 'ready') status('Выполнено 1000 команд. Можно продолжить с текущего адреса.');
+    render();
+  });
+  $('run-to-form').addEventListener('submit', event => {
+    event.preventDefault();
+    if (machine.status !== 'ready' || editor.value !== assembled) return;
+
+    const text = $('run-to-address').value.trim();
+    const target = /^0x[0-9a-f]{1,8}$/i.test(text) ? Number.parseInt(text, 16) : null;
+    if (!listingWords.has(target)) {
+      status('Укажите адрес команды из текущего листинга.');
+      return;
+    }
+
+    let lastEvent;
+    for (let count = 0; count < 1000 && machine.status === 'ready' && machine.pc !== target; count++) {
+      lastEvent = cpu.step(machine);
+      remember(lastEvent);
+    }
+    if (machine.status !== 'ready') {
+      report(lastEvent);
+    } else if (machine.pc === target) {
+      status('Остановка перед командой по адресу ' + address(target) + '.');
+    } else {
+      status('Адрес не достигнут за 1000 шагов. Можно продолжить с текущего адреса.');
+    }
     render();
   });
   $('reset').addEventListener('click', () => {

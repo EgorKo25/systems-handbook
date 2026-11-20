@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="studio.css">
   <script src="../m32/appearance.js" defer></script>
   <script src="../logic/model.js?v=2" defer></script>
-  <script src="rv32.js?v=7" defer></script>
+  <script src="rv32.js?v=8" defer></script>
 </head>
 <body>
   <header class="site-bar">
@@ -37,6 +37,11 @@
           <button id="run" type="button">Запустить</button>
           <button id="reset" type="button">Сбросить выполнение</button>
         </div>
+        <form id="run-to-form" class="actions">
+          <label for="run-to-address">Адрес в листинге</label>
+          <input id="run-to-address" class="address-input" placeholder="0x1008" autocomplete="off" spellcheck="false" required>
+          <button id="run-to" type="submit">Запустить до адреса</button>
+        </form>
         <p id="status" role="status"></p>
       </div>
       <section class="panel code-panel">
