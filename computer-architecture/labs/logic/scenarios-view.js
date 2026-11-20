@@ -26,6 +26,11 @@ function render(x){document.body.dataset.scene=x.scene;$('rows').replaceChildren
  }
  row($('heads'),headings,'th');$('raw').textContent=JSON.stringify(result,null,2);$('compute').disabled=blocked;$('download').disabled=blocked;fields();
 }
+const linkedScene = new URLSearchParams(window.location.search).get('scene');
+if (!blocked && (linkedScene === 'rename' || linkedScene === 'rename-fault')) {
+  selected = {...defaults, scene: linkedScene};
+  $('storage').textContent = 'Открыта трасса из главы. Входы сохранятся после явного вычисления.';
+}
 setInputs(selected);fields();if(!blocked)render(selected);else{$('compute').disabled=true;$('download').disabled=true;}
 $('scene').onchange=fields;
 $('compute').onclick=()=>{if(blocked)return;try{const x=getInputs();render(x);selected=x;try{localStorage.setItem(key,JSON.stringify(x));$('storage').textContent='Входы сохранены; конечная трасса воспроизводится из них.';}catch(error){$('storage').textContent='Сохранение недоступно; скачайте JSON до закрытия.';}}catch(error){$('storage').textContent='Вычисление отвергнуто: '+error.message+'. Предыдущая трасса сохранена.';}};
