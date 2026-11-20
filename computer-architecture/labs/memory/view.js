@@ -1,11 +1,23 @@
 /* Browser view: text/tables, explicit reset, export/import. No protocol semantics here. */
 (function(){'use strict';
 const M=window.MemoryLab,$=id=>document.getElementById(id),KEY='handbook-ca-memory-v1';let locked=false,raw=null;
-const fresh=M.initialAll;let state=fresh();const validate=M.validateAll;
+const lessonMode = new URLSearchParams(window.location.search).get('lesson') === 'dram-rows';
+const fresh=M.initialAll;
+function initialState() {
+  const next = fresh();
+  if (lessonMode) next.scene = 'dram';
+  return next;
+}
+let state=initialState();const validate=M.validateAll;
 function status(text){$('message').textContent=text;}
-try{raw=localStorage.getItem(KEY);if(raw!==null){state=validate(JSON.parse(raw));$('storage').textContent='Продолжено ранее сохранённое состояние; сброс не выполнялся.';}else $('storage').textContent='Новая несохранённая сессия. Первый переход сохранит её.';}
+if (lessonMode) {
+  $('scene').disabled = true;
+  $('reset').textContent = 'Начать этот опыт заново';
+  $('upload').closest('p').hidden = true;
+  $('storage').textContent = 'Опыт из главы. Ход опыта остаётся в этой вкладке, а при повторном открытии опыт начнётся заново.';
+} else try{raw=localStorage.getItem(KEY);if(raw!==null){state=validate(JSON.parse(raw));$('storage').textContent='Продолжено ранее сохранённое состояние; сброс не выполнялся.';}else $('storage').textContent='Новая несохранённая сессия. Первый переход сохранит её.';}
 catch(e){locked=true;$('raw').hidden=raw===null;$('storage').textContent='Не удалось проверить сохранённую копию. Её не стирали. Показано исходное состояние только для чтения; скачайте повреждённый JSON или явно начните заново.';}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(state));$('storage').textContent='Прогресс сохранён в этом браузере; скачайте JSON для переноса.';}catch(e){$('storage').textContent='Сохранение браузера недоступно; состояние остаётся во вкладке. Скачайте JSON перед закрытием.';}}
+function save(){if(lessonMode)return;try{localStorage.setItem(KEY,JSON.stringify(state));$('storage').textContent='Прогресс сохранён в этом браузере; скачайте JSON для переноса.';}catch(e){$('storage').textContent='Сохранение браузера недоступно; состояние остаётся во вкладке. Скачайте JSON перед закрытием.';}}
 function act(fn){if(locked){status('Сначала сохраните повреждённую копию или явно сбросьте сессию.');return;}try{const before=state.scene;const next=fn(state[before]);state[before]=next;save();status('Переход принят. Смотрите состояние и причину в журнале.');render();}catch(e){status('Отказ: '+explainError(e.message)+'. Предыдущее состояние не изменено.');render();}}
 function explainError(msg){if(/alignment/.test(msg))return '32-битное слово требует адреса, кратного 4';if(/^PA outside|physical range/.test(msg))return 'Выбранные байты находятся вне RAM 64 KiB';if(/fence waits/.test(msg))return 'Барьер ждёт передачи собственной предшествующей записи; сначала нажмите drain';if(/overflow/.test(msg))return 'Результат слишком велик для конечного числового расчёта';if(/missRate/.test(msg))return 'Доля промахов должна находиться от 0 до 1';if(/MLP requests|transfer bytes/.test(msg))return 'Число запросов и байты порции должны быть положительными целыми';if(/must be finite/.test(msg))return 'Нужно конечное положительное число; для задержки попадания и интенсивности допустим 0';return msg;}
 function button(label,fn,disabled=false){const b=document.createElement('button');b.textContent=label;b.disabled=disabled||locked;b.onclick=fn;$('actions').append(b);}
@@ -71,8 +83,15 @@ function render(){
  $('head').append(row(headings,'th'));$('log').replaceChildren();for(const e of s.log){const li=document.createElement('li');li.value=e.n;const strong=document.createElement('strong');strong.textContent=e.title;const text=document.createTextNode(' — '+e.detail);li.append(strong,text);$('log').append(li);}
 }
 function download(text,name){const u=URL.createObjectURL(new Blob([text],{type:'application/json'})),a=document.createElement('a');a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),1000);}
-$('scene').onchange=()=>{state.scene=$('scene').value;if(!locked)save();render();};$('reset').onclick=()=>{if(confirm('Явно заменить ВСЕ сцены этой модели исходным состоянием 42 и удалить их текущий прогресс?')){state=fresh();locked=false;raw=null;$('raw').hidden=true;save();render();status('Все сцены сброшены вашим явным действием.');}};
+$('scene').onchange=()=>{if(lessonMode)return;state.scene=$('scene').value;if(!locked)save();render();};$('reset').onclick=()=>{
+  if (lessonMode) {
+    state = initialState();
+    render();
+    status('Опыт начат заново.');
+    return;
+  }
+  if(confirm('Явно заменить ВСЕ сцены этой модели исходным состоянием 42 и удалить их текущий прогресс?')){state=fresh();locked=false;raw=null;$('raw').hidden=true;save();render();status('Все сцены сброшены вашим явным действием.');}};
 $('download').onclick=()=>download(JSON.stringify(state,null,2),'m32-memory-own-state.json');$('raw').onclick=()=>download(raw||'','m32-memory-unparsed-backup.json');
-$('upload').onchange=async()=>{const f=$('upload').files[0];if(!f)return;try{if(f.size>5000000)throw Error('Файл больше 5MB');const candidate=validate(JSON.parse(await f.text()));if(confirm('Заменить все сцены проверенной собственной JSON-копией?')){state=candidate;locked=false;save();render();status('Собственная копия принята.');}}catch(e){status('Импорт отвергнут: '+e.message+'. Текущий прогресс не изменён.');}$('upload').value='';};
+$('upload').onchange=async()=>{if(lessonMode)return;const f=$('upload').files[0];if(!f)return;try{if(f.size>5000000)throw Error('Файл больше 5MB');const candidate=validate(JSON.parse(await f.text()));if(confirm('Заменить все сцены проверенной собственной JSON-копией?')){state=candidate;locked=false;save();render();status('Собственная копия принята.');}}catch(e){status('Импорт отвергнут: '+e.message+'. Текущий прогресс не изменён.');}$('upload').value='';};
 $('print').onclick=()=>window.print();window.M32Appearance.mount($('model-theme'),$('warmth'));render();
 }());
