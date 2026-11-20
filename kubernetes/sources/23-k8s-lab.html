@@ -24,7 +24,20 @@ kubectl --context "$LAB_CONTEXT" -n lab get endpointslices -l kubernetes.io/serv
 <pre><code>kubectl --context "$LAB_CONTEXT" -n lab patch deployment ledger-api --type=strategic -p '{"spec":{"template":{"spec":{"containers":[{"name":"api","readinessProbe":{"httpGet":{"path":"/readyz"}}}]}}}}'
 kubectl --context "$LAB_CONTEXT" -n lab rollout status deployment/ledger-api --timeout=120s
 kubectl --context "$LAB_CONTEXT" -n lab get pods -l app=ledger-api -o wide</code></pre>
-<p>Вторая узкая правка возвращает исходный путь, сохраняя остальные настройки. Затем подтвердите HTTP, новый UID и состав готовых endpoints. Императивный patch может изменить managedFields; если последующий SSA хочет изменить уже принадлежащее другому manager поле, разбирайте конкретный конфликт, а не добавляйте force ко всему приложению. В поддерживаемом desired-файле путь также должен остаться <code>/readyz</code>. Namespace и старые доказательства не удаляют.</p>
+<p>Вторая узкая правка возвращает исходный путь, сохраняя остальные настройки. Затем подтвердите HTTP и запишите фактический UID готового Pod. Возврат к прежнему шаблону может снова задействовать прежний ReplicaSet и сохранившийся Pod. Императивный patch может изменить managedFields; если последующий SSA хочет изменить уже принадлежащее другому manager поле, разбирайте конкретный конфликт, а не добавляйте force ко всему приложению. В поддерживаемом desired-файле путь также должен остаться <code>/readyz</code>. Namespace и старые доказательства не удаляют.</p>
+<p>Для приёмки этапа 3 одного ответа HTTP мало: в момент неудачного выпуска его мог вернуть прежний готовый Pod. Возьмите <code>metadata.uid</code> восстановленного готового Pod из ReplicaSet, который обслуживает возвращённый шаблон. Сохраните этот UID в переменную <code>RECOVERED_UID</code>. Если установлен <code>jq</code>, следующий запрос проверит, что именно этот Pod появился среди готовых и незавершающихся адресатов Service:</p>
+<pre><code>kubectl --context "$LAB_CONTEXT" -n lab get endpointslices \
+  -l kubernetes.io/service-name=ledger-api -o json |
+  jq -e --arg uid "$RECOVERED_UID" '
+    any(.items[].endpoints[];
+      .targetRef.uid == $uid and .conditions.ready == true
+      and .conditions.terminating != true)
+  '</code></pre>
+<p><code>true</code> и код 0 означают, что у адресата с <code>targetRef.uid</code>, равным <code>RECOVERED_UID</code>, выставлено <code>ready: true</code> и он не завершается. Если прежний Pod сохранился и его UID выбран как <code>RECOVERED_UID</code>, он тоже проходит проверку. <code>false</code> означает, что в полученных срезах такого адресата пока нет. Если запрос к API завершился ошибкой, сначала разберите её.</p>
+<p>Если <code>jq</code> нет, после восстановления получите свежие срезы и найдите в них адресат с тем же UID, <code>conditions.ready: true</code> и без <code>conditions.terminating: true</code>:</p>
+<pre><code>kubectl --context "$LAB_CONTEXT" -n lab get endpointslices \
+  -l kubernetes.io/service-name=ledger-api -o yaml</code></pre>
+<p>Проверка относится к учебному Service <code>ledger-api</code>, у которого <code>publishNotReadyAddresses</code> выключен. В журнал запишите совпавший UID и отдельное прикладное наблюдение HTTP, как в критерии восстановления предыдущей главы. <a href="https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/#conditions">Условия EndpointSlice</a>.</p>
 <h2>Этап 4: конфигурация и ownership</h2>
 <p>Измените MESSAGE в ConfigMap, проверьте старый ответ без restart, затем выполните осмысленный rollout и получите новый. На отдельном ConfigMap пройдите SSA conflict двух managers: managerB меняет поле managerA без force, получает conflict; затем возвращает исходный договор. На отдельной копии объекта сделайте устаревший resourceVersion replace и получите 409, reread/recompute/retry. Не включайте force-conflicts как постоянный флаг. Все изменения возвращайте к файлам и журналу, а не к новому пустому namespace.</p>
 <h2>Этап 5: ограниченный расследователь и сеть</h2>

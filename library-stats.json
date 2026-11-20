@@ -19,7 +19,7 @@
     "slug": "bash",
     "title": "Bash: от объектов ядра до надёжного сценария",
     "volume": "IV",
-    "words": 54423,
+    "words": 54508,
     "chapters": 19,
     "terms": 273
   },
@@ -27,7 +27,7 @@
     "slug": "postgres",
     "title": "PostgreSQL: от SQL до эксплуатации и высокой доступности",
     "volume": "IX",
-    "words": 79671,
+    "words": 79820,
     "chapters": 25,
     "terms": 441
   },
@@ -59,7 +59,7 @@
     "slug": "jenkins",
     "title": "Jenkins: от установки и плагинов до устройства и эксплуатации Pipeline",
     "volume": "XIX",
-    "words": 30315,
+    "words": 30334,
     "chapters": 16,
     "terms": 88
   },
@@ -67,7 +67,7 @@
     "slug": "gitlab",
     "title": "GitLab: платформа, исполнение CI и эксплуатация",
     "volume": "XX",
-    "words": 24634,
+    "words": 24658,
     "chapters": 18,
     "terms": 167
   },
@@ -115,7 +115,7 @@
     "slug": "nexus",
     "title": "Nexus Repository: артефакты, Go-модули и сохранение состояния",
     "volume": "XVII",
-    "words": 21960,
+    "words": 21970,
     "chapters": 19,
     "terms": 94
   },
@@ -123,7 +123,7 @@
     "slug": "kubernetes",
     "title": "Kubernetes: от API до процесса, пакета и восстановления",
     "volume": "XXVI",
-    "words": 28197,
+    "words": 28408,
     "chapters": 26,
     "terms": 130
   },
@@ -163,7 +163,7 @@
     "slug": "artifactory",
     "title": "Artifactory: от поставки до прослеживаемого выпуска Go",
     "volume": "XVIII",
-    "words": 20146,
+    "words": 20148,
     "chapters": 20,
     "terms": 82
   },
@@ -179,7 +179,7 @@
     "slug": "terraform",
     "title": "Terraform: язык, граф исполнения и сохранённое состояние",
     "volume": "XXI",
-    "words": 20628,
+    "words": 20686,
     "chapters": 24,
     "terms": 89
   },
@@ -187,7 +187,7 @@
     "slug": "ansible",
     "title": "Ansible: от SSH и одной задачи до управляемого выпуска Go",
     "volume": "XXII",
-    "words": 21278,
+    "words": 21287,
     "chapters": 24,
     "terms": 96
   },
@@ -195,7 +195,7 @@
     "slug": "prometheus",
     "title": "Prometheus и PromQL: измерение, вычисление и хранение",
     "volume": "XXIV",
-    "words": 17566,
+    "words": 17624,
     "chapters": 22,
     "terms": 93
   },
@@ -203,7 +203,7 @@
     "slug": "flyway",
     "title": "Flyway: управляемое изменение живой базы данных",
     "volume": "X",
-    "words": 15397,
+    "words": 15413,
     "chapters": 20,
     "terms": 80
   },

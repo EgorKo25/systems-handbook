@@ -85,7 +85,7 @@
     {
       "id": "16-plans",
       "title": "Индексы, оценки и EXPLAIN",
-      "words": 1763
+      "words": 1912
     },
     {
       "id": "17-security",
@@ -133,7 +133,7 @@
       "words": 8937
     }
   ],
-  "words": 79671,
+  "words": 79820,
   "terms": 441,
   "external_assets": 0
 }
