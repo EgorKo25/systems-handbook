@@ -583,6 +583,46 @@ start:
 </div>
 <p>В первом запуске чтение видит уже записанное слово <code>0x5678</code>. Во втором оно успевает сохранить в <code>R1</code> исходное <code>0x1234</code>. Запись в обоих случаях оставляет одинаковые байты, младший <code>78</code> по адресу <code>0x0080</code> и старший <code>56</code> по адресу <code>0x0081</code>. Две микрооперации входят в одну команду, поэтому счётчик выполненных команд растёт с 1 до 2, а <code>PC</code> один раз продвигается на четыре байта.</p>
 </details>
+<h3 id="store-load-fault-exercise">Сохранится ли запись, если чтение завершилось ошибкой</h3>
+<p>При 256 байтах RAM последний адрес — <code>00FF</code>. По нему можно записать один байт, а чтение 16-битного слова потребует ещё и ячейку <code>0100</code> за пределами памяти. Сравним две программы. Первая записывает байт отдельной командой <code>STB</code> и затем пытается прочитать слово. Во второй эти операции входят в одну команду <code>STB_LD</code>. Какой байт останется по <code>00FF</code> после ошибки в каждом случае?</p>
+<pre><code id="store-load-fault-command">{
+  "name": "STB_LD",
+  "opcode": 74,
+  "format": "RRR",
+  "microcode": [
+    {"op": "store8", "addr": "s", "a": "t"},
+    {"op": "load", "dst": "d", "addr": "s"}
+  ]
+}
+</code></pre>
+<pre><code id="store-load-fault-source">.org 0x20
+    LDI R0, 0x1234
+    LDI R1, 0xFF
+    STB R0, [R1]
+    LD R2, [R1]
+    HALT
+.org 0xFF
+    .byte 0xA5
+</code></pre>
+<ol>
+<li><a id="store-load-fault-ide" href="index.html">Откройте конструктор для опыта с записью и чтением</a>. В панели «Архитектура» раскройте «Изменить устройство процессора». Задайте <strong>16 бит</strong>, <strong>4 регистра</strong> и <strong>256 байт</strong> памяти. В поле «Таблица команд, JSON» добавьте объект <code>STB_LD</code> перед последней <code>]</code>, отделив его запятой от предыдущего объекта. Вставьте листинг и нажмите «Применить и собрать».</li>
+<li>В панели «Память» введите <code>0xFF</code> и нажмите «Перейти». После двух <code>LDI</code> сверьте <code>R0 = 1234</code>, <code>R1 = 00FF</code> и байт <code>A5</code> в RAM. Нажмите «Шаг» для <code>STB</code> и снова сверьте байт. Четвёртым нажатием попробуйте выполнить <code>LD</code> по <code>002C</code>. Проверьте сообщение, RAM, <code>R2</code>, <code>PC</code> и счётчик.</li>
+<li>Замените <code>STB R0, [R1]</code> на <code id="store-load-fault-first">NOP</code>, а <code>LD R2, [R1]</code> — на <code id="store-load-fault-second">STB_LD R2, R1, R0</code>. Нажмите «Собрать» и повторите четыре нажатия. Сравните байт по <code>00FF</code> до и после ошибки.</li>
+</ol>
+<details>
+<summary>Сверить байт перед ошибкой и после неё</summary>
+<div class="table-wrap">
+<table id="store-load-fault-results">
+<thead><tr><th scope="col">Команда по 0028</th><th scope="col">Команда по 002C</th><th scope="col">RAM по 00FF перед попыткой</th><th scope="col">RAM по 00FF после ошибки</th></tr></thead>
+<tbody>
+<tr><th scope="row"><code>STB R0, [R1]</code></th><td><code>LD R2, [R1]</code></td><td><code>34</code></td><td><code>34</code></td></tr>
+<tr><th scope="row"><code>NOP</code></th><td><code>STB_LD R2, R1, R0</code></td><td><code>A5</code></td><td><code>A5</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>Обе попытки дают сообщение «Чтение 2 байт с адреса 255 выходит за пределы памяти». Число 255 соответствует <code>0x00FF</code>. <code>PC = 002C</code>, <code>R2 = 0000</code>, счётчик остаётся равным 3.</p>
+<p>В первом запуске отдельная <code>STB</code> успевает записать младший байт <code>34</code> до шага <code>LD</code>. В <code>STB_LD</code> поля <code>d</code>, <code>s</code> и <code>t</code> выбирают <code>R2</code>, <code>R1</code> и <code>R0</code>. Микрооперация <code>store8</code> готовит запись <code>34</code> в пределах текущего шага. Следующая микрооперация <code>load</code> проверяет диапазон чтения и завершает шаг ошибкой. Движок отбрасывает подготовленную запись, поэтому в RAM остаётся <code>A5</code>.</p>
+</details>
 <h3 id="inc-sum-register-alias-exercise">Когда оба поля команды выбирают один регистр</h3>
 <p>В формате <code>RR</code> поле <code>d</code> выбирает первый регистр, а <code>s</code> — второй. У <code>INC_SUM</code> первая микрооперация увеличивает число в регистре <code>d</code> на единицу. Вторая прибавляет к текущему значению в <code>d</code> значение из <code>s</code> и сохраняет сумму в <code>d</code>. Что прочитает вторая микрооперация, если <code>d</code> и <code>s</code> выбирают один и тот же регистр?</p>
 <pre><code id="inc-sum-register-alias-command">{
