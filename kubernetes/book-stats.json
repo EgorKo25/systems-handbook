@@ -37,7 +37,7 @@
   {
     "id": "05-k8s-watch-apply",
     "title": "List/watch, server-side apply и конфликт владельцев",
-    "words": 1471,
+    "words": 1694,
     "part": "Книга II · API и согласование",
     "number": "5"
   },

@@ -469,7 +469,7 @@ concurrency_demo
 
 Том XXVI · Книга II · API и согласование
 
-List/watch, server-side apply и конфликт владельцевКонтроллеры не читают всю базу каждую миллисекунду. Они строят локальное наблюдаемое состояние и повторяют действия при изменениях и ошибках. · 1471 словСодержание главы
+List/watch, server-side apply и конфликт владельцевКонтроллеры не читают всю базу каждую миллисекунду. Они строят локальное наблюдаемое состояние и повторяют действия при изменениях и ошибках. · 1694 словСодержание главы
 
 Как клиент узнаёт изменение
 
@@ -600,7 +600,37 @@ kubectl --context "$LAB_CONTEXT" -n lab get configmap ownership-demo -o yaml --s
 
 Первый apply должен успешно сохранить blue. Третий должен получить именно конфликт поля data.color с bookA; отсутствие прав, недоступность API или ошибка файла означают другой опыт. Сверьте, что после отказа значение осталось blue. Оба apply здесь выполняет одна удостоверенная личность: меняется только имя управляющего полями, а не пользователь RBAC. Для осознанной передачи на этом отдельном объекте повторите третью команду с --force-conflicts, убедитесь в green и владении bookB, затем верните blue через такой же явный захват bookA. Именно этот последний шаг возвращает исходное распределение управления; обычный apply bookA до передачи обратно может конфликтовать. Namespace, приложение и остальные поля не удаляются.
 
-Когда пропуск data.color удалит ключ? Начнём с нового экземпляра учебного ownership-demo. Менеджеры по очереди посылают SSA к тому же ConfigMap без --force-conflicts. На втором шаге bookB указывает уже сохранённое значение blue и становится совладельцем поля.
+Когда пропуск data.color удалит ключ? После предыдущего опыта ownership-demo уже существует и сохраняет историю управления. Для новой последовательности используем другое имя ownership-shared-demo. Сначала запросите его в namespace lab и убедитесь, что API возвращает NotFound; ошибка доступа или связи не означает отсутствие объекта. Если объект уже есть, прочитайте его UID и managedFields и выберите другое свободное имя во всех четырёх запросах. Существующий объект не удаляется ради примера.
+
+kubectl --context "$LAB_CONTEXT" -n lab get configmap ownership-shared-demo -o yaml --show-managed-fields
+
+Менеджеры по очереди посылают SSA к одному ConfigMap без --force-conflicts. В первом цикле оба намерения содержат data.color: blue. После каждого запроса чтение покажет значение и записи менеджеров. При ошибке остановитесь и разберите её до следующего цикла. На втором шаге bookB становится совладельцем поля.
+
+for manager in bookA bookB; do
+  kubectl --context "$LAB_CONTEXT" -n lab apply --server-side --field-manager="$manager" -f - <<'YAML' || break
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ownership-shared-demo
+  namespace: lab
+data:
+  color: blue
+YAML
+  kubectl --context "$LAB_CONTEXT" -n lab get configmap ownership-shared-demo -o yaml --show-managed-fields || break
+done
+
+Теперь каждый менеджер отправляет новое намерение к тому же объекту без поля data.color. Поля идентификации остаются: это пропуск ключа в apply, а не удаление ConfigMap и не явное значение null. Сверяйте состояние после каждого запроса.
+
+for manager in bookA bookB; do
+  kubectl --context "$LAB_CONTEXT" -n lab apply --server-side --field-manager="$manager" -f - <<'YAML' || break
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ownership-shared-demo
+  namespace: lab
+YAML
+  kubectl --context "$LAB_CONTEXT" -n lab get configmap ownership-shared-demo -o yaml --show-managed-fields || break
+done
 
  | Что отправляет менеджер | Значение в ConfigMap | Кто владеет data.color
 
@@ -612,7 +642,7 @@ kubectl --context "$LAB_CONTEXT" -n lab get configmap ownership-demo -o yaml --s
 
  | bookB опускает ключ | Ключ удалён | Никто
 
-На третьем шаге bookA снимает своё заявление о поле. API server оставляет blue, потому что bookB всё ещё указан для f:data/f:color в managedFields. На четвёртом шаге сервер удаляет ключ, у которого больше нет владельца и для которого не задано значение по умолчанию. Передача управления полем в Kubernetes 1.36.
+На третьем шаге bookA снимает своё заявление о поле. API server оставляет blue, потому что bookB всё ещё владеет полем. В managedFields найдите запись с manager: bookB, operation: Apply и вложенный путь fieldsV1 → f:data → f:color. На четвёртом шаге сервер удаляет ключ, у которого больше нет владельца и для которого не задано значение по умолчанию. Передача управления полем в Kubernetes 1.36.
 
 Для watch клиент сначала получил list с collection resourceVersion W100, затем долго был offline. За это время история до W100 была compacted. Запрос watch resourceVersion=W100 получает 410, потому что сервер не может честно воспроизвести полный интервал. Правильный клиент не придумывает пропущенные события и не увеличивает W100 на 1. Он делает новый list, получает current objects и W900, перестраивает cache/очередь и продолжает watch от W900. Объект, созданный и удалённый целиком в пропуске, может не появиться в новом list: watch не служит финансовым event ledger.
 

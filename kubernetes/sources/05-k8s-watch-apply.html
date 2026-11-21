@@ -24,13 +24,38 @@ kubectl --context "$LAB_CONTEXT" -n lab get configmap ownership-demo -o yaml --s
 kubectl --context "$LAB_CONTEXT" -n lab apply --server-side --field-manager=bookB -f vm/ownership-b.yaml
 kubectl --context "$LAB_CONTEXT" -n lab get configmap ownership-demo -o yaml --show-managed-fields</code></pre>
 <p>Первый apply должен успешно сохранить blue. Третий должен получить именно конфликт поля <code>data.color</code> с bookA; отсутствие прав, недоступность API или ошибка файла означают другой опыт. Сверьте, что после отказа значение осталось blue. Оба apply здесь выполняет одна удостоверенная личность: меняется только имя управляющего полями, а не пользователь RBAC. Для осознанной передачи на этом отдельном объекте повторите третью команду с <code>--force-conflicts</code>, убедитесь в green и владении bookB, затем верните blue через такой же явный захват bookA. Именно этот последний шаг возвращает исходное распределение управления; обычный apply bookA до передачи обратно может конфликтовать. Namespace, приложение и остальные поля не удаляются.</p>
-<p>Когда пропуск <code>data.color</code> удалит ключ? Начнём с нового экземпляра учебного <code>ownership-demo</code>. Менеджеры по очереди посылают SSA к тому же ConfigMap без <code>--force-conflicts</code>. На втором шаге <code>bookB</code> указывает уже сохранённое значение <code>blue</code> и становится совладельцем поля.</p>
+<p>Когда пропуск <code>data.color</code> удалит ключ? После предыдущего опыта <code>ownership-demo</code> уже существует и сохраняет историю управления. Для новой последовательности используем другое имя <code>ownership-shared-demo</code>. Сначала запросите его в namespace <code>lab</code> и убедитесь, что API возвращает <code>NotFound</code>; ошибка доступа или связи не означает отсутствие объекта. Если объект уже есть, прочитайте его UID и <code>managedFields</code> и выберите другое свободное имя во всех четырёх запросах. Существующий объект не удаляется ради примера.</p>
+<pre><code>kubectl --context "$LAB_CONTEXT" -n lab get configmap ownership-shared-demo -o yaml --show-managed-fields</code></pre>
+<p>Менеджеры по очереди посылают SSA к одному ConfigMap без <code>--force-conflicts</code>. В первом цикле оба намерения содержат <code>data.color: blue</code>. После каждого запроса чтение покажет значение и записи менеджеров. При ошибке остановитесь и разберите её до следующего цикла. На втором шаге <code>bookB</code> становится совладельцем поля.</p>
+<pre><code>for manager in bookA bookB; do
+  kubectl --context "$LAB_CONTEXT" -n lab apply --server-side --field-manager="$manager" -f - &lt;&lt;'YAML' || break
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ownership-shared-demo
+  namespace: lab
+data:
+  color: blue
+YAML
+  kubectl --context "$LAB_CONTEXT" -n lab get configmap ownership-shared-demo -o yaml --show-managed-fields || break
+done</code></pre>
+<p>Теперь каждый менеджер отправляет новое намерение к тому же объекту без поля <code>data.color</code>. Поля идентификации остаются: это пропуск ключа в apply, а не удаление ConfigMap и не явное значение <code>null</code>. Сверяйте состояние после каждого запроса.</p>
+<pre><code>for manager in bookA bookB; do
+  kubectl --context "$LAB_CONTEXT" -n lab apply --server-side --field-manager="$manager" -f - &lt;&lt;'YAML' || break
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ownership-shared-demo
+  namespace: lab
+YAML
+  kubectl --context "$LAB_CONTEXT" -n lab get configmap ownership-shared-demo -o yaml --show-managed-fields || break
+done</code></pre>
 <table><thead><tr><th>Что отправляет менеджер</th><th>Значение в ConfigMap</th><th>Кто владеет <code>data.color</code></th></tr></thead><tbody>
 <tr><td><code>bookA</code> задаёт <code>blue</code></td><td><code>blue</code></td><td><code>bookA</code></td></tr>
 <tr><td><code>bookB</code> задаёт <code>blue</code></td><td><code>blue</code></td><td><code>bookA</code> и <code>bookB</code></td></tr>
 <tr><td><code>bookA</code> опускает ключ</td><td><code>blue</code></td><td><code>bookB</code></td></tr>
 <tr><td><code>bookB</code> опускает ключ</td><td>Ключ удалён</td><td>Никто</td></tr>
 </tbody></table>
-<p>На третьем шаге <code>bookA</code> снимает своё заявление о поле. API server оставляет <code>blue</code>, потому что <code>bookB</code> всё ещё указан для <code>f:data/f:color</code> в <code>managedFields</code>. На четвёртом шаге сервер удаляет ключ, у которого больше нет владельца и для которого не задано значение по умолчанию. <a href="https://v1-36.docs.kubernetes.io/docs/reference/using-api/server-side-apply/#transferring-ownership-between-managers">Передача управления полем в Kubernetes 1.36</a>.</p>
+<p>На третьем шаге <code>bookA</code> снимает своё заявление о поле. API server оставляет <code>blue</code>, потому что <code>bookB</code> всё ещё владеет полем. В <code>managedFields</code> найдите запись с <code>manager: bookB</code>, <code>operation: Apply</code> и вложенный путь <code>fieldsV1 → f:data → f:color</code>. На четвёртом шаге сервер удаляет ключ, у которого больше нет владельца и для которого не задано значение по умолчанию. <a href="https://v1-36.docs.kubernetes.io/docs/reference/using-api/server-side-apply/#transferring-ownership-between-managers">Передача управления полем в Kubernetes 1.36</a>.</p>
 <p>Для watch клиент сначала получил list с collection resourceVersion W100, затем долго был offline. За это время история до W100 была compacted. Запрос watch resourceVersion=W100 получает 410, потому что сервер не может честно воспроизвести полный интервал. Правильный клиент не придумывает пропущенные события и не увеличивает W100 на 1. Он делает новый list, получает current objects и W900, перестраивает cache/очередь и продолжает watch от W900. Объект, созданный и удалённый целиком в пропуске, может не появиться в новом list: watch не служит финансовым event ledger.</p>
 <p>Поведение можно исследовать на своих clients без намеренного вмешательства в etcd compaction живого кластера. Не настраивайте агрессивный retention только ради 410 на основном стенде. Локальная пошаговая схема показывает этот случай как модель; реальное наличие 410 не заявлено в протоколе проверок. Informer relist/resync/retry — механизмы восстановления наблюдения, а не доказательство exactly-once внешних side effects.</p>
