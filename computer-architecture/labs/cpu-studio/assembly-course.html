@@ -386,6 +386,45 @@ start:
 </div>
 <p>При равенстве <code>Z = 1</code>, и <code>R2</code> получает 7. При неравенстве <code>Z = 0</code>, и в <code>R2</code> остаётся 99 (<code>0063</code>). Условие управляет только записью в регистр. В обоих случаях конструктор засчитывает команду как пятую, переводит <code>PC</code> на <code>HALT</code> и сохраняет все флаги от <code>CMP</code>.</p>
 </details>
+<h3 id="cmp-copy-new-flags-exercise">Какой Z видит вторая микрооперация</h3>
+<p>В <code>CMP_COPY R1, R0</code> поле <code>d</code> выбирает <code>R1</code>, а <code>s</code> — <code>R0</code>. Первая микрооперация сравнивает <code>R0</code> с нулём. Вторая записывает 85 (<code>0055</code>) в <code>R1</code>, если <code>Z = 1</code>. Какой флаг проверит условие <code>"when": "z"</code>, если команда начала шаг с одним значением <code>Z</code>, а её сравнение дало другое?</p>
+<pre><code id="cmp-copy-new-flags-command">{
+  "name": "CMP_COPY",
+  "opcode": 66,
+  "format": "RR",
+  "microcode": [
+    {"op": "cmp", "a": "s", "b": 0},
+    {"op": "mov", "dst": "d", "a": 85, "when": "z"}
+  ]
+}
+</code></pre>
+<pre><code id="cmp-copy-new-flags-source">.org 0x20
+    LDI R0, 0
+    LDI R1, 0x1234
+    LDI R2, 1
+    CMP R0, R2
+    CMP_COPY R1, R0
+    HALT
+</code></pre>
+<p><code>CMP R0, R2</code> сравнивает <code>R0</code> с единицей. Внутри <code>CMP_COPY</code> тот же <code>R0</code> сравнивается с нулём. Для входов 0 и 1 предскажите флаг после каждого сравнения и значение <code>R1</code> по окончании шага.</p>
+<ol>
+<li><a id="cmp-copy-new-flags-ide" href="index.html">Откройте конструктор для опыта с CMP_COPY</a>. В панели «Архитектура» раскройте «Изменить устройство процессора». Задайте <strong>16 бит</strong>, <strong>4 регистра</strong> и <strong>256 байт</strong> памяти. В поле «Таблица команд, JSON» добавьте объект <code>CMP_COPY</code> перед последней <code>]</code>, поставив запятую между предыдущим объектом и новым. Вставьте программу в редактор и нажмите «Применить и собрать».</li>
+<li>Нажмите «Шаг» четыре раза. При <code>PC = 0030</code> запишите <code>Z</code> от <code>CMP R0, R2</code>, сверьте <code>R1 = 1234</code> и байты <code>42 01 00 00</code> в панели «Слово по адресу PC». Выполните пятый шаг и запишите <code>Z</code>, <code>R1</code> и <code>PC</code>.</li>
+<li>Замените только <code>LDI R0, 0</code> на <code id="cmp-copy-new-flags-variant">LDI R0, 1</code>, нажмите «Собрать» и повторите пять шагов. Сравните значения флага до и после <code>CMP_COPY</code>.</li>
+</ol>
+<details>
+<summary>Сверить Z и запись в R1</summary>
+<div class="table-wrap">
+<table id="cmp-copy-new-flags-results">
+<thead><tr><th scope="col">R0</th><th scope="col">Z до CMP_COPY</th><th scope="col">Z после CMP_COPY</th><th scope="col">R1 после CMP_COPY</th></tr></thead>
+<tbody>
+<tr><th scope="row"><code>0000</code></th><td>0</td><td>1</td><td><code>0055</code></td></tr>
+<tr><th scope="row"><code>0001</code></th><td>1</td><td>0</td><td><code>1234</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>Модель выполняет микрооперации в порядке массива <code>microcode</code>. Сначала <code>cmp</code> обновляет флаги внутри шага. Затем условие <code>"when": "z"</code> читает уже обновлённый <code>Z</code>. При <code>R0 = 0</code> условная запись выполняется, при <code>R0 = 1</code> значение <code>R1</code> сохраняется. В обоих случаях <code>CMP_COPY</code> занимает один шаг. После него <code>PC = 0034</code>, счётчик равен 5 и следующая команда — <code>HALT</code>.</p>
+</details>
 <h3 id="microcode-memory-order-exercise">Что читает вторая микрооперация</h3>
 <p>Две команды обращаются к одному слову по адресу <code>0x0080</code>. <code>STORE_READ</code> сначала записывает туда число из <code>R0</code>, затем читает слово в <code>R1</code>. <code>READ_STORE</code> выполняет чтение перед записью. Предскажите, что останется в <code>R1</code>, если исходное слово в памяти равно <code>0x1234</code>, а в <code>R0</code> лежит <code>0x5678</code>.</p>
 <p>В формате <code>RR</code> поле <code>d</code> обозначает первый регистр команды, а <code>s</code> — второй. В обоих описаниях <code>addr</code> равен 128, то есть <code>0x0080</code>. Микрооперации выполняются в порядке массива <code>microcode</code>.</p>
