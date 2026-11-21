@@ -708,6 +708,35 @@ signed_overflow:
 </div>
 <p>У <code>0x82</code> старший бит равен единице. Только <code>SAR</code> переносит эту единицу в освободившийся старший разряд. У <code>0x02</code> исходный старший бит равен нулю, поэтому обе команды вписывают слева ноль и дают одинаковый результат.</p>
 </details>
+<h3 id="shr-sar-width-carry-exercise">Флаг C при сдвиге на ширину регистра и дальше</h3>
+<p>Теперь оставим в <code>R0</code> байт <code>82</code> (<code>10000010</code>) и изменим число разрядов сдвига. При сдвиге на восемь мест все исходные биты выходят за пределы результата. <code>SHR</code> заполняет освободившиеся разряды нулями, а <code>SAR</code> — единицами, потому что исходный старший бит равен 1. Что покажет флаг <code>C</code> после каждой команды при сдвиге на 8 и на 9?</p>
+<pre><code id="shr-sar-width-carry-source">.org 0x20
+    LDI R0, 0x82
+    LDI R1, 8
+    SHR R2, R0, R1
+    SAR R3, R0, R1
+    HALT
+</code></pre>
+<ol>
+<li><a id="shr-sar-width-carry-ide" href="index.html">Откройте конструктор для опыта с флагом C</a> и вставьте листинг. В панели «Архитектура» раскройте «Изменить устройство процессора». Задайте <strong>8 бит</strong>, <strong>4 регистра</strong> и <strong>256 байт</strong> памяти. Нажмите «Применить и собрать».</li>
+<li>Два раза нажмите «Шаг», чтобы заполнить <code>R0</code> и <code>R1</code>. Третьим шагом выполните <code>SHR</code> и сразу запишите <code>R2</code> и <code>C</code>. Четвёртым шагом выполните <code>SAR</code> и запишите <code>R3</code> и новое значение <code>C</code>.</li>
+<li>Замените только <code>LDI R1, 8</code> на <code id="shr-sar-width-carry-variant">LDI R1, 9</code>, нажмите «Собрать» и повторите четыре шага. Сравните результаты и флаги сразу после каждой команды сдвига.</li>
+</ol>
+<details>
+<summary>Сверить регистры и флаги</summary>
+<div class="table-wrap">
+<table id="shr-sar-width-carry-results">
+<thead><tr><th scope="col">Сдвиг</th><th scope="col">Команда</th><th scope="col">Результат</th><th scope="col">Z N C V</th></tr></thead>
+<tbody>
+<tr><td>8</td><th scope="row"><code>SHR</code></th><td><code>R2 = 00</code></td><td><code>1 0 1 0</code></td></tr>
+<tr><td>8</td><th scope="row"><code>SAR</code></th><td><code>R3 = FF</code></td><td><code>0 1 1 0</code></td></tr>
+<tr><td>9</td><th scope="row"><code>SHR</code></th><td><code>R2 = 00</code></td><td><code>1 0 0 0</code></td></tr>
+<tr><td>9</td><th scope="row"><code>SAR</code></th><td><code>R3 = FF</code></td><td><code>0 1 0 0</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>При сдвиге вправо на восемь последним выходит исходный старший бит. В обеих командах он равен 1 и попадает в <code>C</code>. Для сдвига на девять в исходном байте уже нет девятого бита. По правилу этой модели для числа разрядов больше ширины регистра <code>C = 0</code>. При вычислении самого результата модель ограничивает сдвиг шириной регистра, поэтому <code>R2 = 00</code> и <code>R3 = FF</code> в обоих запусках.</p>
+</details>
 <h3 id="multiword-increment-exercise">Как увеличить число из двух байтов</h3>
 <p>В 8-битной конфигурации пара <code>R1:R0</code> хранит 16-битное число. В <code>R1</code> лежит старший байт, в <code>R0</code> — младший. При прибавлении единицы сначала меняется младший байт. Если он переходит из <code>FF</code> в <code>00</code>, <code>ADDI</code> выставляет перенос <code>C = 1</code> и нужно увеличить старший байт. При <code>C = 0</code> команда <code>JNC done</code> сразу передаёт управление на <code>HALT</code>.</p>
 <pre><code id="multiword-increment-source">.org 0x20
