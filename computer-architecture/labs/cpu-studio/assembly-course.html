@@ -1347,6 +1347,43 @@ not_less:
 </div>
 <p>При <code>N = 0</code> команда <code>JN</code> оставляет выполнение на <code>0030</code>. Там <code>JV</code> переходит к <code>less</code> при <code>V = 1</code>. При <code>V = 0</code> следующая команда <code>JMP</code> ведёт к <code>not_less</code>. При <code>N = 1</code> переход <code>JN</code> ведёт к <code>0038</code>. Там <code>JV</code> переходит к <code>not_less</code> при <code>V = 1</code>, а при <code>V = 0</code> выполняется следующая команда у метки <code>less</code>. Например, для <code>7F / FF</code> точная разность <code>127 − (−1) = 128</code> даёт байт <code>80</code>. У него <code>N = 1</code>, но <code>V = 1</code> указывает, что точная разность положительна.</p>
 </details>
+<h3 id="unsigned-compare-cz-exercise">Беззнаковое сравнение по C и Z</h3>
+<p>Сравним байт в <code>R0</code> с единицей как число от 0 до 255. <code>CMP R0, R1</code> выставляет флаг <code>C = 1</code>, если при вычитании нужен заём. Это случай <code>R0 &lt; R1</code>. При <code>C = 0</code> возможны равенство и большее значение. Их разделяет флаг <code>Z</code>, который равен 1 при нулевой разности.</p>
+<pre><code id="unsigned-compare-cz-source">.org 0x20
+    LDI R0, 0
+    LDI R1, 1
+    CMP R0, R1
+    JNC no_borrow
+    LDI R2, 1
+    HALT
+no_borrow:
+    JZ equal
+    LDI R2, 3
+    HALT
+equal:
+    LDI R2, 2
+    HALT
+</code></pre>
+<p>Программа записывает в <code>R2</code> 1 при «меньше», 2 при «равно» и 3 при «больше». Предскажите путь к одной из трёх загрузок для каждого входа.</p>
+<ol>
+<li><a id="unsigned-compare-cz-ide" href="index.html">Откройте конструктор для опыта с беззнаковым сравнением</a> и вставьте листинг. В панели «Архитектура» раскройте «Изменить устройство процессора». Задайте <strong>8 бит</strong>, <strong>4 регистра</strong> и <strong>256 байт</strong> памяти. Нажмите «Применить и собрать».</li>
+<li>Трижды нажмите «Шаг». После <code>CMP</code> запишите <code>C</code> и <code>Z</code>. Четвёртым шагом выполните <code>JNC</code> и сверьте <code>PC</code>. Если следующая команда — <code>JZ</code>, выполните её и запишите ещё один адрес. Остановитесь перед <code>HALT</code> и сверьте <code>R2</code>.</li>
+<li>Повторите опыт, заменив число в первой <code>LDI</code> сначала на <code id="unsigned-compare-cz-equal">1</code>, затем на <code id="unsigned-compare-cz-greater">255</code>. Каждый раз нажимайте «Собрать». Почему <code>JNC</code> в этих двух запусках ведёт по одному адресу?</li>
+</ol>
+<details>
+<summary>Сверить флаги и путь выполнения</summary>
+<div class="table-wrap">
+<table id="unsigned-compare-cz-results">
+<thead><tr><th scope="col">R0</th><th scope="col">C Z после CMP</th><th scope="col">PC после JNC</th><th scope="col">PC после JZ</th><th scope="col">R2</th></tr></thead>
+<tbody>
+<tr><th scope="row"><code>00</code></th><td><code>1 0</code></td><td><code>0030</code></td><td>—</td><td><code>01</code></td></tr>
+<tr><th scope="row"><code>01</code></th><td><code>0 1</code></td><td><code>0038</code></td><td><code>0044</code></td><td><code>02</code></td></tr>
+<tr><th scope="row"><code>FF</code></th><td><code>0 0</code></td><td><code>0038</code></td><td><code>003C</code></td><td><code>03</code></td></tr>
+</tbody>
+</table>
+</div>
+<p><code>JNC</code> переходит к <code>no_borrow</code> при <code>C = 0</code>. Там <code>JZ</code> ведёт к <code>equal</code> при <code>Z = 1</code>, иначе выполняется загрузка 3 по <code>003C</code>. При <code>R0 = FF</code> разность <code>255 − 1 = 254</code> даёт байт <code>FE</code>. Его старший бит ставит <code>N = 1</code>, но беззнаковый порядок определяют отсутствие займа и ненулевая разность, то есть <code>C = 0</code> и <code>Z = 0</code>. Сами <code>R0</code> и <code>R1</code> команда <code>CMP</code> сохраняет.</p>
+</details>
 <h3 id="shr-sar-exercise">Какой бит появится слева после SHR и SAR</h3>
 <p>При сдвиге на один разряд вправо младший бит выходит из восьмибитного результата. Остальные семь битов сдвигаются вправо, освобождая старший разряд. <code>SHR</code> заполняет его нулём. <code>SAR</code> копирует туда исходный старший бит, который служит знаком в дополнительном коде.</p>
 <pre><code id="shr-sar-source">.org 0x20
