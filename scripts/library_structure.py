@@ -188,7 +188,10 @@ def reading_map(root, stats, configs):
                            publication_volume=row['volume'] if available else None,
                            stats={key: row[key] for key in ('chapters', 'words', 'terms')} if available else None,
                            blurb=cfg.get('blurb', meta.get('blurb', meta['scope'])))
-    return dict(schema=SCHEMA, order=list(RECOMMENDED_ORDER),
+    assembly_course = 'computer-architecture/labs/cpu-studio/assembly-course.html'
+    if books['computer-architecture']['status'] != 'available' or not (root/assembly_course).is_file():
+        assembly_course = None
+    return dict(schema=SCHEMA, order=list(RECOMMENDED_ORDER), assembly_course=assembly_course,
                 order_note='Номера идут по порядку доступных томов в библиотеке. Книги в очереди номера пока не получают; соседние ветки можно изучать независимо.',
                 practice_note='Практикум можно начать после первых глав Linux и Bash и продолжать вместе с изучаемой технологией.',
                 groups=[{**group, 'volumes': list(group['volumes'])} for group in GROUPS],
@@ -245,8 +248,10 @@ def render_shelves(route):
                 '<p class="small">'+escape(route['practice_note'])+'</p>'
                 '<ul class="library-group-nav">'+''.join(
                     '<li><a href="#library-'+group['id']+'">'+escape(group['title'])+'</a></li>' for group in route['groups'])+'</ul></details></aside>')
-    practice_entry = ('<a class="library-practice-link" href="computer-architecture/labs/cpu-studio/assembly-course.html">'
-                      'Ассемблер <span aria-hidden="true">→</span></a>')
+    practice_entry = ''
+    if assembly_course := route.get('assembly_course'):
+        practice_entry = ('<a class="library-practice-link" href="'+escape(assembly_course, quote=True)+'">'
+                          'Ассемблер <span aria-hidden="true">→</span></a>')
     sections = []
     for index, group in enumerate(route['groups'], 1):
         ready, pending = [], []
