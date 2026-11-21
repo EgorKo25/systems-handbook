@@ -166,6 +166,35 @@ start:
 <p><code>29 = 4 × 6 + 5</code>. Пять оставшихся предметов ещё не образуют полную группу. Добавление одного предмета даёт пятую группу и нулевой остаток. Получаем <code>30 = 5 × 6 + 0</code>.</p>
 </details>
 </section>
+<section id="div-unsigned-width-exercise">
+<h2>Что делит DIV после загрузки −2</h2>
+<p><code>LDI</code> декодирует константу −2 и записывает её в дополнительном коде по ширине регистра. Затем <code>DIV</code> читает биты делимого как беззнаковое число. Предскажите, что окажется в <code>R0</code> после загрузки и в <code>R2</code> после деления на 2 при восьми и при шестнадцати битах.</p>
+<pre><code id="div-unsigned-width-source">.org 0x20
+    LDI R0, -2
+    LDI R1, 2
+    DIV R2, R0, R1
+    HALT
+</code></pre>
+<ol>
+<li><a id="div-unsigned-width-ide" href="index.html">Откройте конструктор для опыта с разрядностью DIV</a> и вставьте листинг. В панели «Архитектура» раскройте «Изменить устройство процессора». Задайте <strong>8 бит</strong>, <strong>4 регистра</strong> и <strong>256 байт</strong> памяти. Нажмите «Применить и собрать».</li>
+<li>В панели «Слово по адресу PC» проверьте байты первой <code>LDI</code> по <code>0020</code> и поле <code>imm = -2</code>. Нажмите «Шаг» и сверьте <code>R0</code>. Вторым шагом загрузите делитель. Перед третьим шагом проверьте байты <code>DIV</code> по <code>0028</code>. Выполните команду и запишите <code>R2</code>, флаги, <code>PC</code> и счётчик.</li>
+<li>Смените только разрядность на <strong id="div-unsigned-width-second">16 бит</strong> и нажмите «Применить и собрать». Сравните байты в листинге с первой сборкой и повторите три шага. Как изменилась запись −2 в регистре и какое число прочитала из него <code>DIV</code>?</li>
+</ol>
+<details>
+<summary>Сверить делимое и частное</summary>
+<div class="table-wrap">
+<table id="div-unsigned-width-results">
+<thead><tr><th scope="col">Разрядность</th><th scope="col">R0 после LDI</th><th scope="col">R1 перед DIV</th><th scope="col">Деление</th><th scope="col">R2 после DIV</th></tr></thead>
+<tbody>
+<tr><th scope="row">8 бит</th><td><code>FE</code></td><td><code>02</code></td><td>254 ÷ 2</td><td><code>7F</code></td></tr>
+<tr><th scope="row">16 бит</th><td><code>FFFE</code></td><td><code>0002</code></td><td>65534 ÷ 2</td><td><code>7FFF</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>В обоих образах у первой <code>LDI</code> байты <code>02 00 FE FF</code>. Поле <code>FE FF</code> декодируется как −2 при обеих разрядностях. Восьмибитный регистр сохраняет младшие восемь бит (<code>FE</code>), а шестнадцатибитный — шестнадцать (<code>FFFE</code>). Для <code>DIV</code> эти наборы битов означают 254 и 65534 соответственно.</p>
+<p>Байты <code>DIV</code> в обоих листингах совпадают (<code>07 02 01 00</code>). После деления <code>PC = 002C</code>, выполнены три команды и все четыре флага <code>Z N C V</code> равны нулю. Следующая команда — <code>HALT</code>.</p>
+</details>
+</section>
 <section id="rv32-control">
 <h2>Цикл, вызов и возврат в RV32I</h2>
 <p>Чтобы повторить вычитание три раза, положим в <code>x7</code> число 3. После каждого вычитания <code>BNE</code> сравнивает <code>x7</code> с <code>x0</code>, который всегда содержит ноль. Если числа различаются, следующей командой снова будет вычитание.</p>
