@@ -989,6 +989,45 @@ signed_overflow:
 </div>
 <p>У 510 в шестнадцатеричной записи <code>01FE</code> младший байт равен <code>FE</code>. Число 254 и так занимает один байт <code>FE</code>. У этого байта старший бит равен 1 и значение отлично от нуля, поэтому в обоих опытах <code>N = 1</code> и <code>Z = 0</code>. Для <code>FF × 02</code> в свой диапазон помещается только знаковое произведение. Для <code>7F × 02</code> в свой диапазон помещается только беззнаковое.</p>
 </details>
+<h3 id="signed-compare-nv-exercise">Знаковое сравнение по N и V</h3>
+<p><code>CMP R0, R1</code> вычисляет разность и выставляет флаги. В восьмибитной конфигурации <code>N</code> берётся из старшего бита младшего байта разности, а <code>V = 1</code>, если знаковая разность выходит за диапазон от −128 до 127. Например, <code>−128 − 1</code> даёт −129. Младший байт равен <code>7F</code>, поэтому <code>N = 0</code>, хотя точная разность отрицательна.</p>
+<p>Если <code>V = 0</code>, знак разности даёт сам <code>N</code>. Если <code>V = 1</code>, младший байт даёт противоположный знак. Поэтому знаковое «меньше» выполняется при <code>N ≠ V</code>. Программа проверяет это двумя условными переходами и записывает <code>01</code> в <code>R2</code> для «меньше», <code>00</code> для «больше или равно».</p>
+<pre><code id="signed-compare-nv-source">.org 0x20
+    LDI R0, 0x80
+    LDI R1, 0x01
+    CMP R0, R1
+    JN negative
+    JV less
+    JMP not_less
+negative:
+    JV not_less
+less:
+    LDI R2, 1
+    HALT
+not_less:
+    LDI R2, 0
+    HALT
+</code></pre>
+<ol>
+<li><a id="signed-compare-nv-ide" href="index.html">Откройте конструктор для опыта со знаковым сравнением</a> и вставьте листинг. В панели «Архитектура» раскройте «Изменить устройство процессора». Задайте <strong>8 бит</strong>, <strong>4 регистра</strong> и <strong>256 байт</strong> памяти. Нажмите «Применить и собрать».</li>
+<li>Прочитайте входы как знаковые восьмибитные числа. Нажмите «Шаг» три раза до <code>CMP</code> включительно. Запишите <code>N</code> и <code>V</code>. Предскажите адрес после <code>JN</code> и итоговый <code>R2</code>. Пройдите переходы кнопкой «Шаг» и остановитесь перед <code>HALT</code>. Сверьте <code>R2</code> и путь по адресам.</li>
+<li>Повторите опыт ещё для трёх пар <code>R0 / R1</code>. Меняйте только константы в двух первых <code>LDI</code> и каждый раз нажимайте «Собрать». Остальные пары в шестнадцатеричной записи — <code id="signed-compare-nv-inputs">02 / 01, FF / 01, 7F / FF</code>.</li>
+</ol>
+<details>
+<summary>Сверить флаги, переход и результат</summary>
+<div class="table-wrap">
+<table id="signed-compare-nv-results">
+<thead><tr><th scope="col">R0 / R1</th><th scope="col">Со знаком</th><th scope="col">N V</th><th scope="col">PC после JN</th><th scope="col">R2</th></tr></thead>
+<tbody>
+<tr><th scope="row"><code>80 / 01</code></th><td>−128 и 1</td><td><code>0 1</code></td><td><code>0030</code></td><td><code>01</code></td></tr>
+<tr><th scope="row"><code>02 / 01</code></th><td>2 и 1</td><td><code>0 0</code></td><td><code>0030</code></td><td><code>00</code></td></tr>
+<tr><th scope="row"><code>FF / 01</code></th><td>−1 и 1</td><td><code>1 0</code></td><td><code>0038</code></td><td><code>01</code></td></tr>
+<tr><th scope="row"><code>7F / FF</code></th><td>127 и −1</td><td><code>1 1</code></td><td><code>0038</code></td><td><code>00</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>При <code>N = 0</code> команда <code>JN</code> оставляет выполнение на <code>0030</code>. Там <code>JV</code> переходит к <code>less</code> при <code>V = 1</code>. При <code>V = 0</code> следующая команда <code>JMP</code> ведёт к <code>not_less</code>. При <code>N = 1</code> переход <code>JN</code> ведёт к <code>0038</code>. Там <code>JV</code> переходит к <code>not_less</code> при <code>V = 1</code>, а при <code>V = 0</code> выполняется следующая команда у метки <code>less</code>. Например, для <code>7F / FF</code> точная разность <code>127 − (−1) = 128</code> даёт байт <code>80</code>. У него <code>N = 1</code>, но <code>V = 1</code> указывает, что точная разность положительна.</p>
+</details>
 <h3 id="shr-sar-exercise">Какой бит появится слева после SHR и SAR</h3>
 <p>При сдвиге на один разряд вправо младший бит выходит из восьмибитного результата. Остальные семь битов сдвигаются вправо, освобождая старший разряд. <code>SHR</code> заполняет его нулём. <code>SAR</code> копирует туда исходный старший бит, который служит знаком в дополнительном коде.</p>
 <pre><code id="shr-sar-source">.org 0x20
