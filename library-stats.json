@@ -3,9 +3,9 @@
     "slug": "networks",
     "title": "Сети: от сигнала до приложения",
     "volume": "V",
-    "words": 94213,
-    "chapters": 24,
-    "terms": 379
+    "words": 95588,
+    "chapters": 25,
+    "terms": 380
   },
   {
     "slug": "linux",
@@ -123,9 +123,9 @@
     "slug": "kubernetes",
     "title": "Kubernetes: от API до процесса, пакета и восстановления",
     "volume": "XXVI",
-    "words": 29152,
+    "words": 29262,
     "chapters": 26,
-    "terms": 130
+    "terms": 131
   },
   {
     "slug": "helm",

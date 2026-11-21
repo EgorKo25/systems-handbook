@@ -14,6 +14,7 @@
   "14-dns",
   "15-tls",
   "17-switching",
+  "24-rstp-link-failure",
   "22-wireless-medium",
   "18-routing-control",
   "19-performance",

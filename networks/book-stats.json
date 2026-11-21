@@ -1,6 +1,6 @@
 {
   "date": "2026-11-01",
-  "words": 94213,
+  "words": 95588,
   "chapters": [
     {
       "id": "01-foundations",
@@ -78,6 +78,11 @@
       "words": 2574
     },
     {
+      "id": "24-rstp-link-failure",
+      "title": "Как RSTP перестраивает дерево после обрыва",
+      "words": 1343
+    },
+    {
       "id": "22-wireless-medium",
       "title": "Общий эфир: как участники договариваются о времени",
       "words": 2696
@@ -120,10 +125,10 @@
     {
       "id": "12-glossary",
       "title": "Словарь сетевых терминов",
-      "words": 10254
+      "words": 10286
     }
   ],
-  "terms": 379,
+  "terms": 380,
   "external_assets": 0,
   "edition": "physical-link-wireless-depth"
 }

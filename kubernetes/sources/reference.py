@@ -82,6 +82,7 @@ GLOSSARY = [
 ('TLS termination','Граница завершения TLS. HTTPS до Gateway не автоматически шифрует Gateway→backend участок.'),
 ('PV','PersistentVolume: объект предоставленного storage с capacity/access/reclaim/backend/topology. Не сами bytes резервной копии.'),
 ('PVC','PersistentVolumeClaim: запрос на storage. Bound означает связь объектов, а не завершённый mount/проверенный write.'),
+('VolumeSnapshot','Объект Kubernetes, ссылающийся на снимок тома CSI; status сообщает готовность и размер восстановления. Сам объект не является независимой резервной копией данных backend.'),
 ('StorageClass','Параметры provisioner и политики выделения storage. Произвольное имя provisioner не устанавливает driver.'),
 ('RWO','ReadWriteOnce: предусмотренный read-write доступ с одного node, а не всегда один Pod. Для одного Pod существует поддерживаемый CSI RWOP.'),
 ('Reclaim policy','Политика backend после освобождения claim: Retain либо предусмотренное Delete. Не заменяет application backup.'),
