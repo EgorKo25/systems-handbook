@@ -466,6 +466,44 @@ start:
 <p>При <code>Z = 1</code> микрооперация <code>halt</code> останавливает машину и прерывает оставшиеся микрооперации команды. Выполненная запись <code>0011</code> сохраняется. При <code>Z = 0</code> модель пропускает <code>halt</code> и выполняет вторую запись. В обоих случаях <code>STOP_AT_Z</code> засчитывается как пятая команда и оставляет <code>PC = 0034</code>, адрес следующей <code>LDI</code>.</p>
 <p>После остановки конструктор отключает «Шаг». Если вызвать <code>Machine.step()</code> напрямую, он вернёт <code>halt</code> до чтения следующей команды. Полный снимок совпадёт со снимком после пятого шага. В ветви с <code>Z = 0</code> шестой шаг выполняет <code>LDI</code>, записывает <code>0099</code> в <code>R2</code> и переводит <code>PC</code> на <code>0038</code>, к <code>HALT</code>.</p>
 </details>
+<h3 id="out-div-fault-exercise">Когда OUT_DIV добавляет запись в журнал</h3>
+<p>Команда <code>OUT_DIV R0, R1</code> сначала готовит вывод числа из <code>R0</code> в порт 2, затем делит <code>R0</code> на <code>R1</code> и пишет частное в <code>R0</code>. В формате <code>RR</code> это регистры <code>d</code> и <code>s</code>. К началу шага в журнале уже будет 7 от отдельной команды <code>OUT</code>. Появится ли рядом 8, если деление в конце шага завершится ошибкой?</p>
+<pre><code id="out-div-fault-command">{
+  "name": "OUT_DIV",
+  "opcode": 68,
+  "format": "RR",
+  "microcode": [
+    {"op": "out", "port": 2, "a": "d"},
+    {"op": "div", "dst": "d", "a": "d", "b": "s"}
+  ]
+}
+</code></pre>
+<pre><code id="out-div-fault-source">.org 0x20
+    LDI R0, 8
+    LDI R1, 0
+    LDI R2, 7
+    OUT R2, 2
+    OUT_DIV R0, R1
+    HALT
+</code></pre>
+<ol>
+<li><a id="out-div-fault-ide" href="index.html">Откройте конструктор для опыта с OUT_DIV</a>. В панели «Архитектура» раскройте «Изменить устройство процессора». Задайте <strong>16 бит</strong>, <strong>4 регистра</strong> и <strong>256 байт</strong> памяти. В поле «Таблица команд, JSON» добавьте объект <code>OUT_DIV</code> перед последней <code>]</code>, поставив запятую между предыдущим объектом и новым. Вставьте листинг и нажмите «Применить и собрать».</li>
+<li>Нажмите «Шаг» четыре раза. В панели «Порты ввода и вывода» найдите запись порта 2 со значением 7. При <code>PC = 0030</code> сверьте байты <code>44 10 00 00</code> в панели «Слово по адресу PC». Нажмите «Шаг» ещё раз и проверьте сообщение, журнал, <code>R0</code>, <code>PC</code> и счётчик.</li>
+<li>Замените только <code>LDI R1, 0</code> на <code id="out-div-fault-variant">LDI R1, 2</code>, нажмите «Собрать» и повторите пять шагов. Какое число добавилось в журнал и какое осталось в <code>R0</code>?</li>
+</ol>
+<details>
+<summary>Сверить журнал и состояние после OUT_DIV</summary>
+<div class="table-wrap">
+<table id="out-div-fault-results">
+<thead><tr><th scope="col">Делитель</th><th scope="col">Итог шага</th><th scope="col">Журнал порта 2</th><th scope="col">R0</th><th scope="col">PC</th><th scope="col">Шагов</th></tr></thead>
+<tbody>
+<tr><th scope="row">0</th><td>Деление на ноль</td><td>7</td><td><code>0008</code></td><td><code>0030</code></td><td>4</td></tr>
+<tr><th scope="row">2</th><td>Команда выполнена</td><td>7, 8</td><td><code>0004</code></td><td><code>0034</code></td><td>5</td></tr>
+</tbody>
+</table>
+</div>
+<p>Микрооперация <code>out</code> помещает 8 во временный список записей текущего шага. Движок добавляет этот список в журнал после успешного выполнения всей команды. При делении на ноль шаг возвращает <code>fault</code>, список отбрасывается, а ранее записанное 7 остаётся в журнале. <code>PC</code> по-прежнему указывает на <code>OUT_DIV</code>, выполнены четыре команды. При делении на 2 шаг добавляет в журнал приготовленное до деления число 8 и сохраняет частное 4 в <code>R0</code>. Следующая команда — <code>HALT</code>.</p>
+</details>
 <h3 id="microcode-memory-order-exercise">Что читает вторая микрооперация</h3>
 <p>Две команды обращаются к одному слову по адресу <code>0x0080</code>. <code>STORE_READ</code> сначала записывает туда число из <code>R0</code>, затем читает слово в <code>R1</code>. <code>READ_STORE</code> выполняет чтение перед записью. Предскажите, что останется в <code>R1</code>, если исходное слово в памяти равно <code>0x1234</code>, а в <code>R0</code> лежит <code>0x5678</code>.</p>
 <p>В формате <code>RR</code> поле <code>d</code> обозначает первый регистр команды, а <code>s</code> — второй. В обоих описаниях <code>addr</code> равен 128, то есть <code>0x0080</code>. Микрооперации выполняются в порядке массива <code>microcode</code>.</p>
