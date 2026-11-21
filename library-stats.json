@@ -19,7 +19,7 @@
     "slug": "bash",
     "title": "Bash: от объектов ядра до надёжного сценария",
     "volume": "IV",
-    "words": 54772,
+    "words": 54845,
     "chapters": 19,
     "terms": 273
   },
@@ -83,7 +83,7 @@
     "slug": "docker",
     "title": "Docker: от образа до работающей и восстанавливаемой системы",
     "volume": "VIII",
-    "words": 60261,
+    "words": 60273,
     "chapters": 18,
     "terms": 153
   },

@@ -548,6 +548,40 @@ equal:
 </ul>
 <p>В обоих случаях <code>JZ</code> стоит по адресу <code>0x100C</code>. Замена числа в <code>LDI</code> меняет результат сравнения, а адреса команд сохраняются.</p>
 </details>
+<h3 id="mov-add-before-jz-exercise">MOV и ADD перед JZ</h3>
+<p>В этой модели <code>CMP R0, R1</code> выставляет флаги по разности <code>0 − 1</code>, поэтому <code>Z = 0</code>. Следующая команда запишет ноль в <code>R2</code> в обоих запусках. По какой ветви пойдёт <code>JZ</code>, если ноль в <code>R2</code> получен копированием? А если сложением?</p>
+<pre><code id="mov-add-before-jz-source">.org 0x20
+.entry start
+start:
+    LDI R0, 0
+    LDI R1, 1
+    LDI R2, 9
+    CMP R0, R1
+    MOV R2, R0
+    JZ equal
+    LDI R3, 1
+    HALT
+equal:
+    LDI R3, 2
+    HALT</code></pre>
+<ol>
+<li><a id="mov-add-before-jz-ide" href="index.html">Откройте конструктор для опыта с MOV и ADD</a>. Вставьте программу в редактор. Раскройте «Изменить устройство процессора» и задайте <strong>16 бит</strong>, <strong>4 регистра</strong> и <strong>256 байт</strong> памяти. Нажмите «Применить и собрать».</li>
+<li>Нажмите «Шаг» четыре раза до выполнения <code>CMP</code> включительно и запишите <code>Z</code>. Пятым шагом выполните <code>MOV</code> и снова сверьте <code>Z</code>. Убедитесь, что <code>R2 = 0000</code>, а в панели «Слово по адресу PC» для адреса <code>0x0034</code> и листинг, и RAM показывают <code>15 00 40 00</code>. Предскажите следующий <code>PC</code> по флагу <code>Z</code>. Шестым шагом выполните <code>JZ</code> и проверьте прогноз в карточке «Следующий PC». Седьмым шагом выполните <code>LDI</code> и прочитайте <code>R3</code>.</li>
+<li>Замените только <code>MOV R2, R0</code> на <code id="mov-add-before-jz-variant">ADD R2, R0, R0</code>, нажмите «Собрать» и повторите семь шагов. Сравните два значения <code>Z</code> перед <code>JZ</code> и проверьте, совпали ли байты самой команды перехода.</li>
+</ol>
+<details>
+<summary>Сверить ответы</summary>
+<div class="table-wrap">
+<table id="mov-add-before-jz-results">
+<thead><tr><th scope="col">Команда после CMP</th><th scope="col">R2 перед JZ</th><th scope="col">Z после CMP</th><th scope="col">Z перед JZ</th><th scope="col">PC после JZ</th><th scope="col">R3 после LDI</th></tr></thead>
+<tbody>
+<tr><th scope="row"><code>MOV</code></th><td><code>0000</code></td><td>0</td><td>0</td><td><code>0x0038</code></td><td>1</td></tr>
+<tr><th scope="row"><code>ADD</code></th><td><code>0000</code></td><td>0</td><td>1</td><td><code>0x0040</code></td><td>2</td></tr>
+</tbody>
+</table>
+</div>
+<p><code>MOV</code> копирует ноль из <code>R0</code> и сохраняет флаги от <code>CMP</code>. При <code>Z = 0</code> команда <code>JZ</code> оставляет <code>PC</code> на следующей по порядку команде по адресу <code>0x0038</code>. <code>ADD</code> складывает два нуля и выставляет флаги по результату, поэтому при <code>Z = 1</code> команда <code>JZ</code> записывает в <code>PC</code> адрес <code>equal</code>. Этот адрес, <code>0x0040</code>, закодирован в байтах <code>40 00</code> в обоих запусках.</p>
+</details>
 <h3 id="jnz-exercise">JNZ возвращается к началу цикла</h3>
 <p>Сколько раз выполнится тело цикла, если в <code>R1</code> записать 3? А если записать 1? Регистр <code>R0</code> считает выполненные повторы, <code>R1</code> хранит оставшиеся, а в <code>R2</code> лежит ноль для сравнения. За один проход программа увеличивает <code>R0</code>, уменьшает <code>R1</code> и выполняет <code>CMP R1, R2</code>. При <code>Z = 0</code> команда <code>JNZ again</code> возвращает <code>PC</code> к метке <code>again</code>. При <code>Z = 1</code> следующей выполняется <code>HALT</code>.</p>
 <pre><code id="jnz-exercise-source">.org 0x1000

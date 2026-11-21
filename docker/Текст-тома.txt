@@ -3872,7 +3872,7 @@ GOMEMLIMIT — мягкая цель Go, которая усиливает сб�
 
 Том VIII · Эксплуатация
 
-Резерв Docker: сохранить поколение и восстановить свою службуПосле главы 08 основной counter лежит в study-data. Удаление контейнера его не стирает, но ошибка оператора или потеря диска способны затронуть весь том. Создадим отдельный комплект файлов, вернём основной процесс к работе, затем восстановим сохранённое число в другом томе. Проверочный POST изменит только восстановленную историю. · 5338 словСодержание главы
+Резерв Docker: сохранить поколение и восстановить свою службуПосле главы 08 основной counter лежит в study-data. Удаление контейнера его не стирает, но ошибка оператора или потеря диска способны затронуть весь том. Создадим отдельный комплект файлов, вернём основной процесс к работе, затем восстановим сохранённое число в другом томе. Проверочный POST изменит только восстановленную историю. · 5350 словСодержание главы
 
 Какую часть истории возвращает копия
 
@@ -4253,7 +4253,13 @@ docker --context study ps -a --filter name=restore14 --format '{{.Names}} {{.Sta
 
 (
   set -euo pipefail
-  next="$(python3 -c 'import sys; n=int(sys.argv[1]); assert 0 <= n < (1<<64)-1, "counter exhausted"; print(n+1)' "$EXPECTED_COUNTER")"
+  next="$(python3 -c '
+import sys
+n = int(sys.argv[1])
+if not 0 <= n < (1 << 64) - 1:
+    raise SystemExit("counter exhausted")
+print(n + 1)
+' "$EXPECTED_COUNTER")"
   posted="$(curl --connect-timeout 2 --max-time 5 --noproxy '*' --fail --silent --show-error --request POST http://127.0.0.1:18081/counter)"
   test "$posted" = "$next"
   printf '%s\n' "$posted" > "$RESTORE_RECORD/post.txt"

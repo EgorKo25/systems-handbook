@@ -282,7 +282,13 @@ docker --context study ps -a --filter name=restore14 --format &#x27;{{.Names}} {
 <p>Читающий блок можно повторить после обычной задержки запуска. Следующий блок выполняет ровно один POST. Для вычисления N+1 используем целые Python, поскольку Bash с машинным знаковым целым может переполниться раньше максимума uint64 нашего приложения. При N=18446744073709551615 дальнейшее увеличение невозможно по логике программы: исходное значение корректно, ожидается отказ exhausted, а не обнуление. В этом крае ниже next-программа откажет <em>до</em> POST; чтение и сохранность проверяются отдельно, обычный тест новой записи на этой истории неприменим.</p>
 <pre data-shell="bash"><code>(
   set -euo pipefail
-  next=&quot;$(python3 -c &#x27;import sys; n=int(sys.argv[1]); assert 0 &lt;= n &lt; (1&lt;&lt;64)-1, &quot;counter exhausted&quot;; print(n+1)&#x27; &quot;$EXPECTED_COUNTER&quot;)&quot;
+  next=&quot;$(python3 -c &#x27;
+import sys
+n = int(sys.argv[1])
+if not 0 &lt;= n &lt; (1 &lt;&lt; 64) - 1:
+    raise SystemExit(&quot;counter exhausted&quot;)
+print(n + 1)
+&#x27; &quot;$EXPECTED_COUNTER&quot;)&quot;
   posted=&quot;$(curl --connect-timeout 2 --max-time 5 --noproxy &#x27;*&#x27; --fail --silent --show-error --request POST http://127.0.0.1:18081/counter)&quot;
   test &quot;$posted&quot; = &quot;$next&quot;
   printf &#x27;%s\n&#x27; &quot;$posted&quot; &gt; &quot;$RESTORE_RECORD/post.txt&quot;
