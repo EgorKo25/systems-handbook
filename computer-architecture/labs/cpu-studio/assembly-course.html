@@ -484,6 +484,38 @@ start:
   </svg>
   <figcaption>Рамки выделяют один адрес, 0x1005. Значение в листинге осталось 01. При следующем шаге процессор прочитает 02 из памяти и выберет r2.</figcaption>
 </figure>
+<h3 id="signed-offset-unsigned-port-exercise">Два смысла поля FF FF</h3>
+<p>У команд <code>LD R1, [R0 - 1]</code> и <code>IN R2, 65535</code> последние два байта одинаковы. Что по ним прочитает декодер? Найдите адрес, из которого прочитает <code>LD</code>, если <code>R0 = 0081</code>. Затем предскажите, сможет ли <code>IN</code> сделать шаг, если число ждёт только в очереди порта 0.</p>
+<pre><code id="signed-offset-unsigned-port-source">.org 0x20
+    LDI R0, 0x81
+    LD R1, [R0 - 1]
+    IN R2, 65535
+    HALT
+.org 0x80
+    .byte 0x34, 0x12
+</code></pre>
+<ol>
+<li><a id="signed-offset-unsigned-port-ide" href="index.html">Откройте конструктор для опыта со смещением и портом</a> и вставьте листинг. В панели «Архитектура» раскройте «Изменить устройство процессора». Задайте <strong>16 бит</strong>, <strong>4 регистра</strong> и <strong>256 байт</strong> памяти. Нажмите «Применить и собрать».</li>
+<li>В панели «Порты ввода и вывода» укажите порт 0 и значение <code id="signed-offset-unsigned-port-first">7</code>. Нажмите «Добавить во вход». В панели «Память» перейдите к <code>0x0080</code> и найдите байты <code>34 12</code>.</li>
+<li>Нажмите «Шаг», чтобы загрузить <code>R0</code>. В панели «Слово по адресу PC» проверьте байты <code>10 01 FF FF</code> и поле <code>imm = -1</code>. Нажмите «Шаг» ещё раз, сверьте <code>R1</code>. В той же панели проверьте следующее слово <code>1D 02 FF FF</code> и поле <code>imm = 65535</code>.</li>
+<li>Нажмите «Шаг» и прочитайте сообщение об ожидании. Сверьте <code>PC</code>, счётчик и очередь порта 0. Затем добавьте значение <code id="signed-offset-unsigned-port-resume">22136</code> в порт 65535 и повторите шаг. Проверьте <code>R2</code> и очередь порта 0 перед <code>HALT</code>.</li>
+</ol>
+<details>
+<summary>Сверить декодирование и результат</summary>
+<div class="table-wrap">
+<table id="signed-offset-unsigned-port-results">
+<thead><tr><th scope="col">Команда</th><th scope="col">Байты</th><th scope="col"><code>imm</code></th><th scope="col">Результат</th></tr></thead>
+<tbody>
+<tr><th scope="row"><code>LD</code></th><td><code>10 01 FF FF</code></td><td><code>-1</code></td><td><code>R1 = 1234</code></td></tr>
+<tr><th scope="row"><code>IN</code> до подачи</th><td><code>1D 02 FF FF</code></td><td><code>65535</code></td><td>Ожидание порта 65535</td></tr>
+<tr><th scope="row"><code>IN</code> после подачи</th><td><code>1D 02 FF FF</code></td><td><code>65535</code></td><td><code>R2 = 5678</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>Код операции определяет формат. У <code>LD</code> формат <code>RM</code> читает <code>FF FF</code> как знаковое 16-битное смещение −1. Сумма <code>0x0081 − 1</code> даёт адрес <code>0x0080</code>. Команда читает младший байт <code>34</code> и старший <code>12</code>, получая <code>1234</code>. У <code>IN</code> формат <code>IO</code> читает то же поле как беззнаковый номер 65535.</p>
+<p>Пока порт 65535 пуст, <code>PC = 0028</code> и счётчик равен 2. <code>IN</code> обращается к очереди по декодированному номеру, поэтому число 7 в порту 0 остаётся на месте. После подачи 22136 команда читает его в <code>R2</code> как <code>5678</code> в шестнадцатеричной записи. Теперь <code>PC = 002C</code>, счётчик равен 3, а в порту 0 всё ещё лежит 7.</p>
+<p>Можно проверить и правило сборки. Замените номер в <code>IN</code> на <code id="signed-offset-unsigned-port-negative">-1</code> и нажмите «Собрать». Сборщик отклоняет отрицательное число в поле номера порта.</p>
+</details>
 <h3 id="decode-retry-exercise">Неизвестный код операции и повтор шага</h3>
 <p>В учебной системе команд CPU Studio первый байт команды задаёт её код операции. Сборка помещает <code>02 00 2A 00</code> по адресу <code>0x0024</code>. Код <code>02</code> означает <code>LDI</code>, а <code>2A</code> здесь входит в константу 42. Проверим, что произойдёт, если в памяти по этому адресу окажется код <code>FF</code>, которого нет в штатной таблице команд.</p>
 <pre><code id="decode-retry-source">.org 0x20
