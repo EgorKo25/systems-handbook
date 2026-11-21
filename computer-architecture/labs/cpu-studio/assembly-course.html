@@ -978,6 +978,36 @@ data: .byte 0x2A
 <p>Пока порт 65535 пуст, <code>PC = 0028</code> и счётчик равен 2. <code>IN</code> обращается к очереди по декодированному номеру, поэтому число 7 в порту 0 остаётся на месте. После подачи 22136 команда читает его в <code>R2</code> как <code>5678</code> в шестнадцатеричной записи. Теперь <code>PC = 002C</code>, счётчик равен 3, а в порту 0 всё ещё лежит 7.</p>
 <p>Можно проверить и правило сборки. Замените номер в <code>IN</code> на <code id="signed-offset-unsigned-port-negative">-1</code> и нажмите «Собрать». Сборщик отклоняет отрицательное число в поле номера порта.</p>
 </details>
+<h3 id="ldi-sign-extension-exercise">Как LDI расширяет поле FF FF</h3>
+<p>Первое <code>LDI</code> получает константу <code>0xFFFF</code>, последнее — <code>-1</code>. Сборщик кодирует обе константы одним 16-битным полем <code>FF FF</code>. В памяти по метке <code>data</code> лежат байты <code>FF FF 00 00</code>. Предскажите, что будет в <code>R0</code>, <code>R2</code> и <code>R3</code> перед <code>HALT</code> при 16 и 32 битах.</p>
+<pre><code id="ldi-sign-extension-source">.org 0x20
+    LDI R0, 0xFFFF
+    LDI R1, data
+    LD R2, [R1]
+    LDI R3, -1
+    HALT
+.org 0x80
+data: .byte 0xFF, 0xFF, 0, 0
+</code></pre>
+<ol>
+<li><a id="ldi-sign-extension-ide" href="index.html">Откройте конструктор для опыта с расширением знака</a> и вставьте листинг. В панели «Архитектура» раскройте «Изменить устройство процессора». Задайте <strong>16 бит</strong>, <strong>4 регистра</strong> и <strong>256 байт</strong> памяти. Нажмите «Применить и собрать».</li>
+<li>В панели «Память» введите <code>0x80</code> и нажмите «Перейти». Сверьте четыре байта данных. Перед первым и четвёртым шагами запишите байты <code>LDI</code> и значение <code>imm</code> из панели «Слово по адресу PC». После третьего шага сверьте <code>R2</code>, а перед <code>HALT</code> сравните все три результата.</li>
+<li>Смените только разрядность на <strong id="ldi-sign-extension-second">32 бита</strong> и нажмите «Применить и собрать». Сравните байты данных и команд с первой сборкой, затем повторите четыре шага. Откуда взялись старшие биты каждого результата?</li>
+</ol>
+<details>
+<summary>Сверить чтение константы и слова из RAM</summary>
+<div class="table-wrap">
+<table id="ldi-sign-extension-results">
+<thead><tr><th scope="col">Разрядность</th><th scope="col">R0 после LDI</th><th scope="col">R2 после LD</th><th scope="col">R3 после LDI</th></tr></thead>
+<tbody>
+<tr><th scope="row">16 бит</th><td><code>FFFF</code></td><td><code>FFFF</code></td><td><code>FFFF</code></td></tr>
+<tr><th scope="row">32 бита</th><td><code>FFFFFFFF</code></td><td><code>0000FFFF</code></td><td><code>FFFFFFFF</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>В обоих листингах по <code>0020</code> стоят байты <code>02 00 FF FF</code>, а по <code>002C</code> — <code>02 03 FF FF</code>. Декодер читает поле <code>FF FF</code> как знаковое число −1. При записи в 32-битный регистр модель заполняет старшие 16 бит копиями знакового бита. Все добавленные биты равны единице, поэтому получается <code>FFFFFFFF</code>.</p>
+<p><code>LD</code> читает слово шириной с регистр младшим байтом вперёд. При 16 битах команда берёт <code>FF FF</code>, а при 32 — <code>FF FF 00 00</code>. Старшая половина 32-битного результата берётся из двух нулевых байтов RAM, поэтому <code>R2 = 0000FFFF</code>. Полный образ в обоих запусках одинаков. После четырёх команд <code>PC = 0030</code> указывает на <code>HALT</code>.</p>
+</details>
 <h3 id="effective-address-underflow-exercise">Что происходит при чтении по адресу −1</h3>
 <p>В <code>LD R1, [R0 - 1]</code> модель складывает значение регистра и знаковое смещение, а затем проверяет адрес чтения. Сравним это с вычитанием единицы в отдельной команде <code>ADDI</code>, которая сохраняет результат в восьмибитном <code>R0</code>. В обоих опытах по адресу <code>00FF</code> лежит <code>A5</code>. Предскажите, в каком случае <code>LD</code> прочитает этот байт.</p>
 <pre><code id="effective-address-underflow-source">.org 0x20
