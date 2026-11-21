@@ -436,6 +436,44 @@ start:
 </div>
 <p>В первом запуске чтение видит уже записанное слово <code>0x5678</code>. Во втором оно успевает сохранить в <code>R1</code> исходное <code>0x1234</code>. Запись в обоих случаях оставляет одинаковые байты, младший <code>78</code> по адресу <code>0x0080</code> и старший <code>56</code> по адресу <code>0x0081</code>. Две микрооперации входят в одну команду, поэтому счётчик выполненных команд растёт с 1 до 2, а <code>PC</code> один раз продвигается на четыре байта.</p>
 </details>
+<h3 id="mark-pc-address-exercise">Какой адрес читает операнд pc</h3>
+<p>У команды есть адрес, с которого её прочитали, и адрес, который окажется в <code>PC</code> после шага. Добавим <code>MARK_PC</code>, чтобы сохранить первый адрес в регистре. В формате <code>R</code> имя <code>d</code> обозначает единственный регистр из команды, а <code>pc</code> в микрооперации даёт адрес выполняемой инструкции.</p>
+<pre><code id="mark-pc-address-command">{
+  "name": "MARK_PC",
+  "opcode": 65,
+  "format": "R",
+  "microcode": [{"op": "mov", "dst": "d", "a": "pc"}]
+}
+</code></pre>
+<pre><code id="mark-pc-address-source">.org 0x20
+    MARK_PC R0
+    CALL helper
+    HALT
+helper:
+    MARK_PC R1
+    RET
+</code></pre>
+<p>Каждая команда занимает четыре байта. Найдите в листинге адреса обеих <code>MARK_PC</code> и команды сразу после <code>CALL</code>. Предскажите, какие из этих адресов получат <code>R0</code>, <code>R1</code> и стек.</p>
+<ol>
+<li><a id="mark-pc-address-ide" href="index.html">Откройте конструктор для опыта с MARK_PC</a>. В панели «Архитектура» раскройте «Изменить устройство процессора». Задайте <strong>16 бит</strong>, <strong>4 регистра</strong> и <strong>256 байт</strong> памяти. В поле «Таблица команд, JSON» добавьте объект <code>MARK_PC</code> перед последней <code>]</code>, поставив запятую между предыдущим объектом и новым. Вставьте программу в редактор и нажмите «Применить и собрать».</li>
+<li>В панели «Память» введите <code>0xFC</code> и нажмите «Перейти». Нажмите «Шаг» один раз. Сравните только что записанный <code>R0</code> и новый <code>PC</code>. Вторым шагом выполните <code>CALL</code> и прочитайте <code>PC</code>, <code>SP</code> и четыре байта по адресам <code>00FC</code>–<code>00FF</code>.</li>
+<li>Третьим шагом выполните <code>MARK_PC R1</code> и сравните <code>R1</code> с адресом на стеке. Четвёртым шагом выполните <code>RET</code>. Сверьте <code>PC</code> и <code>SP</code> перед <code>HALT</code>.</li>
+</ol>
+<details>
+<summary>Сверить адреса и байты стека</summary>
+<div class="table-wrap">
+<table id="mark-pc-address-results">
+<thead><tr><th scope="col">После команды</th><th scope="col">PC</th><th scope="col">SP</th><th scope="col">R0</th><th scope="col">R1</th><th scope="col">RAM с 00FC</th></tr></thead>
+<tbody>
+<tr><th scope="row"><code>MARK_PC R0</code></th><td><code>0024</code></td><td><code>0100</code></td><td><code>0020</code></td><td><code>0000</code></td><td><code>00 00 00 00</code></td></tr>
+<tr><th scope="row"><code>CALL</code></th><td><code>002C</code></td><td><code>00FC</code></td><td><code>0020</code></td><td><code>0000</code></td><td><code>28 00 00 00</code></td></tr>
+<tr><th scope="row"><code>MARK_PC R1</code></th><td><code>0030</code></td><td><code>00FC</code></td><td><code>0020</code></td><td><code>002C</code></td><td><code>28 00 00 00</code></td></tr>
+<tr><th scope="row"><code>RET</code></th><td><code>0028</code></td><td><code>0100</code></td><td><code>0020</code></td><td><code>002C</code></td><td><code>28 00 00 00</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>Первая <code>MARK_PC</code> сохраняет свой адрес <code>0020</code>, затем исполнение переходит к <code>CALL</code> по <code>0024</code>. Вызов кладёт в стек адрес продолжения <code>0028</code> младшим байтом вперёд и записывает адрес метки <code>helper</code> в <code>PC</code>. Вторая <code>MARK_PC</code> сохраняет этот адрес <code>002C</code>, потому что сама стоит у метки. <code>RET</code> читает из стека <code>0028</code> и возвращает <code>PC</code> к <code>HALT</code>. <code>SP</code> снова равен <code>0100</code>, хотя байты адреса возврата остались в RAM.</p>
+</details>
 </section>
 <section id="inpair-exercise">
 <h2>Два числа из одной очереди за шаг INPAIR</h2>
