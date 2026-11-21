@@ -916,6 +916,70 @@ save_value:
 </div>
 <p>После открытия шаг читает из восстановленной RAM прежнюю <code>LDI R1, 9</code>. Сборка размещает в RAM новую <code>LDI R1, 42</code> и начинает выполнение с точки входа. После двух шагов в <code>R1</code> оказывается <code>002A</code>, то есть 42.</p>
 </details>
+<h3 id="load-config-signature-exercise">Почему машина отклоняет образ с теми же байтами</h3>
+<p>Проект восстанавливает состояние машины из снимка. Образ программы, который возвращает <code>assemble</code>, служит для запуска программы с начала. Опыт ниже проверяет загрузку образа напрямую через <code>Machine.load</code> и показывает, в какой момент машина B отклоняет образ для машины A.</p>
+<p>В обеих конфигурациях команда <code>STEP_R R0</code> имеет код операции <code>0x40</code> и один операнд-регистр. В A микрооперация читает этот регистр, прибавляет 1 и записывает сумму туда же. В B она прибавляет 2. Имя <code>d</code> в микрооперации ссылается на регистр, указанный в команде. Сборщик получает в обоих случаях <code>40 00 00 00</code> для <code>STEP_R R0</code> по адресу <code>0x0024</code>.</p>
+<p>После <code>LDI</code> в обеих машинах <code>R0 = 0010</code>. В очередь порта 0 машины B добавим число 7. Предскажите, что будет с <code>PC</code>, счётчиком и очередью B после попытки загрузить образ A. Затем предскажите <code>R0</code> после очередного шага в каждой машине.</p>
+<p>Сохраните код как <code>load-signature.cjs</code> в корне исходников учебника и запустите <code>node load-signature.cjs</code>. Для опыта нужны Node.js и <code>engine.js</code> из конструктора.</p>
+<details>
+<summary>Код опыта для Node.js</summary>
+<pre><code id="load-config-signature-source">const assert = require('node:assert/strict')
+const { defaults, assemble, Machine } =
+  require('./computer-architecture/labs/cpu-studio/engine.js')
+
+const source = `.org 0x20
+.entry start
+start:
+    LDI R0, 0x10
+    STEP_R R0
+    HALT
+`
+
+function prepare(increment) {
+  const config = { ...defaults(), bits: 16, registers: 4, memorySize: 256 }
+  config.instructions.push({
+    name: 'STEP_R', opcode: 0x40, format: 'R',
+    microcode: [{ op: 'add', dst: 'd', a: 'd', b: increment }]
+  })
+  const image = assemble(source, config)
+  const machine = new Machine(config)
+  machine.load(image)
+  assert.equal(machine.step().instruction, 'LDI')
+  return { image, machine }
+}
+
+const a = prepare(1)
+const b = prepare(2)
+assert.deepEqual(a.image.bytes, b.image.bytes)
+assert.notEqual(a.image.configSignature, b.image.configSignature)
+
+b.machine.feed(0, [7])
+const before = b.machine.snapshot()
+assert.throws(() =&gt; b.machine.load(a.image),
+  /Образ собран для другой конфигурации процессора/)
+const after = b.machine.snapshot()
+assert.deepEqual(after, before)
+console.log('Снимок B после отказа совпал')
+
+for (const [name, { machine }] of Object.entries({ A: a, B: b })) {
+  assert.equal(machine.step().instruction, 'STEP_R')
+  const r0 = machine.registers[0].toString(16).padStart(4, '0')
+  console.log(name + '  R0=' + r0)
+}
+</code></pre>
+</details>
+<div class="table-wrap">
+<table id="load-config-signature-results">
+<thead><tr><th scope="col">Момент</th><th scope="col">PC</th><th scope="col">R0</th><th scope="col">Шагов</th><th scope="col">Очередь порта 0</th></tr></thead>
+<tbody>
+<tr><th scope="row">B перед загрузкой A</th><td><code>0024</code></td><td><code>0010</code></td><td>1</td><td>7</td></tr>
+<tr><th scope="row">B после отказа</th><td><code>0024</code></td><td><code>0010</code></td><td>1</td><td>7</td></tr>
+<tr><th scope="row">A после STEP_R</th><td><code>0028</code></td><td><code>0011</code></td><td>2</td><td>пусто</td></tr>
+<tr><th scope="row">B после STEP_R</th><td><code>0028</code></td><td><code>0012</code></td><td>2</td><td>7</td></tr>
+</tbody>
+</table>
+</div>
+<p><code>assemble</code> сохраняет в образе ключ конфигурации <code>configSignature</code>. Ключ включает разрядность, число регистров, размер памяти и таблицу команд с микрооперациями. Числа 1 и 2 входят в разные ключи, хотя байты образов совпадают. <code>Machine.load</code> сравнивает ключ образа с ключом машины до сброса и записи байтов в RAM. Поэтому после отказа совпадает весь снимок B, включая память, регистры, флаги и очереди. При следующем шаге каждая машина читает <code>40 00 00 00</code> из своей RAM и выполняет микрооперацию из собственной таблицы.</p>
 </section>
 <section id="x86-first-register">
 <h2>Как INC меняет EAX и куда ведёт JNZ</h2>
