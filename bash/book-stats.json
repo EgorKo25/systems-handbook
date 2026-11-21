@@ -75,12 +75,12 @@
     {
       "id": "14-scripts-and-portability",
       "title": "Сценарий как программа",
-      "words": 2113
+      "words": 2178
     },
     {
       "id": "15-reliable-files-concurrency",
       "title": "Надёжность и параллелизм",
-      "words": 3153
+      "words": 3177
     },
     {
       "id": "16-debugging-and-tests",
@@ -90,7 +90,7 @@
     {
       "id": "17-language-boundaries",
       "title": "Границы языков",
-      "words": 2315
+      "words": 2342
     },
     {
       "id": "18-practice-and-reference",
@@ -100,10 +100,10 @@
     {
       "id": "99-glossary",
       "title": "Словарь терминов",
-      "words": 6093
+      "words": 6092
     }
   ],
-  "words": 54657,
+  "words": 54772,
   "terms": 273,
   "external_assets": 0
 }

@@ -808,6 +808,42 @@ CALL помещает адрес продолжения в стек. RET изв�
 </div>
 <p>Первый <code>POP</code> читает последнее записанное слово, потому что после двух записей <code>SP</code> указывает именно на него. Когда <code>SP</code> возвращается к <code>0x100</code>, стек снова пуст. Байты в памяти при чтении сохраняются.</p>
 </details>
+<h3 id="call-push-width-exercise">Сколько байтов в стеке занимают CALL и PUSH</h3>
+<p>В учебной системе команд конструктора смена разрядности данных меняет размер слова для <code>PUSH</code> и <code>POP</code>. Адрес возврата <code>CALL</code> по-прежнему занимает в стеке четыре байта. Один и тот же листинг позволяет измерить оба размера по изменению <code>SP</code> и по байтам памяти.</p>
+<pre><code id="call-push-width-source">.org 0x20
+.entry start
+start:
+    LDI R0, 0x1234
+    CALL save_value
+    HALT
+save_value:
+    PUSH R0
+    POP R1
+    RET
+</code></pre>
+<ol>
+<li><a id="call-push-width-ide" href="index.html">Откройте конструктор для опыта с шириной стека</a> и вставьте программу. В панели «Архитектура» раскройте «Изменить устройство процессора». Задайте разрядность <strong>16 бит</strong>, <strong>4 регистра</strong> и <strong>256 байт</strong> памяти. Нажмите «Применить и собрать». В панели «Память» введите <code>0xF8</code> и нажмите «Перейти», чтобы видеть последние восемь байтов RAM.</li>
+<li>Первый «Шаг» загружает <code>0x1234</code> в <code>R0</code>. Перед вторым шагом найдите в листинге <code>19 00 2C 00</code> по адресу <code>0x0024</code>. Это код <code>CALL</code> с целью <code>0x002C</code>. Следующая по порядку команда <code>HALT</code> стоит по адресу <code>0x0028</code>. Выполните вызов вторым шагом. Проверьте <code>PC</code>, изменение <code>SP</code> и четыре байта с нового <code>SP</code>.</li>
+<li>Третьим шагом выполните <code>PUSH</code>. Сравните <code>SP</code> и байты на вершине стека с состоянием после <code>CALL</code>. Ещё двумя шагами выполните <code>POP</code> и <code>RET</code>. Перед <code>HALT</code> сверьте <code>PC</code>, <code>SP</code> и <code>R1</code>.</li>
+<li>Смените разрядность на <strong>32 бита</strong> и нажмите «Применить и собрать». Сохраните тот же исходник, 4 регистра и 256 байт памяти. Сравните машинные байты в листинге, затем повторите шаги. Какой шаг займёт больше места в стеке?</li>
+</ol>
+<details>
+<summary>Сверить PC, SP и байты стека</summary>
+<div class="table-wrap">
+<table id="call-push-width-results">
+<thead><tr><th scope="col">После команды</th><th scope="col">PC</th><th scope="col">SP при 16 битах</th><th scope="col">SP при 32 битах</th></tr></thead>
+<tbody>
+<tr><th scope="row"><code>LDI</code></th><td><code>0024</code></td><td><code>0100</code></td><td><code>0100</code></td></tr>
+<tr><th scope="row"><code>CALL</code></th><td><code>002C</code></td><td><code>00FC</code></td><td><code>00FC</code></td></tr>
+<tr><th scope="row"><code>PUSH</code></th><td><code>0030</code></td><td><code>00FA</code></td><td><code>00F8</code></td></tr>
+<tr><th scope="row"><code>POP</code></th><td><code>0034</code></td><td><code>00FC</code></td><td><code>00FC</code></td></tr>
+<tr><th scope="row"><code>RET</code></th><td><code>0028</code></td><td><code>0100</code></td><td><code>0100</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>После <code>CALL</code> по адресам <code>0xFC</code>–<code>0xFF</code> в обоих запусках лежат <code>28 00 00 00</code>. Разность <code>0x100 − 0xFC = 4</code> показывает размер ячейки адреса возврата. Байты идут от младшего к старшему и дают адрес <code>0x0028</code>. Машинное слово самого <code>CALL</code> хранится в коде по <code>0x0024</code> и содержит цель <code>0x002C</code>. В листинге и <code>CALL</code>, и <code>PUSH</code> кодируются четырьмя байтами при обеих разрядностях.</p>
+<p>При 16 битах <code>PUSH</code> кладёт <code>34 12</code> по <code>0xFA</code>–<code>0xFB</code>. При 32 битах он кладёт <code>34 12 00 00</code> по <code>0xF8</code>–<code>0xFB</code>. Байты адреса с <code>0xFC</code> при этом сохраняются. <code>POP</code> снимает слово нужной ширины и оставляет в <code>R1</code> значение <code>0x1234</code>. Затем <code>RET</code> читает четыре байта адреса и возвращает <code>PC</code> к <code>HALT</code>.</p>
+</details>
 </section>
 <section id="ports"><h2>Ввод, вывод и остановка исполнения</h2>
 <p>В этом конструкторе входной порт хранит очередь чисел, а выходной журнал показывает записанные значения с номерами портов. Во встроенном примере «Ввод и вывод» программа читает порт 1 командой <code>IN R0, 1</code>, записывает значение в порт 2 командой <code>OUT R0, 2</code> и возвращается к чтению командой <code>JMP start</code>. В самостоятельной программе из предыдущего раздела номер входного и выходного порта равен 0.</p>
