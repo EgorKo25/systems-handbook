@@ -657,6 +657,46 @@ helper:
 </div>
 <p>Первая <code>MARK_PC</code> сохраняет свой адрес <code>0020</code>, затем исполнение переходит к <code>CALL</code> по <code>0024</code>. Вызов кладёт в стек адрес продолжения <code>0028</code> младшим байтом вперёд и записывает адрес метки <code>helper</code> в <code>PC</code>. Вторая <code>MARK_PC</code> сохраняет этот адрес <code>002C</code>, потому что сама стоит у метки. <code>RET</code> читает из стека <code>0028</code> и возвращает <code>PC</code> к <code>HALT</code>. <code>SP</code> снова равен <code>0100</code>, хотя байты адреса возврата остались в RAM.</p>
 </details>
+<h3 id="push-sp-order-exercise">Когда микрооперация читает SP</h3>
+<p>Обе команды кладут число из <code>R0</code> в стек и копируют указатель стека в <code>R1</code>. В формате <code>RR</code> для записи в <code>R1</code> служит поле <code>d</code>, а поле <code>s</code> выбирает <code>R0</code> для <code>push</code>. В массиве <code>microcode</code> поменяем местами запись в стек и чтение <code>sp</code>. Какая команда сохранит в <code>R1</code> прежний указатель, а какая — указатель после записи?</p>
+<pre><code id="push-sp-order-commands">[
+  {
+    "name": "PUSH_THEN_SP",
+    "opcode": 71,
+    "format": "RR",
+    "microcode": [{"op": "push", "a": "s"}, {"op": "mov", "dst": "d", "a": "sp"}]
+  },
+  {
+    "name": "SP_THEN_PUSH",
+    "opcode": 72,
+    "format": "RR",
+    "microcode": [{"op": "mov", "dst": "d", "a": "sp"}, {"op": "push", "a": "s"}]
+  }
+]
+</code></pre>
+<pre><code id="push-sp-order-source">.org 0x20
+LDI R0, 0x1234
+PUSH_THEN_SP R1, R0
+HALT
+</code></pre>
+<ol>
+<li><a id="push-sp-order-ide" href="index.html">Откройте конструктор для опыта со стеком</a>. В панели «Архитектура» раскройте «Изменить устройство процессора». Задайте <strong>16 бит</strong>, <strong>4 регистра</strong> и <strong>256 байт</strong> памяти. В поле «Таблица команд, JSON» допишите оба объекта в конец массива штатных команд. Скопируйте их без внешних квадратных скобок и отделите от последнего штатного объекта запятой. Вставьте листинг и нажмите «Применить и собрать».</li>
+<li>В панели «Память» введите <code>0xFE</code> и нажмите «Перейти». Нажмите «Шаг», чтобы загрузить <code>R0</code>, и запишите <code>SP</code>. Предскажите <code>R1</code>, <code>SP</code> и два байта по <code>00FE</code> и <code>00FF</code> после второй команды. Выполните её и сверьте прогноз.</li>
+<li>Замените <code>PUSH_THEN_SP</code> на <code id="push-sp-order-variant">SP_THEN_PUSH</code>, нажмите «Собрать» и повторите оба шага. Сравните <code>R1</code>, конечный <code>SP</code> и байты стека.</li>
+</ol>
+<details>
+<summary>Сверить указатель и запись в стек</summary>
+<div class="table-wrap">
+<table id="push-sp-order-results">
+<thead><tr><th scope="col">Команда</th><th scope="col">R1</th><th scope="col">SP</th><th scope="col">PC</th><th scope="col">RAM с 00FE</th></tr></thead>
+<tbody>
+<tr><th scope="row"><code>PUSH_THEN_SP</code></th><td><code>00FE</code></td><td><code>00FE</code></td><td><code>0028</code></td><td><code>34 12</code></td></tr>
+<tr><th scope="row"><code>SP_THEN_PUSH</code></th><td><code>0100</code></td><td><code>00FE</code></td><td><code>0028</code></td><td><code>34 12</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>Перед пользовательской командой <code>SP = 0100</code>. Микрооперация <code>push</code> уменьшает его на два и записывает слово <code>1234</code> младшим байтом вперёд. Микрооперация <code>mov</code> читает указатель в момент своего выполнения. После <code>push</code> она получает <code>00FE</code>, до него — <code>0100</code>. Оба порядка занимают по одному шагу модели. После него счётчик равен 2, а <code>PC = 0028</code> указывает на <code>HALT</code>.</p>
+</details>
 </section>
 <section id="inpair-exercise">
 <h2>Два числа из одной очереди за шаг INPAIR</h2>
