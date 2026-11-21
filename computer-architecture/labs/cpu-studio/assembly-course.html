@@ -904,6 +904,47 @@ data: .byte 0x2A
 <p><code>LD</code> берёт младший байт по указанному адресу, а старший — по следующему. По <code>0081</code> это <code>02</code> и <code>34</code>, поэтому в <code>R1</code> получается <code>3402</code>. Для <code>GO_R</code> тот же адрес задаёт начало инструкции. Проверка выравнивания возвращает ошибку «Адрес инструкции 129 должен быть кратен 4». Число 129 — десятичная запись <code>0x0081</code>. <code>PC</code> остаётся на <code>GO_R</code>, счётчик равен 2.</p>
 <p>Адрес <code>0080</code> кратен четырём. После перехода по нему следующий шаг читает четыре байта <code>02 02 34 12</code> как <code>LDI R2, 0x1234</code>. В <code>R2</code> появляется <code>1234</code>, а <code>PC = 0084</code> указывает на <code>HALT</code>.</p>
 </details>
+<h3 id="jump-address-width-exercise">Откуда JMP и GO_R берут адрес перехода</h3>
+<p>Метка <code>far</code> обозначает адрес <code>0x0120</code>. В обоих запусках с восьмибитными регистрами команда <code>LDI R0, far</code> записывает только младшие восемь бит адреса. Следующая команда получает цель либо из поля своего машинного слова (<code>JMP far</code>), либо из <code>R0</code> (<code>GO_R R0</code>). Предскажите, в каком случае выполнится загрузка 11 по адресу <code>0020</code> и в каком — загрузка 22 по <code>0120</code>.</p>
+<pre><code id="jump-address-width-command">{
+  "name": "GO_R",
+  "opcode": 70,
+  "format": "R",
+  "microcode": [{"op": "jump", "addr": "d"}]
+}
+</code></pre>
+<pre><code id="jump-address-width-source">.org 0x20
+    LDI R1, 11
+    HALT
+.org 0x40
+.entry start
+start:
+    LDI R0, far
+    JMP far
+.org 0x120
+far:
+    LDI R1, 22
+    HALT
+</code></pre>
+<ol>
+<li><a id="jump-address-width-ide" href="index.html">Откройте конструктор для опыта с адресом перехода</a>. В панели «Архитектура» раскройте «Изменить устройство процессора». Задайте <strong>8 бит</strong>, <strong>4 регистра</strong> и <strong>512 байт</strong> памяти. В поле «Таблица команд, JSON» добавьте объект <code>GO_R</code> в конец массива, отделив его запятой. Если <code>GO_R</code> уже есть после предыдущего упражнения, оставьте один объект. Вставьте листинг и нажмите «Применить и собрать».</li>
+<li>Благодаря <code>.entry start</code> начальный <code>PC = 0040</code>. Сверьте байты <code>LDI</code> в панели «Слово по адресу PC» и нажмите «Шаг». Запишите <code>R0</code>. Вторым шагом выполните переход и запишите новый <code>PC</code>. Третьим шагом выполните <code>LDI</code> в цели и сверьте <code>R1</code> перед <code>HALT</code>.</li>
+<li>Замените <code>JMP far</code> на <code id="jump-address-width-variant">GO_R R0</code>, нажмите «Собрать» и повторите три шага. Затем оставьте тот же листинг, смените разрядность на <strong id="jump-address-width-second">16 бит</strong> и нажмите «Применить и собрать». Сравните байты с предыдущей сборкой и повторите шаги.</li>
+</ol>
+<details>
+<summary>Сверить адрес перехода и результат в цели</summary>
+<div class="table-wrap">
+<table id="jump-address-width-results">
+<thead><tr><th scope="col">Биты</th><th scope="col">Команда</th><th scope="col">R0</th><th scope="col">PC после перехода</th><th scope="col">R1 после LDI в цели</th></tr></thead>
+<tbody>
+<tr><td>8</td><th scope="row"><code>JMP far</code></th><td><code>20</code></td><td><code>0120</code></td><td><code>16</code></td></tr>
+<tr><td>8</td><th scope="row"><code>GO_R R0</code></th><td><code>20</code></td><td><code>0020</code></td><td><code>0B</code></td></tr>
+<tr><td>16</td><th scope="row"><code>GO_R R0</code></th><td><code>0120</code></td><td><code>0120</code></td><td><code>0016</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>Байты первой <code>LDI</code> во всех трёх сборках равны <code>02 00 20 01</code>. Поле <code>20 01</code> кодирует <code>0120</code> младшим байтом вперёд. В восьмибитном <code>R0</code> остаётся <code>20</code>, а в шестнадцатибитном помещается <code>0120</code>. <code>JMP</code> читает полный адрес из собственного поля <code>20 01</code> в слове <code>14 00 20 01</code>. <code>GO_R</code> (<code>46 00 00 00</code>) читает то, что сохранилось в <code>R0</code>. Образы с <code>GO_R</code> при 8 и 16 битах совпадают побайтно. Обе цели кратны четырём и находятся внутри 512 байт памяти.</p>
+</details>
 <h3 id="decode-retry-exercise">Неизвестный код операции и повтор шага</h3>
 <p>В учебной системе команд CPU Studio первый байт команды задаёт её код операции. Сборка помещает <code>02 00 2A 00</code> по адресу <code>0x0024</code>. Код <code>02</code> означает <code>LDI</code>, а <code>2A</code> здесь входит в константу 42. Проверим, что произойдёт, если в памяти по этому адресу окажется код <code>FF</code>, которого нет в штатной таблице команд.</p>
 <pre><code id="decode-retry-source">.org 0x20
