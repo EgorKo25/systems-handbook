@@ -7,7 +7,7 @@
 <main>
 <h1>Проектирование процессора и программы на ассемблере</h1>
 <p>Здесь сопровождающая практика к архитектурному тому. Можно менять систему команд, собирать собственную программу и следить за её исполнением. Каждое задание содержит исходное состояние и результат, который следует предсказать до запуска.</p>
-<nav aria-label="Содержание практики"><a href="#first-program">Первая программа</a><a href="#rv32-control">Цикл и стек в RV32I</a><a href="#architecture">Устройство процессора</a><a href="#instruction">Своя команда</a><a href="#assembler">Ассемблер</a><a href="#subroutine">Подпрограмма</a><a href="#ports">Ввод-вывод</a><a href="#x86-first-register">Основы x86-64</a><a href="#x86">NASM и FASM</a><a href="#next">Дальнейшее проектирование</a></nav>
+<nav aria-label="Содержание практики"><a href="#first-program">Первая программа</a><a href="#rv32-control">Цикл и стек в RV32I</a><a href="#architecture">Устройство процессора</a><a href="#instruction">Своя команда</a><a href="#assembler">Ассемблер</a><a href="#subroutine">Подпрограмма</a><a href="#ports">Ввод-вывод</a><a href="#x86-first-register">Основы x86-64</a><a href="#x86">NASM и FASM</a><a href="#x86-nasm-call-ret">CALL и RET в NASM</a><a href="#next">Дальнейшее проектирование</a></nav>
 <section id="first-program">
 <h2>Первая программа. Сложение и запись в память</h2>
 <p>Пусть по адресу <code>0x80</code> лежит ноль. Загрузим 42 в регистр <code>R0</code>, прибавим единицу и запишем 43 в память. По этому примеру можно проследить, откуда команда берёт данные и куда кладёт результат.</p>
@@ -323,7 +323,7 @@ start:
 <p>После LDI в r1 будет 38. Выборка INC4 читает уже собранные байты из памяти, декодер находит opcode 60 и выполняет заданное сложение. После него r1 и выведенное в порт 0 значение равны 42. Если поменять микрооперацию на прибавление пяти и пересобрать проект, результат станет 43.</p>
 <p>Попробуйте назначить INC4 opcode существующей ADD. Проверка конфигурации должна отклонить совпадение до замены работающего проекта. Затем верните свободный opcode и проверьте, как изменились четыре байта INC4 в листинге.</p>
 <h3 id="mov-if-z-exercise">Условная запись в регистр через MOV_IF_Z</h3>
-<p>Добавим команду, которая копирует число только при установленном флаге <code>Z</code>. В формате <code>RR</code> поле <code>d</code> выбирает первый регистр, а <code>s</code> — второй. В записи <code>MOV_IF_Z R2, R0</code> микрооперация <code>mov</code> читает <code>R0</code> через <code>s</code> и пишет в <code>R2</code> через <code>d</code>. Поле <code>"when": "z"</code> разрешает эту запись при <code>Z = 1</code>. Флаг перед командой задаст <code>CMP R0, R1</code>.</p>
+<p>Добавим команду, которая копирует число только при установленном флаге <code>Z</code>. В формате <code>RR</code> поле <code>d</code> выбирает первый регистр, а <code>s</code> — второй. В записи <code>MOV_IF_Z R2, R0</code> микрооперация <code>mov</code> читает <code>R0</code> через <code>s</code> и пишет в <code>R2</code> через <code>d</code>. Поле <code>"when": "z"</code> разрешает эту запись при <code>Z = 1</code>. Флаг перед командой задаст <code>CMP R0, R1</code>. Если условие не выполнено, модель пропускает микрооперацию, но команда завершается: <code>PC</code> переходит к следующей четырёхбайтовой команде, а счётчик выполненных команд увеличивается на единицу. Микрооперация <code>mov</code> сохраняет флаги, полученные после <code>CMP</code>.</p>
 <pre><code id="mov-if-z-command">{
   "name": "MOV_IF_Z",
   "opcode": 61,
@@ -356,6 +356,56 @@ start:
 </table>
 </div>
 <p>При равенстве <code>Z = 1</code>, и <code>R2</code> получает 7. При неравенстве <code>Z = 0</code>, и в <code>R2</code> остаётся 99 (<code>0063</code>). Условие управляет только записью в регистр. В обоих случаях конструктор засчитывает команду как пятую, переводит <code>PC</code> на <code>HALT</code> и сохраняет все флаги от <code>CMP</code>.</p>
+</details>
+<h3 id="microcode-memory-order-exercise">Что читает вторая микрооперация</h3>
+<p>Две команды обращаются к одному слову по адресу <code>0x0080</code>. <code>STORE_READ</code> сначала записывает туда число из <code>R0</code>, затем читает слово в <code>R1</code>. <code>READ_STORE</code> выполняет чтение перед записью. Предскажите, что останется в <code>R1</code>, если исходное слово в памяти равно <code>0x1234</code>, а в <code>R0</code> лежит <code>0x5678</code>.</p>
+<p>В формате <code>RR</code> поле <code>d</code> обозначает первый регистр команды, а <code>s</code> — второй. В обоих описаниях <code>addr</code> равен 128, то есть <code>0x0080</code>. Микрооперации выполняются в порядке массива <code>microcode</code>.</p>
+<pre><code id="microcode-memory-order-command">[
+  {
+    &quot;name&quot;: &quot;STORE_READ&quot;,
+    &quot;opcode&quot;: 62,
+    &quot;format&quot;: &quot;RR&quot;,
+    &quot;microcode&quot;: [
+      {&quot;op&quot;: &quot;store&quot;, &quot;addr&quot;: 128, &quot;a&quot;: &quot;s&quot;},
+      {&quot;op&quot;: &quot;load&quot;, &quot;dst&quot;: &quot;d&quot;, &quot;addr&quot;: 128}
+    ]
+  },
+  {
+    &quot;name&quot;: &quot;READ_STORE&quot;,
+    &quot;opcode&quot;: 63,
+    &quot;format&quot;: &quot;RR&quot;,
+    &quot;microcode&quot;: [
+      {&quot;op&quot;: &quot;load&quot;, &quot;dst&quot;: &quot;d&quot;, &quot;addr&quot;: 128},
+      {&quot;op&quot;: &quot;store&quot;, &quot;addr&quot;: 128, &quot;a&quot;: &quot;s&quot;}
+    ]
+  }
+]
+</code></pre>
+<pre><code id="microcode-memory-order-source">.org 0x20
+    LDI R0, 0x5678
+    STORE_READ R1, R0
+    HALT
+.org 0x80
+    .byte 0x34, 0x12
+</code></pre>
+<ol>
+<li><a id="microcode-memory-order-ide" href="index.html">Откройте конструктор для опыта с порядком микроопераций</a>. В панели «Архитектура» раскройте «Изменить устройство процессора». Задайте <strong>16 бит</strong>, <strong>4 регистра</strong> и <strong>256 байт</strong> памяти.</li>
+<li>В поле «Таблица команд, JSON» вставьте оба объекта в конец существующего массива. Скопируйте содержимое показанного массива без внешних квадратных скобок и отделите новые объекты запятой от предыдущего. Вставьте программу в редактор и нажмите «Применить и собрать».</li>
+<li>В панели «Память» введите <code>0x80</code> и нажмите «Перейти». После первого «Шаг» проверьте <code>R0 = 5678</code>, <code>PC = 0x0024</code> и начальные байты <code>34 12</code>. Вторым шагом выполните <code>STORE_READ</code>. Сверьте <code>R1</code>, те же две ячейки памяти и <code>PC</code>.</li>
+<li>Замените <code>STORE_READ R1, R0</code> на <code>READ_STORE R1, R0</code> и нажмите «Собрать». Сборка вернёт исходные <code>34 12</code> по адресу <code>0x80</code>. Снова выполните два шага. Сравните <code>R1</code>, байты RAM и <code>PC</code> в двух запусках.</li>
+</ol>
+<details>
+<summary>Сверить результат после второго шага</summary>
+<div class="table-wrap">
+<table id="microcode-memory-order-results">
+<thead><tr><th scope="col">Команда</th><th scope="col">R1</th><th scope="col">RAM с 0x80</th><th scope="col">Следующий PC</th></tr></thead>
+<tbody>
+<tr><th scope="row"><code>STORE_READ</code></th><td><code>5678</code></td><td><code>78 56</code></td><td><code>0x0028</code></td></tr>
+<tr><th scope="row"><code>READ_STORE</code></th><td><code>1234</code></td><td><code>78 56</code></td><td><code>0x0028</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>В первом запуске чтение видит уже записанное слово <code>0x5678</code>. Во втором оно успевает сохранить в <code>R1</code> исходное <code>0x1234</code>. Запись в обоих случаях оставляет одинаковые байты, младший <code>78</code> по адресу <code>0x0080</code> и старший <code>56</code> по адресу <code>0x0081</code>. Две микрооперации входят в одну команду, поэтому счётчик выполненных команд растёт с 1 до 2, а <code>PC</code> один раз продвигается на четыре байта.</p>
 </details>
 </section>
 <section id="inpair-exercise">
@@ -846,6 +896,73 @@ printf '%s\n' "$?"</code></pre>
 <p>Замените 42 на 98, предскажите «99», затем на 4294967294 и предскажите «4294967295». Вариант с исходным 4294967295 после 32-разрядного inc даст 0. Сравните это переполнение с упражнением для 8-битного регистра. При запуске этих файлов исполняется настоящий код x86-64. В конструкторе выше используется собственная система команд из проекта.</p>
 <p>Сборка проверена NASM 2.16.01 и FASM 1.73.32 на Linux x86-64. Оба исходника проверены на числах 0, 8, 9, 42, 98, 4294967294 и 4294967295. Компиляторы и исполняемые файлы пользователь устанавливает отдельно. В скачанной книге хранятся исходники.</p>
 <p>Для дальнейших примеров сверяйте <a href="https://www.nasm.us/docs.html">руководство NASM</a>, <a href="https://flatassembler.net/docs.php">руководство FASM</a> и <a href="https://man7.org/linux/man-pages/man2/syscall.2.html">системный ABI Linux</a>.</p>
+</section>
+<section id="x86-nasm-call-ret">
+<h2>Куда возвращается RET в Linux x86-64</h2>
+<p>У короткой функции <code>triple_plus_two</code> один целочисленный аргумент. Она вычисляет <code>3 × INPUT + 2</code>, а вызывающий код передаёт результат Linux как код завершения. Проследим, откуда <code>RET</code> берёт адрес инструкции <code>mov edi, eax</code>, которая стоит после <code>CALL</code>.</p>
+<p>Сохраните исходник как <code>call-ret.asm</code>. Значение <code>INPUT</code> передаётся NASM при сборке.</p>
+<pre><code id="x86-nasm-call-ret-source">global _start
+section .text
+_start:
+    mov edi, INPUT
+call_site:
+    call triple_plus_two
+resume:
+    mov edi, eax
+    mov eax, 60
+    syscall
+
+triple_plus_two:
+    lea eax, [rdi + rdi*2 + 2]
+    ret
+</code></pre>
+<figure>
+<div class="table-wrap">
+<table>
+<thead><tr><th scope="col">Момент</th><th scope="col">RIP и RSP</th><th scope="col">Адрес возврата</th></tr></thead>
+<tbody>
+<tr><th scope="row">До CALL</th><td><code>call_site</code><br><code>RSP = S</code></td><td>Адрес следующей инструкции. CALL ещё не записал его в стек.</td></tr>
+<tr><th scope="row">В функции</th><td>Вход функции<br><code>RSP = S − 8</code></td><td>Восемь байтов по <code>[RSP]</code>.</td></tr>
+<tr><th scope="row">После RET</th><td><code>resume</code><br><code>RSP = S</code></td><td>Уже в <code>RIP</code>.</td></tr>
+</tbody>
+</table>
+</div>
+<figcaption><code>S</code> обозначает значение <code>RSP</code> перед вызовом. <code>LEA</code> вычисляет результат в <code>EAX</code> и оставляет стек прежним, поэтому перед <code>RET</code> на его вершине всё ещё адрес возврата.</figcaption>
+</figure>
+<p>Для целочисленной функции такого вида System V AMD64 передаёт первый аргумент через <code>RDI</code> и возвращает целочисленный результат через <code>RAX</code>. Здесь используются их младшие 32 бита, <code>EDI</code> и <code>EAX</code>. На входе процесса <code>RSP</code> выровнен на 16 байт. До вызова он сохраняет это выравнивание, а при входе в функцию на 16 байт выровнено <code>RSP + 8</code>. Это правила ABI. Запись адреса при ближнем <code>CALL</code> и чтение при <code>RET</code> определяет процессор. Для завершения процесса <code>syscall</code> использует соглашение Linux с номером <code>60</code> в <code>EAX</code> и кодом в <code>EDI</code>.</p>
+<p>На Linux x86-64 соберите и запустите оба варианта. В примере с <code>ld</code> адрес секции кода задан явно, чтобы его было удобно сверять с дизассемблированием.</p>
+<pre><code id="x86-nasm-call-ret-build">for input in 4 9; do
+    nasm -f elf64 -g -F dwarf -DINPUT="$input" call-ret.asm -o "call-ret-$input.o" || break
+    ld -Ttext=0x401000 -o "call-ret-$input" "call-ret-$input.o" || break
+    status=0
+    ./"call-ret-$input" || status=$?
+    printf '%s → %s\n' "$input" "$status"
+done
+objdump -d -Mintel call-ret-4</code></pre>
+<p>Вход 4 даёт код завершения 14, вход 9 — 29. В выводе <code>objdump</code> найдите <code>call</code> по адресу <code>0x401005</code>. Он ведёт к <code>triple_plus_two</code>, а адрес возврата — <code>0x40100A</code>, где стоит <code>resume</code>. В стеке этот адрес виден в порядке little-endian как <code>0A 10 40 00 00 00 00 00</code> от младшего адреса к старшему. Первые три байта имеют веса <code>1</code>, <code>256</code> и <code>65536</code>.</p>
+<p>Чтобы увидеть эти состояния, запустите <code>gdb -q ./call-ret-4</code> и введите команды ниже. <code>starti</code> останавливает программу перед первой инструкцией, а <code>si</code> исполняет одну машинную инструкцию.</p>
+<pre><code id="x86-nasm-call-ret-gdb">set debuginfod enabled off
+set disassembly-flavor intel
+set disable-randomization off
+starti
+si
+set $before = $rsp
+x/i $rip
+printf &quot;before: rsp mod 16 = %lu\n&quot;, ((unsigned long)$rsp &amp; 15)
+si
+x/i $rip
+printf &quot;entry: rsp - before = %ld\n&quot;, (long)$rsp - (long)$before
+x/gx $rsp
+x/8bx $rsp
+si
+x/i $rip
+printf &quot;eax before ret = %u\n&quot;, $eax
+si
+x/i $rip
+printf &quot;after: rsp - before = %ld\n&quot;, (long)$rsp - (long)$before
+</code></pre>
+<p>На входе в функцию разность указателей равна <code>−8</code>, а <code>x/gx</code> и <code>x/8bx</code> показывают тот же адрес как число и как восемь байтов. Перед <code>RET</code> в <code>EAX</code> находится 14. После <code>RET</code> указатель возвращается к <code>S</code>, а <code>x/i $rip</code> показывает <code>resume</code>. Абсолютный адрес стека может отличаться между запусками.</p>
+<p><a href="https://www.intel.com/content/www/us/en/developer/articles/technical/intel-sdm.html">Intel SDM, описание CALL и RET</a> · <a href="https://gitlab.com/x86-psABIs/x86-64-ABI/-/blob/master/x86-64-ABI/low-level-sys-info.tex">System V AMD64 psABI, регистры и выравнивание стека</a></p>
 </section>
 <section id="next"><h2>Дальнейшее проектирование</h2>
 <p>Развитие собственного процессора удобно вести от проверяемых изменений. Сначала добавьте команду INC4. Затем реализуйте заполнение массива циклом, ввод до завершающего нуля, вложенные вызовы с сохранением регистров и обработку неверного адреса. Для каждого задания зафиксируйте вход, ожидаемый вывод и максимальное число шагов.</p>

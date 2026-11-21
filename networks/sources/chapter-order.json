@@ -17,6 +17,7 @@
   "24-rstp-link-failure",
   "22-wireless-medium",
   "18-routing-control",
+  "25-ospf-adjacency-lsdb",
   "19-performance",
   "23-queueing-math",
   "16-nat-lab",

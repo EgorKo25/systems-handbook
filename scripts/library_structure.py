@@ -198,6 +198,8 @@ def reading_map(root, stats, configs):
 
 
 STYLE = '''<style id="library-structure-style">
+.library-practice-link{display:inline-flex;align-items:center;gap:9px;min-height:44px;padding:8px 16px;border-radius:12px;background:var(--home-soft);color:var(--home-accent);font:700 16px/1.4 system-ui}
+.library-practice-link:hover,.library-practice-link:focus-visible{outline:2px solid currentColor;outline-offset:2px}
 .library-overview{margin:28px 0 38px;padding:20px 22px;border:1px solid var(--home-line);border-radius:16px;background:var(--home-paper)}
 .library-overview p{margin:0 0 12px}.library-overview p:last-child{margin-bottom:0}
 .library-guide{margin-top:12px}.library-guide>summary{cursor:pointer;font:600 14px/1.5 system-ui;padding:10px 0;min-height:44px;color:var(--home-accent)}
@@ -243,6 +245,8 @@ def render_shelves(route):
                 '<p class="small">'+escape(route['practice_note'])+'</p>'
                 '<ul class="library-group-nav">'+''.join(
                     '<li><a href="#library-'+group['id']+'">'+escape(group['title'])+'</a></li>' for group in route['groups'])+'</ul></details></aside>')
+    practice_entry = ('<a class="library-practice-link" href="computer-architecture/labs/cpu-studio/assembly-course.html">'
+                      'Ассемблер <span aria-hidden="true">→</span></a>')
     sections = []
     for index, group in enumerate(route['groups'], 1):
         ready, pending = [], []
@@ -275,4 +279,4 @@ def render_shelves(route):
     deferred = route['deferred'][0]
     threads_section = '<section class="notes library-threads"><h2>Связи между книгами</h2><p class="small">Каждая технология получает собственный том. Общие задачи проходят через несколько книг; установка, настройка и проверка своего экземпляра предшествуют его дальнейшей эксплуатации.</p>'+''.join(threads)+'<p class="small library-deferred"><strong>'+escape(deferred['title'])+'.</strong> '+escape(deferred['note'])+'</p></section>'
     data = json.dumps(route, ensure_ascii=False, separators=(',', ':')).replace('<', '\\u003c')
-    return '<!--library-structure:start--><div id="library-shelves">'+overview+''.join(sections)+threads_section+'</div><script type="application/json" id="library-route-data">'+data+'</script><!--library-structure:end-->'
+    return '<!--library-structure:start--><div id="library-shelves">'+practice_entry+overview+''.join(sections)+threads_section+'</div><script type="application/json" id="library-route-data">'+data+'</script><!--library-structure:end-->'

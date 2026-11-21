@@ -3,8 +3,8 @@
     "slug": "networks",
     "title": "Сети: от сигнала до приложения",
     "volume": "V",
-    "words": 95588,
-    "chapters": 25,
+    "words": 97169,
+    "chapters": 26,
     "terms": 380
   },
   {
@@ -19,7 +19,7 @@
     "slug": "bash",
     "title": "Bash: от объектов ядра до надёжного сценария",
     "volume": "IV",
-    "words": 54508,
+    "words": 54657,
     "chapters": 19,
     "terms": 273
   },
@@ -83,7 +83,7 @@
     "slug": "docker",
     "title": "Docker: от образа до работающей и восстанавливаемой системы",
     "volume": "VIII",
-    "words": 60180,
+    "words": 60261,
     "chapters": 18,
     "terms": 153
   },

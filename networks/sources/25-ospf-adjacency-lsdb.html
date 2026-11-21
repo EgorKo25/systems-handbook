@@ -1,0 +1,107 @@
+<article id="25-ospf-adjacency-lsdb" class="chapter" hidden>
+<header class="hero"><div class="eyebrow">Том I · Сети</div><h1>OSPFv2: от Hello до базы одной области</h1><div class="meta">Состояния соседей, две формы LSA и исчезновение одного маршрутизатора</div></header>
+<p>В <a href="#18-routing-control">главе о маршрутизации</a> мы разобрали поля Hello. Теперь выясним, почему на одном Ethernet два соседа остаются в 2-Way, хотя оба видят одну топологию, и что изменится в базе, если один из них перестанет отвечать.</p>
+<h2 id="ospf25-topology">Четыре маршрутизатора и один Ethernet</h2>
+<p>Коммутатор соединяет четыре порта без разделения на разные сегменты. На каждом маршрутизаторе этот интерфейс настроен как OSPF broadcast, то есть сеть с общей рассылкой, в области 0. Маска /24, HelloInterval 10 с, RouterDeadInterval 40 с и параметры аутентификации совпадают. У каждого маршрутизатора ещё есть интерфейс обратной петли (loopback), чей /32 объявляется в той же области. Выборы завершились: A стал назначенным маршрутизатором (DR), B — резервным назначенным (BDR). Приоритет 0 у C и D исключает их из выборов. Позднее появление маршрутизатора с большим приоритетом само по себе не смещает действующего DR.</p>
+<div class="table-wrap"><table><thead><tr><th>Узел</th><th>Router ID и loopback /32</th><th>IPv4 на Ethernet</th><th>Приоритет</th><th>Стоимость выхода</th></tr></thead><tbody>
+<tr><td>A · DR</td><td>192.0.2.1</td><td>10.0.0.1</td><td>30</td><td>10</td></tr>
+<tr><td>B · BDR</td><td>192.0.2.2</td><td>10.0.0.2</td><td>20</td><td>20</td></tr>
+<tr><td>C · DROther</td><td>192.0.2.3</td><td>10.0.0.3</td><td>0</td><td>30</td></tr>
+<tr><td>D · DROther</td><td>192.0.2.4</td><td>10.0.0.4</td><td>0</td><td>40</td></tr>
+</tbody></table></div>
+<p>Router ID — идентификатор маршрутизатора в OSPF. Для простоты мы вручную назначили ему то же значение, что и адресу loopback. В Hello поля DR и BDR содержат IPv4-адреса интерфейсов DR и BDR на этом Ethernet, а список соседей — Router ID.</p>
+<figure>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 250" width="360" height="250" style="display:block;width:100%;max-width:360px;height:auto;margin:auto;color:var(--text,#20252b)" role="img" aria-labelledby="ospf25-svg-title ospf25-svg-desc">
+<title id="ospf25-svg-title">Общий Ethernet и смежности OSPF</title>
+<desc id="ospf25-svg-desc">Один Ethernet соединяет A, B, C, D. У A и B состояние Full друг с другом и с C и D. Между C и D состояние 2-Way.</desc>
+<g fill="none" stroke="currentColor" stroke-width="2">
+<path d="M42 72H318M48 48V72M136 48V72M224 48V72M312 48V72"/>
+<path d="M90 146H270M90 146V202M270 146V202M90 146L270 202M270 146L90 202"/>
+<path d="M90 202H270" stroke-dasharray="5 5"/>
+</g>
+<g fill="currentColor" font-family="system-ui,sans-serif" font-size="14" text-anchor="middle">
+<text x="180" y="21">Ethernet 10.0.0.0/24</text>
+<text x="48" y="44">A</text><text x="136" y="44">B</text><text x="224" y="44">C</text><text x="312" y="44">D</text>
+<text x="180" y="110">Состояния после сходимости</text>
+<text x="90" y="137">A · DR</text><text x="270" y="137">B · BDR</text>
+<text x="90" y="223">C</text><text x="270" y="223">D</text>
+<text x="180" y="239">C ↔ D: 2-Way</text>
+</g>
+</svg>
+<figcaption>Слева направо по линии связаны четыре Ethernet-порта. Ниже показаны отдельные отношения протокола. Каждая сплошная линия означает Full на обоих концах, пунктир — 2-Way. Вершина N, которая появится в базе, представляет общий Ethernet, а не сам коммутатор.</figcaption>
+</figure>
+<h2 id="ospf25-neighbor">Что изменилось между Init и Full</h2>
+<p>Состояние относится к конкретному соседу на конкретном интерфейсе. Обозначение «C видит D в Init» описывает запись у C. Запись у D о C в этот момент может быть другой. <strong>Двусторонняя связь</strong> начинается, когда получатель находит свой Router ID в Hello соседа. <strong>Смежность</strong> (adjacency) — отношение, при котором пара синхронизирует базы. На общем Ethernet её строят пары с DR или BDR. Остальные пары могут весь срок работы оставаться в 2-Way.</p>
+<div class="table-wrap"><table><thead><tr><th>Состояние</th><th>Как его распознать</th></tr></thead><tbody>
+<tr><td>Down</td><td>Подтверждённого контакта нет. Так же заканчивается ожидание после последнего принятого Hello, если истёк таймер неактивности.</td></tr>
+<tr><td>Init</td><td>Получен допустимый Hello, но локального Router ID пока нет в его списке соседей.</td></tr>
+<tr><td>2-Way</td><td>Получатель увидел себя в Hello. C и D остаются здесь. У пары A и D то же событие может сразу запустить ExStart, поэтому отдельной строки 2-Way в снимке может не быть.</td></tr>
+<tr><td>ExStart</td><td>Пара договаривается по пакетам Database Description (DD) о начальной последовательности и ведущем обмена. Ведущий определяется большим Router ID, поэтому здесь D может вести обмен с A, хотя A — DR.</td></tr>
+<tr><td>Exchange</td><td>DD несут заголовки объявлений LSA, то есть опись базы. Получатель запрашивает записи, которых у него нет или чья локальная копия старее.</td></tr>
+<tr><td>Loading</td><td>Описи уже обменяны, но остались запросы. Link State Request (LSR) запрашивает запись, Link State Update (LSU) доставляет полный LSA. Link State Acknowledgment (LSAck) подтверждает получение при распространении LSA. При пустом списке запросов после Exchange пара может сразу перейти в Full.</td></tr>
+<tr><td>Full</td><td>Обмен описаниями закончен, нужные записи получены. Последующие изменения распространяются по смежностям.</td></tr>
+</tbody></table></div>
+<p>Attempt тоже есть в автомате RFC, но используется для настраиваемого соседа на неброадкастной сети NBMA. В данном Ethernet-сценарии этого состояния нет.</p>
+<div class="table-wrap"><table><thead><tr><th>Кто смотрит</th><th>A</th><th>B</th><th>C</th><th>D</th></tr></thead><tbody>
+<tr><td>A</td><td>—</td><td>Full</td><td>Full</td><td>Full</td></tr>
+<tr><td>B</td><td>Full</td><td>—</td><td>Full</td><td>Full</td></tr>
+<tr><td>C</td><td>Full</td><td>Full</td><td>—</td><td>2-Way</td></tr>
+<tr><td>D</td><td>Full</td><td>Full</td><td>2-Way</td><td>—</td></tr>
+</tbody></table></div>
+<p>В таблице пять смежностей. Представь, что D только включился, а C уже работает. C примет первый Hello D и отметит Init, если не увидит себя в списке. Как только C увидит свой Router ID в принятом Hello от D, соседство перейдёт в 2-Way. Тем временем D получит опись базы от A и B. Если после обмена описями D ещё ждёт записи от A, на его стороне будет Loading. После получения записей D достигнет Full с A. C узнает о новых записях по своим смежностям с A или B. Для получения общей топологии ему не требуется входить в Full с D.</p>
+<h2 id="ospf25-lsdb">Из чего складывается граф области</h2>
+<p>LSDB (база состояния связей) хранит объявления LSA. В базе области экземпляр записи ищут по тройке «тип LSA, Link State ID, Advertising Router». Последнее поле указывает Router ID автора. Для записи с тем же ключом номер последовательности, контрольная сумма и возраст участвуют в сравнении экземпляров. Поэтому два последовательных объявления об одном сегменте занимают один ключ, даже когда список подключённых маршрутизаторов поменялся.</p>
+<p>Каждый маршрутизатор выпускает <strong>Router-LSA, тип 1</strong>. В нашем случае у каждого две записи внутри объявления. Связь с транзитной сетью имеет внутренний тип связи 2. Её Link ID равен IPv4-адресу DR на Ethernet, а Link Data — адресу собственного Ethernet-интерфейса. Тупиковая связь к loopback имеет внутренний тип 3: Link ID равен адресу loopback, Link Data — маске 255.255.255.255, стоимость равна 0. Тип связи внутри Router-LSA и тип самого объявления — разные поля.</p>
+<div class="table-wrap"><table><thead><tr><th>Ключ Type 1 · Link State ID = автор</th><th>Транзитная связь · Link ID 10.0.0.1</th><th>Тупиковая связь · стоимость 0</th></tr></thead><tbody>
+<tr><td>192.0.2.1</td><td>Link Data 10.0.0.1 · стоимость 10</td><td>192.0.2.1/32</td></tr>
+<tr><td>192.0.2.2</td><td>Link Data 10.0.0.2 · стоимость 20</td><td>192.0.2.2/32</td></tr>
+<tr><td>192.0.2.3</td><td>Link Data 10.0.0.3 · стоимость 30</td><td>192.0.2.3/32</td></tr>
+<tr><td>192.0.2.4</td><td>Link Data 10.0.0.4 · стоимость 40</td><td>192.0.2.4/32</td></tr>
+</tbody></table></div>
+<p><strong>Network-LSA, тип 2</strong>, выпускает DR, когда у него есть хотя бы один сосед в Full. Здесь ключ равен <code>(2, 10.0.0.1, 192.0.2.1)</code>, маска 255.255.255.0, список подключённых Router ID — 192.0.2.1, 192.0.2.2, 192.0.2.3, 192.0.2.4. DR включает себя и соседей в Full. BDR в этом состоянии собственного Type 2 для сегмента не выпускает.</p>
+<p>В установившемся состоянии у каждого из четырёх маршрутизаторов здесь пять записей LSDB. Для расчёта кратчайшего пути Type 1 задают рёбра от маршрутизаторов к общей вершине N, а Type 2 — обратные рёбра от N с нулевой стоимостью. На первом этапе SPF связь между маршрутизатором и общей сетью учитывают, когда LSA обеих вершин описывают её с двух сторон. Тупиковую сеть loopback добавляют на втором этапе из Router-LSA уже достижимого маршрутизатора. Например, из C к loopback D стоимость равна 30 + 0 + 0 = 30. Ожидаемый IP следующего перехода на общем Ethernet — 10.0.0.4. Роль DR определяет обмен объявлениями, поэтому пользовательский IP-пакет не обязан идти через A.</p>
+<h2 id="ospf25-exercise">Два исхода тишины после последнего Hello</h2>
+<p>После полной сходимости D перестаёт отправлять Hello. Соседи продолжат работу, коммутатор сохраняет их физические соединения. Считай от последнего принятого Hello D. В первом случае в t = 30 с приходит допустимое Hello D, всё ещё содержащее Router ID соседей. Во втором случае к t = 41 с от D ничего не пришло, таймер уже истёк, а обновлённый Type 2 успел распространиться. D исчез внезапно и не отзывал свой Type 1. Какие строки в таблицах сохранятся, и что случится с маршрутом из C к 192.0.2.4/32?</p>
+<details><summary>Разбор обоих исходов</summary>
+<p>В первом случае таймер соседей обновляется до истечения. Состояния и список Type 2 сохраняются, маршрут имеет стоимость 30. Во втором случае записи о D переходят в Down и могут исчезнуть из вывода соседей. A остаётся DR и заново публикует тот же ключ Type 2 со списком A, B, C. Type 1 от D может ещё оставаться в LSDB до старения. Он не даёт достижимости D из C, поскольку у N уже нет обратной связи с D. В этой схеме других путей нет, поэтому OSPF-маршрут к loopback D исчезает.</p>
+</details>
+<p>Для автономной проверки сохрани следующий код в своей записываемой папке как <code>ospf-area.py</code>. Запусти <code>python3 ospf-area.py 30</code> и <code>python3 ospf-area.py 41</code> от обычного пользователя. Значение до 40 означает своевременно полученное взаимное Hello, значение после 40 — наблюдение после истечения таймера и распространения новой записи. Точное совпадение с моментом истечения в опыте пропущено, поскольку порядок событий при равенстве важен.</p>
+<pre><code>from itertools import combinations
+from sys import argv
+
+observed = int(argv[1])
+if observed &lt; 0 or observed == 40:
+    raise SystemExit("Choose 0..39 (valid Hello) or &gt;40 (expired timer)")
+
+routers = "ABCD"
+ids = {r: f"192.0.2.{i}" for i, r in enumerate(routers, 1)}
+ips = {r: f"10.0.0.{i}" for i, r in enumerate(routers, 1)}
+costs = dict(zip(routers, (10, 20, 30, 40)))
+dr, bdr = "A", "B"
+alive = set(routers if observed &lt; 40 else "ABC")
+
+def neighbor(left, right):
+    if not {left, right} &lt;= alive:
+        return "Down"
+    return "Full" if {left, right} &amp; {dr, bdr} else "2-Way"
+
+for left, right in combinations(routers, 2):
+    print(left, right, neighbor(left, right))
+
+# Retain D's last Type 1 in the snapshot, even when D is down.
+for r in routers:
+    print("Type 1:", ids[r], "transit", ips[dr], ips[r], costs[r],
+          "stub", ids[r] + "/32", 0)
+
+members = {dr} | {r for r in routers if r != dr and neighbor(dr, r) == "Full"}
+print("Type 2 key:", (2, ips[dr], ids[dr]), "mask: 255.255.255.0")
+print("Type 2 members:", " ".join(sorted(members)))
+if {"C", "D"} &lt;= members:
+    print(f"C to D: cost {costs['C']}, via {ips['D']}")
+else:
+    print("C to D: absent")</code></pre>
+<p>Первый запуск выдаёт пять пар Full и одну пару 2-Way, строку <code>Type 2 members: A B C D</code> и <code>C to D: cost 30, via 10.0.0.4</code>. Второй выдаёт три пары Full, три пары Down, <code>Type 2 members: A B C</code> и <code>C to D: absent</code>. В обоих запусках напечатаны четыре Type 1, включая возможную ещё не состарившуюся запись D. Во втором запуске пары с D показывают состояние со стороны оставшихся маршрутизаторов.</p>
+<p>Это расчёт по правилам для заданного Ethernet и выбранных моментов наблюдения. Он не запускает OSPF, не генерирует пакеты и не оценивает задержку. В реализации состояние смотрят у указанных участников, ключи и экземпляры — в дампе LSDB, а фактическую потерю трафика — серией запросов к loopback. Для опыта со временем отсчёт ведут от последнего принятого Hello, затем отдельно отмечают исчезновение соседа, изменение Type 2 и удаление маршрута. В <a href="#19-performance">следующей главе</a> разберём, из каких составляющих получается измеренная задержка передачи.</p>
+<p class="sources">Первоисточник · <a href="https://www.rfc-editor.org/rfc/rfc2328.html">RFC 2328, OSPF Version 2, апрель 1998</a>. § 7 описывает Hello, синхронизацию и роли, § 10 — автомат соседа и обмен описью, § 12 — ключи и построение LSA. Проверка обратной связи в графе — § 16.1.</p>
+<footer class="chapter-footer"><button class="read-toggle" aria-pressed="false">Отметить прочитанной</button><div style="margin-top:20px"><label for="note-25-ospf-adjacency-lsdb">Свои вопросы и заметки к главе</label><textarea id="note-25-ospf-adjacency-lsdb" class="note" placeholder="Что хочется проверить или перечитать…"></textarea><div class="note-state">Заметки хранятся в этом браузере.</div></div><div class="footer-nav"><a href="#18-routing-control">← Предыдущая глава</a><a href="#19-performance">Следующая глава →</a></div></footer>
+</article>

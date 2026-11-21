@@ -1,6 +1,6 @@
 {
   "date": "2026-11-01",
-  "words": 95588,
+  "words": 97169,
   "chapters": [
     {
       "id": "01-foundations",
@@ -91,6 +91,11 @@
       "id": "18-routing-control",
       "title": "Откуда берутся маршруты",
       "words": 3063
+    },
+    {
+      "id": "25-ospf-adjacency-lsdb",
+      "title": "OSPFv2: от Hello до базы одной области",
+      "words": 1581
     },
     {
       "id": "19-performance",

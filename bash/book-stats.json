@@ -45,7 +45,7 @@
     {
       "id": "08-status-tests-control",
       "title": "Условия и циклы",
-      "words": 2291
+      "words": 2306
     },
     {
       "id": "09-functions-arrays",
@@ -60,7 +60,7 @@
     {
       "id": "11-filenames-and-records",
       "title": "Имена файлов",
-      "words": 2106
+      "words": 2240
     },
     {
       "id": "12-text-and-bytes",
@@ -103,7 +103,7 @@
       "words": 6093
     }
   ],
-  "words": 54508,
+  "words": 54657,
   "terms": 273,
   "external_assets": 0
 }
