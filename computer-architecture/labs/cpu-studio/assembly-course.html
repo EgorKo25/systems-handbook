@@ -827,6 +827,43 @@ data: .byte 0x2A
 <p>Пока порт 65535 пуст, <code>PC = 0028</code> и счётчик равен 2. <code>IN</code> обращается к очереди по декодированному номеру, поэтому число 7 в порту 0 остаётся на месте. После подачи 22136 команда читает его в <code>R2</code> как <code>5678</code> в шестнадцатеричной записи. Теперь <code>PC = 002C</code>, счётчик равен 3, а в порту 0 всё ещё лежит 7.</p>
 <p>Можно проверить и правило сборки. Замените номер в <code>IN</code> на <code id="signed-offset-unsigned-port-negative">-1</code> и нажмите «Собрать». Сборщик отклоняет отрицательное число в поле номера порта.</p>
 </details>
+<h3 id="unaligned-data-pc-exercise">Один адрес для чтения данных и для перехода</h3>
+<p>В этой модели <code>LD</code> при 16 битах читает два соседних байта с адреса в регистре. Адрес может быть нечётным, если оба байта помещаются в памяти. Для перехода действует ещё одно правило. Инструкция занимает четыре байта, а её начальный адрес должен быть кратен четырём. Добавим <code>GO_R</code>, чтобы передать переходу адрес из единственного регистра <code>d</code>. Что произойдёт, если обеим командам дать адрес <code>0x0081</code>?</p>
+<pre><code id="unaligned-data-pc-command">{
+  "name": "GO_R",
+  "opcode": 70,
+  "format": "R",
+  "microcode": [{"op": "jump", "addr": "d"}]
+}
+</code></pre>
+<pre><code id="unaligned-data-pc-source">.org 0x20
+    LDI R0, 0x80
+    LD R1, [R0]
+    GO_R R0
+    HALT
+.org 0x80
+    LDI R2, 0x1234
+    HALT
+</code></pre>
+<ol>
+<li><a id="unaligned-data-pc-ide" href="index.html">Откройте конструктор для опыта с выравниванием</a>. В панели «Архитектура» раскройте «Изменить устройство процессора». Задайте <strong>16 бит</strong>, <strong>4 регистра</strong> и <strong>256 байт</strong> памяти. В поле «Таблица команд, JSON» добавьте объект <code>GO_R</code> перед последней <code>]</code>, поставив запятую между предыдущим объектом и новым. Вставьте листинг и нажмите «Применить и собрать».</li>
+<li>В панели «Память» перейдите к <code>0x80</code> и сверьте <code>02 02 34 12</code>. Дважды нажмите «Шаг» и запишите <code>R1</code> после <code>LD</code>. Третьим шагом выполните <code>GO_R</code> по <code>0028</code>. Проверьте <code>PC</code> и команду в панели «Слово по адресу PC». Выполните ещё один шаг и сверьте <code>R2</code>.</li>
+<li>Замените только <code>LDI R0, 0x80</code> на <code id="unaligned-data-pc-variant">LDI R0, 0x81</code> и нажмите «Собрать». Сравните память и <code>R1</code> после двух шагов. Третьим шагом попробуйте выполнить переход. Сверьте сообщение, <code>PC</code> и счётчик.</li>
+</ol>
+<details>
+<summary>Сверить слово данных и результат перехода</summary>
+<div class="table-wrap">
+<table id="unaligned-data-pc-results">
+<thead><tr><th scope="col">Адрес в R0</th><th scope="col">Байты для LD</th><th scope="col">R1</th><th scope="col">Итог GO_R</th><th scope="col">PC</th><th scope="col">Шагов</th></tr></thead>
+<tbody>
+<tr><th scope="row"><code>0080</code></th><td><code>02 02</code></td><td><code>0202</code></td><td><code>step</code></td><td><code>0080</code></td><td>3</td></tr>
+<tr><th scope="row"><code>0081</code></th><td><code>02 34</code></td><td><code>3402</code></td><td><code>fault</code></td><td><code>0028</code></td><td>2</td></tr>
+</tbody>
+</table>
+</div>
+<p><code>LD</code> берёт младший байт по указанному адресу, а старший — по следующему. По <code>0081</code> это <code>02</code> и <code>34</code>, поэтому в <code>R1</code> получается <code>3402</code>. Для <code>GO_R</code> тот же адрес задаёт начало инструкции. Проверка выравнивания возвращает ошибку «Адрес инструкции 129 должен быть кратен 4». Число 129 — десятичная запись <code>0x0081</code>. <code>PC</code> остаётся на <code>GO_R</code>, счётчик равен 2.</p>
+<p>Адрес <code>0080</code> кратен четырём. После перехода по нему следующий шаг читает четыре байта <code>02 02 34 12</code> как <code>LDI R2, 0x1234</code>. В <code>R2</code> появляется <code>1234</code>, а <code>PC = 0084</code> указывает на <code>HALT</code>.</p>
+</details>
 <h3 id="decode-retry-exercise">Неизвестный код операции и повтор шага</h3>
 <p>В учебной системе команд CPU Studio первый байт команды задаёт её код операции. Сборка помещает <code>02 00 2A 00</code> по адресу <code>0x0024</code>. Код <code>02</code> означает <code>LDI</code>, а <code>2A</code> здесь входит в константу 42. Проверим, что произойдёт, если в памяти по этому адресу окажется код <code>FF</code>, которого нет в штатной таблице команд.</p>
 <pre><code id="decode-retry-source">.org 0x20
