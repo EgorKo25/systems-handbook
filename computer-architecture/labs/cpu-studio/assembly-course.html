@@ -734,6 +734,32 @@ helper:
   </svg>
   <figcaption>Рамки выделяют один адрес, 0x1005. Значение в листинге осталось 01. При следующем шаге процессор прочитает 02 из памяти и выберет r2.</figcaption>
 </figure>
+<h3 id="entry-data-first-exercise">Откуда начинается исполнение, если первыми лежат данные</h3>
+<p><code>.org 0x20</code> задаёт адрес первых байтов образа. В примере их размещает директива <code>.byte</code> у метки <code>header</code>. Сразу за ними стоит первая команда исходника, <code>LDI</code> у метки <code>start</code>. Предскажите начальный <code>PC</code> без явной точки входа и после добавления <code>.entry header</code>.</p>
+<pre><code id="entry-data-first-source">.org 0x20
+header: .byte 0x1F, 0, 0, 0
+start:  LDI R0, 42
+        HALT
+</code></pre>
+<ol>
+<li><a id="entry-data-first-ide" href="index.html">Откройте конструктор для опыта с точкой входа</a> и вставьте листинг. В панели «Архитектура» раскройте «Изменить устройство процессора». Задайте <strong>16 бит</strong>, <strong>4 регистра</strong> и <strong>256 байт</strong> памяти. Нажмите «Применить и собрать».</li>
+<li>Запишите адреса <code>header</code> и <code>start</code> из списка «Метка». В панели «Память» перейдите к <code>0x20</code> и сверьте 12 байтов с листингом. Прочитайте начальный <code>PC</code> и поле «Слово по адресу PC». Нажимайте «Шаг» до остановки и запишите <code>R0</code>, <code>PC</code> и счётчик.</li>
+<li>Вставьте строку <code id="entry-data-first-directive">.entry header</code> сразу после <code>.org 0x20</code> и нажмите «Собрать». Сравните адреса меток и все 12 байтов с первой сборкой. Прочитайте новый начальный <code>PC</code> и команду, которую показывает панель «Слово по адресу PC». Выполните первый шаг и проверьте, остановилась ли машина.</li>
+</ol>
+<details>
+<summary>Сверить точку входа и исполнение</summary>
+<div class="table-wrap">
+<table id="entry-data-first-results">
+<thead><tr><th scope="col">Вариант</th><th scope="col">Начальный PC</th><th scope="col">Первая команда</th><th scope="col">PC после остановки</th><th scope="col">R0</th><th scope="col">Шагов</th></tr></thead>
+<tbody>
+<tr><th scope="row">Без <code>.entry</code></th><td><code>0024</code></td><td><code>LDI</code></td><td><code>002C</code></td><td><code>002A</code></td><td>2</td></tr>
+<tr><th scope="row"><code>.entry header</code></th><td><code>0020</code></td><td><code>HALT</code></td><td><code>0024</code></td><td><code>0000</code></td><td>1</td></tr>
+</tbody>
+</table>
+</div>
+<p>Оба образа начинаются по <code>0020</code> и содержат <code>1F 00 00 00 02 00 2A 00 1F 00 00 00</code>. Без <code>.entry</code> сборщик выбирает адрес первой строки с командой, <code>LDI</code> по <code>0024</code>. Директива <code>.entry header</code> меняет только отдельно сохранённую точку входа. При загрузке машина берёт из неё начальный <code>PC</code>.</p>
+<p>Модель читает четыре байта по <code>PC</code> и декодирует их по таблице команд. По <code>0020</code> лежит <code>1F 00 00 00</code>, код <code>HALT</code> в штатной таблице. Эти байты специально размещены через <code>.byte</code>, поэтому строка отмечена в листинге как данные, а при явном входе по этому адресу машина останавливается на первом шаге.</p>
+</details>
 <h3 id="signed-offset-unsigned-port-exercise">Два смысла поля FF FF</h3>
 <p>У команд <code>LD R1, [R0 - 1]</code> и <code>IN R2, 65535</code> последние два байта одинаковы. Что по ним прочитает декодер? Найдите адрес, из которого прочитает <code>LD</code>, если <code>R0 = 0081</code>. Затем предскажите, сможет ли <code>IN</code> сделать шаг, если число ждёт только в очереди порта 0.</p>
 <pre><code id="signed-offset-unsigned-port-source">.org 0x20
