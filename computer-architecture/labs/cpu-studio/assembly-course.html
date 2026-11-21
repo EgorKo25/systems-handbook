@@ -867,6 +867,35 @@ data: .byte 0x2A
 <p>Пока порт 65535 пуст, <code>PC = 0028</code> и счётчик равен 2. <code>IN</code> обращается к очереди по декодированному номеру, поэтому число 7 в порту 0 остаётся на месте. После подачи 22136 команда читает его в <code>R2</code> как <code>5678</code> в шестнадцатеричной записи. Теперь <code>PC = 002C</code>, счётчик равен 3, а в порту 0 всё ещё лежит 7.</p>
 <p>Можно проверить и правило сборки. Замените номер в <code>IN</code> на <code id="signed-offset-unsigned-port-negative">-1</code> и нажмите «Собрать». Сборщик отклоняет отрицательное число в поле номера порта.</p>
 </details>
+<h3 id="effective-address-underflow-exercise">Что происходит при чтении по адресу −1</h3>
+<p>В <code>LD R1, [R0 - 1]</code> модель складывает значение регистра и знаковое смещение, а затем проверяет адрес чтения. Сравним это с вычитанием единицы в отдельной команде <code>ADDI</code>, которая сохраняет результат в восьмибитном <code>R0</code>. В обоих опытах по адресу <code>00FF</code> лежит <code>A5</code>. Предскажите, в каком случае <code>LD</code> прочитает этот байт.</p>
+<pre><code id="effective-address-underflow-source">.org 0x20
+    LDI R0, 0
+    NOP
+    LD R1, [R0 - 1]
+    HALT
+.org 0xFF
+    .byte 0xA5
+</code></pre>
+<ol>
+<li><a id="effective-address-underflow-ide" href="index.html">Откройте конструктор для опыта с вычислением адреса</a> и вставьте листинг. В панели «Архитектура» раскройте «Изменить устройство процессора». Задайте <strong>8 бит</strong>, <strong>4 регистра</strong> и <strong>256 байт</strong> памяти. Нажмите «Применить и собрать». В панели «Память» введите <code>0xFF</code>, нажмите «Перейти» и сверьте <code>A5</code>.</li>
+<li>Дважды нажмите «Шаг». При <code>PC = 0028</code> сверьте <code>R0</code> и поле <code>imm</code> в панели «Слово по адресу PC». Вычислите адрес, затем нажмите «Шаг» и запишите сообщение, <code>R1</code>, <code>PC</code> и счётчик.</li>
+<li>Замените <code>NOP</code> на <code id="effective-address-underflow-adjust">ADDI R0, -1</code>, а <code>LD R1, [R0 - 1]</code> — на <code id="effective-address-underflow-load">LD R1, [R0]</code>. Нажмите «Собрать» и повторите опыт. После второго шага сверьте <code>R0</code>, после третьего — <code>R1</code>, <code>PC</code> и счётчик.</li>
+</ol>
+<details>
+<summary>Сверить адреса и результат чтения</summary>
+<div class="table-wrap">
+<table id="effective-address-underflow-results">
+<thead><tr><th scope="col">Команда перед LD</th><th scope="col">R0</th><th scope="col">Адрес чтения</th><th scope="col">R1 после попытки</th><th scope="col">PC</th><th scope="col">Шагов</th></tr></thead>
+<tbody>
+<tr><th scope="row"><code>NOP</code></th><td><code>00</code></td><td>−1, отказ</td><td><code>00</code></td><td><code>0028</code></td><td>2</td></tr>
+<tr><th scope="row"><code>ADDI R0, -1</code></th><td><code>FF</code></td><td><code>00FF</code></td><td><code>A5</code></td><td><code>002C</code></td><td>3</td></tr>
+</tbody>
+</table>
+</div>
+<p>В первом запуске <code>10 01 FF FF</code> кодирует <code>LD</code> со смещением −1. При вычислении эффективного адреса модель использует сумму <code>0 + (−1) = −1</code> целиком. Попытка чтения даёт сообщение «Чтение 1 байт с адреса -1 выходит за пределы памяти». <code>PC</code> остаётся на <code>LD</code>, регистры и счётчик сохраняются.</p>
+<p>Во втором запуске <code>ADDI</code> сохраняет младшие восемь бит результата <code>0 − 1</code>, поэтому в <code>R0</code> появляется <code>FF</code>. Команда <code>LD</code> с байтами <code>10 01 00 00</code> прибавляет к беззнаковой базе 255 нулевое смещение. Она читает один байт с <code>00FF</code> в <code>R1</code> и оставляет <code>PC = 002C</code> на <code>HALT</code>.</p>
+</details>
 <h3 id="unaligned-data-pc-exercise">Один адрес для чтения данных и для перехода</h3>
 <p>В этой модели <code>LD</code> при 16 битах читает два соседних байта с адреса в регистре. Адрес может быть нечётным, если оба байта помещаются в памяти. Для перехода действует ещё одно правило. Инструкция занимает четыре байта, а её начальный адрес должен быть кратен четырём. Добавим <code>GO_R</code>, чтобы передать переходу адрес из единственного регистра <code>d</code>. Что произойдёт, если обеим командам дать адрес <code>0x0081</code>?</p>
 <pre><code id="unaligned-data-pc-command">{
