@@ -1423,6 +1423,36 @@ save_value:
 <p>После <code>CALL</code> по адресам <code>0xFC</code>–<code>0xFF</code> в обоих запусках лежат <code>28 00 00 00</code>. Разность <code>0x100 − 0xFC = 4</code> показывает размер ячейки адреса возврата. Байты идут от младшего к старшему и дают адрес <code>0x0028</code>. Машинное слово самого <code>CALL</code> хранится в коде по <code>0x0024</code> и содержит цель <code>0x002C</code>. В листинге и <code>CALL</code>, и <code>PUSH</code> кодируются четырьмя байтами при обеих разрядностях.</p>
 <p>При 16 битах <code>PUSH</code> кладёт <code>34 12</code> по <code>0xFA</code>–<code>0xFB</code>. При 32 битах он кладёт <code>34 12 00 00</code> по <code>0xF8</code>–<code>0xFB</code>. Байты адреса с <code>0xFC</code> при этом сохраняются. <code>POP</code> снимает слово нужной ширины и оставляет в <code>R1</code> значение <code>0x1234</code>. Затем <code>RET</code> читает четыре байта адреса и возвращает <code>PC</code> к <code>HALT</code>.</p>
 </details>
+<h3 id="ret-stack-top-exercise">Какое слово RET берёт с вершины стека</h3>
+<p><code>CALL work</code> сохраняет адрес возврата <code>0028</code>. В подпрограмме <code>PUSH R0</code> кладёт слово <code>00000029</code> поверх него. Сравним два случая. В одном <code>NOP</code> оставляет вершину стека на месте. В другом <code>POP R1</code> снимает слово перед возвратом. По какому адресу <code>RET</code> прочитает четыре байта в каждом случае?</p>
+<pre><code id="ret-stack-top-source">.org 0x20
+    LDI R0, 0x0029
+    CALL work
+    HALT
+work:
+    PUSH R0
+    NOP
+    RET
+</code></pre>
+<ol>
+<li><a id="ret-stack-top-ide" href="index.html">Откройте конструктор для опыта с RET</a> и вставьте листинг. В панели «Архитектура» раскройте «Изменить устройство процессора». Задайте <strong>32 бита</strong>, <strong>4 регистра</strong> и <strong>256 байт</strong> памяти. Нажмите «Применить и собрать».</li>
+<li>Нажмите «Шаг» четыре раза, чтобы остановиться перед <code>RET</code> по <code>0034</code>. В панели «Память» введите <code>0xF8</code> и нажмите «Перейти». Запишите восемь байтов по <code>00F8</code>–<code>00FF</code> и текущий <code>SP</code>. По четырём байтам с адреса <code>SP</code> предскажите, какую цель проверит <code>RET</code>. Нажмите «Шаг» и сверьте сообщение, <code>PC</code>, <code>SP</code> и счётчик.</li>
+<li>Замените только <code>NOP</code> на <code id="ret-stack-top-variant">POP R1</code>, нажмите «Собрать» и повторите опыт. Сравните <code>SP</code> и байты перед <code>RET</code>. После пятого нажатия проверьте <code>R1</code>, <code>PC</code> и <code>SP</code>. Остановитесь перед <code>HALT</code>.</li>
+</ol>
+<details>
+<summary>Сверить вершину стека и результат RET</summary>
+<div class="table-wrap">
+<table id="ret-stack-top-results">
+<thead><tr><th scope="col">Перед RET</th><th scope="col">SP до RET</th><th scope="col">Цель</th><th scope="col">PC после</th><th scope="col">SP после</th><th scope="col">Шагов</th></tr></thead>
+<tbody>
+<tr><th scope="row"><code>NOP</code></th><td><code>00F8</code></td><td><code>0029</code></td><td><code>0034</code></td><td><code>00F8</code></td><td>4</td></tr>
+<tr><th scope="row"><code>POP R1</code></th><td><code>00FC</code></td><td><code>0028</code></td><td><code>0028</code></td><td><code>0100</code></td><td>5</td></tr>
+</tbody>
+</table>
+</div>
+<p>В обоих запусках по <code>00F8</code>–<code>00FF</code> лежат <code>29 00 00 00 28 00 00 00</code>. После <code>NOP</code> указатель <code>00F8</code> выбирает первые четыре байта. Цель <code>0029</code> не кратна четырём, поэтому конструктор сообщает «Адрес инструкции 41 должен быть кратен 4». Число 41 — десятичная запись <code>0x0029</code>. Модель фиксирует снятие слова только при допустимой цели. Ошибка оставляет <code>PC</code> на <code>RET</code> и сохраняет <code>SP</code> и счётчик.</p>
+<p><code>POP R1</code> сохраняет <code>00000029</code> в регистре и сдвигает <code>SP</code> с <code>00F8</code> на <code>00FC</code>. Теперь <code>RET</code> берёт <code>28 00 00 00</code>, возвращает исполнение к <code>HALT</code> и увеличивает <code>SP</code> до <code>0100</code>. Снятые со стека слова остаются в RAM. Текущий <code>SP</code> определяет, какое из них прочитает следующая команда снятия со стека.</p>
+</details>
 <h3 id="stack-image-floor-exercise">Как конец образа ограничивает стек</h3>
 <p>В этой модели при 256 байтах памяти начальный <code>SP = 0100</code>. Команда <code>PUSH R0</code> при 16-битных регистрах пытается уменьшить <code>SP</code> на два и записать слово по адресам <code>00FE</code> и <code>00FF</code>. В одном листинге последний байт образа лежит по <code>00FD</code>, в другом — по <code>00FE</code>. Этот байт равен нулю, как и соседние ячейки. В каком случае запись заденет загруженный образ?</p>
 <pre><code id="stack-image-floor-source">.org 0x20
