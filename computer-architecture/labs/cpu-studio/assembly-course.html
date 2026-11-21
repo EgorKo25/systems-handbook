@@ -1009,6 +1009,37 @@ done:
 </div>
 <p>В первом запуске <code>JNC</code> оставляет выполнение на следующей команде, и <code>ADDI R1, 1</code> увеличивает старший байт. Во втором <code>JNC</code> перескакивает через эту команду, поэтому старший байт остаётся <code>01</code>. Для прогноза перехода нужен <code>C</code> сразу после сложения младшего байта.</p>
 </details>
+<h3 id="multiword-subtract-borrow-exercise">Как заём из младшего байта меняет старший</h3>
+<p>При вычитании единицы из пары <code>R1:R0</code> начнём с младшего байта <code>R0</code>. Если он равен нулю, не хватает одной единицы. Заём означает, что одна единица старшего байта даёт 256 единиц младшего. После вычитания в младшем байте остаётся 255 (<code>FF</code>), а старший нужно уменьшить на единицу. В этой модели <code>SUB</code> показывает беззнаковый заём флагом <code>C = 1</code>. Если займа нет, <code>C = 0</code>.</p>
+<pre><code id="multiword-subtract-borrow-source">.org 0x20
+    LDI R0, 0x00
+    LDI R1, 0x01
+    LDI R2, 0x01
+    SUB R0, R0, R2
+    JNC done
+    SUB R1, R1, R2
+done:
+    HALT
+</code></pre>
+<ol>
+<li><a id="multiword-subtract-borrow-ide" href="index.html">Откройте конструктор для опыта с займом между байтами</a> и вставьте листинг. В панели «Архитектура» раскройте «Изменить устройство процессора». Задайте <strong>8 бит</strong>, <strong>4 регистра</strong> и <strong>256 байт</strong> памяти. Нажмите «Применить и собрать».</li>
+<li>Нажмите «Шаг» три раза и прочитайте исходную пару <code>0100</code>. Четвёртым шагом выполните <code>SUB R0, R0, R2</code> по <code>002C</code>. Запишите <code>R0</code> и <code>C</code> до выполнения <code>JNC</code>. Предскажите, укажет ли следующий <code>PC</code> на <code>0034</code>, где уменьшается старший байт, или на <code>0038</code>, где стоит <code>HALT</code>.</li>
+<li>Выполните <code>JNC</code> и сверьте <code>PC</code>. Если <code>PC = 0034</code>, сделайте ещё один шаг. Перед <code>HALT</code> запишите <code>R1:R0</code> от старшего байта к младшему и счётчик.</li>
+<li>Замените только <code>LDI R0, 0x00</code> на <code id="multiword-subtract-borrow-variant">LDI R0, 0x10</code>, нажмите «Собрать» и повторите опыт для <code>0110</code>.</li>
+</ol>
+<details>
+<summary>Сверить заём, переход и итоговую пару</summary>
+<div class="table-wrap">
+<table id="multiword-subtract-borrow-results">
+<thead><tr><th scope="col">Вход R1:R0</th><th scope="col">Младший байт</th><th scope="col">C перед JNC</th><th scope="col">PC после JNC</th><th scope="col">Итог R1:R0</th><th scope="col">Шагов</th></tr></thead>
+<tbody>
+<tr><th scope="row"><code>0100</code></th><td><code>FF</code></td><td>1</td><td><code>0034</code></td><td><code>00FF</code></td><td>6</td></tr>
+<tr><th scope="row"><code>0110</code></th><td><code>0F</code></td><td>0</td><td><code>0038</code></td><td><code>010F</code></td><td>5</td></tr>
+</tbody>
+</table>
+</div>
+<p><code>JNC done</code> переходит к <code>HALT</code> при <code>C = 0</code>, поэтому в случае <code>0110 − 1</code> старший байт остаётся <code>01</code>. При <code>C = 1</code> выполняется команда по <code>0034</code> и старший байт становится <code>00</code>. После неё флаги описывают уже вычитание в старшем байте. Для прогноза перехода смотрите <code>C</code> сразу после младшего <code>SUB</code>.</p>
+</details>
 <h3 id="twos-complement-exercise">Меняем знак в 16 битах</h3>
 <p>В этом опыте получим противоположное число в дополнительном коде за два шага, если результат представим в 16 битах. Сначала инвертируем все 16 бит, затем прибавим единицу. <code>NOT</code> меняет каждый ноль на единицу, а каждую единицу на ноль. Следующее сложение оставляет в регистре младшие 16 бит результата. Проверим полученное число, сложив его с исходным.</p>
 <pre><code id="twos-complement-source">.org 0x20
