@@ -63,6 +63,7 @@ b children rbdstudy/report-disk@s0
 deep-flatten: без него снимки child могут сохранять зависимость.
 В этом упражнении у child снимков нет. Unprotect разрешён только после
 проверки зависимостей; rollback и удаление здесь не выполняются автоматически.</p>
+<style>#ceph11-flatten-relations p, #ceph11-flatten-relations figcaption { text-align: start; }</style>
 <figure id="ceph11-flatten-relations" style="margin:1.2rem 0;padding:1rem;border:1px solid var(--line);border-radius:.75rem;background:var(--soft)">
 <figcaption><strong>Какая ссылка исчезает при flatten</strong><br>Стрелка означает зависимость от снимка-родителя, а не направление копирования байтов.</figcaption>
 <div style="display:grid;gap:.7rem;grid-template-columns:repeat(auto-fit,minmax(min(100%,14rem),1fr));margin-block:.8rem">

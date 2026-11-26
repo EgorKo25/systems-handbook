@@ -1251,6 +1251,33 @@ target:
 </div>
 <p>Метка <code>target</code> даёт <code>R1 = 002C</code>. <code>STB</code> прибавляет к этому адресу 2 и записывает младший байт <code>R0</code>, то есть <code>2A</code>, по адресу <code>002E</code>. В слове <code>LDI</code> первые два байта по-прежнему задают операцию и регистр <code>R2</code>. Последние два байта задают константу младшим байтом вперёд. После <code>STB</code> декодер читает <code>2A 00</code> как 42, а листинг сохраняет собранное <code>07 00</code>. После четвёртого шага в обоих прогонах <code>PC = 0030</code> указывает на <code>HALT</code>.</p>
 </details>
+<h3 id="decode-register-count-exercise">Как число регистров меняет декодирование LDI</h3>
+<p>В слове <code>02 04 07 00</code> байт <code>02</code> задаёт <code>LDI</code>, <code>04</code> выбирает <code>R4</code>, а <code>07 00</code> кодирует константу 7. В конфигурации с четырьмя регистрами доступны <code>R0</code>–<code>R3</code>, с восемью — <code>R0</code>–<code>R7</code>. Директива <code>.byte</code> помещает в RAM заданные байты. Директива <code>.entry start</code> указывает начать исполнение по адресу <code>0020</code>, где лежит это слово. Предскажите результат первого шага в каждой конфигурации.</p>
+<pre><code id="decode-register-count-source">.org 0x20
+.entry start
+start:
+    .byte 0x02, 0x04, 0x07, 0
+    HALT
+</code></pre>
+<ol>
+<li><a id="decode-register-count-ide" href="index.html">Откройте конструктор для опыта с числом регистров</a>. В панели «Архитектура» раскройте «Изменить устройство процессора». Задайте <strong>16 бит</strong>, <strong id="decode-register-count-first">4 регистра</strong> и <strong>256 байт</strong> памяти. Вставьте листинг и нажмите «Применить и собрать».</li>
+<li>В панели «Слово по адресу PC» при <code>0020</code> сверьте байты RAM и результат декодирования. Нажмите «Шаг» и запишите сообщение, <code>PC</code> и число выполненных команд.</li>
+<li>Установите <strong id="decode-register-count-second">8 регистров</strong>, сохранив тот же листинг, разрядность и размер памяти. Нажмите «Применить и собрать». Снова сравните байты RAM и декодированную команду при <code>0020</code>. После одного шага запишите <code>R4</code>, <code>PC</code> и счётчик.</li>
+</ol>
+<details>
+<summary>Сверить декодирование и результат шага</summary>
+<div class="table-wrap">
+<table id="decode-register-count-results">
+<thead><tr><th scope="col">Регистров</th><th scope="col">Результат шага</th><th scope="col">PC</th><th scope="col">Выполнено</th></tr></thead>
+<tbody>
+<tr><th scope="row">4</th><td>Ошибка декодирования</td><td><code>0020</code></td><td>0</td></tr>
+<tr><th scope="row">8</th><td><code>R4 = 0007</code></td><td><code>0024</code></td><td>1</td></tr>
+</tbody>
+</table>
+</div>
+<p>По адресу <code>0020</code> в обоих случаях лежат <code>02 04 07 00</code>. С четырьмя регистрами после распознавания кода <code>LDI</code> декодер сообщает «Регистр r4 отсутствует в конфигурации». Шаг оставляет <code>PC</code> и счётчик на месте. С восемью регистрами декодер показывает <code>LDI · d = r4 · imm = 7</code>. Команда записывает 7 в <code>R4</code> и переводит <code>PC</code> на <code>HALT</code>.</p>
+<p>Для проверки сборщика замените строку <code>.byte</code> на <code id="decode-register-count-named">LDI R4, 7</code>. С восемью регистрами сборка даст то же слово. С четырьмя сообщение о неизвестном <code>R4</code> появится при сборке, до первого шага. При использовании <code>.byte</code> допустимость номера регистра проверяет декодер, когда читает слово из RAM.</p>
+</details>
 <h3 id="add-register-lesson">ADD с двумя регистрами</h3>
 <p>В <code>INC4 d</code> поле <code>d</code> выбирает регистр для чтения и записи, а второе слагаемое 4 задано командой. В <code>ADD d, s, t</code> оба слагаемых хранятся в регистрах <code>s</code> и <code>t</code>, а сумма записывается в <code>d</code>.</p>
 <p><a id="add-register-ide" href="index.html">Откройте конструктор для опыта с ADD</a>, вставьте программу и нажмите «Собрать».</p>
@@ -1935,6 +1962,53 @@ work:
 </div>
 <p>Форма проверяет все числа до передачи пакета машине. Даже при прямом вызове <code>Machine.feed(1, [66, 256])</code> движок сначала проверяет весь пакет. Исключение из-за 256 оставляет полный снимок машины прежним, включая обе очереди. Второй <code>IN</code> ждёт порт 1 по адресу <code>0024</code>. Число 90 находится в очереди другого порта.</p>
 <p>После добавления <code>[66, 255]</code> повторный шаг читает 66 из порта 1. Следующая команда забирает 90 из порта 2, затем последняя читает 255 из порта 1. Перед <code>HALT</code> обе очереди пусты. В <code>R0</code>–<code>R3</code> лежат 65, 66, 90 и 255, то есть <code>41</code>, <code>42</code>, <code>5A</code> и <code>FF</code> в шестнадцатеричной записи.</p>
+</details>
+<h3 id="in-out-port-order-exercise">Как порядок IN и OUT меняет порт вывода</h3>
+<p>Обе команды забирают число 3 из входной очереди порта 1 и выводят число 65. В формате <code>RR</code> поле <code>d</code> выбирает <code>R0</code>, а <code>s</code> — <code>R1</code>. Микрооперация <code>in</code> записывает входное число в <code>R0</code>. Микрооперация <code>out</code> берёт значение для вывода из <code>R1</code>, а номер выходного порта — из <code>R0</code>. Перед командой <code>R0 = 0002</code>. Предскажите выходной порт для каждого порядка микроопераций.</p>
+<pre><code id="in-out-port-order-commands">[
+  {
+    "name": "IN_OUT_PORT",
+    "opcode": 77,
+    "format": "RR",
+    "microcode": [
+      {"op": "in", "dst": "d", "port": 1},
+      {"op": "out", "a": "s", "port": "d"}
+    ]
+  },
+  {
+    "name": "OUT_IN_PORT",
+    "opcode": 78,
+    "format": "RR",
+    "microcode": [
+      {"op": "out", "a": "s", "port": "d"},
+      {"op": "in", "dst": "d", "port": 1}
+    ]
+  }
+]
+</code></pre>
+<pre><code id="in-out-port-order-source">.org 0x20
+    LDI R0, 2
+    LDI R1, 65
+    IN_OUT_PORT R0, R1
+    HALT
+</code></pre>
+<ol>
+<li><a id="in-out-port-order-ide" href="index.html">Откройте конструктор для опыта с порядком ввода и вывода</a>. В панели «Архитектура» раскройте «Изменить устройство процессора». Задайте <strong>16 бит</strong>, <strong>4 регистра</strong> и <strong>256 байт</strong> памяти. Добавьте оба объекта из примера в конец массива «Таблица команд, JSON», отделяя объекты запятыми. Если один из них уже есть, оставьте его в единственном экземпляре. Вставьте листинг и нажмите «Применить и собрать».</li>
+<li>В панели «Порты ввода и вывода» укажите порт <code id="in-out-port-order-input-port">1</code> и значение <code id="in-out-port-order-input-value">3</code>, затем нажмите «Добавить во вход». Дважды нажмите «Шаг». При <code>PC = 0028</code> сверьте <code>R0 = 0002</code>, очередь порта 1 и слово <code>4D 10 00 00</code>. Выполните третий шаг. Запишите <code>R0</code>, состояние входной очереди, номер порта и число в разделе «Выход».</li>
+<li>Замените имя <code>IN_OUT_PORT</code> в листинге на <code id="in-out-port-order-variant">OUT_IN_PORT</code> и нажмите «Собрать». Снова добавьте 3 во вход порта 1 и выполните три шага. Перед третьим шагом сверьте слово <code>4E 10 00 00</code>. Сравните итоговые <code>R0</code> и выходные записи с первым прогоном.</li>
+</ol>
+<details>
+<summary>Сверить R0 и выходную запись</summary>
+<div class="table-wrap">
+<table id="in-out-port-order-results">
+<thead><tr><th scope="col">Команда</th><th scope="col">R0 после шага</th><th scope="col">Порт выхода</th><th scope="col">Значение</th></tr></thead>
+<tbody>
+<tr><th scope="row"><code>IN_OUT_PORT</code></th><td><code>0003</code></td><td>3</td><td>65</td></tr>
+<tr><th scope="row"><code>OUT_IN_PORT</code></th><td><code>0003</code></td><td>2</td><td>65</td></tr>
+</tbody>
+</table>
+</div>
+<p>В <code>IN_OUT_PORT</code> первая микрооперация уже записала 3 в <code>R0</code> к моменту выбора порта. Поэтому запись с числом 65 относится к порту 3. В <code>OUT_IN_PORT</code> первая микрооперация берёт номер 2 из <code>R0</code> и готовит запись для порта 2. Последующий ввод меняет <code>R0</code> на 3, а подготовленная запись сохраняет номер 2. В обоих случаях выходная запись появляется по завершении третьего шага, очередь порта 1 пуста и <code>PC = 002C</code> указывает на <code>HALT</code>.</p>
 </details>
 <h3 id="halt-nop-memory-edge-exercise">HALT и NOP в последнем слове памяти</h3>
 <p>В этой модели команда занимает четыре байта. При 256 байтах памяти последняя команда целиком помещается по адресам <code>0x00FC</code>–<code>0x00FF</code>. Директива <code>.org 0xFC</code> размещает её там, и с неё начинается исполнение. Что вернёт второй вызов шага после <code>HALT</code>? А после <code>NOP</code>?</p>
