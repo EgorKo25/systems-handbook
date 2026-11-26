@@ -108,8 +108,9 @@ def write_text(path, value):
 
 
 def sketch(d):
+    mobile_rows = d.get('mobile_timeline', ())
     # Editorial placement markup is not part of the reader's diagram data.
-    d = {k: v for k, v in d.items() if k != 'insert_before'}
+    d = {k: v for k, v in d.items() if k not in ('insert_before', 'mobile_timeline')}
     esc = escape
     transcript = []
     labels = {n['id']: n['label'] for n in d['nodes']}
@@ -117,11 +118,21 @@ def sketch(d):
         fields = ''.join('<li><strong>'+esc(f['name'])+':</strong> '+esc(f['before'])+' → '+esc(f['after'])+'. '+esc(f['why'])+'</li>' for f in s['fields'])
         states = '; '.join(labels[k]+': '+v for k,v in s['states'].items())
         transcript.append(f'<div class="ds-transcript-step"><h4>{i}. {esc(s["title"])}</h4><p>{esc(s["explanation"])}</p><p>Действует: {esc(s["actor"])}.</p><p>{esc(states)}</p><ul>{fields}</ul></div>')
+    timeline = ''
+    if mobile_rows:
+        rows = ''.join(
+            f'<tr><th scope="row">{esc(interval)}</th><td>{esc(state)}</td><td>{cpu_ms}</td></tr>'
+            for interval, state, cpu_ms in mobile_rows
+        )
+        timeline = ('<div class="os30-mobile-timeline"><p>Весь путь запроса · мс</p>'
+                    '<table><thead><tr><th scope="col">Время</th><th scope="col">Состояние потока</th>'
+                    '<th scope="col">CPU к концу</th></tr></thead><tbody>' +
+                    rows + '</tbody></table></div>')
     return f'''<section class="deep-sketch" id="{d['id']}" aria-labelledby="{d['id']}-title">
 <div class="ds-eyebrow">Разобрать по шагам</div><h3 id="{d['id']}-title">{esc(d['title'])}</h3><p class="ds-intro">{esc(d['intro'])}</p>
 <details class="ds-assumptions"><summary>Условия этого примера</summary><p>{esc(d['assumptions'])}</p></details>
 <div class="ds-live"><div class="ds-navigation"><button type="button" data-ds-prev aria-label="Предыдущий шаг">←</button><div class="ds-stage" aria-live="polite"><span data-ds-count></span><strong data-ds-title></strong></div><button type="button" data-ds-next>Дальше →</button></div>
-<div class="ds-steps" role="group" aria-label="Выбрать шаг"></div><svg class="ds-graph" role="img" aria-label="Участники и направление действия"></svg>
+<div class="ds-steps" role="group" aria-label="Выбрать шаг"></div>{timeline}<svg class="ds-graph" role="img" aria-label="Участники и направление действия"></svg>
 <div class="ds-flow" aria-live="polite"></div><p class="ds-explanation" data-ds-explanation></p><p class="ds-actor"><strong>Сейчас действует:</strong> <span data-ds-actor></span></p>
 <div class="ds-band-heading">Выберите часть структуры — откроется её смысл</div><div class="ds-bands" role="group" aria-label="Состав данных и состояния"></div><div class="ds-band-detail" aria-live="polite"></div>
 <div class="ds-field-heading">Что изменилось на этом шаге</div><div class="ds-fields"></div></div>

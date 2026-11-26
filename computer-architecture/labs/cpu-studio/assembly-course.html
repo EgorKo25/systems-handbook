@@ -454,6 +454,43 @@ start:
 </div>
 <p>Модель выполняет микрооперации в порядке массива <code>microcode</code>. Сначала <code>cmp</code> обновляет флаги внутри шага. Затем условие <code>"when": "z"</code> читает уже обновлённый <code>Z</code>. При <code>R0 = 0</code> условная запись выполняется, при <code>R0 = 1</code> значение <code>R1</code> сохраняется. В обоих случаях <code>CMP_COPY</code> занимает один шаг. После него <code>PC = 0034</code>, счётчик равен 5 и следующая команда — <code>HALT</code>.</p>
 </details>
+<h3 id="conditional-load-bounds-exercise">Когда условное чтение проверяет границу RAM</h3>
+<p>В памяти на 256 байт последний адрес — <code>00FF</code>. Микрооперация <code>load</code> при разрядности 16 бит читает два соседних байта. В команде <code>LOAD_IF_Z R3, R1</code> поле <code>d</code> выбирает регистр результата <code>R3</code>, поле <code>s</code> — регистр адреса <code>R1</code>. Условие <code>"when": "z"</code> проверяется перед чтением. Сравните три случая и предскажите, когда машина засчитает команду и что окажется в <code>R3</code>.</p>
+<pre><code id="conditional-load-bounds-command">{
+  "name": "LOAD_IF_Z",
+  "opcode": 76,
+  "format": "RR",
+  "microcode": [{"op": "load", "dst": "d", "addr": "s", "when": "z"}]
+}
+</code></pre>
+<pre><code id="conditional-load-bounds-source">.org 0x20
+    LDI R0, 1
+    LDI R1, 0xFF
+    CMP R0, R2
+    LOAD_IF_Z R3, R1
+    HALT
+.org 0xFE
+    .byte 0x34, 0x12
+</code></pre>
+<ol>
+<li><a id="conditional-load-bounds-ide" href="index.html">Откройте конструктор для опыта с условным чтением</a>. В панели «Архитектура» раскройте «Изменить устройство процессора». Задайте <strong>16 бит</strong>, <strong>4 регистра</strong> и <strong>256 байт</strong> памяти. Добавьте объект <code>LOAD_IF_Z</code> в конец массива «Таблица команд, JSON», отделив его запятой. Если объект уже есть, оставьте один. Вставьте листинг и нажмите «Применить и собрать».</li>
+<li>В панели «Память» перейдите к адресу <code>0xFE</code> и сверьте байты <code>34 12</code>. Трижды нажмите «Шаг». <code>CMP R0, R2</code> сравнивает <code>R0</code> с нулём в <code>R2</code>. Проверьте <code>Z</code> и байты <code>4C 13 00 00</code> по <code>002C</code> в панели «Слово по адресу PC». Нажмите «Шаг» ещё раз и запишите <code>R3</code>, <code>PC</code>, число выполненных команд и сообщение в строке состояния.</li>
+<li>Замените <code>LDI R0, 1</code> на <code id="conditional-load-bounds-value">LDI R0, 0</code>, нажмите «Собрать» и повторите четыре нажатия. Затем оставьте <code>R0 = 0</code> и замените <code>LDI R1, 0xFF</code> на <code id="conditional-load-bounds-address">LDI R1, 0xFE</code>. Соберите и повторите опыт. Сравните <code>PC</code> и счётчик после четвёртого нажатия.</li>
+</ol>
+<details>
+<summary>Сверить три результата условного чтения</summary>
+<div class="table-wrap">
+<table id="conditional-load-bounds-results">
+<thead><tr><th scope="col">Z перед шагом</th><th scope="col">Адрес в R1</th><th scope="col">Итог</th><th scope="col">R3</th><th scope="col">PC</th><th scope="col">Выполнено</th></tr></thead>
+<tbody>
+<tr><th scope="row">0</th><td><code>00FF</code></td><td>Пропуск чтения</td><td><code>0000</code></td><td><code>0030</code></td><td>4</td></tr>
+<tr><th scope="row">1</th><td><code>00FF</code></td><td>Ошибка чтения</td><td><code>0000</code></td><td><code>002C</code></td><td>3</td></tr>
+<tr><th scope="row">1</th><td><code>00FE</code></td><td>Чтение двух байтов</td><td><code>1234</code></td><td><code>0030</code></td><td>4</td></tr>
+</tbody>
+</table>
+</div>
+<p>При <code>Z = 0</code> модель пропускает микрооперацию целиком. Адрес чтения остаётся непроверенным, но команда засчитывается и <code>PC</code> указывает на <code>HALT</code>. При <code>Z = 1</code> чтение с <code>00FF</code> потребовало бы второй байт по <code>0100</code>, за пределами RAM. Проверка диапазона возвращает ошибку «Чтение 2 байт с адреса 255 выходит за пределы памяти». Число 255 — десятичная запись <code>00FF</code>. Значения <code>R3</code>, <code>PC</code> и счётчика сохраняются. С адреса <code>00FE</code> модель читает младший байт <code>34</code> и старший <code>12</code>. В <code>R3</code> появляется <code>1234</code>, а <code>PC</code> указывает на <code>HALT</code>.</p>
+</details>
 <h3 id="stop-at-z-exercise">Остановка в середине команды STOP_AT_Z</h3>
 <p><code>STOP_AT_Z R1</code> сначала записывает 17 (<code>0011</code>) в <code>R1</code>. Затем проверяет <code>Z</code> перед микрооперацией <code>halt</code>. За ней в описании команды стоит вторая запись, 34 (<code>0022</code>) в тот же регистр. Какая запись останется, если <code>halt</code> выполнится? Дойдёт ли машина до следующей команды?</p>
 <pre><code id="stop-at-z-command">{
@@ -1114,6 +1151,50 @@ far:
 </table>
 </div>
 <p>Байты первой <code>LDI</code> во всех трёх сборках равны <code>02 00 20 01</code>. Поле <code>20 01</code> кодирует <code>0120</code> младшим байтом вперёд. В восьмибитном <code>R0</code> остаётся <code>20</code>, а в шестнадцатибитном помещается <code>0120</code>. <code>JMP</code> читает полный адрес из собственного поля <code>20 01</code> в слове <code>14 00 20 01</code>. <code>GO_R</code> (<code>46 00 00 00</code>) читает то, что сохранилось в <code>R0</code>. Образы с <code>GO_R</code> при 8 и 16 битах совпадают побайтно. Обе цели кратны четырём и находятся внутри 512 байт памяти.</p>
+</details>
+<h3 id="jump-twice-exercise">Как две микрооперации jump меняют адрес следующей команды</h3>
+<p>По адресу <code>0028</code> заменим штатный <code>JMP first</code> командой с двумя микрооперациями <code>jump</code>. К началу перехода в <code>R0</code> лежит адрес метки <code>first</code> (<code>0040</code>), а в <code>R1</code> — адрес <code>last</code> (<code>0050</code>). В формате <code>RR</code> поле <code>d</code> выбирает первый регистр команды, поле <code>s</code> — второй. Предскажите, где окажется <code>PC</code> сразу после перехода и какое число следующий шаг запишет в <code>R2</code>.</p>
+<pre><code id="jump-twice-command">{
+  "name": "JUMP_TWICE",
+  "opcode": 75,
+  "format": "RR",
+  "microcode": [
+    {"op": "jump", "addr": "d"},
+    {"op": "jump", "addr": "s"}
+  ]
+}
+</code></pre>
+<pre><code id="jump-twice-source">.org 0x20
+    LDI R0, first
+    LDI R1, last
+    JMP first
+    JMP last
+.org 0x40
+first:
+    LDI R2, 11
+    HALT
+.org 0x50
+last:
+    LDI R2, 22
+    HALT
+</code></pre>
+<ol>
+<li><a id="jump-twice-ide" href="index.html">Откройте конструктор для опыта с двумя jump</a>. В панели «Архитектура» раскройте «Изменить устройство процессора». Задайте <strong>16 бит</strong>, <strong>4 регистра</strong> и <strong>256 байт</strong> памяти. Добавьте объект <code>JUMP_TWICE</code> в конец массива «Таблица команд, JSON», отделив его запятой. Если объект уже есть, оставьте один. Вставьте листинг и нажмите «Применить и собрать».</li>
+<li>Дважды нажмите «Шаг». В панели «Слово по адресу PC» сверьте байты <code>14 00 40 00</code> по адресу <code>0028</code>. Третьим шагом выполните переход и запишите <code>PC</code>. Четвёртым шагом выполните <code>LDI</code> в цели. Запишите <code>R2</code> и адрес следующей команды.</li>
+<li>Замените только <code>JMP first</code> на <code id="jump-twice-variant">JUMP_TWICE R0, R1</code> и нажмите «Собрать». Повторите четыре шага. Перед третьим шагом сверьте слово <code>4B 10 00 00</code> по <code>0028</code>.</li>
+</ol>
+<details>
+<summary>Сверить адрес выборки и значение R2</summary>
+<div class="table-wrap">
+<table id="jump-twice-results">
+<thead><tr><th scope="col">Команда по 0028</th><th scope="col">PC после 3 шагов</th><th scope="col">R2 после 4 шагов</th><th scope="col">PC на HALT</th></tr></thead>
+<tbody>
+<tr><th scope="row"><code>JMP first</code></th><td><code>0040</code></td><td><code>000B</code></td><td><code>0044</code></td></tr>
+<tr><th scope="row"><code>JUMP_TWICE R0, R1</code></th><td><code>0050</code></td><td><code>0016</code></td><td><code>0054</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>Штатный <code>JMP first</code> берёт <code>0040</code> из слова команды. В <code>JUMP_TWICE</code> первая микрооперация задаёт будущий <code>PC = 0040</code> из <code>R0</code>, а вторая заменяет его адресом <code>0050</code> из <code>R1</code>. CPU Studio записывает итоговый <code>PC</code> в конце шага. Следующее слово выбирается уже по этому адресу. Поэтому четвёртый шаг загружает 11 в первом запуске и 22 во втором. В обоих запусках счётчик после перехода равен 3 и отдельный <code>JMP last</code> по адресу <code>002C</code> пропускается.</p>
 </details>
 <h3 id="decode-retry-exercise">Неизвестный код операции и повтор шага</h3>
 <p>В учебной системе команд CPU Studio первый байт команды задаёт её код операции. Сборка помещает <code>02 00 2A 00</code> по адресу <code>0x0024</code>. Код <code>02</code> означает <code>LDI</code>, а <code>2A</code> здесь входит в константу 42. Проверим, что произойдёт, если в памяти по этому адресу окажется код <code>FF</code>, которого нет в штатной таблице команд.</p>
