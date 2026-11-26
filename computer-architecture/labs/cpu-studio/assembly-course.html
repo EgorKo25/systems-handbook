@@ -1312,6 +1312,32 @@ signed_overflow:
 <p>При входе 127 сумма 128 помещается в беззнаковый байт. В знаковом диапазоне 128 не представимо, и сохранённый байт <code>0x80</code> читается как −128.</p>
 <p>При входе 255 байт <code>0xFF</code> означает −1 в знаковой записи. Сумма −1 + 1 равна нулю и помещается в знаковый диапазон, а беззнаковая сумма 255 + 1 даёт перенос. Поэтому <code>JC</code> сразу уводит выполнение на <code>0x38</code> и <code>JV</code> пропускается. Для 126 + 1 сумма 127 помещается в оба диапазона.</p>
 </details>
+<h3 id="add-negative-vs-sub-exercise">Почему ADDI −1 и SUB 1 дают разные C</h3>
+<p>При восьмибитных регистрах прибавление −1 и вычитание 1 дают один и тот же младший байт. Но в этой модели <code>ADDI</code> выставляет <code>C</code> при беззнаковом переносе из старшего разряда, а <code>SUB</code> — при беззнаковом займе. Предскажите байт результата и <code>C</code> для исходных <code>00</code> и <code>01</code>.</p>
+<pre><code id="add-negative-vs-sub-source">.org 0x20
+    LDI R0, 0
+    LDI R1, 1
+    ADDI R0, -1
+    HALT
+</code></pre>
+<ol>
+<li><a id="add-negative-vs-sub-ide" href="index.html">Откройте конструктор для опыта со сложением и вычитанием</a> и вставьте листинг. В панели «Архитектура» раскройте «Изменить устройство процессора». Задайте <strong>8 бит</strong>, <strong>4 регистра</strong> и <strong>256 байт</strong> памяти. Нажмите «Применить и собрать».</li>
+<li>Дважды нажмите «Шаг». По адресу <code>0028</code> сверьте байты <code>04 00 FF FF</code> и <code>imm = -1</code> в панели «Слово по адресу PC». Выполните третий шаг и запишите <code>R0</code> и флаги.</li>
+<li>Замените <code>ADDI R0, -1</code> на <code id="add-negative-vs-sub-operation">SUB R0, R0, R1</code>, нажмите «Собрать» и повторите три шага. Сверьте байты <code>05 00 01 00</code> и результат. Затем повторите оба запуска с <code id="add-negative-vs-sub-input">LDI R0, 1</code> вместо <code>LDI R0, 0</code>.</li>
+</ol>
+<details>
+<summary>Сверить байт результата, перенос и заём</summary>
+<div class="table-wrap">
+<table id="add-negative-vs-sub-results">
+<thead><tr><th scope="col">Исходный R0</th><th scope="col">Результат R0</th><th scope="col">C после ADDI</th><th scope="col">C после SUB</th><th scope="col">Z N V в обоих случаях</th></tr></thead>
+<tbody>
+<tr><th scope="row"><code>00</code></th><td><code>FF</code></td><td>0</td><td>1</td><td><code>0 1 0</code></td></tr>
+<tr><th scope="row"><code>01</code></th><td><code>00</code></td><td>1</td><td>0</td><td><code>1 0 0</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>Для вычисления переноса <code>ADDI</code> использует восьмибитный операнд <code>FF</code>, то есть 255 без знака. Сумма <code>0 + 255</code> помещается в байт, а <code>1 + 255 = 256</code> даёт перенос. Для <code>SUB</code> вычитание <code>0 − 1</code> требует займа, а <code>1 − 1</code> обходится без него. Регистр сохраняет младшие восемь бит и в каждой паре получает один результат. После третьего шага <code>PC = 002C</code> указывает на <code>HALT</code>.</p>
+</details>
 <h3 id="mul-overflow-same-byte-exercise">Один байт результата, разные флаги MUL</h3>
 <p>В восьмибитной модели <code>MUL</code> записывает в регистр младший байт произведения. Флаг <code>C</code> показывает, вышло ли беззнаковое произведение за 255, а <code>V</code> показывает, вышло ли знаковое произведение за диапазон от −128 до 127. Прочитайте <code>FF</code> и <code>7F</code> как числа без знака и как числа в дополнительном коде. Умножьте каждое на 2 и предскажите значение регистра и оба флага.</p>
 <pre><code id="mul-overflow-same-byte-source">.org 0x20
