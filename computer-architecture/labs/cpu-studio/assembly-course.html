@@ -1806,6 +1806,33 @@ save_value:
 <p>После <code>CALL</code> по адресам <code>0xFC</code>–<code>0xFF</code> в обоих запусках лежат <code>28 00 00 00</code>. Разность <code>0x100 − 0xFC = 4</code> показывает размер ячейки адреса возврата. Байты идут от младшего к старшему и дают адрес <code>0x0028</code>. Машинное слово самого <code>CALL</code> хранится в коде по <code>0x0024</code> и содержит цель <code>0x002C</code>. В листинге и <code>CALL</code>, и <code>PUSH</code> кодируются четырьмя байтами при обеих разрядностях.</p>
 <p>При 16 битах <code>PUSH</code> кладёт <code>34 12</code> по <code>0xFA</code>–<code>0xFB</code>. При 32 битах он кладёт <code>34 12 00 00</code> по <code>0xF8</code>–<code>0xFB</code>. Байты адреса с <code>0xFC</code> при этом сохраняются. <code>POP</code> снимает слово нужной ширины и оставляет в <code>R1</code> значение <code>0x1234</code>. Затем <code>RET</code> читает четыре байта адреса и возвращает <code>PC</code> к <code>HALT</code>.</p>
 </details>
+<h3 id="pop-ret-width-exercise">Почему двух байтов хватает для POP, а RET требует четыре</h3>
+<p>Сравним <code>POP</code> и <code>RET</code> на одной вершине стека. В 16-битной конфигурации <code>PUSH R0</code> кладёт два байта. Число для записи берём из метки <code>done</code>, которая указывает на <code>HALT</code> по адресу <code>002C</code>. Этот адрес кратен четырём. Предскажите, какая команда сможет снять значение со стека и где после третьего нажатия «Шаг» окажутся <code>SP</code> и <code>PC</code>.</p>
+<pre><code id="pop-ret-width-source">.org 0x20
+    LDI R0, done
+    PUSH R0
+    POP R1
+done:
+    HALT
+</code></pre>
+<ol>
+<li><a id="pop-ret-width-ide" href="index.html">Откройте конструктор для опыта с POP и RET</a>. В панели «Архитектура» раскройте «Изменить устройство процессора». Задайте <strong>16 бит</strong>, <strong>4 регистра</strong> и <strong>256 байт</strong> памяти. Вставьте листинг и нажмите «Применить и собрать».</li>
+<li>Дважды нажмите «Шаг». В панели «Память» введите <code>0xFE</code> и нажмите «Перейти». Сверьте <code>SP = 00FE</code> и байты <code>2C 00</code> по адресам <code>00FE</code> и <code>00FF</code>. Выполните <code>POP R1</code> третьим шагом. Запишите <code>R1</code>, <code>SP</code>, <code>PC</code> и число выполненных команд. Снова проверьте байты стека.</li>
+<li>Замените только <code>POP R1</code> на <code id="pop-ret-width-variant">RET</code> и нажмите «Собрать». Снова выполните два шага и сверьте ту же вершину. Третьим нажатием попробуйте выполнить <code>RET</code>. Сравните сообщение, регистры, счётчик и байты памяти с первым прогоном.</li>
+</ol>
+<details>
+<summary>Сверить состояние после третьего нажатия</summary>
+<div class="table-wrap">
+<table id="pop-ret-width-results">
+<thead><tr><th scope="col">Команда</th><th scope="col">R1</th><th scope="col">SP</th><th scope="col">PC</th><th scope="col">Выполнено</th></tr></thead>
+<tbody>
+<tr><th scope="row"><code>POP R1</code></th><td><code>002C</code></td><td><code>0100</code></td><td><code>002C</code></td><td>3</td></tr>
+<tr><th scope="row"><code>RET</code></th><td><code>0000</code></td><td><code>00FE</code></td><td><code>0028</code></td><td>2</td></tr>
+</tbody>
+</table>
+</div>
+<p>В этой модели <code>POP</code> читает слово шириной с регистр. Два байта <code>2C 00</code> дают <code>R1 = 002C</code>. Указатель стека увеличивается на два, а <code>PC</code> переходит к следующей по порядку команде <code>HALT</code>. <code>RET</code> начинает со снятия четырёх байтов адреса возврата. С <code>00FE</code> доступны только два, поэтому модель сообщает «В стеке недостаточно байтов» ещё до проверки цели. <code>PC</code>, <code>SP</code> и счётчик сохраняются. В обоих прогонах <code>2C 00</code> остаются в RAM.</p>
+</details>
 <h3 id="ret-stack-top-exercise">Какое слово RET берёт с вершины стека</h3>
 <p><code>CALL work</code> сохраняет адрес возврата <code>0028</code>. В подпрограмме <code>PUSH R0</code> кладёт слово <code>00000029</code> поверх него. Сравним два случая. В одном <code>NOP</code> оставляет вершину стека на месте. В другом <code>POP R1</code> снимает слово перед возвратом. По какому адресу <code>RET</code> прочитает четыре байта в каждом случае?</p>
 <pre><code id="ret-stack-top-source">.org 0x20
