@@ -1223,6 +1223,34 @@ last:
 </div>
 <p>После попытки шага строка состояния сообщает «Неизвестный код операции 0xff». Исполнитель берёт слово из RAM и останавливает этот шаг на декодировании. Команда ещё не начала менять состояние. Когда в RAM снова лежит <code>02 00 2A 00</code>, следующий шаг исполняет <code>LDI</code> по тому же адресу. В <code>R0</code> записывается 42, и <code>PC</code> указывает на <code>HALT</code>.</p>
 </details>
+<h3 id="stb-ldi-immediate-exercise">Как STB меняет константу следующей LDI</h3>
+<p>Листинг показывает машинные слова последней сборки. Декодер CPU Studio берёт слово текущей команды из RAM. В этом опыте <code>STB</code> запишет один байт в память прямо перед выборкой следующей <code>LDI</code>. Предскажите, какой байт изменится и что после <code>LDI</code> окажется в <code>R2</code>.</p>
+<pre><code id="stb-ldi-immediate-source">.org 0x20
+    LDI R0, 42
+    LDI R1, target
+    NOP
+target:
+    LDI R2, 7
+    HALT
+</code></pre>
+<ol>
+<li><a id="stb-ldi-immediate-ide" href="index.html">Откройте конструктор для опыта со STB и LDI</a>. В панели «Архитектура» раскройте «Изменить устройство процессора». Задайте <strong>16 бит</strong>, <strong>4 регистра</strong> и <strong>256 байт</strong> памяти. Вставьте листинг и нажмите «Применить и собрать».</li>
+<li>Трижды нажмите «Шаг». В панели «Слово по адресу PC» при <code>002C</code> сверьте «Байты листинга», «Байты RAM» и значение <code>imm</code> в декодированном слове. Нажмите «Шаг» ещё раз и запишите <code>R2</code>.</li>
+<li>Замените <code>NOP</code> на <code id="stb-ldi-immediate-variant">STB R0, [R1 + 2]</code> и нажмите «Собрать». Снова выполните три шага и сравните оба слова и <code>imm</code> по адресу <code>002C</code>. Четвёртым шагом выполните <code>LDI</code> из RAM и сверьте <code>R2</code>.</li>
+</ol>
+<details>
+<summary>Сверить слово LDI и значение R2</summary>
+<div class="table-wrap">
+<table id="stb-ldi-immediate-results">
+<thead><tr><th scope="col">Третий шаг</th><th scope="col">Листинг по 002C</th><th scope="col">RAM по 002C</th><th scope="col">imm</th><th scope="col">R2 после LDI</th></tr></thead>
+<tbody>
+<tr><th scope="row"><code>NOP</code></th><td><code>02 02 07 00</code></td><td><code>02 02 07 00</code></td><td>7</td><td><code>0007</code></td></tr>
+<tr><th scope="row"><code>STB</code></th><td><code>02 02 07 00</code></td><td><code>02 02 2A 00</code></td><td>42</td><td><code>002A</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>Метка <code>target</code> даёт <code>R1 = 002C</code>. <code>STB</code> прибавляет к этому адресу 2 и записывает младший байт <code>R0</code>, то есть <code>2A</code>, по адресу <code>002E</code>. В слове <code>LDI</code> первые два байта по-прежнему задают операцию и регистр <code>R2</code>. Последние два байта задают константу младшим байтом вперёд. После <code>STB</code> декодер читает <code>2A 00</code> как 42, а листинг сохраняет собранное <code>07 00</code>. После четвёртого шага в обоих прогонах <code>PC = 0030</code> указывает на <code>HALT</code>.</p>
+</details>
 <h3 id="add-register-lesson">ADD с двумя регистрами</h3>
 <p>В <code>INC4 d</code> поле <code>d</code> выбирает регистр для чтения и записи, а второе слагаемое 4 задано командой. В <code>ADD d, s, t</code> оба слагаемых хранятся в регистрах <code>s</code> и <code>t</code>, а сумма записывается в <code>d</code>.</p>
 <p><a id="add-register-ide" href="index.html">Откройте конструктор для опыта с ADD</a>, вставьте программу и нажмите «Собрать».</p>
