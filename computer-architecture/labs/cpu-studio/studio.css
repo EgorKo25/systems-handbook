@@ -271,3 +271,14 @@ summary { padding: 8px 0; color: var(--accent); font-weight: 650; }
   box-shadow: inset 0 -2px var(--accent);
   font-weight: 780;
 }
+
+/* The guided first instruction uses the same palette as the IDE. */
+.first-run { padding: clamp(16px, 3vw, 28px); margin: 0 0 24px; }
+.first-run[hidden], .workbench[hidden], .intro[hidden] { display: none; }
+.first-run h2 { margin: 0; }
+.first-run p { max-width: 68ch; line-height: 1.55; }
+.first-run-flow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.first-run-flow div { flex: 1 1 85px; padding: 12px; border: 1px solid var(--line); border-radius: 5px; background: var(--soft); }
+.first-run-flow div span, .first-run-flow strong { display: block; }
+.first-run-flow div span { color: var(--muted); font-size: .85rem; }
+.first-run-flow strong { font: 700 1.3rem var(--mono); margin-top: 4px; }

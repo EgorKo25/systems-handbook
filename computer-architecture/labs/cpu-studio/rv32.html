@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="studio.css">
   <script src="../m32/appearance.js" defer></script>
   <script src="../logic/model.js?v=2" defer></script>
-  <script src="rv32.js?v=9" defer></script>
+  <script src="rv32.js?v=10" defer></script>
 </head>
 <body>
   <header class="site-bar">
@@ -29,7 +29,19 @@
       <p id="calls" hidden>Сравните x1 до и после вложенного JAL. Сохранённый адрес внешнего возврата лежит на стеке и загружается обратно перед последним JALR.</p>
       <p id="loop" hidden>Цикл уменьшает x7 с 3 до 0. На BNE сравните x7 с нулём и посмотрите, куда переместится PC.</p>
     </div></header>
-    <section class="workbench" aria-label="Редактор и выполнение">
+    <section id="first-run" class="first-run panel" aria-labelledby="first-run-title" hidden>
+      <h2 id="first-run-title">Первый шаг: 42 → 43</h2>
+      <p>Программа уже загрузила число 42 из памяти в регистр <code>x6</code>. Регистр — небольшая ячейка процессора. Следующая команда прибавит к нему 1.</p>
+      <div class="first-run-flow" aria-label="Путь значения: регистр x6, прибавить 1, регистр x6">
+        <div><span>До · x6</span><strong>42</strong></div><span aria-hidden="true">→</span>
+        <div><span>Команда</span><strong>+ 1</strong></div><span aria-hidden="true">→</span>
+        <div><span>После · x6</span><strong id="first-run-result">?</strong></div>
+      </div>
+      <p><code>addi x6, x6, 1</code> берёт значение из <code>x6</code>, прибавляет 1 и записывает результат обратно в <code>x6</code>.</p>
+      <p id="first-run-status" role="status">До выполнения: x6 = 42, PC = 0x1008. PC указывает на следующую команду.</p>
+      <button id="first-run-next" class="primary" type="button">Выполнить ADDI</button>
+    </section>
+    <section id="rv32-workbench" class="workbench" aria-label="Редактор и выполнение">
       <div class="execution">
         <div class="actions">
           <button id="assemble" class="primary" type="button">Собрать</button>
