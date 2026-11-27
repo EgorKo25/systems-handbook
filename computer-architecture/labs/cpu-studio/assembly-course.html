@@ -1632,6 +1632,35 @@ equal:
 </div>
 <p>При сдвиге вправо на восемь последним выходит исходный старший бит. В обеих командах он равен 1 и попадает в <code>C</code>. Для сдвига на девять в исходном байте уже нет девятого бита. По правилу этой модели для числа разрядов больше ширины регистра <code>C = 0</code>. При вычислении самого результата модель ограничивает сдвиг шириной регистра, поэтому <code>R2 = 00</code> и <code>R3 = FF</code> в обоих запусках.</p>
 </details>
+<h3 id="zero-shift-flags-exercise">Сдвиг на ноль. Тот же байт, другие флаги</h3>
+<p>При восьмибитных регистрах <code>255 + 1</code> оставляет в <code>R0</code> байт <code>00</code> и выставляет <code>Z = 1</code> и <code>C = 1</code>. Затем сравним копирование <code>MOV R3, R2</code> и логический сдвиг <code>SHR R3, R2, R1</code> при <code>R1 = 0</code>. Обе команды запишут в <code>R3</code> байт <code>81</code>. Предскажите, что произойдёт с флагами <code>C</code>, <code>Z</code> и <code>N</code>.</p>
+<pre><code id="zero-shift-flags-source">.org 0x20
+    LDI R0, 255
+    LDI R1, 0
+    LDI R2, 0x81
+    ADDI R0, 1
+    MOV R3, R2
+    HALT
+</code></pre>
+<ol>
+<li><a id="zero-shift-flags-ide" href="index.html">Откройте конструктор для опыта со сдвигом на ноль</a>. В панели «Архитектура» раскройте «Изменить устройство процессора». Задайте <strong>8 бит</strong>, <strong>4 регистра</strong> и <strong>256 байт</strong> памяти. Вставьте листинг и нажмите «Применить и собрать».</li>
+<li>Нажмите «Шаг» четыре раза. При <code>PC = 0030</code> сверьте флаги от <code>ADDI</code> и байты <code>01 23 00 00</code> в панели «Слово по адресу PC». Пятым шагом выполните <code>MOV</code> и запишите <code>R3</code>, флаги, <code>PC</code> и число выполненных команд.</li>
+<li>Замените только <code>MOV R3, R2</code> на <code id="zero-shift-flags-variant">SHR R3, R2, R1</code> и нажмите «Собрать». Повторите пять шагов. Перед пятым сверьте слово <code>0D 23 01 00</code> по адресу <code>0030</code>. Сравните состояние после <code>SHR</code> с первым прогоном.</li>
+</ol>
+<details>
+<summary>Сверить байт и флаги</summary>
+<div class="table-wrap">
+<table id="zero-shift-flags-results">
+<thead><tr><th scope="col">Момент</th><th scope="col">R3</th><th scope="col">Z N C V</th><th scope="col">PC</th><th scope="col">Шагов</th></tr></thead>
+<tbody>
+<tr><th scope="row">После <code>ADDI</code></th><td><code>00</code></td><td><code>1 0 1 0</code></td><td><code>0030</code></td><td>4</td></tr>
+<tr><th scope="row">После <code>MOV</code></th><td><code>81</code></td><td><code>1 0 1 0</code></td><td><code>0034</code></td><td>5</td></tr>
+<tr><th scope="row">После <code>SHR</code></th><td><code>81</code></td><td><code>0 1 0 0</code></td><td><code>0034</code></td><td>5</td></tr>
+</tbody>
+</table>
+</div>
+<p><code>MOV</code> сохраняет флаги от сложения, поэтому <code>Z = 1</code> и <code>C = 1</code> относятся к результату в <code>R0</code>. В CPU Studio <code>SHR</code> выставляет флаги даже при нулевом сдвиге. Результат <code>81</code> ненулевой, его старший бит равен 1, поэтому <code>Z = 0</code> и <code>N = 1</code>. Ни один бит не вышел за пределы байта, поэтому в этой модели <code>C = 0</code>. Переполнение <code>V = 0</code>. После обоих вариантов <code>PC = 0034</code> указывает на <code>HALT</code>.</p>
+</details>
 <h3 id="multiword-increment-exercise">Как увеличить число из двух байтов</h3>
 <p>В 8-битной конфигурации пара <code>R1:R0</code> хранит 16-битное число. В <code>R1</code> лежит старший байт, в <code>R0</code> — младший. При прибавлении единицы сначала меняется младший байт. Если он переходит из <code>FF</code> в <code>00</code>, <code>ADDI</code> выставляет перенос <code>C = 1</code> и нужно увеличить старший байт. При <code>C = 0</code> команда <code>JNC done</code> сразу передаёт управление на <code>HALT</code>.</p>
 <pre><code id="multiword-increment-source">.org 0x20

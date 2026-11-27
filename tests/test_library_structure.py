@@ -23,6 +23,7 @@ class Page(HTMLParser):
         super().__init__()
         self.ids, self.cards, self.links = [], [], []
         self.route, self._route = '', False
+        self.nested_links, self._open_link = [], False
         self.feed(source)
 
     def handle_starttag(self, tag, attrs):
@@ -30,6 +31,9 @@ class Page(HTMLParser):
         if attrs.get('id'):
             self.ids.append(attrs['id'])
         if tag == 'a':
+            if self._open_link:
+                self.nested_links.append(attrs['href'])
+            self._open_link = True
             self.links.append(attrs['href'])
             if attrs.get('class') == 'volume':
                 self.cards.append(attrs['href'])
@@ -37,6 +41,8 @@ class Page(HTMLParser):
             self._route = True
 
     def handle_endtag(self, tag):
+        if tag == 'a':
+            self._open_link = False
         if tag == 'script':
             self._route = False
 
@@ -162,6 +168,31 @@ class StructureTests(unittest.TestCase):
         self.assertNotIn('<img src=x>', rendered)
         self.assertIn('Go &lt;script&gt;bad&lt;/script&gt;', rendered)
         self.assertIn('Go <script>bad</script>', json.loads(Page(rendered).route)['books']['go']['title'])
+
+    def test_assembly_course_is_a_separate_link_next_to_the_architecture_card(self):
+        slug = 'computer-architecture'
+        architecture_href = slug+'/index.html'
+        assembly_href = slug+'/labs/cpu-studio/assembly-course.html'
+        course = self.root/assembly_href
+        course.parent.mkdir(parents=True)
+        self.configs[slug] = dict(volume='XI', short='Архитектура компьютера')
+        self.stats[slug] = dict(volume='XI', chapters=2, words=100, terms=0)
+        course.touch()
+        self.assertNotIn(assembly_href, Page(structure.render_shelves(self.route())).links)
+
+        (self.root/architecture_href).touch()
+        rendered = structure.render_shelves(self.route())
+        page = Page(rendered)
+        self.assertIn(architecture_href, page.cards)
+        self.assertEqual(page.links.count(assembly_href), 1)
+        self.assertEqual(page.nested_links, [])
+        self.assertEqual(json.loads(page.route)['assembly_course'], assembly_href)
+        self.assertRegex(rendered, r'<div class="library-volume-links"><a class="volume" href="'+
+                         architecture_href+r'".*?</a><a class="library-practice-link" href="'+
+                         assembly_href+r'">Ассемблер [^<]*<span[^>]*>→</span></a></div>')
+
+        course.unlink()
+        self.assertNotIn(assembly_href, Page(structure.render_shelves(self.route())).links)
 
     def test_home_preserves_masthead_theme_and_notes_and_is_idempotent(self):
         self.configs['docker'] = dict(volume='XI', short='Docker', blurb='In progress', diagram_modules=[])
