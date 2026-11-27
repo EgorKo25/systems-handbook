@@ -11,6 +11,8 @@ REVISION = re.compile(r"[0-9a-f]{40}")
 DIGEST = re.compile(r"[0-9a-f]{64}")
 RESERVE = re.compile(r"book-fallback-[0-9a-f]{7}")
 MIN_AGE = 72 * 60 * 60
+NANOSECONDS_PER_SECOND = 1_000_000_000
+STAT_BLOCK_BYTES = 512
 
 
 def require(condition, message):
@@ -76,6 +78,10 @@ def inspect(snapshot):
     receipts = snapshot["receipts"]
     prefixes = Counter(reserve_name(revision) for revision in receipts)
     names = Counter(row["name"] for row in snapshot["trees"])
+    inodes = Counter(
+        (row["device"], row["inode"]) for row in snapshot["trees"]
+        if integer(row.get("device")) and integer(row.get("inode"), 1)
+    )
     protected = {reserve_name(revision) for revision in snapshot["protected"].values()}
     protected.update(snapshot["caddy"]["reserves"])
     accepted = {}
@@ -98,6 +104,12 @@ def inspect(snapshot):
               or not integer(row.get("device")) or not integer(row.get("inode"), 1)
               or not integer(row.get("ctime_ns"), 1) or not integer(row.get("reclaimable_bytes"))):
             skipped[name] = "unsafe or incomplete filesystem evidence"
+        elif inodes[row["device"], row["inode"]] != 1:
+            skipped[name] = "ambiguous directory inode"
+        elif row["ctime_ns"] // NANOSECONDS_PER_SECOND > snapshot["observed_at"]:
+            skipped[name] = "directory ctime is after observation"
+        elif row["reclaimable_bytes"] % STAT_BLOCK_BYTES:
+            skipped[name] = "reclaimable bytes must be a multiple of 512"
         else:
             accepted[name] = row
     return blocked, accepted, skipped
@@ -141,7 +153,9 @@ def unique_object(pairs):
 
 
 def read_inventory(path):
-    return json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=unique_object)
+    snapshot = json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=unique_object)
+    require(isinstance(snapshot, dict), "invalid inventory object")
+    return snapshot
 
 
 def main():

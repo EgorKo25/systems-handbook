@@ -43,7 +43,7 @@ def inventory():
         "loopback": {"revision": roles["active"], "manifest": MANIFEST},
         "active_manifest": MANIFEST,
         "receipts": {OLD: MANIFEST},
-        "trees": [tree(OLD), tree(HISTORICAL)],
+        "trees": [tree(OLD), tree(HISTORICAL) | {"inode": 21}],
         "pending": False,
     }
 
@@ -111,6 +111,40 @@ class CleanupPlanTests(unittest.TestCase):
         self.current["generation"] = "a" * 64
         self.assertEqual(cleanup.plan(self.current, self.first)["candidates"], [])
 
+    def test_shared_directory_inode_excludes_both_names(self):
+        for snapshot in (self.first, self.current):
+            snapshot["receipts"][HISTORICAL] = MANIFEST
+            snapshot["trees"][1]["inode"] = snapshot["trees"][0]["inode"]
+        report = cleanup.plan(self.current, self.first)
+        self.assertEqual(report["candidates"], [])
+        self.assertEqual(report["skipped"], {
+            cleanup.reserve_name(OLD): "ambiguous directory inode",
+            cleanup.reserve_name(HISTORICAL): "ambiguous directory inode",
+        })
+
+    def test_ctime_matches_inventory_clock_resolution(self):
+        boundary = (self.first["observed_at"] + 1) * cleanup.NANOSECONDS_PER_SECOND
+        for snapshot in (self.first, self.current):
+            snapshot["trees"][0]["ctime_ns"] = boundary - 1
+        self.assertEqual(len(cleanup.plan(self.current, self.first)["candidates"]), 1)
+        for snapshot in (self.first, self.current):
+            snapshot["trees"][0]["ctime_ns"] = boundary
+        self.assertEqual(cleanup.plan(self.current, self.first)["candidates"], [])
+        later = (self.current["observed_at"] + 1) * cleanup.NANOSECONDS_PER_SECOND
+        self.current["trees"][0]["ctime_ns"] = later
+        report = cleanup.plan(self.current, self.first)
+        self.assertEqual(report["candidates"], [])
+        self.assertEqual(report["skipped"][cleanup.reserve_name(OLD)], "directory ctime is after observation")
+
+    def test_reclaimable_estimate_uses_stat_blocks(self):
+        self.current["trees"][0]["reclaimable_bytes"] = 1
+        report = cleanup.plan(self.current, self.first)
+        self.assertEqual(report["candidates"], [])
+        self.assertEqual(report["skipped"][cleanup.reserve_name(OLD)],
+                         "reclaimable bytes must be a multiple of 512")
+        self.current["trees"][0]["reclaimable_bytes"] = 512
+        self.assertEqual(cleanup.plan(self.current, self.first)["candidates"][0]["reclaimable_bytes"], 512)
+
     def test_fails_for_incomplete_or_reversed_inventory(self):
         self.current["observed_at"] = 99
         with self.assertRaisesRegex(ValueError, "out of order"):
@@ -135,3 +169,17 @@ class CleanupPlanTests(unittest.TestCase):
             result = subprocess.run(command, text=True, capture_output=True)
             self.assertEqual(result.returncode, 2)
             self.assertIn("duplicate JSON key", result.stderr)
+
+    def test_cli_rejects_explicit_null_earlier(self):
+        with TemporaryDirectory() as work:
+            current = Path(work) / "current.json"
+            earlier = Path(work) / "earlier.json"
+            current.write_text(json.dumps(self.current))
+            earlier.write_text("null")
+            command = [sys.executable, "-B", str(Path(cleanup.__file__)), str(current)]
+            omitted = subprocess.run(command, text=True, check=True, capture_output=True)
+            self.assertEqual(json.loads(omitted.stdout)["candidates"], [])
+            explicit = subprocess.run(command + ["--earlier", str(earlier)], text=True, capture_output=True)
+            self.assertEqual(explicit.returncode, 2)
+            self.assertEqual(explicit.stdout, "")
+            self.assertIn("invalid inventory", explicit.stderr)
