@@ -193,7 +193,7 @@ def reading_map(root, stats, configs):
         assembly_course = None
     return dict(schema=SCHEMA, order=list(RECOMMENDED_ORDER), assembly_course=assembly_course,
                 order_note='Номера идут по порядку доступных томов в библиотеке. Книги в очереди номера пока не получают; соседние ветки можно изучать независимо.',
-                practice_note='Практикум можно начать после первых глав Linux и Bash и продолжать вместе с изучаемой технологией.',
+                practice_note='Практикум можно продолжать вместе с изучаемой технологией. Какие главы прочитать перед первым заданием, указано в начале P00 практикума.',
                 groups=[{**group, 'volumes': list(group['volumes'])} for group in GROUPS],
                 books=books, threads=[{**thread, 'volumes': list(thread['volumes'])} for thread in THREADS],
                 deferred=[dict(id='sql-depth', title='Большое расширение SQL', status='deferred',
