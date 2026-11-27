@@ -203,6 +203,8 @@ def reading_map(root, stats, configs):
 STYLE = '''<style id="library-structure-style">
 .library-volume-links{display:flex;flex-direction:column;align-items:flex-start;gap:8px;min-width:0}
 .library-volume-links .volume{align-self:stretch;flex:1}
+.library-practice{align-self:stretch;min-width:0;padding:14px 16px;border:1px solid var(--home-line);border-radius:12px}
+.library-practice h4{margin:0 0 6px;font:700 18px/1.3 system-ui}.library-practice p{margin:0 0 10px;color:var(--home-muted);font:14px/1.5 system-ui;overflow-wrap:anywhere}
 .library-practice-link{display:inline-flex;align-items:center;gap:9px;min-height:44px;padding:8px 16px;border-radius:12px;background:var(--home-soft);color:var(--home-accent);font:700 16px/1.4 system-ui}
 .library-practice-link:hover,.library-practice-link:focus-visible{outline:2px solid currentColor;outline-offset:2px}
 .library-overview{margin:28px 0 38px;padding:20px 22px;border:1px solid var(--home-line);border-radius:16px;background:var(--home-paper)}
@@ -267,8 +269,11 @@ def render_shelves(route):
                     '<span class="open">Открыть том →</span></a>')
                 if slug == 'computer-architecture' and assembly_course:
                     card = ('<div class="library-volume-links">'+card+
+                            '<section class="library-practice" aria-labelledby="library-assembly-title">'
+                            '<h4 id="library-assembly-title">Ассемблер</h4>'
+                            '<p>Выберите RV32I, Linux x86-64 и NASM или свой процессор.</p>'
                             '<a class="library-practice-link" href="'+escape(assembly_course, quote=True)+'">'
-                            'Ассемблер <span aria-hidden="true">→</span></a></div>')
+                            'Выбрать маршрут ассемблера <span aria-hidden="true">→</span></a></section></div>')
                 ready.append(card)
             else:
                 pending.append('<li data-planned-volume="'+slug+'"><div class="library-queue-title"><strong>'+escape(book['title'])+'</strong>'
