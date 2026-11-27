@@ -71,7 +71,7 @@ class StructureTests(unittest.TestCase):
         self.configs = {}
         for slug, number in PUBLICATION.items():
             (self.root/slug).mkdir()
-            (self.root/slug/'index.html').write_text('<html>built reading book</html>', encoding='utf-8')
+            (self.root/slug/'index.html').write_text('<html><div id="P00-rescue-bootstrap"></div></html>' if slug == 'practicum' else '<html>built reading book</html>', encoding='utf-8')
             self.stats[slug] = dict(slug=slug, title=slug, volume=number, chapters=21, words=12345, terms=42)
             if slug not in structure.BASE_SLUGS:
                 self.configs[slug] = dict(volume=number, short=structure.BOOKS[slug]['title'],
@@ -153,7 +153,13 @@ class StructureTests(unittest.TestCase):
             if href.startswith('#'):
                 self.assertIn(href[1:], document.ids)
             else:
-                self.assertTrue((self.root/href).is_file(), href)
+                path, _, anchor = href.partition('#')
+                self.assertTrue((self.root/path).is_file(), href)
+                if anchor:
+                    self.assertIn(anchor, Page((self.root/path).read_text(encoding='utf-8')).ids, href)
+        self.assertIn('practicum/index.html#P00-rescue-bootstrap', document.links)
+        (self.root/'practicum'/'index.html').unlink()
+        self.assertNotIn('practicum/index.html#P00-rescue-bootstrap', Page(structure.render_shelves(self.route())).links)
         for slug, book in public['books'].items():
             self.assertEqual(book['href'] is not None, book['status'] == 'available', slug)
         source = json.dumps(public, ensure_ascii=False)
