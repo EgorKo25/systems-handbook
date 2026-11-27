@@ -234,8 +234,10 @@
       if (index + 1 === state.cycle) item.setAttribute('aria-current', 'step');
       else item.removeAttribute('aria-current');
     });
+    const faultStatus = state.fault === 'instruction-address-misaligned'
+      ? 'Исключение: невыровненный адрес инструкции.' : 'Исключение доступа.';
     $('status').textContent = state.cycle
-      ? 'Такт ' + state.cycle + ' из 4. ' + (state.fault ? 'Исключение доступа.' : stages[state.cycle - 1] + '.')
+      ? 'Такт ' + state.cycle + ' из 4. ' + (state.fault ? faultStatus : stages[state.cycle - 1] + '.')
       : 'Исходное состояние. Инструкция ещё в памяти.';
   }
 

@@ -177,7 +177,56 @@
 
   window.M32Appearance?.mount($('studio-theme'), $('warmth'));
   loadExample();
-  window.addEventListener('hashchange', loadExample);
+  const guide = $('first-run');
+  const workbench = $('rv32-workbench');
+  const intro = document.querySelector('.intro');
+  const exercise = $('rv32-lw-x0');
+  let guideActive = false;
+  function showGuide() {
+    guideActive = true;
+    $('first-run-result').textContent = '?';
+    $('first-run-status').textContent = 'До выполнения: x6 = 42, PC = 0x1008. PC указывает на следующую команду.';
+    $('first-run-next').textContent = 'Выполнить ADDI';
+    // The same machine shown in the IDE: execute the setup instructions first.
+    remember(cpu.step(machine));
+    remember(cpu.step(machine));
+    render();
+    guide.hidden = false;
+    intro.hidden = true;
+    workbench.hidden = true;
+    exercise.hidden = true;
+  }
+  function closeGuide() {
+    guideActive = false;
+    guide.hidden = true;
+    intro.hidden = false;
+    workbench.hidden = false;
+    exercise.hidden = false;
+  }
+  if (window.location.hash === '#first-run') showGuide();
+  window.addEventListener('hashchange', () => {
+    closeGuide();
+    loadExample();
+    if (window.location.hash === '#first-run') {
+      showGuide();
+      $('first-run-next').focus();
+    }
+  });
+  $('first-run-next').addEventListener('click', () => {
+    if (!guideActive) return;
+    if (machine.pc === 0x1008) {
+      const event = cpu.step(machine);
+      remember(event);
+      report(event);
+      render();
+      $('first-run-result').textContent = String(machine.regs[6]);
+      $('first-run-status').textContent = 'После ADDI: x6 = ' + machine.regs[6] + ', PC = ' + address(machine.pc) + '. Следующая команда SW запишет результат в память.';
+      $('first-run-next').textContent = 'Открыть IDE';
+    } else {
+      closeGuide();
+      $('step').focus();
+    }
+  });
 
   editor.addEventListener('input', () => {
     render();
