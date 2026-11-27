@@ -6,7 +6,17 @@
 <nav><a href="../../index.html">Архитектура компьютера</a><a href="index.html">Открыть конструктор</a><a href="README.txt">Формат процессора и проекта</a></nav>
 <main>
 <h1>Проектирование процессора и программы на ассемблере</h1>
-<p>Здесь сопровождающая практика к архитектурному тому. Можно менять систему команд, собирать собственную программу и следить за её исполнением. Каждое задание содержит исходное состояние и результат, который следует предсказать до запуска.</p>
+<p>Это дополнительная практика к тому «Архитектура компьютера»: три подкниги об ассемблере и командах разных машин. Каждое задание содержит исходное состояние и результат, который можно предсказать до запуска.</p>
+<section id="reading-paths" aria-labelledby="reading-paths-title">
+<h2 id="reading-paths-title">Выберите подкнигу</h2>
+<p>Перед началом полезно понимать <a href="../../index.html#ca-03-numbers">двоичную и шестнадцатеричную запись чисел</a>, <a href="../../index.html#ca-04-bytes-text-layout">байты и порядок байтов</a>, <a href="../../index.html#ca-05-registers-clock">регистры</a> и <a href="../../index.html#ca-06-memory-addresses">адреса памяти</a>. Команда, счётчик команд и последовательность выполнения разобраны в <a href="../../index.html#ca-01-computer-model">первой главе тома</a>. Для вызовов и возвратов пригодится <a href="../../index.html#ca-09-control-stack-abi">глава о переходах и стеке</a>.</p>
+<ul>
+<li><a href="#first-program">Собственный процессор и его ISA</a>. Начните с записи 43 в память, затем изучите команды, сборку и настройку процессора. <a href="index.html">Конструктор</a> открывается с первой программой. Его синтаксис и кодировка принадлежат учебной модели; описание формата и команд находится в <a href="README.txt">справке</a>.</li>
+<li><a href="#rv32-control">RV32I: цикл и вызов</a>. Сначала проследите <a href="../../index.html#ca-01-computer-model">пример из книги</a>, затем откройте <a href="rv32.html">модель RV32I</a>. Для упражнения о цикле и стеке также нужны переходы и адрес возврата из главы о стеке.</li>
+<li><a href="#x86-first-register">x86-64: регистры, переход и вызов</a>. После примера RV32I сравните его с программой x86-64; далее идут <a href="#x86">примеры NASM и FASM</a> и <a href="#x86-nasm-call-ret">CALL и RET</a>. Для запуска нужны Linux x86-64 и отдельно установленные инструменты, указанные в заданиях.</li>
+</ul>
+<p>Из <a href="../../index.html">тома</a> можно открыть конструктор по ссылке в маршруте чтения, а модель RV32I — из примеров глав. Из конструктора ссылка «Подкниги ассемблера» возвращает к этому выбору. Тренажёры дополняют книгу и не обязательны для её чтения.</p>
+</section>
 <nav aria-label="Содержание практики"><a href="#first-program">Первая программа</a><a href="#rv32-control">Цикл и стек в RV32I</a><a href="#architecture">Устройство процессора</a><a href="#instruction">Своя команда</a><a href="#assembler">Ассемблер</a><a href="#subroutine">Подпрограмма</a><a href="#ports">Ввод-вывод</a><a href="#x86-first-register">Основы x86-64</a><a href="#x86">NASM и FASM</a><a href="#x86-nasm-call-ret">CALL и RET в NASM</a><a href="#next">Дальнейшее проектирование</a></nav>
 <section id="first-program">
 <h2>Первая программа. Сложение и запись в память</h2>
@@ -1631,6 +1641,35 @@ equal:
 </table>
 </div>
 <p>При сдвиге вправо на восемь последним выходит исходный старший бит. В обеих командах он равен 1 и попадает в <code>C</code>. Для сдвига на девять в исходном байте уже нет девятого бита. По правилу этой модели для числа разрядов больше ширины регистра <code>C = 0</code>. При вычислении самого результата модель ограничивает сдвиг шириной регистра, поэтому <code>R2 = 00</code> и <code>R3 = FF</code> в обоих запусках.</p>
+</details>
+<h3 id="zero-shift-flags-exercise">Сдвиг на ноль. Тот же байт, другие флаги</h3>
+<p>При восьмибитных регистрах <code>255 + 1</code> оставляет в <code>R0</code> байт <code>00</code> и выставляет <code>Z = 1</code> и <code>C = 1</code>. Затем сравним копирование <code>MOV R3, R2</code> и логический сдвиг <code>SHR R3, R2, R1</code> при <code>R1 = 0</code>. Обе команды запишут в <code>R3</code> байт <code>81</code>. Предскажите, что произойдёт с флагами <code>C</code>, <code>Z</code> и <code>N</code>.</p>
+<pre><code id="zero-shift-flags-source">.org 0x20
+    LDI R0, 255
+    LDI R1, 0
+    LDI R2, 0x81
+    ADDI R0, 1
+    MOV R3, R2
+    HALT
+</code></pre>
+<ol>
+<li><a id="zero-shift-flags-ide" href="index.html">Откройте конструктор для опыта со сдвигом на ноль</a>. В панели «Архитектура» раскройте «Изменить устройство процессора». Задайте <strong>8 бит</strong>, <strong>4 регистра</strong> и <strong>256 байт</strong> памяти. Вставьте листинг и нажмите «Применить и собрать».</li>
+<li>Нажмите «Шаг» четыре раза. При <code>PC = 0030</code> сверьте флаги от <code>ADDI</code> и байты <code>01 23 00 00</code> в панели «Слово по адресу PC». Пятым шагом выполните <code>MOV</code> и запишите <code>R3</code>, флаги, <code>PC</code> и число выполненных команд.</li>
+<li>Замените только <code>MOV R3, R2</code> на <code id="zero-shift-flags-variant">SHR R3, R2, R1</code> и нажмите «Собрать». Повторите пять шагов. Перед пятым сверьте слово <code>0D 23 01 00</code> по адресу <code>0030</code>. Сравните состояние после <code>SHR</code> с первым прогоном.</li>
+</ol>
+<details>
+<summary>Сверить байт и флаги</summary>
+<div class="table-wrap">
+<table id="zero-shift-flags-results">
+<thead><tr><th scope="col">Момент</th><th scope="col">R3</th><th scope="col">Z N C V</th><th scope="col">PC</th><th scope="col">Шагов</th></tr></thead>
+<tbody>
+<tr><th scope="row">После <code>ADDI</code></th><td><code>00</code></td><td><code>1 0 1 0</code></td><td><code>0030</code></td><td>4</td></tr>
+<tr><th scope="row">После <code>MOV</code></th><td><code>81</code></td><td><code>1 0 1 0</code></td><td><code>0034</code></td><td>5</td></tr>
+<tr><th scope="row">После <code>SHR</code></th><td><code>81</code></td><td><code>0 1 0 0</code></td><td><code>0034</code></td><td>5</td></tr>
+</tbody>
+</table>
+</div>
+<p><code>MOV</code> сохраняет флаги от сложения, поэтому <code>Z = 1</code> и <code>C = 1</code> относятся к результату в <code>R0</code>. В CPU Studio <code>SHR</code> выставляет флаги даже при нулевом сдвиге. Результат <code>81</code> ненулевой, его старший бит равен 1, поэтому <code>Z = 0</code> и <code>N = 1</code>. Ни один бит не вышел за пределы байта, поэтому в этой модели <code>C = 0</code>. Переполнение <code>V = 0</code>. После обоих вариантов <code>PC = 0034</code> указывает на <code>HALT</code>.</p>
 </details>
 <h3 id="multiword-increment-exercise">Как увеличить число из двух байтов</h3>
 <p>В 8-битной конфигурации пара <code>R1:R0</code> хранит 16-битное число. В <code>R1</code> лежит старший байт, в <code>R0</code> — младший. При прибавлении единицы сначала меняется младший байт. Если он переходит из <code>FF</code> в <code>00</code>, <code>ADDI</code> выставляет перенос <code>C = 1</code> и нужно увеличить старший байт. При <code>C = 0</code> команда <code>JNC done</code> сразу передаёт управление на <code>HALT</code>.</p>
