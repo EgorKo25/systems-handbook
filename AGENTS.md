@@ -1,5 +1,9 @@
 # Publication and authorship
 
+Open a pull request against `main` for each task and release batch. Merge only
+after the required `build` check passes. The merge into `main` triggers
+artifact creation and automatic deployment.
+
 Use GitHub noreply identity for every commit in this public repository:
 
 - Name: `EgorKo25`
