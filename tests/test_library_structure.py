@@ -187,9 +187,15 @@ class StructureTests(unittest.TestCase):
         self.assertEqual(page.links.count(assembly_href), 1)
         self.assertEqual(page.nested_links, [])
         self.assertEqual(json.loads(page.route)['assembly_course'], assembly_href)
-        self.assertRegex(rendered, r'<div class="library-volume-links"><a class="volume" href="'+
-                         architecture_href+r'".*?</a><a class="library-practice-link" href="'+
-                         assembly_href+r'">Ассемблер [^<]*<span[^>]*>→</span></a></div>')
+        self.assertRegex(
+            rendered,
+            r'<div class="library-volume-links"><a class="volume" href="'+
+            architecture_href+r'".*?</a><section class="library-practice" aria-labelledby="library-assembly-title">'
+            r'<h4 id="library-assembly-title">Ассемблер</h4>'
+            r'<p>Выберите RV32I, Linux x86-64 и NASM или свой процессор\.</p>'
+            r'<a class="library-practice-link" href="'+assembly_href+
+            r'">Выбрать маршрут ассемблера <span[^>]*>→</span></a></section></div>',
+        )
 
         course.unlink()
         self.assertNotIn(assembly_href, Page(structure.render_shelves(self.route())).links)
