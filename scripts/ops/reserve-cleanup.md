@@ -9,6 +9,27 @@ python3 -B -m unittest discover -s tests -p test_plan_reserve_cleanup.py -v
 
 With a single snapshot, the report identifies objects that still need an earlier observation. Two snapshots at least 72 hours apart can qualify the same verified reserve. A missing receipt, ambiguous abbreviated name, changed identity, protected revision or guard failure leaves the object outside the candidate list.
 
+## Interpreting the report
+
+- **Exit code `2` with `invalid inventory:` on stderr.** The CLI rejected the
+  inventory input, including any invalid `--earlier` snapshot, and produced no
+  JSON on stdout. Record the diagnostic and obtain valid, trusted input before
+  retrying the report.
+- **Exit code `0` with a reason in `blocked`.** The current snapshot tripped a
+  report-wide guard, such as `pending cutover` or `Caddy digest changed`.
+  Candidate selection stops and `candidates` is empty. Entries in `skipped` may
+  repeat the guard reason. Investigate the guard and collect a fresh trusted
+  snapshot once it clears. A blocked snapshot cannot serve as the earlier
+  observation.
+- **Exit code `0` with `blocked: null`.** Each `skipped` entry gives the reason
+  that reserve was left out of `candidates`. Leave a `protected` reserve in
+  place. For `matching earlier observation required`, look for a matching,
+  trusted earlier observation. Start a new observation period if continuity
+  cannot be established.
+
+Use the report to review candidates and the evidence behind them. Acting on a
+candidate requires separate authorization and the rechecks under locks below.
+
 ## Inventory contract
 
 A controller adapter supplies the following data. Keep snapshots and any actual topology outside the public repository.
