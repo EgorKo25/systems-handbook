@@ -71,7 +71,7 @@ SCRIPT = r'''(()=>{'use strict';
 const bar=document.getElementById('phone-tools'),view=document.getElementById('phone-view'),backdrop=document.getElementById('phone-backdrop'),side=document.getElementById('side-nav'),dictionary=document.getElementById('dictionary');
 if(!bar||!view||!side||!dictionary)return;
 const mq=matchMedia('(max-width:750px)'),button=name=>bar.querySelector('[data-phone-action="'+name+'"]');
-let volumeLevel=location.hash==='#volume';
+let volumeLevel=location.hash==='#volume',chapterActivation=null;
 for(const hint of document.querySelectorAll('aside.callout'))if(hint.querySelector('strong')?.textContent==='Справка по ходу чтения')hint.classList.add('phone-reference-hint');
 function closeView(){view.hidden=true;button('view').setAttribute('aria-expanded','false');}
 function sync(){
@@ -129,9 +129,18 @@ view.addEventListener('dblclick',event=>{if(event.target.closest('button'))event
 view.addEventListener('keydown',event=>{if(event.key!=='Tab')return;const all=[...view.querySelectorAll('button,input,select')].filter(el=>!el.disabled&&el.getClientRects().length),first=all[0],last=all.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}});
 backdrop.addEventListener('click',closeAll);addEventListener('keydown',event=>{if(event.key==='Escape'){if(volumeLevel)continueReading();else closeAll();}});
 const close=document.createElement('button');close.type='button';close.className='phone-sidebar-close';close.textContent='Закрыть главы ×';close.addEventListener('click',closeAll);side.prepend(close);
+side.addEventListener('click',event=>{
+ const link=event.target.closest('.chapter-nav a[href^="#"]');
+ if(!mq.matches||volumeLevel||!side.classList.contains('open')||!link||link!==document.activeElement||
+    event.detail!==0||event.altKey||event.ctrlKey||event.metaKey||event.shiftKey||link.hash===location.hash)return;
+ // Native fragment navigation can blur the focused link before hashchange.
+ chapterActivation={hash:link.hash,event};
+});
 new MutationObserver(sync).observe(side,{attributes:true,attributeFilter:['class']});new MutationObserver(sync).observe(dictionary,{attributes:true,attributeFilter:['hidden']});new MutationObserver(sync).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 window.LibraryPreferences?.subscribe(sync);
 function routeLevel(){
+ const restoreChapterFocus=chapterActivation?.hash===location.hash&&!chapterActivation.event.defaultPrevented;
+ chapterActivation=null;
  closeView();volumeLevel=location.hash==='#volume';
  if(!volumeLevel)side.classList.remove('open');
  else {
@@ -141,6 +150,8 @@ function routeLevel(){
   side.scrollTop=0;
  }
  sync();
+ if(restoreChapterFocus&&mq.matches&&document.activeElement===document.body)
+  button('chapters').focus({preventScroll:true});
  if(volumeLevel&&mq.matches){const title=side.querySelector('.bookname');title.tabIndex=-1;title.focus({preventScroll:true});}
 }
 addEventListener('hashchange',routeLevel);mq.addEventListener('change',()=>{if(!mq.matches)closeAll();sync();});routeLevel();
