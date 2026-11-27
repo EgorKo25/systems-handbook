@@ -36,7 +36,7 @@ GROUPS = (
          description='Переходите сюда после устройства Linux, сети и контейнеров: управляйте жизненным циклом приложения и проверяйте согласование состояния.',
          volumes=('kubernetes', 'helm', 'argocd')),
     dict(id='practice', title='Сквозной практикум',
-         description='Открывайте параллельно основным книгам после первых глав Linux и Bash. Один учебный мир сохраняет настройки, данные и последствия ваших решений.',
+         description='Практикум можно проходить параллельно основным книгам. Один учебный мир сохраняет настройки, данные и последствия ваших решений.',
          volumes=('practicum',)),
 )
 
@@ -193,7 +193,7 @@ def reading_map(root, stats, configs):
         assembly_course = None
     return dict(schema=SCHEMA, order=list(RECOMMENDED_ORDER), assembly_course=assembly_course,
                 order_note='Номера идут по порядку доступных томов в библиотеке. Книги в очереди номера пока не получают; соседние ветки можно изучать независимо.',
-                practice_note='Практикум можно начать после первых глав Linux и Bash и продолжать вместе с изучаемой технологией.',
+                practice_note='Практикум можно продолжать вместе с изучаемой технологией. Какие главы прочитать перед первым заданием, указано в начале P00 практикума.',
                 groups=[{**group, 'volumes': list(group['volumes'])} for group in GROUPS],
                 books=books, threads=[{**thread, 'volumes': list(thread['volumes'])} for thread in THREADS],
                 deferred=[dict(id='sql-depth', title='Большое расширение SQL', status='deferred',
@@ -276,6 +276,7 @@ def render_shelves(route):
         sections.append('<section class="library-shelf" id="library-'+group['id']+'" aria-labelledby="library-'+group['id']+'-title">'
             '<div class="library-shelf-heading"><span class="library-shelf-number" aria-hidden="true">'+str(index).zfill(2)+'</span><h2 id="library-'+group['id']+'-title">'+escape(group['title'])+'</h2></div>'
             '<p class="library-shelf-description">'+escape(group['description'])+'</p>'+
+            ('<p class="library-shelf-description">Перед первой попыткой посмотрите в начале <a href="'+escape(books['practicum']['href'], quote=True)+'#P00-rescue-bootstrap">P00</a>, какие темы понадобятся.</p>' if group['id'] == 'practice' and books['practicum']['href'] else '')+
             ('<div class="grid">'+''.join(ready)+'</div>' if ready else '')+
             ('<ul class="library-queue" aria-label="Следующие самостоятельные тома">'+''.join(pending)+'</ul>' if pending else '')+'</section>')
     threads = []
