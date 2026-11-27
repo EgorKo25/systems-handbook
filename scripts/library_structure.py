@@ -201,6 +201,8 @@ def reading_map(root, stats, configs):
 
 
 STYLE = '''<style id="library-structure-style">
+.library-volume-links{display:flex;flex-direction:column;align-items:flex-start;gap:8px;min-width:0}
+.library-volume-links .volume{align-self:stretch;flex:1}
 .library-practice-link{display:inline-flex;align-items:center;gap:9px;min-height:44px;padding:8px 16px;border-radius:12px;background:var(--home-soft);color:var(--home-accent);font:700 16px/1.4 system-ui}
 .library-practice-link:hover,.library-practice-link:focus-visible{outline:2px solid currentColor;outline-offset:2px}
 .library-overview{margin:28px 0 38px;padding:20px 22px;border:1px solid var(--home-line);border-radius:16px;background:var(--home-paper)}
@@ -248,10 +250,7 @@ def render_shelves(route):
                 '<p class="small">'+escape(route['practice_note'])+'</p>'
                 '<ul class="library-group-nav">'+''.join(
                     '<li><a href="#library-'+group['id']+'">'+escape(group['title'])+'</a></li>' for group in route['groups'])+'</ul></details></aside>')
-    practice_entry = ''
-    if assembly_course := route.get('assembly_course'):
-        practice_entry = ('<a class="library-practice-link" href="'+escape(assembly_course, quote=True)+'">'
-                          'Ассемблер <span aria-hidden="true">→</span></a>')
+    assembly_course = route.get('assembly_course')
     sections = []
     for index, group in enumerate(route['groups'], 1):
         ready, pending = [], []
@@ -260,12 +259,17 @@ def render_shelves(route):
             prerequisites = ', '.join(books[other]['title'] for other in book['prerequisites'])
             if book['status'] == 'available':
                 row = book['stats']
-                ready.append('<a class="volume" href="'+escape(book['href'], quote=True)+'" data-volume="'+slug+'">'
+                card = ('<a class="volume" href="'+escape(book['href'], quote=True)+'" data-volume="'+slug+'">'
                     '<div class="tag">Том '+escape(book['publication_volume'])+'</div><h3>'+escape(book['title'])+'</h3>'
                     '<p>'+escape(book['blurb'])+'</p>'+
                     ('<span class="library-volume-prerequisites">Опора: '+escape(prerequisites)+'</span>' if prerequisites else '')+
                     '<div class="counts">'+str(row['chapters'])+' '+_plural(row['chapters'], ('глава', 'главы', 'глав'))+' · '+_number(row['words'])+' слов · словарь: '+str(row['terms'])+'</div>'
                     '<span class="open">Открыть том →</span></a>')
+                if slug == 'computer-architecture' and assembly_course:
+                    card = ('<div class="library-volume-links">'+card+
+                            '<a class="library-practice-link" href="'+escape(assembly_course, quote=True)+'">'
+                            'Ассемблер <span aria-hidden="true">→</span></a></div>')
+                ready.append(card)
             else:
                 pending.append('<li data-planned-volume="'+slug+'"><div class="library-queue-title"><strong>'+escape(book['title'])+'</strong>'
                     '<span class="library-status">'+STATUS_LABELS[book['status']]+'</span></div><p>'+escape(book['scope'])+'</p></li>')
@@ -284,4 +288,4 @@ def render_shelves(route):
     deferred = route['deferred'][0]
     threads_section = '<section class="notes library-threads"><h2>Связи между книгами</h2><p class="small">Каждая технология получает собственный том. Общие задачи проходят через несколько книг; установка, настройка и проверка своего экземпляра предшествуют его дальнейшей эксплуатации.</p>'+''.join(threads)+'<p class="small library-deferred"><strong>'+escape(deferred['title'])+'.</strong> '+escape(deferred['note'])+'</p></section>'
     data = json.dumps(route, ensure_ascii=False, separators=(',', ':')).replace('<', '\\u003c')
-    return '<!--library-structure:start--><div id="library-shelves">'+practice_entry+overview+''.join(sections)+threads_section+'</div><script type="application/json" id="library-route-data">'+data+'</script><!--library-structure:end-->'
+    return '<!--library-structure:start--><div id="library-shelves">'+overview+''.join(sections)+threads_section+'</div><script type="application/json" id="library-route-data">'+data+'</script><!--library-structure:end-->'
